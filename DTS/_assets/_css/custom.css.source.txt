@@ -1,0 +1,442 @@
+@charset "UTF-8";
+/* CSS Document */
+
+body {
+	font-size: 16px;
+}
+input {
+	color: #474A47;
+}
+textarea {
+	border-top-width: thin;
+	border-right-width: thin;
+	border-bottom-width: thin;
+	border-left-width: thin;
+	border-top-style: solid;
+	border-right-style: solid;
+	border-bottom-style: solid;
+	border-left-style: solid;
+	border-top-color: #AEACAA;
+	border-right-color: #AEACAA;
+	border-bottom-color: #AEACAA;
+	border-left-color: #AEACAA;
+	font-size: 90%;
+	padding: 3px;
+	margin: 0px;
+	color: #474A47;
+}
+.hero-unit h1 {
+	font-family: "Lato", Verdana, Arial, Helvetica, sans-serif;
+	font-weight: 300;
+	font-size: 40px;
+	line-height: 50px;
+}
+.hero-unit p {
+	font-family: "Lato", Verdana, Arial, Helvetica, sans-serif;
+	font-weight: 300;
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+.muted {
+	font-family: "Lato", Verdana, Arial, Helvetica, sans-serif;
+	font-weight: 300;
+}
+.header-background {
+	background-color: #93CCCB;
+	padding-top: 10px;
+	padding-right: 10px;
+	padding-bottom: 10px;
+	padding-left: 30px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	margin-left: 0px;
+}
+.container-fluid {
+	padding-right: 30px;
+	padding-left: 30px;	
+}
+
+ul, ol, dl { /* Due to variations between browsers, it's best practices to zero padding and margin on lists. For consistency, you can either specify the amounts you want here, or on the list items (LI, DT, DD) they contain. Remember that what you do here will cascade to the .nav list unless you write a more specific selector. */
+	padding: 0;
+	margin: 0;
+}
+h1, h2, h3, h4, h5, h6, p, ul, ol {
+	margin-top: 0;
+	/* removing the top margin gets around an issue where margins can escape from their containing div. The remaining bottom margin will hold it away from any elements that follow. */
+	padding-right: 15px;
+	padding-left: 15px; /* adding the padding to the sides of the elements within the divs, instead of the divs themselves, gets rid of any box model math. A nested div with side padding can also be used as an alternate method. */
+	line-height: 160%;
+}
+
+
+/*Navigation
+--------------------------------------------------*/
+
+a img { /* this selector removes the default blue border displayed in some browsers around an image when it is surrounded by a link */
+	border: none;
+}
+
+/* ~~ Styling for your site's links must remain in this order - including the group of selectors that create the hover effect. ~~ */
+a {
+	color: #009498;
+	font-family: "Lato", Verdana, Arial, Helvetica, sans-serif;
+	font-weight: 400;
+}
+a:hover {
+	color: #C33C2C;
+	text-decoration: none;
+}
+h3 a {
+	font-weight: 300;
+}
+.navbar-inner .brand {
+	margin-left: 10px;
+	padding-bottom: 3px
+}
+.navbar .nav > li > a {
+	padding-top: 10px;
+	padding-right: 15px;
+	padding-bottom: 6px;
+	padding-left: 15px;
+}
+
+
+/*Floats (find out how these work in bootstap then delete)
+--------------------------------------------------*/
+
+.clearfloat { /* this class can be placed on a <br /> or empty div as the final element following the last floated div (within the #container) if the #footer is removed or taken out of the #container */
+	clear:both;
+	height:0;
+	font-size: 1px;
+	line-height: 0px;
+}
+
+/*Breadcrumb
+--------------------------------------------------*/
+.breadcrumb {
+	padding-left: 20px;
+	padding-top: 4px;
+	padding-bottom: 4px;
+}
+.breadcrumb a {
+	font-weight: 300;
+}
+.breadcrumb li {
+	font-family: "Lato", Verdana, Arial, Helvetica, sans-serif;
+	font-weight: 300;
+}
+
+/*Thumbnails
+--------------------------------------------------*/
+.thumbnails li {
+	margin-bottom: 6px;
+}
+
+/*Basic
+--------------------------------------------------*/
+
+p {
+	font-family: "Lato", helvetica, arial, "san serif";
+	font-size: 110%;
+	margin-top: 6px;
+	margin-bottom: 6px;
+	font-weight: 300;
+}
+h1 {
+	font-family: "Lato", helvetica, arial, "san serif";
+	font-weight: 100;
+	font-size: 260%;
+	margin-top: 0px;
+	margin-bottom: 6px;
+	letter-spacing: 110%;
+	font-weight: 100;
+}
+h2 {
+	font-family: "Lato", helvetica, arial, "san serif";
+	font-size: 180%;
+	font-weight: 300;
+	margin-top: 20px;
+	margin-bottom: 16px;
+	line-height: 100%;
+}
+h3 {
+	font-family: "Lato", helvetica, arial, "san serif";
+	font-size: 130%;
+	font-weight: 300;
+	margin-top: 10px;
+	margin-bottom: 6px;
+}
+h4 {
+	font-family: "Lato", helvetica, arial, "san serif";
+	font-size: 130%;
+	font-weight: 300;
+	margin-top: 10px;
+	margin-bottom: 6px;
+	color: #009498;
+}
+h5 {
+	font-family: "Lato", helvetica, arial, "san serif";
+	font-size: 110%;
+	font-weight: 300;
+	font-weight: normal;
+	margin-top: 0px;
+	margin-bottom: 6px;
+}
+h6 {
+	font-family: "Lato", helvetica, arial, "san serif";
+	color: #929292;
+	font-size: 320%;
+	margin-top: 20px;
+	margin-bottom: 6px;
+	font-weight: 300;
+	line-height: 45px;
+}
+
+p sup {
+	font-size: 60%;
+	top: -.8em;
+}
+h1 sup {
+	font-size: 35%;
+	top: -1.3em;
+}
+h2 sup {
+	font-size: 45%;
+	top: -1.2em;
+}
+h3 sup {
+	font-size: 50%;
+	top: -.9em;
+}
+
+li {
+	margin-top: 0px;
+	margin-bottom: 7px;
+	padding-left: 6px;
+	margin-left: 20px;
+}
+ul {
+	font-size: 100%;
+	line-height: 160%;
+	margin-top: 6px;
+	margin-bottom: 6px;
+	}
+ol {
+	font-size: 100%;
+	line-height: 160%;
+	padding-right: 25px;
+	margin-top: 6px;
+	margin-bottom: 6px;
+}
+table {
+	line-height: 120%;
+	margin-left: 0px;
+}
+tr {
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	padding-top: 6px;
+	padding-bottom: 6px;
+}
+td {
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: dashed;
+	border-left-style: none;
+	color: #474A47;
+	padding-right: 5px;
+	padding-left: 8px;
+	vertical-align: top;
+	padding-top: 2px;
+	padding-bottom: 3px;
+	font-size: 11px;
+	border-bottom-width: 1px;
+	border-bottom-color: #BABFB6;
+	line-height: 18px;
+}
+button {
+	padding-top: 1px;
+	padding-right: 4px;
+	padding-bottom: 1px;
+	padding-left: 4px;
+}
+
+/*Colors
+--------------------------------------------------*/
+
+.teal {
+	color: #009498;
+}
+.red {
+	color: #C33C2C;
+}
+.emphasis {
+	color: #002B5E;
+	font-weight: bold;
+}
+
+
+/*Backgrounds
+--------------------------------------------------*/
+.teal-background {
+	background-color: #E3F1EF;
+}
+.yellow-background {
+	background-color: #FFFCD6;
+}
+.red-background {
+	background-color: #F6E5DF;
+}
+.background-pale {
+	background-color: #EFEFEF;
+	border-bottom: solid;
+	border-bottom-color: #CCC;
+	border-bottom-width: thin;
+	border-top: solid;
+	border-top-color: #CCC;
+	border-top-width: thin;
+}
+
+
+/*Boxes*/
+
+.box {
+	font-family: "Lato", Verdana, Helvetica, Arial, "san serif";
+	font-weight: 400;
+	font-size: 90%;
+	padding-top: 15px;
+	padding-right: 20px;
+	padding-bottom: 15px;
+	padding-left: 20px;
+	margin-top: 30px;
+	margin-bottom: 30px;
+	margin-left: 5%;
+	margin-right: 5%;
+	line-height: 22px;
+	box-shadow: -1px -1px 1px #FFF, 1px 1px 10px #8A8A8A;
+	background-color: #F3F3F3;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+}
+.box_shadow {
+  -webkit-box-shadow: 6px 6px 6px 4px #262626; /* Saf3-4, iOS 4.0.2 - 4.2, Android 2.3+ */
+          box-shadow: 6px 6px 6px 4px #262626; /* Opera 10.5, IE9, FF4+, Chrome 6+, iOS 5 */
+}
+.box_gradient {
+  background-color: #444444;
+  background-image: -webkit-gradient(linear, left top, left bottom, from(#444444), to(#999999)); /* Saf4+, Chrome */
+  background-image: -webkit-linear-gradient(top, #444444, #999999); /* Chrome 10+, Saf5.1+, iOS 5+ */
+  background-image: -moz-linear-gradient(top, #444444, #999999); /* FF3.6+ */
+  background-image: -o-linear-gradient(top, #444444, #999999); /* Opera 11.10+ */
+  background-image: linear-gradient(to bottom, #444444, #999999);
+}
+.box_round {
+  -webkit-border-radius: 12px; /* Saf3-4, iOS 1-3.2, Android ≤1.6 */
+          border-radius: 12px; /* Opera 10.5, IE9, Saf5, Chrome, FF4+, iOS 4, Android 2.1+ */
+
+  /* useful if you don't want a bg color from leaking outside the border: */
+  -moz-background-clip: padding; -webkit-background-clip: padding-box; background-clip: padding-box;
+}
+.box_textshadow {
+     text-shadow: 1px 1px 3px #888; /* FF3.5+, Opera 9+, Saf1+, Chrome, IE10 */
+}
+/*                           [to clipboard] [toggle rule off] */
+.box_opacity {
+  opacity: 0.8; /* Chrome 4+, FF2+, Saf3.1+, Opera 9+, IE9, iOS 3.2+, Android 2.1+ */
+  filter: alpha(opacity=80); /* IE6-IE8 */
+}
+
+/*Alerts
+--------------------------------------------------*/
+
+.alert-info {
+	color: #3B3B3B;
+	background-color: #E3EFF1;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	border-top-width: thin;
+	border-bottom-width: thin;
+	border-top-style: solid;
+	border-bottom-style: solid;
+	border-top-color: #CCCCCC;
+	border-bottom-color: #CCC;
+}
+.alert-info p {
+	padding-top: 2px;
+	padding-bottom: 2px;
+	padding-left: 40px;
+	padding-right: 40px;
+	font-size: 90%;
+	font-weight: 400;
+	line-height: 140%;
+}
+
+/*Decoration
+--------------------------------------------------*/
+.top-bottom-lines {
+	border-top-width: thin;
+	border-top-style: solid;
+	border-top-color: #CCCCCC;
+	border-bottom-width: thin;
+	border-bottom-style: solid;
+	border-bottom-color: #CCCCCC;
+}
+.bottom-line {
+	border-bottom-width: thin;
+	border-bottom-style: solid;
+	border-bottom-color: #CCCCCC;
+}
+
+/*Buttons
+--------------------------------------------------*/
+
+.btn-teal {
+  background-color: hsl(185, 66%, 30%) !important;
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#2bc5d3", endColorstr="#1a767e");
+  background-image: -khtml-gradient(linear, left top, left bottom, from(#2bc5d3), to(#1a767e));
+  background-image: -moz-linear-gradient(top, #2bc5d3, #1a767e);
+  background-image: -ms-linear-gradient(top, #2bc5d3, #1a767e);
+  background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #2bc5d3), color-stop(100%, #1a767e));
+  background-image: -webkit-linear-gradient(top, #2bc5d3, #1a767e);
+  background-image: -o-linear-gradient(top, #2bc5d3, #1a767e);
+  background-image: linear-gradient(#2bc5d3, #1a767e);
+  border-color: #1a767e #1a767e hsl(185, 66%, 25%);
+  color: #fff !important;
+  font-weight: 600;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.33);
+  -webkit-font-smoothing: antialiased;
+}
+#footer {
+	padding-top: 4px;
+	padding-bottom: 6px;
+	margin-top: 2px;
+}
+
+
+/*Padding and margins
+--------------------------------------------------*/
+
+.padding-top-20 {
+	padding-top: 20px;
+}
+.padding-top-30 {
+	padding-top: 30px;
+}
+.padding-bottom-0 {
+	padding-bottom: 0px;
+}
+.padding-top-140 {
+	padding-top: 140px;
+}
+
+
+.margin-bottom-30 {
+	margin-bottom: 30px;
+}
+.margin-bottom-0 {
+	margin-bottom: 0px;
+}

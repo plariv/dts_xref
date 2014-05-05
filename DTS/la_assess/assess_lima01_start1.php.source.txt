@@ -1,0 +1,81 @@
+<?php
+  ob_start();
+?>
+
+
+<?php   // SetSessionVar.php
+// Sessiom start & error reporting requred for session variables code
+if (!isset($_SESSION)) {
+  session_start();
+}
+error_reporting(E_ALL); 
+?>
+
+
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php  require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+
+// If an LAKEY is specified, then the user should just be directed on to the first page.
+if (isset($_GET['lakey']) AND $_GET['lakey'] <> "") {
+	header(sprintf("Location: assess_lima01_start2.php?lakey=".$_GET['lakey']));
+}
+
+
+
+	$insertSQL = sprintf("INSERT INTO la_data (lakey, instrument_id, userkey) VALUES (%s, %s, %s)",
+                       GetSQLValueString($_POST['lakey'], "int"),
+                       GetSQLValueString($_SESSION['instrument_id'], "text"),
+                       GetSQLValueString($_SESSION['log_userkey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($insertSQL, $Assessment) or die(mysql_error());
+  $insert_id = mysql_insert_id();
+
+  $insertGoTo = "assess_lima01_start2.php?lakey=$insert_id";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+    $insertGoTo .= $_SERVER['QUERY_STRING'];
+  }
+
+
+
+  header(sprintf("Location: %s", $insertGoTo));
+
+?>

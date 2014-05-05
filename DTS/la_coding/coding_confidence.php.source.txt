@@ -1,0 +1,261 @@
+<?php 
+include_once ("../includes/dts_functions.php");
+
+
+// restrict access if not logged in
+if (!WA_Auth_RulePasses("Logged in as teacher assistant")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_name = str_replace("_", " ", $_SESSION['instrument_id']);
+$instrument_id_base = str_replace("_JOURNAL", "", $_SESSION['instrument_id']);
+
+$lakey = -1;
+if (isset($_GET['lakey'])) {  $lakey = $_GET['lakey'];  }
+
+
+
+
+
+// Figure out which coder you are, and which coding table you should be writing to
+$coder = 0;
+if (isset($_GET['coder'])) { $coder = SQLstr($_GET['coder'], "int"); }
+if (isset($_GET['scorer_no'])) { $coder = 1; }
+
+$table = "la_codes_".$coder;
+$table = str_replace("_1", "", $table);
+
+$sql_lacodeskey = "";
+if (isset($_GET['lacodeskey'])) { 
+	$sql_lacodeskey = sprintf(" AND lacodeskey = %s ", SQLstr($_GET['lacodeskey'])); 
+}  
+
+
+$editFormAction = $_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING'];
+
+
+
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE {$table} 
+		SET coded_confidence = %s, special_comment = %s, codercomment = %s 
+		WHERE lakey = %s {$sql_lacodeskey}",
+			SQLstr($_POST['coded_confidence'], 'int'),
+			SQLstr($_POST['special_comment'], 'int'),
+			SQLstr($_POST['codercomment'], 'text'),
+			SQLstr($lakey, 'int'));
+  $Result1 = mysql_query($updateSQL) or die(mysql_error());
+	//topher($updateSQL);
+	
+	if (isset($_GET['scorer_no'])) {
+		$updateGoTo = "../la_scoring/scoring_processing.php?".$_SERVER['QUERY_STRING'];		
+	} else { 
+		$updateGoTo = "coding_processing.php?".$_SERVER['QUERY_STRING'];
+	}
+  header(sprintf("Location: %s", $updateGoTo));
+	exit();
+}
+
+
+
+// Recordset: la_codes or la_codes_2 depending on who's using the page
+$query_rsLaCodes = sprintf("SELECT c.*, d.coded_1, d.coded_2, d.coded_3 
+	FROM {$table} c 
+		JOIN la_data d ON c.lakey = d.lakey 
+	WHERE c.lakey = %s {$sql_lacodeskey}", 
+		SQLstr($lakey, "int"));
+$rsLaCodes = mysql_query($query_rsLaCodes) or die("rsLaCodes: ".mysql_error());
+$row_rsLaCodes = mysql_fetch_assoc($rsLaCodes);
+
+
+$query_rsConfidence = "SELECT * FROM confidence ORDER BY confidencekey ASC";
+$rsConfidence = mysql_query($query_rsConfidence) or die(mysql_error());
+
+$sql_rsSpecialComment = "SELECT * FROM la_menus 
+	WHERE type = 'coding' AND menu = 'special_comment' AND menu_item_name <> ''";
+$rsSpecialComment = mysql_query($sql_rsSpecialComment) or die(mysql_error());
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Coding confidence</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+
+-->
+</style>
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextarea.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+	<?php include 'code_quickmenu.php'; ?><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+<h1>CODING CONFIDENCE FOR RECORD <?php echo $lakey; ?> (CODER <?php echo $coder; ?>) </h1>
+<form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+  <table>
+      <tr>
+        <td>Confidence</td>
+        <td><span id="spryselect1">
+          <select name="coded_confidence" class="pulldown_width_150">
+            <option value="" <?php 
+						if ($row_rsLaCodes['coded_confidence'] == "") 
+						{ echo "selected='selected'"; } 
+						?>>-select one-</option>
+            <?php
+						while ($row_rsConfidence = mysql_fetch_assoc($rsConfidence)) { ?>
+            <option value="<?php echo $row_rsConfidence['confidencekey']?>"<?php 
+							if (!(strcmp($row_rsConfidence['confidencekey'], 
+													htmlentities($row_rsLaCodes['coded_confidence'], ENT_COMPAT, 'UTF-8')))) 
+							{ echo "selected='selected'"; } ?>>
+              <?php 
+							echo $row_rsConfidence['confidencelevel']?>
+              </option>
+            <?php
+						} ?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+      	<td>Special comment</td>
+      	<td><span id="spryselect2">
+      	  <select name="special_comment" class="pulldown_width_400">
+      	    <option value="" <?php 
+						if ($row_rsLaCodes['special_comment'] == "") 
+						{ echo "selected='selected'"; } 
+						?>>-select one-</option>
+      	    <?php
+						while ($row_rsSpecialComment = mysql_fetch_assoc($rsSpecialComment)) { ?>
+      	    <option value="<?php echo $row_rsSpecialComment['menukey']?>" <?php 
+							if ($row_rsLaCodes['special_comment'] == $row_rsSpecialComment['menukey']) 
+							{ echo "selected='selected'"; } ?>>
+      	      <?php 
+							echo $row_rsSpecialComment['menu_item_name']?>
+      	      </option>
+      	    <?php
+						} ?>
+    	    </select></span>
+        </td>
+      </tr>
+      
+      <tr>
+        <td>Comments on the performance</td>
+        <td><span id="sprytextarea1">
+          <textarea name="codercomment" id="codercomment" cols="45" rows="5"><?php 
+						echo $row_rsLaCodes['codercomment']; ?></textarea>
+</span></td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td><div align="right">
+          <input type="submit" value="SUBMIT" />
+        </div></td>
+      </tr>
+    </table>
+    <!-- Form element takes the score average, calculated in the PHP above, and posts back the result. -->
+    <input type="hidden" name="MM_update" value="form1" />
+    <input type="hidden" name="lakey" value="<?php echo $row_rsLaCodes['lakey']; ?>" />
+</form>
+  <p>&nbsp;</p>
+  <script type="text/javascript">
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]});
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {isRequired:false, validateOn:["blur", "change"]});
+  </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+?>

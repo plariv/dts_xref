@@ -1,0 +1,74 @@
+<?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLRJA = "-1";
+if (isset($_GET['bulkcustomerkey'])) {
+  $colname_rsLRJA = $_GET['bulkcustomerkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJA = sprintf("SELECT LRJA.lrjakey, LRJA.userkey, LRJA.user_name, LRJA.bulkcustomerkey, LRJA.`Date`, LRJA.testtime, LRJA.Age, LRJA.Edu, LRJA.Sex, LRJA.SenseFirstTime, LRJA.UncertaintyCertain, LRJA.WorkHard, LRJA.InstructorQuality, LRJA.VarietyOfSources, LRJA.LearnInnate, LRJA.ExpertsAnnoying, LRJA.ScientistsTruth, LRJA.ChallengeOverconfident, LRJA.CombineSources, LRJA.Simpler, LRJA.PreciseMeasurement, LRJA.BigIdeas, LRJA.FewSources, LRJA.LoseFaithChange, LRJA.TrueAgree, LRJA.NoEvaluateBeliefs, LRJA.ScienceBest, LRJA.SentenceManyMeaning, LRJA.ScienceOriginalThinking, LRJA.NoTruth, LRJA.UpToYou, LRJA.MemorizingYes, LRJA.MultipleApproaches, LRJA.LikeDisagreement, LRJA.LearnToLearn, LRJA.ManyPerspectivesBest, LRJA.MostCanAgreeSome, LRJA.SomeThingsFaith, LRJA.EveryoneOwnTruth, LRJA.NewConceptOnOwn, LRJA.SentenceContext, LRJA.SimpleSolutions, LRJA.TruthUnchanging, LRJA.SeekAdvice, LRJA.StickToFacts, LRJA.NeverRightAnswer, LRJA.QuestionExperts, LRJA.NotFunIfEasy, LRJA.Ethnicity1, LRJA.Ethnicity2, LRJA.FirstLanguage, LRJA.`Form`, LRJA.ThinkOf, LRJA.DifferentConclusions, LRJA.IdealProcess, LRJA.Certainty, LRJA.Truth, LRJA.IdentifyTruth, LRJA.AbsoluteTruth, LRJAscores.lrjascoringkey, LRJAscores.lrjakey, LRJAscores.essay1las, LRJAscores.essay2las, LRJAscores.essay3las, LRJAscores.essay4las, LRJAscores.essay5las, LRJAscores.essay6las, LRJAscores.essay7las, LRJAscores.lasname, LRJAscores.coherenceprobekey, LRJAscores.coherencerelevanceexampkey, LRJAscores.coherencerelevanceargkey, LRJAscores.coherenceconcisekey, LRJAscores.coherenceframingkey, LRJAscores.coherencefragmentkey, LRJAscores.coherencepersuadekey, LRJAscores.coherenceoverallkey, LRJAscores.coherenceenglishkey, LRJAscores.coherencevocabularykey, LRJAscores.relativism, LRJAscores.absolutism, ProjectRespondents.UserKey, ProjectRespondents.wave, ProjectRespondents.grade, ProjectRespondents.cert, ProjectRespondents.condition  FROM LRJA, LRJAscores, ProjectRespondents WHERE LRJA.bulkcustomerkey = %s AND LRJA.lrjakey = LRJAscores.lrjakey AND LRJA.userkey = ProjectRespondents.UserKey", GetSQLValueString($colname_rsLRJA, "int"));
+$rsLRJA = mysql_query($query_rsLRJA, $Assessment) or die(mysql_error());
+$row_rsLRJA = mysql_fetch_assoc($rsLRJA);
+$totalRows_rsLRJA = mysql_num_rows($rsLRJA);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+<p>
+  <?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=LRJAcompleteHogan.txt\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+lrjakey*userkey*user_name*bulkcustomerkey*`Date`*testtime*Age*Edu*Sex*SenseFirstTime*UncertaintyCertain*WorkHard*InstructorQuality*VarietyOfSources*LearnInnate*ExpertsAnnoying*ScientistsTruth*ChallengeOverconfident*CombineSources*Simpler*PreciseMeasurement*BigIdeas*FewSources*LoseFaithChange*TrueAgree*NoEvaluateBeliefs*ScienceBest*SentenceManyMeaning*ScienceOriginalThinking*NoTruth*UpToYou*MemorizingYes*MultipleApproaches*LikeDisagreement*LearnToLearn*ManyPerspectivesBest*MostCanAgreeSome*SomeThingsFaith*EveryoneOwnTruth*NewConceptOnOwn*SentenceContext*SimpleSolutions*TruthUnchanging*SeekAdvice*StickToFacts*NeverRightAnswer*QuestionExperts*NotFunIfEasy*Ethnicity1*Ethnicity2*FirstLanguage*`Form`*ThinkOf*DifferentConclusions*IdealProcess*Certainty*Truth*IdentifyTruth*AbsoluteTruth*lrjascoringkey*essay1las*essay2las*essay3las*essay4las*essay5las*essay6las*essay7las*lasname*coherenceprobekey*coherencerelevanceexampkey*coherencerelevanceargkey*coherenceconcisekey*coherenceframingkey*coherencefragmentkey*coherencepersuadekey*coherenceoverallkey*coherenceenglishkey*coherencevocabularykey*relativism*absolutism*Wave*Grade*Cert*Condition<br />
+  <?php do { ?>
+<?php echo $row_rsLRJA['lrjakey']; ?> *<?php echo $row_rsLRJA['userkey']; ?>*<?php echo $row_rsLRJA['user_name']; ?>*<?php echo $row_rsLRJA['bulkcustomerkey']; ?>*<?php echo $row_rsLRJA['Date']; ?>*<?php echo $row_rsLRJA['testtime']; ?>*<?php echo $row_rsLRJA['Age']; ?>*<?php echo $row_rsLRJA['Edu']; ?>*<?php echo $row_rsLRJA['Sex']; ?>*<?php echo $row_rsLRJA['SenseFirstTime']; ?>*<?php echo $row_rsLRJA['UncertaintyCertain']; ?>*<?php echo $row_rsLRJA['WorkHard']; ?>*<?php echo $row_rsLRJA['InstructorQuality']; ?>*<?php echo $row_rsLRJA['VarietyOfSources']; ?>*<?php echo $row_rsLRJA['LearnInnate']; ?>*<?php echo $row_rsLRJA['ExpertsAnnoying']; ?>*<?php echo $row_rsLRJA['ScientistsTruth']; ?>*<?php echo $row_rsLRJA['ChallengeOverconfident']; ?>*<?php echo $row_rsLRJA['CombineSources']; ?>*<?php echo $row_rsLRJA['Simpler']; ?>*<?php echo $row_rsLRJA['PreciseMeasurement']; ?>*<?php echo $row_rsLRJA['BigIdeas']; ?>*<?php echo $row_rsLRJA['FewSources']; ?>*<?php echo $row_rsLRJA['LoseFaithChange']; ?>*<?php echo $row_rsLRJA['TrueAgree']; ?>*<?php echo $row_rsLRJA['NoEvaluateBeliefs']; ?>*<?php echo $row_rsLRJA['ScienceBest']; ?>*<?php echo $row_rsLRJA['SentenceManyMeaning']; ?>*<?php echo $row_rsLRJA['ScienceOriginalThinking']; ?>*<?php echo $row_rsLRJA['NoTruth']; ?>*<?php echo $row_rsLRJA['UpToYou']; ?>*<?php echo $row_rsLRJA['MemorizingYes']; ?>*<?php echo $row_rsLRJA['MultipleApproaches']; ?>*<?php echo $row_rsLRJA['LikeDisagreement']; ?>*<?php echo $row_rsLRJA['LearnToLearn']; ?>*<?php echo $row_rsLRJA['ManyPerspectivesBest']; ?>*<?php echo $row_rsLRJA['MostCanAgreeSome']; ?>*<?php echo $row_rsLRJA['SomeThingsFaith']; ?>*<?php echo $row_rsLRJA['EveryoneOwnTruth']; ?>*<?php echo $row_rsLRJA['NewConceptOnOwn']; ?>*<?php echo $row_rsLRJA['SentenceContext']; ?>*<?php echo $row_rsLRJA['SimpleSolutions']; ?>*<?php echo $row_rsLRJA['TruthUnchanging']; ?>*<?php echo $row_rsLRJA['SeekAdvice']; ?>*<?php echo $row_rsLRJA['StickToFacts']; ?>*<?php echo $row_rsLRJA['NeverRightAnswer']; ?>*<?php echo $row_rsLRJA['QuestionExperts']; ?>*<?php echo $row_rsLRJA['NotFunIfEasy']; ?>*<?php echo $row_rsLRJA['Ethnicity1']; ?>*<?php echo $row_rsLRJA['Ethnicity2']; ?>*<?php echo $row_rsLRJA['FirstLanguage']; ?>*<?php echo $row_rsLRJA['Form']; ?>*<?php echo $row_rsLRJA['ThinkOf']; ?>*<?php echo $row_rsLRJA['DifferentConclusions']; ?>*<?php echo $row_rsLRJA['IdealProcess']; ?>*<?php echo $row_rsLRJA['Certainty']; ?>*<?php echo $row_rsLRJA['Truth']; ?>*<?php echo $row_rsLRJA['IdentifyTruth']; ?>*<?php echo $row_rsLRJA['AbsoluteTruth']; ?>*<?php echo $row_rsLRJA['lrjascoringkey']; ?>*<?php echo $row_rsLRJA['essay1las']; ?>*<?php echo $row_rsLRJA['essay2las']; ?>*<?php echo $row_rsLRJA['essay3las']; ?>*<?php echo $row_rsLRJA['essay4las']; ?>*<?php echo $row_rsLRJA['essay5las']; ?>*<?php echo $row_rsLRJA['essay6las']; ?>*<?php echo $row_rsLRJA['essay7las']; ?>*<?php echo $row_rsLRJA['lasname']; ?>*<?php echo $row_rsLRJA['coherenceprobekey']; ?>*<?php echo $row_rsLRJA['coherencerelevanceexampkey']; ?>*<?php echo $row_rsLRJA['coherencerelevanceargkey']; ?>*<?php echo $row_rsLRJA['coherenceconcisekey']; ?>*<?php echo $row_rsLRJA['coherenceframingkey']; ?>*<?php echo $row_rsLRJA['coherencefragmentkey']; ?>*<?php echo $row_rsLRJA['coherencepersuadekey']; ?>*<?php echo $row_rsLRJA['coherenceoverallkey']; ?>*<?php echo $row_rsLRJA['coherenceenglishkey']; ?>*<?php echo $row_rsLRJA['coherencevocabularykey']; ?>*<?php echo $row_rsLRJA['relativism']; ?>*<?php echo $row_rsLRJA['absolutism']; ?>*<?php echo $row_rsLRJA['wave']; ?>*<?php echo $row_rsLRJA['grade']; ?> *<?php echo $row_rsLRJA['cert']; ?>*<?php echo $row_rsLRJA['condition']; ?><br />
+    <?php } while ($row_rsLRJA = mysql_fetch_assoc($rsLRJA)); ?>
+</p>
+<?
+exit();
+?>
+</body>
+</html>
+<?php
+mysql_free_result($rsLRJA);
+?>

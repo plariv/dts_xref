@@ -1,0 +1,7 @@
+	<a href="http://lectica.org">HOME</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+  	<a href="../landing.php">SELECT</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+    <a href="http://lectica.org/visitors/about.php">ABOUT</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="/contactus.php">CONTACT US</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+    <a href="/security/logIn.php">LOG IN</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+    <a href="/security/logout.php">LOG OUT</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+    <a href="../security/registration.php">REGISTER</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 

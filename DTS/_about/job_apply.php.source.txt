@@ -1,0 +1,400 @@
+<?php 
+include_once ("../includes/dts_functions.php");
+
+$jobkey = $_GET['jobkey'];
+if ($jobkey == 0) { header("Location: work_with_us.php?message=select_job"); exit(); }
+$appkey = 0; if (isset($_GET['appkey'])) { $appkey = $_GET['appkey']; }
+
+// Fetch info on the job posting
+$sql = sprintf("SELECT * FROM job_postings WHERE jobkey = %s ", SQLstr($jobkey, 'int'));
+$rsJob = mysql_query($sql) or die("ERROR fetching info on this job posting. Please contact us.");
+$job = mysql_fetch_assoc($rsJob);
+
+// fetch info on this application, if present
+$sql = sprintf("SELECT * FROM job_apps WHERE appkey = %s ", SQLstr($appkey, 'int'));
+$rsApp = mysql_query($sql) or die("ERROR fetching info on this job posting. Please contact us.");
+$app = mysql_fetch_assoc($rsApp);
+
+$rsLaBoil = mysql_query("SELECT b.* FROM la_boilerplate b 
+	WHERE type = 'admin' ") or die("rsLaBoil: ".mysql_error());
+$boil = array();
+while ($row_rsLaBoil = mysql_fetch_assoc($rsLaBoil)) {
+	$boil[$row_rsLaBoil['name']] = $row_rsLaBoil['la_boilerplate_text'];
+}
+
+if (isset($_GET['readcv'])) {
+	header("Content-Description: File Transfer");
+	header("Content-disposition: attachment; filename=".$app['cv_filename']);
+	header("Content-Type: application/octet-stream");
+	/* if (strpos($app['cv_filename'], '.pdf')) {
+		header("Content-type: application/pdf"); 
+	} else {
+		header("Content-type: application/msword"); 
+	} */
+	header("Content-Transfer-Encoding: binary");
+	header("Content-length: ".$app['cv_size']); 
+	echo base64_decode($app['cv_file']);
+	exit();
+}
+
+
+
+$message_success = false;
+
+// If form was submitted
+if (isset($_POST['submit'])) {
+	
+	$p_name = $_POST['name'];
+	$job_name = $_POST['job_name']; 
+	
+	// get CV file info
+	$cv_path = "";
+	$cv_name = $_FILES['cv']['name'];
+	$cv_ext = substr($cv_name, strpos($cv_name, "."));
+	$cv_size = $_FILES['cv']['size'];
+	$cv_type = " ".$_FILES['cv']['type'];
+	$cv_tmpname = $_FILES['cv']["tmp_name"];
+
+	$cv = null; // $cv is the actual file contents
+	$cv_accept = true;
+
+	// check the CV file type
+	if ((strpos($cv_type, "document") AND strpos($cv_type, "word") AND $cv_ext == ".doc") OR
+			(strpos($cv_type, "document") AND strpos($cv_type, "word") AND $cv_ext == ".docx") OR
+		  (strpos($cv_type, "application") AND strpos($cv_type, "pdf") AND $cv_ext == ".pdf")) {
+	} else {
+		$cv_accept = false;
+		$cv = "CV file rejected: incorrect file type. Filename: {$cv_name}. Size: {$cv_size}. Type: {$cv_type}.";
+	}
+	
+	// Only accept this document if the size is within limits
+	if ($cv_accept AND $cv_size > (3000 * 1024)) {
+		$cv_accept = false; 
+		$cv = "ERROR - the uploaded CV file was too large: {$cv_size} bytes.";
+	} else {
+		$cv_pointer = fopen($cv_tmpname, 'r');
+		$cv = fread($cv_pointer, filesize($cv_tmpname));
+		fclose($cv_pointer);
+	}
+	
+	// save the application (whether or not CV was accepted)
+	$sql_insert = sprintf("INSERT INTO job_apps
+		(jobkey, name, email, about_me, 
+		 cv_file, cv_filename, cv_size,
+		 recommend_1, recommend_2, recommend_3, 
+		 essay_1, essay_2, comments, date_created)
+		VALUES (%s, %s, %s, %s,   '%s', %s, %s,   %s, %s, %s,   %s, %s, %s, NOW() ) ",
+			SQLstr($_POST['jobkey'], 'int'),
+			SQLstr($_POST['name'], 'text'),
+			SQLstr($_POST['email'], 'text'),
+			SQLstr($_POST['about_me'], 'text'),
+			mysql_real_escape_string(base64_encode($cv)),
+			SQLstr($cv_name, 'text'),
+			SQLstr($cv_size, 'int'),
+			SQLstr($_POST['recommend_1'], 'text'),
+			SQLstr($_POST['recommend_2'], 'text'),
+			SQLstr($_POST['recommend_3'], 'text'),
+			SQLstr($_POST['essay_1'], 'text'),
+			SQLstr((isset($_POST['essay_2']) ? $_POST['essay_2'] : ""), 'text'),
+			SQLstr($_POST['comments'], 'text'));
+	$result = mysql_query($sql_insert); 
+	if ($result === false) { 
+		die("ERROR saving your application. 
+			Please press the BACK button to retrieve your text, then use the Contact Us form to reach us.");
+		error_log(mysql_error());
+	}
+	$appkey = mysql_insert_id();
+	
+	$subject = "{$p_name} has applied for a {$job_name} position";
+	$message = "{$p_name} has applied for a {$job_name} position.
+		View the application here: ".
+		"https://devtestservice.org/_about/job_apply.php?jobkey={$jobkey}&appkey={$appkey} ";
+	sendEmail("inquiries@lectica.org", "service@lectica.org", "", $subject, $message);
+
+	$message_success = true;
+}
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: Apply</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	
+	$('#job_apply').submit(function(){
+		// check for required elements
+		var required = $('.required').filter('[value=""]');
+		if (required.length > 0) { 
+			var name = required.attr('name');
+			name = name.replace('_', ' ');
+			alert("Please make a selection for '"+name+"'.");
+			return false;
+		} 
+	});
+	
+});
+</script>
+
+
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+  	
+    
+    <? 
+		$show_form = true;
+		if ($message_success) { 
+			$show_form = false; ?>
+    	<div class="box">Thank you for applying. We will follow up with you soon.</div>
+    	<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>
+    <? } // ?>
+    <? if ($job['removed'] == 1 OR date('Y-m-d') > $job['date_end']) { 
+			$show_form = false; ?>
+    	<div class="box">We're sorry, this position has been filled. 
+      	See our current openings <a href="work_with_us.php">here</a>.</div>
+      	<p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p><p>&nbsp;</p>
+    <? } // ?>
+    
+    <? 
+    if ($show_form) {
+	    $intro = $boil['job_app_intro'];
+			$intro = str_replace("[POSITION_NAME]", strtoupper($job['job_name']), $intro);
+			$job['job_description'] = preg_replace('/<h.>[^<>]+<\/h.>/', '', $job['job_description']);
+			$intro = str_replace("[POSITION_DESC]", $job['job_description'], $intro);
+			echo $intro;
+		}
+		?>
+
+    <? if ($show_form) { ?>
+	    <table width="90%">
+	    <form name="job_apply" id="job_apply" method="POST" enctype="multipart/form-data" action="">
+	      <tr>
+	      	<th colspan="2" style='font-weight:700; text-align:left; width:20%; padding-top: 10px; border-bottom-style:solid; border-bottom-color:#007376; border-bottom-width:2px;'>Basics</th>
+	      </tr>
+	    	<tr>
+	      	<td align='right' style= style='width:20%; padding-top:8px;'>Name</td>
+	        <td style='width:80%; padding-top:8px;'><input type="text" name="name" class="required" value="<? echo $app['name']; ?>" /></td>
+	    	</tr>
+	    	<tr>
+	      	<td align='right'>Email</td>
+	        <td><input type="text" name="email" class="required" value="<? echo $app['email']; ?>" /></td>
+	    	</tr>
+	    	<tr>
+	      	<td align='right'>A little about you</td>
+	        <td><textarea name="about_me" class="height-150 required" style='font-size:90%;'><? echo $app['about_me']; ?></textarea></td>
+	    	</tr>
+	      <tr>
+	      	<td align='right'>Resume / CV</td>
+	        <td>
+	        	<? if ($appkey == 0) { ?>
+	          	<input type="file" name="cv" class="required" /> <br />
+	            (must be a .doc, .docx, or .pdf file under 1 MB in size) <? 
+						} else { 
+							if (strpos($app['cv_path'], "rejected")) { 
+								echo "<span class='red'>".$app['cv_path']."</span>"; 
+							} else { ?>
+	        			<a href="?jobkey=<? echo $jobkey; ?>&appkey=<? 
+									echo $appkey; ?>&readcv=yes">view CV</a><? 
+							}
+						} // ?>
+	        </td>
+	      </tr>
+	      
+	      <tr>
+	      	<th colspan="2" style='font-weight:700; text-align:left; width:20%; padding-top: 10px; border-bottom-style:solid; border-bottom-color:#007376; border-bottom-width:2px;'><div align="left">Recommendations</div></th>
+	      </tr>
+	    	<tr style>
+	      	<td align='right'>1st</td>
+	        <td><textarea name="recommend_1" class="height-50 required" style='font-size:90%;'><? 
+						echo $app['recommend_1']; ?></textarea></td>
+	    	</tr>
+	    	<tr>
+	      	<td align='right'>2nd</td>
+	        <td><textarea name="recommend_2" class="height-50 required" style='font-size:90%;'><? 
+						echo $app['recommend_2']; ?></textarea></td>
+	    	</tr>
+	    	<tr>
+	      	<td align='right'>3rd</td>
+	        <td><textarea name="recommend_3" class="height-50 required" style='font-size:90%;'><? 
+						echo $app['recommend_3']; ?></textarea></td>
+	    	</tr>
+	      
+	      
+	      <tr>
+	      	<th colspan="2" style='font-weight:700; text-align:left; width:20%; padding-top: 10px; border-bottom-style:solid; border-bottom-color:#007376; border-bottom-width:2px;'><div align="left">Essay<? if ($job['essay_2'] <> "") { echo "s"; } ?></div></th>
+	      </tr>
+	    	<tr>
+	      	<td colspan="2"><? echo $job['essay_1']; ?></td>
+	      </tr>
+	      <tr>
+	        <td></td>
+	        <td>
+	        	<textarea name="essay_1" class="height-200 required" style='font-size:90%;'><? echo $app['essay_1']; ?></textarea></td>
+	    	</tr>
+	      <? if ($job['essay_2'] <> "") { ?>
+	    	<tr>
+	      	<td colspan="2"><? echo $job['essay_2']; ?></td>
+	      </tr>
+	      <tr>
+	        <td></td>
+	        <td>
+	        	<textarea name="essay_2" class="height-200 required" style='font-size:90%;'><? echo $app['essay_2']; ?></textarea></td>
+	    	</tr>
+	      <? } // ?>
+	      
+	      <tr>
+	      	<th colspan="2" style='font-weight:700; text-align:left; width:20%; padding-top: 10px; border-bottom-style:solid; border-bottom-color:#007376; border-bottom-width:2px;'><div align="left">Submit</div></th>
+	      </tr>
+	    	<tr>
+	      	<td align='right'>Any other thoughts</td>
+	        <td><textarea name="comments" class="height-50"><? echo $app['comments']; ?></textarea></td>
+	    	</tr>
+	      <tr>
+	      	<td colspan="2" align="right">
+	        	<input type="hidden" name="jobkey" value="<? echo $job['jobkey']; ?>" />
+	        	<input type="hidden" name="job_name" value="<? echo $job['job_name']; ?>" />
+	        	<? if ($appkey == 0) { ?>
+	          	<input type="submit" name="submit" style='font-size:130%;'value="Send application" />
+	          <? } // ?>
+	        </td>
+	      </tr>
+	    </form>
+	    </table>
+    <? } // ENDIF: if $show_form ?>
+		
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>     	
+  
+	<!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+  <!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" -->
+  <!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

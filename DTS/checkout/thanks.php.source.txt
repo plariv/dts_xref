@@ -1,0 +1,302 @@
+<? require_once('../includes/dts_functions.php'); 
+
+// I'm assuming that you're already logged in.
+// You can't make a payment unless you're logged in.
+$userkey = $_SESSION['log_userkey']; 
+$rsRegistrant = query(prepsql("SELECT * FROM registrants WHERE userkey = ?", $userkey), 'rsRegistrant');
+$registrant = $rsRegistrant->fetch_assoc();
+
+$paypal_lectica_identity_token = "DtXlOAWoXqNz6B2XuT7QuMORI5LUwwhL5msFTlq3rDbv_pG3YPC37Aqxn6m";
+
+// a simple function to take erros seriously.
+function panic_and_die($error) {
+  sendEmail("admin@lectica.org", "service@lectica.org", "theo@lectica.org", 
+    "ERROR processing PayPal payment",
+    "A user paid us on PayPal, but our checkout/thanks.php receiver page encountered an error while processing the payment. They may be denied their paid-for services (if any) until this is resolved.\n\nUserkey: {$_SESSION['log_userkey']}\nDate: ".date('Y-m-d h:i:s')."\nThe full URL that PayPal returned the user to: {$_SERVER['PHP_SELF']}?{$_SERVER['QUERY_STRING']}\nThe error: \n{$error}");
+  echo "ERROR: PayPal has processed your payment for transaction #{$tx}, but we're unable to update our records accordingly. Please <a href='/contactus.php'>contact us</a> to resolve this problem.";
+  die();
+}
+
+
+
+// You must have a transaction ID to view this page.
+if (!isset($_GET['tx'])) { panic_and_die("I didn't see a transaction ID, so I don't know anything about payment details, or even whether a payment happened."); }
+$tx = $_GET['tx']; 
+
+// cURL request to fetch data
+$request = curl_init();
+curl_setopt_array($request, array
+(
+  CURLOPT_URL => 'https://www.paypal.com/cgi-bin/webscr',
+  CURLOPT_POST => TRUE,
+  CURLOPT_POSTFIELDS => http_build_query(array
+    (
+      'cmd' => '_notify-synch',
+      'tx' => $tx,
+      'at' => $paypal_lectica_identity_token,
+    )),
+  CURLOPT_RETURNTRANSFER => TRUE,
+  CURLOPT_HEADER => FALSE,
+  CURLOPT_SSL_VERIFYPEER => TRUE,
+  CURLOPT_CAINFO => 'cacert.pem'
+));
+// Execute request and get response and status code
+$response = curl_exec($request);
+$status   = curl_getinfo($request, CURLINFO_HTTP_CODE);
+// Close connection
+curl_close($request);
+
+// Did I get cURL data back from PayPal? If not, that's a problem.
+if ($status <> 200 OR !strpos(' '.$response, 'SUCCESS')) {
+  panic_and_die("Thanks.php received a transaction ID and requested details from PayPal, but we failed to receive a cURL response."); }
+
+
+
+// clean up response string
+$response = substr($response, 7);
+$response = urldecode($response);
+// convert into associative array
+preg_match_all('/^([^=\s]++)=(.*+)/m', $response, $m, PREG_PATTERN_ORDER);
+$payment_data = array_combine($m[1], $m[2]);
+ksort($payment_data);
+
+// print_r($payment_data); die();
+
+// If we've gotten this far, we have verified and legible payment data from PayPal!
+
+/* What to do next:
+ - For payments (not donations), paymentkey is embedded as the first integer in the item_name.
+ - look up the payment row, which should be marked as not yet confirmed by paypal.
+ - update that payment row as "received" so we don't double-credit if the user refreshes the page.
+ - if the payment is for a course, update the registration table to reflect their payment status.
+*/
+
+// Donations don't have a paymentkey in the item_name, but I could tweak the donations form to include one if it would be useful.
+$is_donation = false;
+if (strpos(' '.$payment_data['item_number'], 'EIN')) { 
+  $is_donation = true;
+  // Send an alert email to outreach
+  sendEmail("outreach@lectica.org", "service@lectica.org", "", 
+    "Donation to Lectica",
+    "The user '{$payment_data['payer_email']}' has just donated \${$payment_data['payment_gross']} to Lectica. \n PayPal transaction ID: {$payment_data['txn_id']}");
+}
+
+else if (strpos(' '.$payment_data['item_name'], '#') == 1) {
+  // Look up this payment record from the payments table
+  $paymentkey = preg_replace("/^#(\d+).+/", "$1", $payment_data['item_name']);
+  
+  $sql = prepsql("SELECT is_confirmed_by_paypal, for_course 
+    FROM payments WHERE paymentkey = ? AND userkey = ? ",
+      $paymentkey, 
+      $userkey);
+  $rsPayment = query($sql, 'rsPayment');
+  // If a matching payment can't be found, then that's a problem.
+  if ($rsPayment->num_rows <> 1) { panic_and_die("PayPal returned valid data for this TX ID, and it looks like a payment, but I can't find a valid paymentkey in the item_name."); }
+  $payment_row = $rsPayment->fetch_assoc();
+
+  // If this payment has not yet been marked as received, update the database!
+  if ($payment_row['is_confirmed_by_paypal'] == 0) {
+    // Also update the amount paid (this usually won't change from the amount initially entered)
+    $sql = prepsql("UPDATE payments SET is_confirmed_by_paypal = 1, paypal_transaction_id = ?, amount = ?
+      WHERE paymentkey = ? ", 
+        $payment_data['txn_id'], // <- should always be the same as $tx.
+        $payment_data['payment_gross'],
+        $paymentkey);
+    query($sql, 'mark payment as confirmed');
+
+    // Is this payment for a course? 
+    if ($payment_row['for_course'] > 0) {
+      $coursekey = $payment_row['for_course'];
+      
+      // update the amount paid towards this course
+      $sql = prepsql("UPDATE course_registrations cr SET cr.amount_paid = (cr.amount_paid + ?)
+        WHERE cr.coursekey = ? AND cr.userkey = ? ",
+          $payment_data['payment_gross'],
+          $coursekey, 
+          $userkey);
+      query($sql, 'update amount paid towards course');
+
+      // Find out whether we need to mark this course as is_paid_in_full.
+      $sql = prepsql("SELECT * FROM course_registrations cr WHERE cr.coursekey = ? AND cr.userkey = ? ",
+        $coursekey, 
+        $userkey);
+      $rsCourseReg = query($sql, 'rsCourseReg');
+      $course_reg = $rsCourseReg->fetch_assoc();
+      
+      // By the way, if this course registration can't be found, then panic.
+      if ($rsCourseReg->num_rows <> 1) { panic_and_die("I got the payment info from PayPal and updated payment record #{$paymentkey} as received. The payment is supposed to be for a course, and if the user has paid in full then I should update their record as such, but I can't find a course registration record for this user. That shouldn't be possible..."); }
+
+      // Mark this course as paid in full! The user will now have full access to the course.
+      if ($course_reg['amount_paid'] >= $course_reg['amount_charged'] 
+        AND $course_reg['is_paid_in_full'] == 0) {
+
+        $sql = prepsql("UPDATE course_registrations SET is_paid_in_full = 1 
+          WHERE coursekey = ? AND userkey = ? ",
+            $coursekey,
+            $userkey);
+        query($sql, 'update course is_paid_in_full');
+
+        // send the new registrant (and CC us) an email confirming their full payment.
+        $boilerplate = prepBoilerplate("register");
+        $to = $registrant['email'];
+        $from = "service@lectica.org";
+        $cc = "admin@lectica.org";
+        $subject = $boilerplate['fola_lectures_paid_email_subject'];
+        $body = $boilerplate['fola_lectures_paid_email_body'];
+        $body = str_replace("[NAME]", $registrant['firstname'], $body);
+        sendEmail($to, $from, $cc, $subject, $body);
+      }
+
+    } // ENDIF: if this payment was for a course
+  
+  } // ENDIF: if this payment is new and the database should be updated
+
+} // ENDIF: if this was a payment, not a donation
+
+else { panic_and_die("PayPal returned valid data for this TX ID, but it didn't look like a payment and it didn't look like a donation, so I don't know what it is."); }
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: Payment received</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+
+
+<style>
+  
+  .twoColFixRtHdr #container #mainContent p {
+  	font-size: 110%;
+  	font-weight: 400;
+  }
+  .twoColFixRtHdr #container #mainContent td {
+  	font-size: 110%;
+  	font-weight: 400;
+  }
+  .twoColFixRtHdr #container #mainContent table {
+  	width: 100%;
+  	max-width: 650px;
+  	min-width: 200px;	
+  }
+
+</style>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    
+    <h1>Thank you for your <? if ($is_donation) { echo "donation"; } else { echo "payment"; } ?></h1>
+
+    <table>
+      <tr>
+        <td align='right'>Paid to</td>
+        <td>Lectica, Inc.<br>EIN: 27-1234120</td>
+      </tr>
+      <tr>
+        <td align='right'>Transaction ID</td>
+        <td><? echo $tx; ?></td>
+      </tr>
+      <? if (isset($payment_data)) { ?>
+        <tr>
+          <td align='right'>Amount paid</td>
+          <td>$<? echo $payment_data['payment_gross']; ?></td>
+        </tr>
+      <? } ?>
+    </table>
+
+    <p>PayPal has sent you a full receipt for this transaction. Please <a href='/contactus.php'>contact us</a> with any questions.</p>
+
+    <? if (isset($coursekey)) { ?>
+      <p><a href='/courses/registration_status.php?coursekey=<? echo $coursekey; ?>'>view my FOLA registration status</a></p>
+    <? } ?>
+    
+
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: </title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible p {
+	line-height: 20px;
+}
+.container .inner_container .column1 .TabbedPanelsTab {
+	padding-left: 6px;
+}
+-->
+</style>
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+  <p><a href="referencesmj.php">ethical reasoning</a> | <a href="referencesrj.php">reflective judgment</a> | <a href="referencesself.php">self understanding</a> | <a href="referenceslead.php">leadership</a> | <a href="references.php">site</a> | <a href="../creativity/c-results.php">creativity</a></p>
+  <h1>SELECTED DECISION MAKING REFERENCES  </h1>
+  <div id="TabbedPanels1" class="TabbedPanels">
+    <ul class="TabbedPanelsTabGroup">
+      <li class="TabbedPanelsTab" tabindex="0">A–H</li>
+      <li class="TabbedPanelsTab" tabindex="0">I–N</li>
+      <li class="TabbedPanelsTab" tabindex="0">O-Z</li>
+</ul>
+    <div class="TabbedPanelsContentGroup">
+      <div class="TabbedPanelsContent">
+        <p>Arlin, P. K. (1989). Problem solving and problem finding in young artists and young scientists. In M. L. Commons, J. D. Sinnott, F. A. Richards &amp; C. Armon (Eds.), <em>Adult development, Vol. 1: Comparisons and applications of developmental models.</em> (pp. 197-216).</p>
+        <p>Bandura, A., &amp; Jourden, F. (1991). Self-regulatory mechanisms governing the impact of social comparison on complex decision making. <em>Journal of Personality and Social Psychology, 60,</em> 941-951.</p>
+        <p>Basadur, M., &amp; Hausdorf, P. A. (1996). Measuring divergent thinking attitudes related to creative problem solving and innovation management. <em>Creativity Research Journal, 9,</em> 21-32.</p>
+        <p>Bass, K., &amp; Barnett, T. B. (1998). The moral philosophy of sales managers and its influence on ethical decision making. <em>Journal of Personal Selling &amp; Sales Management, 18</em>(2), 1-17.</p>
+        <p>Bazerman, M. H. (1986 ). <em>Judgement in managerial decision making.</em> New York: Wiley.</p>
+        <p>Bransford, J. D., Sherwood, R., Vye, N. J., &amp; Rieser, J. (1986). Teaching thinking and problem solving. <em>American Psychologist, 41</em>(10), 1078-1089.</p>
+        <p>Ewell- Kumar, A. (1999).<em> The influence of metacognition on managerial hiring decision making: Implications for management development.</em> Dissertation Abstracts International Section A: Humanities and Social Sciences, 59(10-A).</p>
+        <p>Ford, R. C., &amp; Richardson, W. D. (1994). Ethical decision making: A review of the empirical literature. <em>Journal of Business Ethics, 13,</em> 205-221.</p>
+        <p>Gul, F. A. (1984). The joint and moderating role of personality and cognitive style on decision making. <em>The Accounting Review,</em> LIX(2).</p>
+        <p>Hammond, K. R., McClelland, G. H., &amp; Mumpower, J. (1980). <em>Human judgement and decision making.</em> New York: Praeger.</p>
+        <p>Huber, G. P. (1980).<em> Managerial decision making.</em> Glenview, IL: Scott Foresman.</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <p>Keeney, R. L. (1992).<em> Value-focused thinking:  A path to creative decision making.</em> Cambridge, MA: Harvard University Press.</p>
+        <p>Klaczynski, P. A. (1997). The roles of personal investment and reasoning competence in career-relevant everyday problem solving.<em> Journal of Experimental Child Psychology, 66</em>(2), 193-210.</p>
+        <p>Kontos, S., &amp; Grant-Nicholas, J. (2001). Independent problem solving in the development of metacognition. <em>The Journal of Genetic Psychology, 147</em>(4), 481-495.</p>
+        <p>Lee, D. (1991). Relativistic operations: A framework for conceptualizing teachers’ everyday problem solving. In J. Sinnot &amp; J. C. Cavanaugh (Eds.), <em>Bridging paradigms: Positive development in adulthood and cognitive aging.</em> (pp. 73-86). New York: Praeger Publishers.</p>
+        <p>Leonard, N. H., Scholl, R. W., &amp; Berube-Kowalski, K. (1999). Information processing style and decision making. <em>Journal of Organizational Behavior, 20</em>(3), 407-420.</p>
+        <p>Linstone, H. A. (1999). <em>Decision making for technology executives: Using multiple perspectives to improve performances.</em> Norwood, MA: Artech House.</p>
+        <p>Loe, T. W., Ferrell, L., &amp; Mansfield, P. (2000). A review of empirical studies assessing ethical decision making in business.<em> Joumal of Business Ethics 25</em>(185-204).</p>
+        <p>March, J. G. (1994). <em>A primer on decision making.</em> The Free Press: New York.</p>
+        <p>Meacham, J. A., &amp; Emont, N. C. (1989). The interpersonal basis of everyday problem solving. In J. D. Sinnott (Ed.), <em>Everyday problem solving: Theory and applications.</em> (pp. 7-23). New York, NY: Praeger Publishers.</p>
+        <p>Newell, A., &amp; Simon, H. A. (1972). <em>Human problem solving.</em> Englewood Cliffs: Prentice-Hall.</p>
+        <p>Nutt, P. C. (1976). Models for decision making in organizations and some contextual variables which stipulate optimal use. <em>The Academy of Management Review, 1</em>(2), 84-98.</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <p>Ravlin, E. C., &amp; Meglino, B. M. (1987). Effect of values on perception and decision making: A study of alternative work values measures. <em>Journal of Applied Psychology, 72,</em> 666-673.<br />
+          </p>
+        <p>Sigler, E. A., &amp; Tallent-Runnels, M. K. (2006). Examining the validity of scores from an instrument designed to measure metacognition of problem solving. <em>The Journal of General Psychology, 133,</em> 257-276.<br />
+          </p>
+        <p>Sinnott, J. D. (1991). Limits to problem solving: Emotion, intention, goal clarity, health, and other factors in postformal thought. In J. D. Sinnot &amp; J. D. Cavanaugh (Eds.), <em>Bridging paradigms: Positive development in adulthood and cognitive aging.</em> (pp. 169-201). New York, NY: Praeger Publishers.<br />
+          </p>
+        <p>Sinnott, J. D. (Ed.). (1989). <em>Everyday problem solving: Theory and applications.</em> Praeger Publishers; New York, NY, US.<br />
+          </p>
+        <p>Sinnott, J. D., &amp; Guttmann, D. (1978). Dialectics of decision making in older adults. <em>Human Development, 21,</em> 190-200.<br />
+          </p>
+        <p>Sternberg, R. J. &amp; Frensch, P. A. (Eds.). (1991).<em> Complex problem solving: Principles and mechanisms.</em> Lawrence Erlbaum Associates, Inc; Hillsdale, NJ, US.</p>
+        <p>Vroom, V., &amp; Yetton, P. W. (1973).<em> Leadership and decision making.</em> Pittsburgh, PA: University of Pittsburgh Press.<br />
+          </p>
+        <p>Weber, J. (1996). Influences upon managerial moral decision making: Nature of the harm and magnitude of consequences. <em>Human Relations, 49</em>(1), 1-22.<br />
+          </p>
+        <p>Wynn, C. T. (1989). Decision making and postformal thought: Goals for secondary social studies education. <em>Journal of Social Studies Research, 13,</em> 1-9.<br />
+          </p>
+<p>Zych, J. M. (1999). Integrating ethical issues with managerial decision making in the classroom: Product support programme decisions. <em>Journal of Business Ethics, 18,</em> 255-266.</p>
+      </div>
+</div>
+  </div>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+  <div align="center"><br />
+  </div>
+  <!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" --><!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

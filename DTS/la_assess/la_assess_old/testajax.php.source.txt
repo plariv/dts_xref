@@ -1,0 +1,359 @@
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../../security/logIn.php");
+}
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../../select_instrument.php");
+}
+
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+
+
+function randPassword() {
+	
+	
+	// 									Generate a random password
+		
+	// all passwords are 8 characters in length.
+	$pw_length = 8;
+	// the pw will have between 1 and (length-1) alphabetic characters,
+	$char_length = mt_rand(1, $pw_length - 1);
+	// and the rest will be numbers.
+	$num_length = $pw_length - $char_length;
+	// except there might be an initial capital letter,
+	$capital = "";
+	if (mt_rand(0,1) == 1) {
+		$capital_pool = "ABCDEFGHNJKLMNOPQRSTUVWXYZ";
+		$capital = $capital_pool[mt_rand(0, 25)];
+		$char_length --;
+	}
+	// and there also might be a final punctuation mark.
+	$punc = "";
+	if (mt_rand(0,1) == 1) {
+		$punc_pool = "!@#$%^&*?-=+";
+		$punc = $punc_pool[mt_rand(0, 11)];
+		$num_length --;
+	}
+	// choose the random letters (weighted towards the more familiar ones)
+	$chars = "";
+	while ($char_length > 0) {
+		$char_pool = "abcdefghijkmnopqrstuvwxyzabcdefghijkmnop";
+		$chars .= $char_pool[mt_rand(0, 39)];
+		$char_length --;
+	}
+	// and choose the random numbers
+	$nums = "";
+	while ($num_length > 0) {
+		$nums .= "".mt_rand(0, 9);
+		$num_length --;
+	}
+	// and put them all together
+	$pw = "";
+	$pw .= $capital;
+	// with either the letters first or the numbers first
+	if (mt_rand(0,1) == 1) { $pw .= $chars.$nums; } else { $pw .= $nums.$chars; }
+	$pw .= $punc;
+	
+	echo $pw."\n";
+	
+}
+
+
+
+
+// Initializing frequently used variables
+
+$instrument_id_name = str_replace("_", " ", $_SESSION['instrument_id']);
+
+$instrument_id_base = "-1";
+if (isset($_SESSION['instrument_id'])) {
+  $instrument_id_base = str_replace("_JOURNAL", "", $_SESSION['instrument_id']);
+}
+
+$lakey = "-1";
+if (isset($_GET['lakey'])) {
+  $lakey = (get_magic_quotes_gpc()) ? $_GET['lakey'] : addslashes($_GET['lakey']);
+}
+
+// Needs to be initialized empty to avoid minor PHP errors.
+$status = "";
+
+
+
+
+
+
+
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+	
+  $updateSQL = sprintf("UPDATE la_data SET test_taker_comments=%s WHERE lakey='5041'",
+       GetSQLValueString($_POST['probe01'], "text"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+	
+	header("Location: testajax.php");
+		
+	
+	
+}
+
+
+
+
+
+
+include("assess_custom_functions.php");
+
+
+
+?>
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="//fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: <?php echo $row_rsProbe01['probe_name']; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../jQuery/jquery-1.6.4.js"></script>
+
+<script src="../SpryAssetsAssess/SpryValidationCheckbox.js" type="text/javascript"></script>
+<script src="../SpryAssetsAssess/SpryValidationTextarea.js" type="text/javascript"></script>
+<script src="../SpryAssetsAssess/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="../SpryAssetsAssess/SpryValidationCheckbox.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssetsAssess/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssetsAssess/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryTabbedPanelsVertical.css" rel="stylesheet" type="text/css" />
+
+
+<style type="text/css">
+.twoColFixRtHdr #container #mainContent #CollapsiblePanel1 .CollapsiblePanelTab {
+	color: #BD1F06;
+}
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible table {
+	margin-top: 0px;
+}
+.indent25 {
+	margin-left: 25px;
+}
+</style>
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>TEST AJAX</h1>
+    
+    <form action="<?php echo $editFormAction; ?>" id="form1" name="form1" method="POST">
+
+      <table>
+        <tr>
+        <td><?php echo $row_rsProbe01['probe_description']; ?><span class="red">*</span>
+          <p>&nbsp;</p></td>
+        <td><span id="sprytextarea1">
+        <textarea name="probe01" class="textarea440_500" id="probe01"><?php 
+				$i = 0;
+				
+				while ($i < 100) {
+					
+					randPassword();
+					$i ++;
+				}
+				
+				
+				 ?></textarea>
+        <span id="countsprytextarea1">&nbsp;</span></span></td>
+      </tr>
+    </table>
+    
+    
+    <div align="right">
+      <input name="lakey" type="hidden" id="lakey" value="<?php echo $_GET['lakey']; ?>" />
+      <input type="hidden" name="projectkey" id="projectkey" value="<?php echo $row_rsProject['projectkey']; ?>" />
+      <p><span class="fltlft"></span>&nbsp;<input type="submit" name="save_changes" id="save_changes" value="SAVE YOUR WORK" />&nbsp;<input type="submit" name="button" id="button" value="SAVE AND GO TO NEXT PAGE" /></p>
+        <input type="hidden" name="MM_update" value="form1" />
+    </div>
+      <p>&nbsp;</p>
+  </form>
+  
+  
+  
+  
+  <script type="text/javascript">
+
+// AUTOSAVE TEXT
+
+var lakey = form1.elements["lakey"].value;
+var text_now = "";
+var text_old = ""; 
+var t; // timeout handler
+
+function autosave() 
+{
+	
+	text_now = form1.elements["probe01"].value;
+	
+	// eventually have this remember the last-time length, and only autosave if length has increased. 
+	if (text_now.length > text_old.length) 
+	{	
+		$.post("autosave.php", 
+		  { probe01: text_now, lakey: lakey } );
+			// To troubleshoot, add a 3rd argument at end of $.post: alert("Sent probe01.")
+		
+		var now = new Date();
+		var hours = now.getHours();
+		if (hours > 12) { hours = hours - 12; } 
+		var minutes = now.getMinutes();
+		if (minutes < 10) { minutes = "0" + minutes; } 
+		document.getElementById("save_changes").value="Last saved " + hours + ":" + minutes;
+	}
+	
+	// remember the length of the text this time. So if the user deletes a bunch of text, then resumes typing, the relative increase in text (though not absolute increase from highest amount) will still trigger save.
+	text_old = text_now;
+	t = setTimeout('autosave()', 10000); // Call this same function again in a minute.
+}
+
+t = setTimeout('autosave()', 10000);
+
+</script>
+  
+  
+  <script type="text/javascript">
+<!--
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {validateOn:["blur", "change"], maxChars:3000, counterId:"countsprytextarea1", counterType:"chars_count", isRequired:false});
+
+<?php essayInformationFooter(); ?>
+//-->
+  </script>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsEssays);
+
+mysql_free_result($rsProbe01);
+
+mysql_free_result($rsProject);
+
+mysql_free_result($rsDilemmas);
+?>

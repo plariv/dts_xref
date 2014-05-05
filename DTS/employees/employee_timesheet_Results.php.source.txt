@@ -1,0 +1,488 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+//WA Database Search Include
+require_once("../WADbSearch/HelperPHP.php");
+?>
+<?php
+//WA Database Search (Copyright 2005, WebAssist.com)
+//Recordset: rsTimeSheet;
+//Searchpage: employee_timesheet_Results.php;
+//Form: form1;
+$WADbSearch2_DefaultWhere = "";
+if (!session_id()) session_start();
+if ((isset($_POST["WADbSearch2"])) && ($_POST["WADbSearch2"] != "")) {
+  $WADbSearch2 = new FilterDef;
+  $WADbSearch2->initializeQueryBuilder("MYSQL","1");
+  //keyword array declarations
+
+  //comparison list additions
+  $WADbSearch2->addComparisonFromEdit("date","Start","AND",">=",2);
+  $WADbSearch2->addComparison("date","".WAQB_getEndDate($_POST["End"])  ."","AND","<=",2);
+  $WADbSearch2->addComparisonFromList("project","Project","AND","=",0);
+  $WADbSearch2->addComparisonFromList("work_type","WorkType","AND","=",0);
+
+  //save the query in a session variable
+  if (1 == 1) {
+    $_SESSION["WADbSearch2_employee_timesheet_Results"]=$WADbSearch2->whereClause;
+  }
+}
+else     {
+  $WADbSearch2 = new FilterDef;
+  $WADbSearch2->initializeQueryBuilder("MYSQL","1");
+  //get the filter definition from a session variable
+  if (1 == 1)     {
+    if (isset($_SESSION["WADbSearch2_employee_timesheet_Results"]) && $_SESSION["WADbSearch2_employee_timesheet_Results"] != "")     {
+      $WADbSearch2->whereClause = $_SESSION["WADbSearch2_employee_timesheet_Results"];
+    }
+    else     {
+      $WADbSearch2->whereClause = $WADbSearch2_DefaultWhere;
+    }
+  }
+  else     {
+    $WADbSearch2->whereClause = $WADbSearch2_DefaultWhere;
+  }
+}
+$WADbSearch2->whereClause = str_replace("\\''", "''", $WADbSearch2->whereClause);
+$WADbSearch2whereClause = '';
+?>
+<?php
+
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as intern")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+
+
+
+
+$maxRows_rsTimeSheet = 15;
+$pageNum_rsTimeSheet = 0;
+if (isset($_GET['pageNum_rsTimeSheet'])) {
+  $pageNum_rsTimeSheet = $_GET['pageNum_rsTimeSheet'];
+}
+$startRow_rsTimeSheet = $pageNum_rsTimeSheet * $maxRows_rsTimeSheet;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTimeSheet = sprintf("SELECT timesheetkey, userkey, work_hours, `date`, project, work_type FROM employee_timesheet WHERE userkey = %s ORDER BY `date` DESC", 
+		GetSQLValueString($_SESSION['log_userkey'], "text"));
+setQueryBuilderSource($query_rsTimeSheet,$WADbSearch2,false);
+$query_limit_rsTimeSheet = sprintf("%s LIMIT %d, %d", $query_rsTimeSheet, $startRow_rsTimeSheet, $maxRows_rsTimeSheet);
+$rsTimeSheet = mysql_query($query_limit_rsTimeSheet, $Assessment) or die(mysql_error());
+$row_rsTimeSheet = mysql_fetch_assoc($rsTimeSheet);
+
+if (isset($_GET['totalRows_rsTimeSheet'])) {
+  $totalRows_rsTimeSheet = $_GET['totalRows_rsTimeSheet'];
+} else {
+  $all_rsTimeSheet = mysql_query($query_rsTimeSheet);
+  $totalRows_rsTimeSheet = mysql_num_rows($all_rsTimeSheet);
+}
+$totalPages_rsTimeSheet = ceil($totalRows_rsTimeSheet/$maxRows_rsTimeSheet)-1;
+
+
+
+// total hours and # records for this search
+$query_rsTotalHours = "SELECT SUM(employee_timesheet.work_hours) AS sum_hours, COUNT(employee_timesheet.timesheetkey) AS num_records FROM employee_timesheet WHERE employee_timesheet.userkey = '{$_SESSION['log_userkey']}'";
+setQueryBuilderSource($query_rsTotalHours,$WADbSearch2,false);
+$rsTotalHours = mysql_query($query_rsTotalHours, $Assessment) or die(mysql_error());
+$row_rsTotalHours = mysql_fetch_assoc($rsTotalHours);
+
+
+
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProjects = "SELECT * FROM employee_timesheet_projects ORDER BY timesheet_projects ASC";
+$rsProjects = mysql_query($query_rsProjects, $Assessment) or die(mysql_error());
+$row_rsProjects = mysql_fetch_assoc($rsProjects);
+$totalRows_rsProjects = mysql_num_rows($rsProjects);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTypes = "SELECT * FROM employee_timesheet_types ORDER BY timesheet_work_types ASC";
+$rsTypes = mysql_query($query_rsTypes, $Assessment) or die(mysql_error());
+$row_rsTypes = mysql_fetch_assoc($rsTypes);
+$totalRows_rsTypes = mysql_num_rows($rsTypes);
+
+
+
+$queryString_rsTimeSheet = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsTimeSheet") == false && 
+        stristr($param, "totalRows_rsTimeSheet") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsTimeSheet = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsTimeSheet = sprintf("&totalRows_rsTimeSheet=%d%s", $totalRows_rsTimeSheet, $queryString_rsTimeSheet);
+
+
+
+
+
+
+?>
+
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Time sheet history</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<link href="../includes/js_res/jquery.ui.smoothness.css" rel="stylesheet" type="text/css" />
+
+<link href="../WA_DataAssist/styles/Refined_Pacifica.css" rel="stylesheet" type="text/css" />
+<link href="../WA_DataAssist/styles/Arial.css" rel="stylesheet" type="text/css" />
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript">
+$(document).ready(function() {
+	
+	$('.date').datepicker({ 
+		dateFormat: 'yy-mm-dd', 
+		numberOfMonths: 1,
+		showOtherMonths: true,
+		selectOtherMonths: true
+	});
+	
+});	
+</script>
+
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  
+  
+    <h1>TIME SHEET HISTORY</h1>
+    <p><a href="employee_timesheet_Insert.php">new time sheet entry</a></p>
+    
+      <?php 
+		// CALCULATE THE NEXT PAY PERIOD DEADLINE
+		// based on a starting date, continually add 2 weeks until a date in the future is reached.
+		$start = array();
+		$end = array();
+		
+		$end['cur'] = '2011-11-18';
+		while ($end['cur'] < date('Y-m-d')) { 
+			$end['cur'] = date('Y-m-d', strtotime($end['cur'].' +2 weeks'));
+		}
+		
+		// calculate other end dates
+		$end['-1'] = date('Y-m-d', strtotime($end['cur'].' -2 weeks'));
+		$end['-2'] = date('Y-m-d', strtotime($end['-1'].' -2 weeks'));
+		$end['+1'] = date('Y-m-d', strtotime($end['cur'].' +2 weeks'));
+		$end['+2'] = date('Y-m-d', strtotime($end['+1'].' +2 weeks'));
+		
+		?>
+    
+    <table border="0">
+    	<tr>
+      	<td><strong>Pay period</strong></td>
+        <td align="center"><strong>Starts</strong></td>
+        <td align="center"><strong>Ends</strong></td>
+      <tr>
+        <td>&nbsp;</td>
+        <td><?php echo date('Y-m-d', strtotime($end['-2'].' -13 days')); ?></td>
+        <td><?php echo $end['-2']; ?></td>
+      </tr>
+      <tr>
+        <td>Last pay period</td>
+        <td><?php echo date('Y-m-d', strtotime($end['-1'].' -13 days')); ?></td>
+        <td><?php echo $end['-1']; ?></td>
+      </tr>
+      <tr>
+        <td><strong>This pay period</strong></td>
+        <td><strong><?php echo date('Y-m-d', strtotime($end['cur'].' -13 days')); ?></strong></td>
+        <td><strong><?php echo $end['cur']; ?></strong></td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td><?php echo date('Y-m-d', strtotime($end['+1'].' -13 days')); ?></td>
+        <td><?php echo $end['+1']; ?></td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td><?php echo date('Y-m-d', strtotime($end['+2'].' -13 days')); ?></td>
+        <td><?php echo $end['+2']; ?></td>
+      </tr>
+    </table>
+    <p>&nbsp;</p>
+    <h3>Search</h3>
+    <table>
+      <tr>
+        <td>
+
+
+<form name="form1" action="employee_timesheet_Results.php" method="post">
+  <table width="350" border="0" cellpadding="2" cellspacing="0">
+    <tr>
+      <td><label for="Start">Date range</label></td>
+      <td><span id="sprytextfield1">
+        <input name="Start" type="text" class="date" value="" size="11" />
+        <span class="textfieldInvalidFormatMsg">Invalid format.</span></span>&nbsp;
+        <label for="End">To:</label>
+        &nbsp;<span id="sprytextfield2">
+        <input name="End" type="text" class="date" value="" size="11" />
+<span class="textfieldInvalidFormatMsg">Invalid format.</span></span></td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td><label for="Project">Projects</label></td>
+      <td><span id="spryselect1">
+        <select name="Project" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsProjects['timesheet_projects']?>"><?php echo $row_rsProjects['timesheet_projects']?></option>
+          <?php
+} while ($row_rsProjects = mysql_fetch_assoc($rsProjects));
+  $rows = mysql_num_rows($rsProjects);
+  if($rows > 0) {
+      mysql_data_seek($rsProjects, 0);
+	  $row_rsProjects = mysql_fetch_assoc($rsProjects);
+  }
+?>
+        </select>
+</span></td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td><label for="WorkType">Work types</label></td>
+      <td><span id="spryselect2">
+        <select name="WorkType" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsTypes['timesheet_work_types']?>"><?php echo $row_rsTypes['timesheet_work_types']?></option>
+          <?php
+} while ($row_rsTypes = mysql_fetch_assoc($rsTypes));
+  $rows = mysql_num_rows($rsTypes);
+  if($rows > 0) {
+      mysql_data_seek($rsTypes, 0);
+	  $row_rsTypes = mysql_fetch_assoc($rsTypes);
+  }
+?>
+        </select>
+</span></td>
+		</tr>
+    <tr>
+    	<td><input type="submit" name="WADbSearch2" value="SEARCH" /></td>
+      <td><div align="right"></div></td>
+    </tr>
+  </table>
+</form>
+
+</td>
+<td>
+			
+  <table width="350">
+      <tr class="tablehead">
+        <td>Search</td>
+        <td width="150">Results</td>
+      </tr>
+      <tr>
+        <td>For the current search: <br />
+        <?php 
+          echo (isset($_POST["Start"]) AND $_POST["Start"] <> "") ? 
+            "Start date = ".$_POST["Start"]."<br>" : "";
+          echo (isset($_POST["End"]) AND $_POST["End"] <> "") ? 
+            "End date = ".$_POST["End"]."<br>" : "";
+          echo (isset($_POST["Project"]) AND $_POST["Project"] <> "") ? 
+            "Project = ".$_POST["Project"]."<br>" : "";
+          echo (isset($_POST["WorkType"]) AND $_POST["WorkType"] <> "") ? 
+            "First name = ".$_POST["WorkType"]."<br>" : "";
+        
+        ?>
+        
+        </td>
+        <td>Total hours: <span class="fltrt"><?php echo $row_rsTotalHours['sum_hours']; ?></span><br />
+          # work entries: <span class="fltrt"><?php echo $row_rsTotalHours['num_records']; ?></span></td>
+        </tr>
+      
+      <tr>
+        <td>
+        </td>
+        <td>
+        </td>
+      </tr>
+    </table>
+
+</td></tr></table>
+
+<p> From <?php echo ($startRow_rsTimeSheet + 1) ?>&nbsp; to <?php echo min($startRow_rsTimeSheet + $maxRows_rsTimeSheet, $totalRows_rsTimeSheet) ?> &nbsp;of <?php echo $totalRows_rsTimeSheet ?> &nbsp;&nbsp;&nbsp;<a href="<?php printf("%s?pageNum_rsTimeSheet=%d%s", $currentPage, 0, $queryString_rsTimeSheet); ?>">First</a> | <a href="<?php printf("%s?pageNum_rsTimeSheet=%d%s", $currentPage, max(0, $pageNum_rsTimeSheet - 1), $queryString_rsTimeSheet); ?>">Previous</a> | <a href="<?php printf("%s?pageNum_rsTimeSheet=%d%s", $currentPage, min($totalPages_rsTimeSheet, $pageNum_rsTimeSheet + 1), $queryString_rsTimeSheet); ?>">Next</a> | <a href="<?php printf("%s?pageNum_rsTimeSheet=%d%s", $currentPage, $totalPages_rsTimeSheet, $queryString_rsTimeSheet); ?>">Last</a>&nbsp;&nbsp; </p>
+<table width="690">
+      <tr class="tablehead">
+        <td>Record number</td>
+        <td>Date</td>
+        <td>Project</td>
+        <td>Work type</td>
+        <td>Hours</td>
+        <td>Update</td>
+      </tr>
+      <?php do { ?>
+        <tr>
+          <td><?php echo $row_rsTimeSheet['timesheetkey']; ?></td>
+          <td><?php echo $row_rsTimeSheet['date']; ?></td>
+          <td><?php echo $row_rsTimeSheet['project']; ?></td>
+          <td><?php echo $row_rsTimeSheet['work_type']; ?></td>
+          <td><div align="center"><?php echo $row_rsTimeSheet['work_hours']; ?></div></td>
+          <td><div align="center"><a href="employee_timesheet_Update.php?timesheetkey=<?php echo $row_rsTimeSheet['timesheetkey']; ?>">update</a></div></td>
+        </tr>
+        <?php } while ($row_rsTimeSheet = mysql_fetch_assoc($rsTimeSheet)); ?>
+    </table>
+    <p>&nbsp;</p>
+    <script type="text/javascript">
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "date", {isRequired:false, format:"yyyy-mm-dd", useCharacterMasking:true});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "date", {format:"yyyy-mm-dd", useCharacterMasking:true, isRequired:false});
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {isRequired:false, validateOn:["blur", "change"]});
+    </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsTimeSheet);
+
+mysql_free_result($rsProjects);
+
+mysql_free_result($rsTypes);
+?>

@@ -1,0 +1,583 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+// Start trigger
+$formValidation = new tNG_FormValidation();
+$tNGs->prepareValidation($formValidation);
+// End trigger
+
+// calculate total
+$facts_total = 0;
+$facts_total += $_POST['learninnate'];
+$facts_total += $_POST['instructorquality'];
+$facts_total += $_POST['sensefirsttime'];
+$facts_total += $_POST['memorizingyes'];
+
+// calc average
+$facts_num_fields = 4;
+
+$facts_average = $facts_total / ($facts_num_fields);
+
+// calculate total
+$concepts_total = 0;
+$concepts_total += $_POST['workhardsolve'];
+$concepts_total += $_POST['uptoyou'];
+$concepts_total += $_POST['learntolearn'];
+$concepts_total += $_POST['newconceptonown'];
+$concepts_total += $_POST['norfunifeasy'];
+$concepts_total += $_POST['bigideas'];
+$concepts_total += $_POST['scienceoriginalthinking'];
+
+// calc average
+$concepts_num_fields = 6;
+
+$concepts_average = $concepts_total / ($concepts_num_fields);
+
+// calculate total
+$inquiry_total = 0;
+$inquiry_total += $_POST['varietyofsources'];
+$inquiry_total += $_POST['combinesources'];
+$inquiry_total += $_POST['manyperspectivesbest'];
+$inquiry_total += $_POST['seekadvice'];
+
+// calc average
+$inquiry_num_fields = 4;
+
+$inquiry_average = $inquiry_total / ($inquiry_num_fields);
+
+// calculate total
+$relative_total = 0;
+$relative_total += $_POST['notruth'];
+$relative_total += $_POST['sentencecontext'];
+$relative_total += $_POST['noevaluatebeliefs'];
+$relative_total += $_POST['everyoneowntruth'];
+
+// calc average
+$relative_num_fields = 4;
+
+$relative_average = $relative_total / ($relative_num_fields);
+
+// calculate total
+$absolute_total = 0;
+$absolute_total += $_POST['sciencebest'];
+$absolute_total += $_POST['somethingsfaith'];
+$absolute_total += $_POST['mostcanagreesome'];
+
+// calc average
+$absolute_num_fields = 3;
+
+$absolute_average = $absolute_total / ($absolute_num_fields);
+
+// calculate total
+$certain_total = 0;
+$certain_total += $_POST['expertsannoying'];
+$certain_total += $_POST['challengeoverconfident'];
+$certain_total += $_POST['simpler'];
+$certain_total += $_POST['precisemeasurement'];
+$certain_total += $_POST['losefaithchange'];
+$certain_total += $_POST['simplesolutions'];
+$certain_total += $_POST['truthunchanging'];
+$certain_total += $_POST['sticktofacts'];
+
+// calc average
+$certain_num_fields = 8;
+
+$certain_average = $certain_total / ($certain_num_fields);
+
+// calculate total
+$uncertain_total = 0;
+$uncertain_total += $_POST['sentencemanymeaning'];
+$uncertain_total += $_POST['neverrightanswer'];
+$uncertain_total += $_POST['questionexperts'];
+$uncertain_total += $_POST['multipleapproaches'];
+$uncertain_total += $_POST['likedisagreement'];
+
+// calc average
+$uncertain_num_fields = 5;
+
+$uncertain_average = $uncertain_total / ($uncertain_num_fields);
+
+
+
+$_SESSION["facts_average"] = $facts_average;
+$_SESSION["concepts_average"] = $concepts_average;
+$_SESSION["inquiry_average"] = $inquiry_average;
+$_SESSION["relative_average"] = $relative_average;
+$_SESSION["absolute_average"] = $absolute_average;
+$_SESSION["certain_average"] = $certain_average;
+$_SESSION["uncertain_average"] = $uncertain_average;
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? "'" . doubleval($theValue) . "'" : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoded = "SELECT * FROM coded";
+$rsCoded = mysql_query($query_rsCoded, $Assessment) or die(mysql_error());
+$row_rsCoded = mysql_fetch_assoc($rsCoded);
+$totalRows_rsCoded = mysql_num_rows($rsCoded);
+
+// Make an update transaction instance
+$upd_LRJA = new tNG_update($conn_Assessment);
+$tNGs->addTransaction($upd_LRJA);
+// Register triggers
+$upd_LRJA->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Update1");
+$upd_LRJA->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$upd_LRJA->registerTrigger("END", "Trigger_Default_Redirect", 99, "../codingLRJA/chooselrja.php");
+// Add columns
+$upd_LRJA->setTable("LRJA");
+$upd_LRJA->addColumn("Coded", "NUMERIC_TYPE", "POST", "Coded");
+$upd_LRJA->addColumn("Uncertain", "NUMERIC_TYPE", "VALUE", "{SESSION.uncertain_average}");
+$upd_LRJA->addColumn("Certain", "NUMERIC_TYPE", "VALUE", "{SESSION.certain_average}");
+$upd_LRJA->addColumn("Absolute", "NUMERIC_TYPE", "VALUE", "{SESSION.absolute_average}");
+$upd_LRJA->addColumn("Relative", "NUMERIC_TYPE", "VALUE", "{SESSION.relative_average}");
+$upd_LRJA->addColumn("Inquiry", "NUMERIC_TYPE", "VALUE", "{SESSION.inquiry_average}");
+$upd_LRJA->addColumn("Concepts", "NUMERIC_TYPE", "VALUE", "{SESSION.concepts_average}");
+$upd_LRJA->addColumn("Facts", "NUMERIC_TYPE", "VALUE", "{SESSION.facts_average}");
+$upd_LRJA->addColumn("SenseFirstTime", "NUMERIC_TYPE", "POST", "SenseFirstTime");
+$upd_LRJA->addColumn("UncertaintyCertain", "NUMERIC_TYPE", "POST", "UncertaintyCertain");
+$upd_LRJA->addColumn("WorkHard", "NUMERIC_TYPE", "POST", "WorkHard");
+$upd_LRJA->addColumn("InstructorQuality", "NUMERIC_TYPE", "POST", "InstructorQuality");
+$upd_LRJA->addColumn("VarietyOfSources", "NUMERIC_TYPE", "POST", "VarietyOfSources");
+$upd_LRJA->addColumn("LearnInnate", "NUMERIC_TYPE", "POST", "LearnInnate");
+$upd_LRJA->addColumn("ExpertsAnnoying", "NUMERIC_TYPE", "POST", "ExpertsAnnoying");
+$upd_LRJA->addColumn("ScientistsTruth", "NUMERIC_TYPE", "POST", "ScientistsTruth");
+$upd_LRJA->addColumn("ChallengeOverconfident", "NUMERIC_TYPE", "POST", "ChallengeOverconfident");
+$upd_LRJA->addColumn("CombineSources", "NUMERIC_TYPE", "POST", "CombineSources");
+$upd_LRJA->addColumn("Simpler", "NUMERIC_TYPE", "POST", "Simpler");
+$upd_LRJA->addColumn("PreciseMeasurement", "NUMERIC_TYPE", "POST", "PreciseMeasurement");
+$upd_LRJA->addColumn("BigIdeas", "NUMERIC_TYPE", "POST", "BigIdeas");
+$upd_LRJA->addColumn("FewSources", "NUMERIC_TYPE", "POST", "FewSources");
+$upd_LRJA->addColumn("LoseFaithChange", "NUMERIC_TYPE", "POST", "LoseFaithChange");
+$upd_LRJA->addColumn("TrueAgree", "NUMERIC_TYPE", "POST", "TrueAgree");
+$upd_LRJA->addColumn("NoEvaluateBeliefs", "NUMERIC_TYPE", "POST", "NoEvaluateBeliefs");
+$upd_LRJA->addColumn("ScienceBest", "NUMERIC_TYPE", "POST", "ScienceBest");
+$upd_LRJA->addColumn("SentenceManyMeaning", "NUMERIC_TYPE", "POST", "SentenceManyMeaning");
+$upd_LRJA->addColumn("ScienceOriginalThinking", "NUMERIC_TYPE", "POST", "ScienceOriginalThinking");
+$upd_LRJA->addColumn("NoTruth", "NUMERIC_TYPE", "POST", "NoTruth");
+$upd_LRJA->addColumn("UpToYou", "NUMERIC_TYPE", "POST", "UpToYou");
+$upd_LRJA->addColumn("MemorizingYes", "NUMERIC_TYPE", "POST", "MemorizingYes");
+$upd_LRJA->addColumn("MultipleApproaches", "NUMERIC_TYPE", "POST", "MultipleApproaches");
+$upd_LRJA->addColumn("LikeDisagreement", "NUMERIC_TYPE", "POST", "LikeDisagreement");
+$upd_LRJA->addColumn("LearnToLearn", "NUMERIC_TYPE", "POST", "LearnToLearn");
+$upd_LRJA->addColumn("ManyPerspectivesBest", "NUMERIC_TYPE", "POST", "ManyPerspectivesBest");
+$upd_LRJA->addColumn("MostCanAgreeSome", "NUMERIC_TYPE", "POST", "MostCanAgreeSome");
+$upd_LRJA->addColumn("SomeThingsFaith", "NUMERIC_TYPE", "POST", "SomeThingsFaith");
+$upd_LRJA->addColumn("EveryoneOwnTruth", "NUMERIC_TYPE", "POST", "EveryoneOwnTruth");
+$upd_LRJA->addColumn("NewConceptOnOwn", "NUMERIC_TYPE", "POST", "NewConceptOnOwn");
+$upd_LRJA->addColumn("SentenceContext", "NUMERIC_TYPE", "POST", "SentenceContext");
+$upd_LRJA->addColumn("SimpleSolutions", "NUMERIC_TYPE", "POST", "SimpleSolutions");
+$upd_LRJA->addColumn("TruthUnchanging", "NUMERIC_TYPE", "POST", "TruthUnchanging");
+$upd_LRJA->addColumn("SeekAdvice", "NUMERIC_TYPE", "POST", "SeekAdvice");
+$upd_LRJA->addColumn("StickToFacts", "NUMERIC_TYPE", "POST", "StickToFacts");
+$upd_LRJA->addColumn("NeverRightAnswer", "NUMERIC_TYPE", "POST", "NeverRightAnswer");
+$upd_LRJA->addColumn("QuestionExperts", "NUMERIC_TYPE", "POST", "QuestionExperts");
+$upd_LRJA->addColumn("NotFunIfEasy", "NUMERIC_TYPE", "POST", "NotFunIfEasy");
+$upd_LRJA->setPrimaryKey("lrjakey", "NUMERIC_TYPE", "GET", "lrjakey");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsLRJA = $tNGs->getRecordset("LRJA");
+$row_rsLRJA = mysql_fetch_assoc($rsLRJA);
+$totalRows_rsLRJA = mysql_num_rows($rsLRJA);
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelrjascore2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LRJA scoring confirmation</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag --><!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #A9BBA0;
+	background-image: url(/images/skin/LRJAbackground.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #52561F;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LRJAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #809874;
+	background-image: url(/images/skin/LRJAmenu.jpg);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #809874;
+	background-image: url(/images/skin/LRJAmenu.jpg);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container .indent46 a:link {
+	color: #929292;
+}
+.twoColFixRtHdr #container .indent46 a:visited {
+	color: #929292;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:hover {
+	color: #474A47;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.navigation {}
+-->
+</style>
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="#" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <a href="/scoring/chooseassessment.php">choose assessment</a> | <a href="/scoring/chooselrja.php">choose lrja</a> | <a href="/scoring/bulkcustomerselect.php">sortable</a> | <a href="/scoring_lrja/lrjascoring_update_1.php">rescore contested</a> | <a href="/scoring_lrja/lrjascoring2nd_a.php">second score</a> | <a href="/scoring_lrja/lrja-complexity1.php">complexity</a> | <a href="/scoring_lrja/lrja-evaluation1.php">evaluate</a> | <a href="/scoring_lrja/lrja-certainty1.php">certainty</a> | <a href="/scoring_lrja/lrja-inquiry1.php">inquiry</a> | <a href="/scoring_lrja/lrja-relativism1.php">absolute truth</a> | <a href="/scoring_lrja/lrjatruth1.php">truth</a> | <a href="/scoring_lrja/lrja-growth.php">growth comments</a> |  <a href="/scoring_lrja/lrja-strengthcom.php">present strengths</a> | <a href="/scoring_lrja/lrja-growthcom.php">potential strengths</a> | <a href="/scoring_lrja/lrja-recommendcom.php">recommendations</a></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" --> 
+  <h1>RATE YOUR 
+    CONFIDENCE
+</h1>
+  <p><a href="../scoring/chooseassessment.php">choose assessment</a> | <a href="../codingLRJA/lrjapersonalcom.php">personal comments</a> | <a href="../codingLRJA/lrja-general.php">general comments</a> | <a href="lrja-complexity1.php">complexity</a> | <a href="lrja-evaluation1.php">evaluate</a> | <a href="lrja-inquiry1.php">inquiry</a> | <a href="lrja-relativism1.php">relativism</a> | <a href="lrja-growth.php">growth</a> | <a href="../codingLRJA/lrjatruth1.php">truth</a> | <a href="../codingLRJA/lrja-strengths1.php">strengths</a> | <a href="lrja-caveats1.php">weaknesses</a> | <a href="../codingLRJA/lrjarecommend1.php">resources</a> | <a href="../codingLRJA/chooselrja.php">choose lrja</a></p>
+  <p>&nbsp;</p>
+<p>
+  <?php
+	echo $tNGs->getErrorMsg();
+?>
+  </p>
+<form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+  <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+    <tr>
+      <td width="233" class="KT_th"><label for="Coded">Rate your confidence in your scores.</label></td>
+      <td width="453"><select name="Coded" id="Coded">
+        <?php
+do {  
+?>
+        <option value="<?php echo $row_rsCoded['codedkey']?>"<?php if (!(strcmp($row_rsCoded['codedkey'], $row_rsLRJA['coded']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsCoded['codedcomment']?></option>
+        <?php
+} while ($row_rsCoded = mysql_fetch_assoc($rsCoded));
+  $rows = mysql_num_rows($rsCoded);
+  if($rows > 0) {
+      mysql_data_seek($rsCoded, 0);
+	  $row_rsCoded = mysql_fetch_assoc($rsCoded);
+  }
+?>
+        </select>
+        <?php echo $tNGs->displayFieldError("LRJA", "Coded"); ?></td>
+      </tr>
+    <tr class="KT_buttons">
+      <td colspan="2"><p>
+        </p>
+        <p>
+          <input type="submit" name="KT_Update1" id="KT_Update1" value="SUBMIT" />
+        </p></td>
+      </tr>
+    </table>
+  <input type="hidden" name="Uncertain" id="Uncertain" value="<?php echo KT_escapeAttribute($row_rsLRJA['uncertain']); ?>" />
+  <input type="hidden" name="Certain" id="Certain" value="<?php echo KT_escapeAttribute($row_rsLRJA['certain']); ?>" />
+  <input type="hidden" name="Absolute" id="Absolute" value="<?php echo KT_escapeAttribute($row_rsLRJA['absolute']); ?>" />
+  <input type="hidden" name="Relative" id="Relative" value="<?php echo KT_escapeAttribute($row_rsLRJA['relative']); ?>" />
+  <input type="hidden" name="Inquiry" id="Inquiry" value="<?php echo KT_escapeAttribute($row_rsLRJA['inquiry']); ?>" />
+  <input type="hidden" name="Concepts" id="Concepts" value="<?php echo KT_escapeAttribute($row_rsLRJA['concepts']); ?>" />
+  <input type="hidden" name="Facts" id="Facts" value="<?php echo KT_escapeAttribute($row_rsLRJA['facts']); ?>" />
+  <input type="hidden" name="SenseFirstTime" id="SenseFirstTime" value="<?php echo KT_escapeAttribute($row_rsLRJA['sensefirsttime']); ?>" />
+  <input type="hidden" name="UncertaintyCertain" id="UncertaintyCertain" value="<?php echo KT_escapeAttribute($row_rsLRJA['uncertaintycertain']); ?>" />
+  <input type="hidden" name="WorkHard" id="WorkHard" value="<?php echo KT_escapeAttribute($row_rsLRJA['workhard']); ?>" />
+  <input type="hidden" name="InstructorQuality" id="InstructorQuality" value="<?php echo KT_escapeAttribute($row_rsLRJA['instructorquality']); ?>" />
+  <input type="hidden" name="VarietyOfSources" id="VarietyOfSources" value="<?php echo KT_escapeAttribute($row_rsLRJA['varietyofsources']); ?>" />
+  <input type="hidden" name="LearnInnate" id="LearnInnate" value="<?php echo KT_escapeAttribute($row_rsLRJA['learninnate']); ?>" />
+  <input type="hidden" name="ExpertsAnnoying" id="ExpertsAnnoying" value="<?php echo KT_escapeAttribute($row_rsLRJA['expertsannoying']); ?>" />
+  <input type="hidden" name="ScientistsTruth" id="ScientistsTruth" value="<?php echo KT_escapeAttribute($row_rsLRJA['scientiststruth']); ?>" />
+  <input type="hidden" name="ChallengeOverconfident" id="ChallengeOverconfident" value="<?php echo KT_escapeAttribute($row_rsLRJA['challengeoverconfident']); ?>" />
+  <input type="hidden" name="CombineSources" id="CombineSources" value="<?php echo KT_escapeAttribute($row_rsLRJA['combinesources']); ?>" />
+  <input type="hidden" name="Simpler" id="Simpler" value="<?php echo KT_escapeAttribute($row_rsLRJA['simpler']); ?>" />
+  <input type="hidden" name="PreciseMeasurement" id="PreciseMeasurement" value="<?php echo KT_escapeAttribute($row_rsLRJA['precisemeasurement']); ?>" />
+  <input type="hidden" name="BigIdeas" id="BigIdeas" value="<?php echo KT_escapeAttribute($row_rsLRJA['bigideas']); ?>" />
+  <input type="hidden" name="FewSources" id="FewSources" value="<?php echo KT_escapeAttribute($row_rsLRJA['fewsources']); ?>" />
+  <input type="hidden" name="LoseFaithChange" id="LoseFaithChange" value="<?php echo KT_escapeAttribute($row_rsLRJA['losefaithchange']); ?>" />
+  <input type="hidden" name="TrueAgree" id="TrueAgree" value="<?php echo KT_escapeAttribute($row_rsLRJA['trueagree']); ?>" />
+  <input type="hidden" name="NoEvaluateBeliefs" id="NoEvaluateBeliefs" value="<?php echo KT_escapeAttribute($row_rsLRJA['noevaluatebeliefs']); ?>" />
+  <input type="hidden" name="ScienceBest" id="ScienceBest" value="<?php echo KT_escapeAttribute($row_rsLRJA['sciencebest']); ?>" />
+  <input type="hidden" name="SentenceManyMeaning" id="SentenceManyMeaning" value="<?php echo KT_escapeAttribute($row_rsLRJA['sentencemanymeaning']); ?>" />
+  <input type="hidden" name="ScienceOriginalThinking" id="ScienceOriginalThinking" value="<?php echo KT_escapeAttribute($row_rsLRJA['scienceoriginalthinking']); ?>" />
+  <input type="hidden" name="NoTruth" id="NoTruth" value="<?php echo KT_escapeAttribute($row_rsLRJA['notruth']); ?>" />
+  <input type="hidden" name="UpToYou" id="UpToYou" value="<?php echo KT_escapeAttribute($row_rsLRJA['uptoyou']); ?>" />
+  <input type="hidden" name="MemorizingYes" id="MemorizingYes" value="<?php echo KT_escapeAttribute($row_rsLRJA['memorizingyes']); ?>" />
+  <input type="hidden" name="MultipleApproaches" id="MultipleApproaches" value="<?php echo KT_escapeAttribute($row_rsLRJA['multipleapproaches']); ?>" />
+  <input type="hidden" name="LikeDisagreement" id="LikeDisagreement" value="<?php echo KT_escapeAttribute($row_rsLRJA['likedisagreement']); ?>" />
+  <input type="hidden" name="LearnToLearn" id="LearnToLearn" value="<?php echo KT_escapeAttribute($row_rsLRJA['learntolearn']); ?>" />
+  <input type="hidden" name="ManyPerspectivesBest" id="ManyPerspectivesBest" value="<?php echo KT_escapeAttribute($row_rsLRJA['manyperspectivesbest']); ?>" />
+  <input type="hidden" name="MostCanAgreeSome" id="MostCanAgreeSome" value="<?php echo KT_escapeAttribute($row_rsLRJA['mostcanagreesome']); ?>" />
+  <input type="hidden" name="SomeThingsFaith" id="SomeThingsFaith" value="<?php echo KT_escapeAttribute($row_rsLRJA['somethingsfaith']); ?>" />
+  <input type="hidden" name="EveryoneOwnTruth" id="EveryoneOwnTruth" value="<?php echo KT_escapeAttribute($row_rsLRJA['everyoneowntruth']); ?>" />
+  <input type="hidden" name="NewConceptOnOwn" id="NewConceptOnOwn" value="<?php echo KT_escapeAttribute($row_rsLRJA['newconceptonown']); ?>" />
+  <input type="hidden" name="SentenceContext" id="SentenceContext" value="<?php echo KT_escapeAttribute($row_rsLRJA['sentencecontext']); ?>" />
+  <input type="hidden" name="SimpleSolutions" id="SimpleSolutions" value="<?php echo KT_escapeAttribute($row_rsLRJA['simplesolutions']); ?>" />
+  <input type="hidden" name="TruthUnchanging" id="TruthUnchanging" value="<?php echo KT_escapeAttribute($row_rsLRJA['truthunchanging']); ?>" />
+  <input type="hidden" name="SeekAdvice" id="SeekAdvice" value="<?php echo KT_escapeAttribute($row_rsLRJA['seekadvice']); ?>" />
+  <input type="hidden" name="StickToFacts" id="StickToFacts" value="<?php echo KT_escapeAttribute($row_rsLRJA['sticktofacts']); ?>" />
+  <input type="hidden" name="NeverRightAnswer" id="NeverRightAnswer" value="<?php echo KT_escapeAttribute($row_rsLRJA['neverrightanswer']); ?>" />
+  <input type="hidden" name="QuestionExperts" id="QuestionExperts" value="<?php echo KT_escapeAttribute($row_rsLRJA['questionexperts']); ?>" />
+  <input type="hidden" name="NotFunIfEasy" id="NotFunIfEasy" value="<?php echo KT_escapeAttribute($row_rsLRJA['notfunifeasy']); ?>" />
+</form>
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<?php echo $tNGs->displayValidationRules();?>
+        <td valign="top"><h2>&nbsp;</h2></td>
+        <!-- InstanceEndEditable -->
+<!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsCoded);
+?>

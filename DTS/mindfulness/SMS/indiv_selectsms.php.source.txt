@@ -1,0 +1,311 @@
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+$colname_rsMindfulness = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsMindfulness = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulness = sprintf("SELECT mindfulkey, testtime, userkey, sms08mean, sms09mean, sms10mean, sms08sum, timestamp FROM Mindfulness WHERE userkey = %s ORDER BY mindfulkey DESC", GetSQLValueString($colname_rsMindfulness, "int"));
+$rsMindfulness = mysql_query($query_rsMindfulness, $Assessment) or die(mysql_error());
+$row_rsMindfulness = mysql_fetch_assoc($rsMindfulness);
+$totalRows_rsMindfulness = mysql_num_rows($rsMindfulness);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mindfulness1.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Select an SMS report</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../../SpryAssetsSMS/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<script src="../../SpryAssetsSMS/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../../SpryAssetsSMS/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<link href="../../SpryAssetsSMS/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+	background-color: #93B3C8;
+}
+.oneColFixCtrHdr #container {
+	width: 780px;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #7799B8;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+	background-image: url(/images/mindful/m-background.gif);
+}
+.oneColFixCtrHdr #header {
+	background-color: #DDDDDD;
+	background-image: url(/images/mindful/m-header.gif);
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+	height: 104px;
+}
+.oneColFixCtrHdr #menu {
+	background-color: #8AB3C4;
+	padding-top: 0;
+	padding-right: 40px;
+	padding-bottom: 0;
+	height: 20px;
+	background-image: url(/images/skin/SMSmenu.jpg);
+}
+.oneColFixCtrHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0;
+	vertical-align: text-bottom;
+}
+.oneColFixCtrHdr #mainContent {
+	padding-top: 30;
+	padding-right: 45px;
+	padding-bottom: 0;
+	padding-left: 45px;
+}
+.oneColFixCtrHdr #footer {
+	padding: 0 10px;
+}
+.oneColFixCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+-->
+</style>
+<link href="/css/styles3.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssets/SpryMenuBarHorizontalmind.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="oneColFixCtrHdr">
+
+<div id="container">
+  <div id="header">
+    <h1>&nbsp;</h1>
+  <!-- end #header --></div>
+  <div id="menu">
+       <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/landing.php">home</a></li>
+<li><a href="/mindfulness/SMS/m-articles.html">articles</a></li>
+        <li><a href="/mindfulness/SMS/m-intro.html">intro</a></li>
+        <li><a href="/mindfulness/SMS/m-start.php">survey</a></li>
+        <li><a href="/mindfulness/SMS/m-suggestions.php">ideas</a></li>
+        <li><a href="/mindfulness/SMS/m-teacherinfo.php" class="MenuBarItemSubmenu">teachers</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/bc_viewsms.php">view SMS results</a></li>
+            <li><a href="/mindfulness/SMJ/teacher_viewjournalentries.php">view SMS journal</a></li>
+            <li><a href="/bulkcustomers/bulkpolicies.php">policies &amp; schedules</a></li>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+        <li><a href="#" class="MenuBarItemSubmenu">research</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+    </ul>
+    <!-- end #menu --></div>
+  <div id="mainContent">
+    <!-- InstanceBeginEditable name="Main" -->
+<td valign="top"><p><?php include '../menu_indiv_SMS_links.php'; ?></p>
+  <h1>SMS scores for <?php echo $row_rsRegistrants['firstname']; ?> <?php echo $row_rsRegistrants['lastname']; ?></h1>
+<p><a href="summary_sms.php">Click here</a> to view your Journal results.</p>
+  <h3>YOUR SMS SCORES</h3>
+  <p>SMS 2010 scores are likely to be lower than SMS 2009 scores. This is because the scale changed from a 1-8 scale to a 1-6 scale.</p>
+  <table width="610" class="tableindent">
+    <tr>
+      <td class="tablehead">SMS key</td>
+      <td class="tablehead">Date</td>
+      <td class="tablehead">Test time</td>
+      <td class="tablehead">Score 2009</td>
+      <td class="tablehead">Score 2010</td>
+      <td class="tablehead">Summary</td>
+    </tr>
+    <?php do { ?>
+    <tr>
+      <td><div align="center"><?php echo $row_rsMindfulness['mindfulkey']; ?></div></td>
+      <td><div align="center"><?php echo $row_rsMindfulness['timestamp']; ?></div></td>
+      <td><div align="center"><?php echo $row_rsMindfulness['testtime']; ?></div></td>
+      <td><div align="center"><?php echo $row_rsMindfulness['sms09mean']; ?></div></td>
+      <td><div align="center"><?php echo $row_rsMindfulness['sms10mean']; ?></div></td>
+      <td><div align="center"><a href="summary_sms.php">select</a></div></td>
+    </tr>
+    <?php } while ($row_rsMindfulness = mysql_fetch_assoc($rsMindfulness)); ?>
+  </table>
+  <h3>&nbsp;</h3>
+  <h3>WHAT SCORES MEAN</h3>
+  <p>Click on one of the items below to learn more about levels of performance on the SMS 2010. (These do not apply to SMS 2009 scores.)</p>
+  <div id="TabbedPanels1" class="TabbedPanels">
+    <ul class="TabbedPanelsTabGroup">
+      <li class="TabbedPanelsTab">Level 1 (1.0–3.0)</li>
+      <li class="TabbedPanelsTab"> Level 2 (3.1–3.7)</li>
+      <li class="TabbedPanelsTab"> Level 3 (3.8–4.6)</li>
+      <li class="TabbedPanelsTab">Level 4 (4.7–5.4)</li>
+      <li class="TabbedPanelsTab">Level 5 (5.5–6.0)</li>
+    </ul>
+    <div class="TabbedPanelsContentGroup">
+      <div class="TabbedPanelsContent">
+        <h3>VERY EARLY INTENTIONAL ATTENTION EXPERIENCE</h3>
+        <p>A score at this level indicates that you are probably new to mindfulness practice and have just begun to notice more about yourself and your experiences. As you begin to bring <em>intentional attention</em> to moments in your life, as a focused, kind, non-judgmental, curious mind, you are likely  to:</p>
+        <ul>
+          <li>Discover a new sense of accomplishment when you complete tasks,</li>
+          <li>Notice a new sense of gratitude for things usually taken for granted,</li>
+          <li>Notice body sensations,</li>
+          <li>Notice the causes of your emotions,</li>
+          <li>Be more aware of insights into your life,</li>
+          <li>Notice that you listen more intently to others,</li>
+          <li>Notice that you can be a witness to your experiences as you participate in them, and</li>
+          <li>Notice that you can control attention, moving it from thoughts of the past or future back to observing what is happening now.</li>
+        </ul>
+        <h3>ONE STUDENT PERFORMING AT THIS LEVEL WROTE:</h3>
+        <p>“It got VERY cold this week. As I was standing outside waiting for someone, I took a deep breath, and noticed the slight wind blowing the leaves around the scent of rain in the air. I love the smell of rain, usually more so in the spring time with the scent of flowers also in the air, but I like it nonetheless. I noticed people walking briskly and shivering loudly, disgruntled over the rain and the cold. It was interesting, I never really noticed people that way before, probably because I am usually concentrating on my own desire to get warm.”</p>
+        <h3>RECOMMENDATIONS</h3>
+        <p>See <a href="http://www.mindfulness.com">www.mindfulness.com</a> for a short description of mindfulness practice.</p>
+        <p>See this book to learn how to begin or increase your mindfulness practice: <em>The Beginner’s Guide to Insight Meditation, </em>by Arianna Weisman and Jean Smith.</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <h3>BEGINNING INTENTIONAL ATTENTION</h3>
+        <p>At this level, continuing to increase the intention of mindfulness practice—<em>intentional attention</em> as a focused, kind, non-judgmental, curious mind—people report experiencing a growing sense of awareness yourself as a person who understands more about him or herself and the ability to control the ability to respond instead of react to experiences. You are more likely than at lower levels,  to:</p>
+        <ul>
+          <li>Discover things about yourself that you never noticed before,</li>
+          <li>Experience joy in ordinary experiences,</li>
+          <li>Experience a  growing capacity for consciously examining your life,</li>
+          <li>Experience a  growing capacity to listen to others non-judgmentally,</li>
+          <li>Experience a  growing satisfaction with your life, and</li>
+          <li>Experience a  growing ability to control attention so that you can respond instead of react to your experiences.</li>
+        </ul>
+<h3>ONE STUDENT PERFORMING AT THIS LEVEL WROTE:</h3>
+        <p>“Usually when I awake in the morning, my mind is racing with thoughts of everything I need to get done. Taking deep breaths and trying to clear my mind proved a bit difficult. Lying in bed, trying to be in the now, I could hear my heart beating, and my ears ringing. I could feel that my eyes were itchy, my teeth were throbbing (I grind them in my sleep), and my throat was sore. I thought that I must be doing this wrong, this wasn’t fun. ‘Relax more, take another breath, concentrate. Now I noticed that everything has a rhythm, and as I listened and felt that rhythm, I was soothed. Eating my bowl of Kashi, I had to slow down, put my spoon down between bites, and concentrate on each mouthful. I could feel and enjoy the coolness of the milk, the taste and texture of the cereal, the weight and smoothness of the spoon. This was challenging and unnatural for me as I am usually not that aware of eating breakfast. The day continued to be a challenge. Many times I had to stop, breathe, and pay attention to the rhythm to clear my mind. What stands out for me is how easily distracted I am from the moment. Interruptions from my son, my dogs, the phone, but mostly from my own mind, seem a huge obstacle. I need to incorporate all of these into “happenings of the now” instead of intrusions. Being in the moment seemed easier in the evening. Perhaps my mind was tired, or I was less distracted now that the day was near an end. Playing cards with my husband, it was simpler to enjoy just doing what I was doing, and not thinking about anything else. For some reason this day seemed longer than most.” </p>
+        <h3>RECOMMENDATIONS</h3>
+        <p>We suggest that you study  the section entitled <em>Stage 1</em><em>,</em> in B. Alan Wallace’s, <em>The Attention Revolution: Unlocking the Power of the Focused Mind. </em>The suggestions in this section are particularly helpful for those who  are beginning to develop intentional attention as a focused, kind, non-judgmental, curious mind.</p>
+        <p>Wallace, B. A. (2006). <em>The attention revolution: Unlocking the power of the focused mind.</em> Somerville, MA: Wisdom Publications.</p>
+        <p>&nbsp;</p>
+        <p></p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <h3>INCREASED INTENTIONAL ATTENTION</h3>
+        <p>At this level, continuing to increase the intention of mindfulness practice—<em>intentional attention,</em> as a focused, kind, non-judgmental, curious mind—you experience a growing sense of awareness and greater understanding of yourself. You are likely to experience an increasing ability to control your attention in a way allows you to <em>respond</em> instead of <em>reacting</em> to experiences. With increasing frequency, you:</p>
+        <ul>
+          <li>observe your thoughts as an objective witness,</li>
+          <li>observe your experiences nonjudgmentally,</li>
+          <li>control attention to reduce feelings of stress,</li>
+          <li>notice that ordinary experiences feel significant, and</li>
+          <li>see things in fresh new ways.</li>
+        </ul>
+        <h3>ONE STUDENT PERFORMING AT THIS LEVEL WROTE:</h3>
+        <p>“I have come such a long way since the first day of this project. On this day, I noticed the sun on my face as I was walking. It was an amazing feeling! It was amazing to feel amazing just doing something like walking and feeling the sun on your face. Something else happened. I went to a sandwich place to get lunch. Here you order your sandwich and you watch the person make it for you, similar to the way “Subway” is set up. When I was watching my sandwich being made, I noticed that the guy making my sandwich had a birth defect with his left hand. His left hand was significantly smaller than what the normal size should have been and he could not fully use that hand, it appeared as if he could not move all his fingers. I like to think that I do not discriminate against others, but I was ashamed at what I thought about. When I saw that he had a birth defect with his left hand and I saw him making my sandwich, I suddenly did not want to each the sandwich. I felt my stomach get sick. I did not want the sandwich because of his hand. Once I realized that these were the types of thoughts going through my head, I noticed that I wasn’t being mindful. I took a deep breath and bought myself back to the moment. Once I was here in the moment, I saw him. He was a person like me. I took my sandwich. I smiled. I have mixed feelings about this experience. On the one hand, I am happy that I was able to use the mindfulness in a positive way to notice my thinking and to do the right thing. However, I am also embarrassed to know that I am a person who would think this about someone else in the first place.”</p>
+        <h3>RECOMMENDATIONS</h3>
+        <p>We suggest that you study  the section entitled <em>Stage 2</em>, in B. Alan Wallace’s, <em>The Attention Revolution: Unlocking the Power of the Focused Mind. </em>The suggestions in this section are particularly helpful for those who  wish to continue developing intentional attention as a focused, kind, non-judgmental, curious mind. </p>
+        <p>Wallace, B. A. (2006). <em>The attention revolution: Unlocking the power of the focused mind.</em> Somerville, MA: Wisdom Publications.</p>
+<p>&nbsp;</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <h3>MAKING INTENTIONAL ATTENTION MORE CONTINUOUS</h3>
+        <p>At this level, people report experiencing increasingly frequent periods of <em>intentional attention</em>—as a focused, kind, non-judgmental, curious mind—facilitating a deeper awareness of interconnections between all things. You are more likely than at lower levels,  to:</p>
+        <ul>
+          <li>Increasingly notice that <em>interdependence</em> is a more relevant interpretation of the way things work than an interpretation of <em>independence</em>, and</li>
+          <li>More frequently step back from personal experiences  to observe them as an objective witness.</li>
+        </ul>
+<h3>ONE STUDENT PERFORMING AT THIS LEVEL WROTE:</h3>
+        <p>“With the holidays approaching, I was afraid I might backslide, start to panic about what needs to be done before family arrives. My need for approval, my old mental habit, might rear its ugly head. But that hasn’t happened. This mindfulness is like a natural tranquilizer. It’s not that I’am numb or blasé. I’m excited and looking forward to sharing the holidays. It’s more like I’m at ease, aware of my own mental connections with what’s around me. Life is touching me, and I’m allowing it. With the “approval monster” banished, I am free to be sensitive to a whole new realm, and enjoy each experience and mindful moment as it comes. From past experience, I had connected family gatherings with a certain amount of stress; trying to make sure everything was perfect. I’ve just been doing each thing and enjoying the doing without thinking about what needs to be done next. You don’t have to analyze it, manage it, or improve upon it—just be part of it. I’m amazed at the peace I feel and the joy. This holiday season is going to be the best one since childhood.”</p>
+        <h3>RECOMMENDATIONS</h3>
+        <p>We suggest that you study  the section entitled <em>Stage 3</em>, in B. Alan Wallace’s,&nbsp;<em>The Attention Revolution: Unlocking the Power of the Focused Mind</em>. The suggestions in this section are particularly  helpful as you continue to increase the intention of mindfulness practice.        </p>
+        <p>Also:&nbsp;</p>
+        <p><em>The Miracle of Mindfulness,</em>&nbsp;by Thich Nhat Hahn&nbsp;<br />
+          <em>Wherever You Go There You Are,</em>&nbsp;by Jon Kabat-Zinn<br />
+          <em>Coming to Our Senses: Healing the World Through Mindfulness,</em>&nbsp;by Jon Kabat-Zinn</p>
+        <p></p>
+      </div>
+<div class="TabbedPanelsContent">
+        <h3>LEVEL 5: DEEPENING CONTINUOUS INTENTIONAL ATTENTION</h3>
+        <p>At this level, people report experiencing increasingly frequent periods of <em>intentional attention—</em>as a focused, kind, non-judgmental, curious mind as the catalyst for an increasing awareness of compassion opening the heart. You are more likely than at lower levels,  to notice:</p>
+        <ul>
+          <li> An ever growing capacity to transform your hurt into compassion, and </li>
+          <li> An ever growing capacity to transform anger into compassion.</li>
+        </ul>
+<h3>ONE STUDENT PERFORMING AT THIS LEVEL WROTE:</h3>
+        <p>“Today was a very peaceful day. For one thing I took the chance to step back and look at the situation I have made for myself. Where I am emotionally right now, I am extremely content. Each day is getting easier and easier for me to get through without thinking about how much I messed something up for myself or looking back and regretting things that I have done. Today, specifically, I concentrated on not being judgmental of myself. I am my worst critic. No matter what it is, I always find something that is wrong with something I have done. It can be good or not; I will still find a reason to say to myself, “Well, I could have done it better.” Not criticizing myself and being aware that I am NOT doing so makes me feel better. It helps me to look into my inner self and feel compassion for myself and compromise and admit that it may not be the best that I could have done, but at the time I gave it my all and right now  is what matters the most. I wasn’t so angry today. I like when we do the meditation in class because it helps set the tone for the day. And I’m finding my own Breath Meditation time is a good way for me to just relax and clear my mind of anything that may be bothering me or haunting my spirit.”</p>
+        <h3>RECOMMENDATIONS</h3>
+        <p>We suggest that you study  the section entitled <em>Stage 4</em><em></em> in B. Alan Wallace’s, <em>The attention revolution: Unlocking the power of the focused mind. </em>The suggestions in this section are particularly helpful for those who  are ready to deepen intentional attention as a focused, kind, non-judgmental, curious mind.</p>
+      </div>
+    </div>
+<br class="clearfloat" />   
+  </div>
+  <script type="text/javascript">
+<!--
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+//-->
+  </script>
+	</td>
+<!-- InstanceEndEditable -->
+	<!-- end #mainContent --></div>
+  <div id="footer">
+    <p align="center">©2010-2011 Sharon Solloway. All rights reserved.</p>
+  <!-- end #footer --></div>
+<!-- end #container --></div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+
+mysql_free_result($rsRegistrants);
+
+mysql_free_result($rsMindfulness);
+?>

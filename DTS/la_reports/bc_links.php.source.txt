@@ -1,0 +1,26 @@
+<?php 
+if (!isset($instrument_id)) { $instrument_id = ""; }
+if ($instrument_id == "SMA" OR $instrument_id == "SMS" OR $instrument_id == "SMJ") { ?>
+	<a href="../la_coding/coding_performance_select.php">code</a> &nbsp;
+<?php } ?>
+	Reports: 
+  <a href="bc_select.php">individual</a> | 
+  <a href="report_bulkcustomer.php">summary</a> | 
+  <a href="report_surveys_admin.php">surveys</a> 
+  
+<?php if (WA_Auth_RulePasses("Logged in as analyst")) { ?>
+	| <a href="download_results.php">download</a>
+<?php } ?> &nbsp;
+  Accounts: 
+  <a href="assignments.php">assignments</a> | 
+  <a href="bc_manage_accounts.php">manage</a> | 
+  <a href="bc_add_accounts.php">add</a> &nbsp;
+  Emails: <a href="email_test_takers.php?mode=account">account</a> | 
+  <a href="email_test_takers.php?mode=assignment">assignment</a> | 
+  <a href="email_test_takers.php?mode=generic">custom</a> &nbsp;
+<?php if ($instrument_id == "SMA" OR $instrument_id == "SMS" OR $instrument_id == "SMJ") { ?>
+	<br />
+  <a href="../set_session_var_instrument.php?link_id=la_reports/report_bulkcustomer.php&sessionVarName=instrument_id&sessionVarValue=SMS">SMS</a> |
+  <a href="../set_session_var_instrument.php?link_id=la_reports/report_bulkcustomer.php&sessionVarName=instrument_id&sessionVarValue=SMA">SMA</a> |
+  <a href="../set_session_var_instrument.php?link_id=la_reports/report_bulkcustomer.php&sessionVarName=instrument_id&sessionVarValue=SMJ">SMJ</a> 
+<?php } ?>

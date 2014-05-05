@@ -1,0 +1,647 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? "'" . doubleval($theValue) . "'" : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? "'" . doubleval($theValue) . "'" : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLDMA = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsLDMA = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMA = sprintf("SELECT * FROM ldmamil WHERE ldmakey = %s", GetSQLValueString($colname_rsLDMA, "int"));
+$rsLDMA = mysql_query($query_rsLDMA, $Assessment) or die(mysql_error());
+$row_rsLDMA = mysql_fetch_assoc($rsLDMA);
+$totalRows_rsLDMA = mysql_num_rows($rsLDMA);
+
+$colname_rsStrengths = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsStrengths = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrengths = sprintf("SELECT ldmamilscores.ldmakey, ldmamilscores.essay1las, ldmamilscores.essay2las, ldmamilscores.essay3las, ldmamilscores.essay4las, ldmamilscores.essay5las, ldmamilscores.lasname, dmcode1perspectives.lasname1, dmcode1perspectives.dmcode1perspectives, dmcode2perspectives.lasname2, dmcode2perspectives.dmcode2perspectives, dmcode3response.lasname3, dmcode3response.dmcode3response, dmcode4response.lasname4, dmcode4response.dmcode4response, dmcode5process.lasname5, dmcode5process.dmcode5process FROM ldmamilscores, dmcode1perspectives, dmcode2perspectives, dmcode3response, dmcode4response, dmcode5process WHERE ldmamilscores.ldmakey= %s AND dmcode5process.lasname5=ldmamilscores.essay5las and dmcode1perspectives.lasname1=ldmamilscores.essay1las and dmcode2perspectives.lasname2=ldmamilscores.essay2las and dmcode3response.lasname3=ldmamilscores.essay3las and dmcode4response.lasname4=ldmamilscores.essay4las", GetSQLValueString($colname_rsStrengths, "int"));
+$rsStrengths = mysql_query($query_rsStrengths, $Assessment) or die(mysql_error());
+$row_rsStrengths = mysql_fetch_assoc($rsStrengths);
+$totalRows_rsStrengths = mysql_num_rows($rsStrengths);
+
+$colname_rsManlasart = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsManlasart = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlasart = sprintf("SELECT manlasart.manlasvert, manlasart.manlaspie, manlasart.lasname FROM manlasart WHERE lasname = %s", GetSQLValueString($colname_rsManlasart, "text"));
+$rsManlasart = mysql_query($query_rsManlasart, $Assessment) or die(mysql_error());
+$row_rsManlasart = mysql_fetch_assoc($rsManlasart);
+$totalRows_rsManlasart = mysql_num_rows($rsManlasart);
+
+$colname_rsManlevelart = "-1";
+if (isset($_GET['manlevel'])) {
+  $colname_rsManlevelart = $_GET['manlevel'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlevelart = sprintf("SELECT * FROM manlevelart WHERE manlevelkey = %s", GetSQLValueString($colname_rsManlevelart, "int"));
+$rsManlevelart = mysql_query($query_rsManlevelart, $Assessment) or die(mysql_error());
+$row_rsManlevelart = mysql_fetch_assoc($rsManlevelart);
+$totalRows_rsManlevelart = mysql_num_rows($rsManlevelart);
+
+$colname_rsDmintroman = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsDmintroman = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmintroman = sprintf("SELECT * FROM dmintroman WHERE lasname = %s", GetSQLValueString($colname_rsDmintroman, "text"));
+$rsDmintroman = mysql_query($query_rsDmintroman, $Assessment) or die(mysql_error());
+$row_rsDmintroman = mysql_fetch_assoc($rsDmintroman);
+$totalRows_rsDmintroman = mysql_num_rows($rsDmintroman);
+
+$colname_rsDmmanlasgendescrip = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsDmmanlasgendescrip = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmmanlasgendescrip = sprintf("SELECT dmmanlasgendescrip.lasname, dmmanlasgendescrip.dmmanlasgendescrip, dmmanlasgendescrip.dmmanlasperspec, dmmanlasgendescrip.dmmanlasresponse, dmmanlasgendescrip.dmmanlasprocess FROM dmmanlasgendescrip WHERE lasname = %s", GetSQLValueString($colname_rsDmmanlasgendescrip, "text"));
+$rsDmmanlasgendescrip = mysql_query($query_rsDmmanlasgendescrip, $Assessment) or die(mysql_error());
+$row_rsDmmanlasgendescrip = mysql_fetch_assoc($rsDmmanlasgendescrip);
+$totalRows_rsDmmanlasgendescrip = mysql_num_rows($rsDmmanlasgendescrip);
+
+$colname_rsManlevelcomment = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsManlevelcomment = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlevelcomment = sprintf("SELECT manlevelcomment.manlevelkey, manlevelcomment.manlevelcomment, ldmamil.manlevel, ldmamil.ldmakey, managementlevel.manlevelkey2, managementlevel.manlevelkey FROM manlevelcomment, ldmamil, managementlevel WHERE ldmamil.manlevel=managementlevel.manlevelkey AND managementlevel.manlevelkey2 = manlevelcomment.manlevelkey and ldmamil.ldmakey=%s", GetSQLValueString($colname_rsManlevelcomment, "int"));
+$rsManlevelcomment = mysql_query($query_rsManlevelcomment, $Assessment) or die(mysql_error());
+$row_rsManlevelcomment = mysql_fetch_assoc($rsManlevelcomment);
+$totalRows_rsManlevelcomment = mysql_num_rows($rsManlevelcomment);
+
+$colname_rsManleveljuxtapose = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsManleveljuxtapose = $_GET['lasname'];
+}
+$colname2_rsManleveljuxtapose = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname2_rsManleveljuxtapose = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManleveljuxtapose = sprintf("SELECT manleveljuxtapose.lasname, manleveljuxtapose.manlevelkey, manleveljuxtapose.manleveljuxtapose, ldmamil.manlevel, ldmamil.ldmakey, managementlevel.manlevelkey, managementlevel.manlevelkey2, manleveljuxtapose.manlevelkey FROM manleveljuxtapose, ldmamil, managementlevel WHERE manleveljuxtapose.lasname = %s AND managementlevel.manlevelkey=ldmamil.manlevel  and ldmamil.ldmakey=%s and managementlevel.manlevelkey2 = manleveljuxtapose.manlevelkey", GetSQLValueString($colname_rsManleveljuxtapose, "text"),GetSQLValueString($colname2_rsManleveljuxtapose, "int"));
+$rsManleveljuxtapose = mysql_query($query_rsManleveljuxtapose, $Assessment) or die(mysql_error());
+$row_rsManleveljuxtapose = mysql_fetch_assoc($rsManleveljuxtapose);
+$totalRows_rsManleveljuxtapose = mysql_num_rows($rsManleveljuxtapose);
+
+$colname_rsDmgrowth = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsDmgrowth = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmgrowth = sprintf("SELECT dmgrowth.dmgrowthperspectives, dmgrowth.dmgrowthresponse, dmgrowth.dmgrowthprocess, dmgrowth.lasname FROM dmgrowth WHERE lasname = %s", GetSQLValueString($colname_rsDmgrowth, "text"));
+$rsDmgrowth = mysql_query($query_rsDmgrowth, $Assessment) or die(mysql_error());
+$row_rsDmgrowth = mysql_fetch_assoc($rsDmgrowth);
+$totalRows_rsDmgrowth = mysql_num_rows($rsDmgrowth);
+
+$colname_rsDmlessons = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsDmlessons = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmlessons = sprintf("SELECT dmlessons.lasname, dmlessons.dmlesson1, dmlessons.dmlesson2, dmlessons.dmlesson3, dmlessons.dmlesson4, dmlessons.dmlesson5, dmlessons.dmlesson6 FROM dmlessons WHERE lasname = %s", GetSQLValueString($colname_rsDmlessons, "text"));
+$rsDmlessons = mysql_query($query_rsDmlessons, $Assessment) or die(mysql_error());
+$row_rsDmlessons = mysql_fetch_assoc($rsDmlessons);
+$totalRows_rsDmlessons = mysql_num_rows($rsDmlessons);
+
+$colname_rsProjectRespondent = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsProjectRespondent = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProjectRespondent = sprintf("SELECT projectrespondents.userkey, projectrespondents.userkey, ldmamil.userkey, ldmamil.ldmakey FROM projectrespondents, ldmamil WHERE projectrespondents.userkey = ldmamil.userkey  AND ldmamil.ldmakey = %s", GetSQLValueString($colname_rsProjectRespondent, "int"));
+$rsProjectRespondent = mysql_query($query_rsProjectRespondent, $Assessment) or die(mysql_error());
+$row_rsProjectRespondent = mysql_fetch_assoc($rsProjectRespondent);
+$totalRows_rsProjectRespondent = mysql_num_rows($rsProjectRespondent);
+
+$colname_rsldmascores = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsldmascores = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsldmascores = sprintf("SELECT * FROM ldmamilscores WHERE ldmakey = %s", GetSQLValueString($colname_rsldmascores, "int"));
+$rsldmascores = mysql_query($query_rsldmascores, $Assessment) or die(mysql_error());
+$row_rsldmascores = mysql_fetch_assoc($rsldmascores);
+$totalRows_rsldmascores = mysql_num_rows($rsldmascores);
+
+$colname_rsManagementLevel = "-1";
+if (isset($_GET['manlevel'])) {
+  $colname_rsManagementLevel = $_GET['manlevel'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManagementLevel = sprintf("SELECT * FROM managementlevel WHERE manlevelkey = %s", GetSQLValueString($colname_rsManagementLevel, "int"));
+$rsManagementLevel = mysql_query($query_rsManagementLevel, $Assessment) or die(mysql_error());
+$row_rsManagementLevel = mysql_fetch_assoc($rsManagementLevel);
+$totalRows_rsManagementLevel = mysql_num_rows($rsManagementLevel);
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateassess.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LDMA report</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<style type="text/css">
+<!--
+.style11 {
+	font-size: 10px;
+	line-height: normal;
+}
+-->
+</style>
+<style type="text/css">
+<!--
+.style12 {	font-size: 10px;
+	line-height: normal;
+}
+.style12 {	font-size: 10px
+}
+-->
+</style>
+<style type="text/css">
+<!--
+.style13 {	font-size: 10px;
+	line-height: normal;
+}
+.style13 {	font-size: 10px
+}
+-->
+</style>
+<style type="text/css">
+<!--
+.style14 {	font-size: 10px;
+	line-height: normal;
+}
+.style14 {	font-size: 10px
+}
+-->
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	background-image: url();
+	background-repeat: repeat;
+	background-color: #EDEEE9;
+}
+#apDiv1 {
+	position:absolute;
+	left:0;
+	top:0px;
+	width:780px;
+	height:110;
+	z-index:15;
+}
+#apDiv2 {
+	position:absolute;
+	left:43px;
+	top:122px;
+	width:780px;
+	height:17px;
+	z-index:4;
+}
+#apDiv3 {
+	position:absolute;
+	left:168px;
+	top:295px;
+	width:539px;
+	height:17px;
+	z-index:8;
+}
+#apDiv4 {
+	position:absolute;
+	left:704px;
+	top:122px;
+	width:42px;
+	height:17px;
+	z-index:3;
+}
+#apDiv5 {
+	position:absolute;
+	left:124px;
+	top:113px;
+	width:753px;
+	z-index:5;
+	height: 2000px;
+}
+#apDiv6 {
+	position:absolute;
+	left:260px;
+	top:135px;
+	width:522px;
+	z-index:6;
+}
+#apDiv7 {
+	position:absolute;
+	left:127px;
+	top:941px;
+	width:625px;
+	height:15px;
+	z-index:7;
+}
+#apDiv8 {
+	position:absolute;
+	left:83px;
+	top:257px;
+	width:147px;
+	height:269px;
+	z-index:8;
+}
+#apDiv9 {
+	position:absolute;
+	left:83px;
+	top:586px;
+	width:146px;
+	z-index:9;
+	background-color: #FFFFFF;
+	height: 233px;
+}
+#apDiv10 {
+	position:absolute;
+	left:83px;
+	top:134px;
+	width:146px;
+	height:107px;
+	z-index:10;
+}
+#apDiv11 {
+	position:absolute;
+	left:84px;
+	top:926px;
+	width:145px;
+	height:45px;
+	z-index:11;
+}
+#apDiv12 {
+	position:absolute;
+	left:83px;
+	top:836px;
+	width:146px;
+	height:54px;
+	z-index:12;
+}
+-->
+</style>
+<link href="../css/styleassess.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+<!--
+#apDiv13 {
+	position:absolute;
+	left:82px;
+	top:806px;
+	width:147px;
+	height:3px;
+	z-index:13;
+	background-color: #627ECF;
+}
+.style11 {
+	font-size: 10px
+}
+.style4 {	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10px;
+}
+#apDiv16 {	position:absolute;
+	left:4px;
+	top:3px;
+	width:30px;
+	height:28px;
+	z-index:14;
+}
+#apDiv17 {
+	position:absolute;
+	left:667px;
+	top:62px;
+	width:232px;
+	height:21px;
+	z-index:16;
+	padding-top: 4px;
+}
+-->
+</style>
+<script src="../SpryAssetsAssessments/SpryMenuBar.js" type="text/javascript"></script>
+<link href="../SpryAssetsAssessments/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssetsAssessments/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+#apDiv14 {
+	position:absolute;
+	left:324px;
+	top:68px;
+	width:362px;
+	height:17px;
+	z-index:17;SpryAssetsAssessments
+}
+#apDiv15 {
+	position:absolute;
+	left:0px;
+	top:158px;
+	width:1000px;
+	z-index:18;
+	height: 200px;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="apDiv1"><img src="../images/dtsskinold/DTSheader1.gif" alt="DTS masthead" width="1000" height="66" /></div>
+<div id="apDiv5"><!-- InstanceBeginEditable name="main" -->
+        <td valign="top">
+          <h1><?php echo $row_rsProjectRespondent['userkey']; ?></h1>
+          <p>You may find it useful to revisit your report from time to time. As we update our knowledge about learning at each phase, we add to our learning suggestions. This means that, from time to time, you may discover new resources here, even if you don't take another assessment.</p>
+          <table width="80%" border="0" cellpadding="4" cellspacing="0">
+            <tr>
+              <td width="124" rowspan="6" align="left" valign="top"><div align="left"><img src="<?php echo $row_rsManlasart['../scoring/manlasvert']; ?>" alt="Graph of level versus management levels" hspace="0" align="top" /></div></td>
+              <td width="165"><strong>Date of assessment</strong></td>
+              <td width="258"><?php echo $row_rsLDMA['date']; ?></td>
+            </tr>
+            <tr>
+              <td width="165"><strong>Lectical phase</strong></td>
+              <td><?php echo $_GET['lasname']; ?></td>
+            </tr>
+            <tr>
+              <td colspan="2"><?php echo $row_rsDmintroman['dmintroman']; ?></td>
+            </tr>
+            <tr>
+              <td colspan="2"><strong>Your performance indicates that you are likely to think:</strong></td>
+            </tr>
+            <tr>
+              <td colspan="2"><?php echo $row_rsStrengths['dmcode1perspectives']; ?></td>
+            </tr>
+            <tr>
+              <td colspan="2"><?php echo $row_rsStrengths['dmcode2perspectives']; ?></td>
+            </tr>
+            <tr>
+              <td colspan="3"><?php echo $row_rsStrengths['dmcode3response']; ?></td>
+            </tr>
+            <tr>
+              <td colspan="3"><?php echo $row_rsStrengths['dmcode4response']; ?></td>
+            </tr>
+            <tr>
+              <td colspan="3"><strong>In your decision-making process, you are likely to...</strong></td>
+            </tr>
+            <tr>
+              <td colspan="3"><?php echo $row_rsStrengths['dmcode5process']; ?></td>
+            </tr>
+            <tr>
+              <td colspan="3"><strong>Personal remarks</strong></td>
+            </tr>
+            <tr>
+              <td colspan="3"><?php echo $row_rsldmascores['codercomment']; ?></td>
+            </tr>
+            <tr>
+              <td colspan="2" valign="bottom"><span class="style12"><img src="../images/skin/Star.gif" alt="Star" width="21" height="20" align="left" />The size of the star relative to the above scale  indicates the range in which the respondent’s “true” score is most likely to fall. The center of the star represents our best estimate and the points represent the margin of error. All Lectical assessments are assessments of performances, not people. All individuals function in a developmental range, and a single assessment cannot represent that range. Further, our assessments are discipline-specific. Individuals generally function at different levels in different disciplines. Consequently, performance on one assessment in any one domain cannot be taken as a general assessment of cognitive ability. </span></td>
+              <td align="right" valign="top"><div align="right"><img src="<?php echo $row_rsManlasart['../scoring/manlaspie']; ?>" alt="Pie chart showing the distribution of managers across levels" hspace="6" vspace="6" align="right" /></div></td>
+            </tr>
+            <tr>
+              <td colspan="3"><span class="style12"><br />
+              </span></td>
+            </tr>
+          </table>
+          <h3>Suggestions</h3>
+          <table width="80%" border="0" cellspacing="0" cellpadding="4">
+            <tr>
+              <td><strong>Areas for growth include...</strong></td>
+            </tr>
+            <tr>
+              <td valign="top"><?php echo $row_rsDmgrowth['dmgrowthperspectives']; ?></td>
+            </tr>
+            <tr>
+              <td valign="top"><?php echo $row_rsDmgrowth['dmgrowthresponse']; ?></td>
+            </tr>
+            <tr>
+              <td valign="top"><?php echo $row_rsDmgrowth['dmgrowthprocess']; ?></td>
+            </tr>
+            <tr>
+              <td><strong>Learning suggestions</strong></td>
+            </tr>
+            <tr>
+              <td><?php echo $row_rsDmlessons['dmlesson1']; ?></td>
+            </tr>
+            <tr>
+              <td><?php echo $row_rsDmlessons['dmlesson2']; ?></td>
+            </tr>
+            <tr>
+              <td><?php echo $row_rsDmlessons['dmlesson3']; ?></td>
+            </tr>
+            <tr>
+              <td><?php echo $row_rsDmlessons['dmlesson4']; ?></td>
+            </tr>
+            <tr>
+              <td><?php echo $row_rsDmlessons['dmlesson5']; ?></td>
+            </tr>
+            <tr>
+              <td><?php echo $row_rsDmlessons['dmlesson6']; ?></td>
+            </tr>
+            <tr>
+              <td align="center" valign="middle"><div align="center"><span class="style13"><img src="<?php echo $row_rsManlevelart['../scoring/manlevelgraphs']; ?>" alt="Management level by lectical level" hspace="6" vspace="6" align="absmiddle" /></span></div></td>
+            </tr>
+            <tr>
+              <td align="center" valign="middle"><div align="center"><?php echo $row_rsManlevelart['manlevelgraphstitle']; ?></div></td>
+            </tr>
+          </table>
+          <h3>Reasoning in this phase</h3>
+          <table width="80%" border="0" cellspacing="0" cellpadding="4">
+            <tr>
+              <td colspan="2"><?php echo $row_rsDmmanlasgendescrip['dmmanlasgendescrip']; ?></td>
+            </tr>
+            <tr>
+              <td colspan="2"><?php echo $row_rsDmmanlasgendescrip['dmmanlasperspec']; ?></td>
+            </tr>
+            <tr>
+              <td colspan="2"><?php echo $row_rsDmmanlasgendescrip['dmmanlasresponse']; ?></td>
+            </tr>
+            <tr>
+              <td colspan="2"><?php echo $row_rsDmmanlasgendescrip['dmmanlasprocess']; ?></td>
+            </tr>
+            <tr>
+              <td align="right" valign="bottom">&nbsp;</td>
+              <td rowspan="9"><div align="right"><img src="<?php echo $row_rsManlevelart['../scoring/manlevel3graphs']; ?>" alt="Comparison of management levels with lectical distributions" hspace="6" vspace="6" /></div></td>
+            </tr>
+            <tr>
+              <td align="left" valign="bottom">&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="bottom">&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="bottom">&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="bottom">&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="bottom">&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="right" valign="bottom"><span class="style14"><?php echo $row_rsManlevelart['manlevel3graphstitle']; ?></span></td>
+            </tr>
+            <tr>
+              <td align="right" valign="bottom">&nbsp;</td>
+            </tr>
+            <tr>
+              <td align="left" valign="bottom">&nbsp;</td>
+            </tr>
+            <tr>
+              <td colspan="2" align="left" valign="bottom"><p><span class="emphasis">Note: </span>We did not base your score on the particular concepts and ideas in your performance. We base our scores on what researchers call the &quot;hierarchical&quot; and &quot;horizontal&quot; complexity of  performances. (To read a short description of our scoring system—the Lectical Assessment System—<a href="../PDF/LAAS.pdf">click here</a>.) Don't be surprised if the ideas represented in the above descriptions are not identical with your own. Two people can reason in the same phase and use quite different concepts in their arguments. Because your continued development requires that you  expand the range and depth of your knowledge, we suggest that you deliberately seek out ideas in these descriptions that are different from your own, and take some time to explore them. Many of these ideas are represented in the articles and books we list under  the &quot;suggestions&quot; tab.</p></td>
+            </tr>
+          </table>
+          <h3>Comments</h3>
+          <table width="80%" border="0" cellspacing="0" cellpadding="4">
+            <tr>
+              <td><p>An appropriate level of decision-making skill is necessary but not sufficient for managerial success. Other skills, such as strategic thinking and reasoning about the leadership role, along with interpersonal awareness, emotional maturity, motivation, and personality contribute to predictions of performance. The figure below portrays our evolving research-based model of the skills and conditions that contribute to the development of good leadership. </p></td>
+            </tr>
+            <tr>
+              <td><div align="center"><img src="../images/LeadModelLevelS.gif" alt="Leadership model" width="425" height="310" /></div></td>
+            </tr>
+            <tr>
+              <td><p><?php echo $row_rsManlevelcomment['manlevelcomment']; ?></p></td>
+            </tr>
+            <tr>
+              <td><p><?php echo $row_rsManleveljuxtapose['manleveljuxtapose']; ?></p></td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+          </table>
+          <h3>Essays</h3>
+          <table width="80%" border="0" cellspacing="0" cellpadding="4">
+            <tr>
+              <td width="150" valign="top"><strong>What are the important things to consider in this situation? In one or two paragraphs, explain what they are and why they are important.</strong></td>
+              <td width="73%" valign="top"><?php echo $row_rsLDMA['perspectives1']; ?></td>
+            </tr>
+            <tr>
+              <td width="150" valign="top"><strong>Are some of the the considerations you discussed in your response to question 1 more important than others? If so, what are they and why are they more important?</strong></td>
+              <td valign="top"><?php echo $row_rsLDMA['perspectives2']; ?></td>
+            </tr>
+            <tr>
+              <td width="150" valign="top"><strong>What do you think is an appropriate response to this type of situation? Please explain why this response is appropriate.</strong></td>
+              <td valign="top"><?php echo $row_rsLDMA['response1']; ?></td>
+            </tr>
+            <tr>
+              <td width="150" valign="top"><strong>Describe another reasonable response to this kind of situation. Compare the potential risks and benefits of this response with those of your original response.</strong></td>
+              <td valign="top"><?php echo $row_rsLDMA['response2']; ?></td>
+            </tr>
+            <tr>
+              <td width="150" valign="top"><strong>What process would you recommend for deciding how to respond to situations of this kind? Please describe this decision -making process in a way that would allow another person to replicate it.</strong></td>
+              <td valign="top"><?php echo $row_rsLDMA['process']; ?></td>
+            </tr>
+          </table>
+          <p>&nbsp;</p>
+          </td>
+              <!-- InstanceEndEditable -->
+  <p>&nbsp;</p>
+  <div align="center" class="copyright"> </div>
+</div>
+<div id="apDiv17">
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="../security/logIn.php">log in</a></li>
+    <li><a href="../index.html">home</a></li>
+    <li><a href="../contactus.php">contact</a></li>
+  </ul>
+</div>
+<div id="apDiv14">
+<p class="copyright">©2010, Developmental Testing Service, INC. All rights reserved.
+    </p>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"../SpryAssetsAssessments/SpryMenuBarDownHover.gif", imgRight:"../SpryAssetsAssessments/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsProjectRespondent);
+
+mysql_free_result($rsldmascores);
+
+mysql_free_result($rsManagementLevel);
+
+mysql_free_result($rsLDMA);
+
+mysql_free_result($rsStrengths);
+
+mysql_free_result($rsManlasart);
+
+mysql_free_result($rsManlevelart);
+
+mysql_free_result($rsDmintroman);
+
+mysql_free_result($rsDmmanlasgendescrip);
+
+mysql_free_result($rsManlevelcomment);
+
+mysql_free_result($rsManleveljuxtapose);
+
+mysql_free_result($rsDmgrowth);
+
+mysql_free_result($rsDmlessons);
+
+?>

@@ -1,0 +1,420 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+$maxRows_rsGlobal = 10;
+$pageNum_rsGlobal = 0;
+if (isset($_GET['pagenum_rsglobal'])) {
+  $pageNum_rsGlobal = $_GET['pagenum_rsglobal'];
+}
+$startRow_rsGlobal = $pageNum_rsGlobal * $maxRows_rsGlobal;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGlobal = "SELECT globalconsciousness_data.glckey, globalconsciousness_data.`timestamp`, globalconsciousness_data.bulkcustomerkey, globalconsciousness_data.completed, globalconsciousness_data.scored1, globalconsciousness_data.userkey, bulkcustomerinfo.bulkcustomerkey,  bulkcustomerinfo.lastname FROM globalconsciousness_data, bulkcustomerinfo WHERE globalconsciousness_data.completed > 0 AND  globalconsciousness_data.scored1 < 1 and bulkcustomerinfo.bulkcustomerkey = globalconsciousness_data.bulkcustomerkey ORDER BY `date` asc";
+$query_limit_rsGlobal = sprintf("%s limit %d, %d", $query_rsGlobal, $startRow_rsGlobal, $maxRows_rsGlobal);
+$rsGlobal = mysql_query($query_limit_rsGlobal, $Assessment) or die(mysql_error());
+$row_rsGlobal = mysql_fetch_assoc($rsGlobal);
+
+if (isset($_GET['totalrows_rsglobal'])) {
+  $totalRows_rsGlobal = $_GET['totalrows_rsglobal'];
+} else {
+  $all_rsGlobal = mysql_query($query_rsGlobal);
+  $totalRows_rsGlobal = mysql_num_rows($all_rsGlobal);
+}
+$totalPages_rsGlobal = ceil($totalRows_rsGlobal/$maxRows_rsGlobal)-1;
+
+$maxRows_rsGlobal2 = 20;
+$pageNum_rsGlobal2 = 0;
+if (isset($_GET['pagenum_rsglobal2'])) {
+  $pageNum_rsGlobal2 = $_GET['pagenum_rsglobal2'];
+}
+$startRow_rsGlobal2 = $pageNum_rsGlobal2 * $maxRows_rsGlobal2;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGlobal2 = "SELECT globalconsciousness_data.glckey, globalconsciousness_data.`timestamp`, globalconsciousness_data.bulkcustomerkey, globalconsciousness_data.coded1, globalconsciousness_scores.glcscoringkey, globalconsciousness_data.scored1, globalconsciousness_data.finalized, globalconsciousness_data.confidence1, globalconsciousness_data.confidence2, globalconsciousness_data.confidence3, globalconsciousness_data.scored1, globalconsciousness_data.userkey, globalconsciousness_scores.lasnumber_1, globalconsciousness_scores.lasnumber_2, globalconsciousness_scores.lasnumber_3, bulkcustomerinfo.bulkcustomerkey, bulkcustomerinfo.lastname FROM globalconsciousness_data, globalconsciousness_scores, bulkcustomerinfo WHERE globalconsciousness_data.glckey=globalconsciousness_scores.glckey AND globalconsciousness_data.scored1>0 and bulkcustomerinfo.bulkcustomerkey = globalconsciousness_data.bulkcustomerkey ORDER BY globalconsciousness_scores.glcscoringkey desc";
+$query_limit_rsGlobal2 = sprintf("%s limit %d, %d", $query_rsGlobal2, $startRow_rsGlobal2, $maxRows_rsGlobal2);
+$rsGlobal2 = mysql_query($query_limit_rsGlobal2, $Assessment) or die(mysql_error());
+$row_rsGlobal2 = mysql_fetch_assoc($rsGlobal2);
+
+if (isset($_GET['totalrows_rsglobal2'])) {
+  $totalRows_rsGlobal2 = $_GET['totalrows_rsglobal2'];
+} else {
+  $all_rsGlobal2 = mysql_query($query_rsGlobal2);
+  $totalRows_rsGlobal2 = mysql_num_rows($all_rsGlobal2);
+}
+$totalPages_rsGlobal2 = ceil($totalRows_rsGlobal2/$maxRows_rsGlobal2)-1;
+
+$queryString_rsGlobal = "";
+if (!empty($_SERVER['query_string'])) {
+  $params = explode("&", $_SERVER['query_string']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsGlobal") == false && 
+        stristr($param, "totalRows_rsGlobal") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsGlobal = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsGlobal = sprintf("&totalrows_rsglobal=%d%s", $totalRows_rsGlobal, $queryString_rsGlobal);
+
+if (isset($_GET['totalrows_rsglobal3'])) {
+  $totalRows_rsGlobal3 = $_GET['totalrows_rsglobal3'];
+} else {
+  $all_rsGlobal3 = mysql_query($query_rsGlobal3);
+  $totalRows_rsGlobal3 = mysql_num_rows($all_rsGlobal3);
+}
+$totalPages_rsGlobal3 = ceil($totalRows_rsGlobal3/$maxRows_rsGlobal3)-1;
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatescore1.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Choose an assessment</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #929292;
+	background-image: url(/images/skin/background.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 1300px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #EAEAEA;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/headerWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footerWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.logintext {
+	line-height: 20px;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="/" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="../" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <td valign="top"><h1>GLOBAL CONSCIOUSNESS ASSESSMENTS TO SCORE</h1>
+      <p><a href="chooseassessment.php">choose assessment</a> | <a href="choosecommunity.php">community</a> | <a href="chooseengagement.php">engagement</a></p>
+      <h3>Ready to score</h3>
+      <p>Records <?php echo ($startRow_rsGlobal + 1) ?>  to <?php echo min($startRow_rsGlobal + $maxRows_rsGlobal, $totalRows_rsGlobal) ?>  of <?php echo $totalRows_rsGlobal ?>   <a href="<?php printf("%s?pageNum_rsGlobal=%d%s", $currentPage, 0, $queryString_rsGlobal); ?>">First</a> | <a href="<?php printf("%s?pageNum_rsGlobal=%d%s", $currentPage, max(0, $pageNum_rsGlobal - 1), $queryString_rsGlobal); ?>">Previous</a> | <a href="<?php printf("%s?pageNum_rsGlobal=%d%s", $currentPage, min($totalPages_rsGlobal, $pageNum_rsGlobal + 1), $queryString_rsGlobal); ?>">Next</a> | <a href="<?php printf("%s?pageNum_rsGlobal=%d%s", $currentPage, $totalPages_rsGlobal, $queryString_rsGlobal); ?>">Last</a></p>
+      <table>
+        <tr>
+          <td width="40" class="tablehead"><strong>Global</strong></td>
+          <td width="130" class="tablehead"><strong>Date</strong></td>
+          <td class="tablehead">ID</td>
+          <td class="tablehead">Customer</td>
+          <td width="100" class="tablehead"><strong>Score</strong></td>
+        </tr>
+        <?php do { ?>
+          <tr>
+            <td width="40"><div align="center"><?php echo $row_rsGlobal['glckey']; ?></div></td>
+            <td width="130"><div align="center"><?php echo $row_rsGlobal['timestamp']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsGlobal['userkey']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsGlobal['lastname']; ?></div></td>
+            <td width="100"><div align="center"><a href="../scoring_glc/glc_scoring1a.php?glckey=<?php echo $row_rsGlobal['glckey']; ?>">select</a></div></td>
+          </tr>
+          <?php } while ($row_rsGlobal = mysql_fetch_assoc($rsGlobal)); ?>
+      </table>
+      <h3>Scored to finalized    </h3>
+      <p>Records <?php echo ($startRow_rsGlobal2 + 1) ?> to <?php echo min($startRow_rsGlobal2 + $maxRows_rsGlobal2, $totalRows_rsGlobal2) ?> of 
+      <?php echo $totalRows_rsGlobal2 ?>&nbsp;&nbsp;<a href="<?php printf("%s?pageNum_rsGlobal2=%d%s", $currentPage, 0, $queryString_rsGlobal2); ?>">First</a> | <a href="<?php printf("%s?pageNum_rsGlobal2=%d%s", $currentPage, max(0, $pageNum_rsGlobal2 - 1), $queryString_rsGlobal2); ?>">Previous</a> | <a href="<?php printf("%s?pageNum_rsGlobal2=%d%s", $currentPage, min($totalPages_rsGlobal2, $pageNum_rsGlobal2 + 1), $queryString_rsGlobal2); ?>">Next</a> | <a href="<?php printf("%s?pageNum_rsGlobal2=%d%s", $currentPage, $totalPages_rsGlobal2, $queryString_rsGlobal2); ?>">Last</a></p>
+      <table width="100%" border="0">
+        <tr>
+          <td width="40" class="tablehead">Global</td>
+          <td width="130" class="tablehead">Date</td>
+          <td class="tablehead">Customer</td>
+          <td class="tablehead">Orig ID</td>
+          <td class="tablehead">LAS 1</td>
+          <td class="tablehead">Conf 1</td>
+          <td class="tablehead">LAS 2</td>
+          <td class="tablehead">Conf 2</td>
+          <td class="tablehead">LAS 3</td>
+          <td class="tablehead">Conf 3</td>
+          <td class="tablehead">Coded</td>
+          <td class="tablehead">Finalized</td>
+          <td class="tablehead">Coder</td>
+          <td class="tablehead">1st scorer</td>
+          <td class="tablehead">Finalize</td>
+          <td class="tablehead"><strong> 2nd scorer</strong></td>
+          <td class="tablehead"><strong> 3rd scorer</strong></td>
+        </tr>
+        <?php do { ?>
+          <tr>
+            <td width="40"><div align="center"><?php echo $row_rsGlobal2['glckey']; ?></div></td>
+            <td width="130"><div align="center"><?php echo $row_rsGlobal2['timestamp']; ?></div></td>
+            <td><?php echo $row_rsGlobal2['lastname']; ?></td>
+            <td><div align="center"><?php echo $row_rsGlobal2['userkey']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsGlobal2['lasnumber_1']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsGlobal2['confidence1']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsGlobal2['lasnumber_2']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsGlobal2['confidence2']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsGlobal2['lasnumber_3']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsGlobal2['confidence3']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsGlobal2['coded1']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsGlobal2['finalized']; ?></div></td>
+            <td><div align="center"><a href="../scoring_glc/glc_coder.php?glckey=<?php echo $row_rsGlobal2['glckey']; ?>">code</a></div></td>
+            <td><div align="center"><a href="../scoring_glc/glc_scoring1a.php?glcscoringkey=<?php echo $row_rsGlobal2['glcscoringkey']; ?>&amp;glckey=<?php echo $row_rsGlobal2['glckey']; ?>">edit</a></div></td>
+            <td><div align="center"><a href="../scoring_glc/glc_scoringfinalize.php?glckey=<?php echo $row_rsGlobal2['glckey']; ?>&amp;userkey=<?php echo $row_rsGlobal2['userkey']; ?>">finalize</a></div></td>
+            <td><div align="center"><a href="../scoring_glc/glc_scoring2a.php?glcscoringkey=<?php echo $row_rsGlobal2['glcscoringkey']; ?>&amp;glckey=<?php echo $row_rsGlobal2['glckey']; ?>">score</a></div></td>
+            <td><div align="center"><a href="../scoring_glc/glc_scoring3a.php?glcscoringkey=<?php echo $row_rsGlobal2['glcscoringkey']; ?>&amp;glckey=<?php echo $row_rsGlobal2['glckey']; ?>">score</a></div></td>
+          </tr>
+          <?php } while ($row_rsGlobal2 = mysql_fetch_assoc($rsGlobal2)); ?>
+      </table>
+      <h3>&nbsp;</h3>
+      <p>&nbsp;</p>
+      </p>
+  <table width="100%" border="0">
+  </table><!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsGlobal);
+
+mysql_free_result($rsGlobal2);
+
+mysql_free_result($rsGlobal);
+
+mysql_free_result($rsGlobal2);
+
+mysql_free_result($rsGlobal);
+?>

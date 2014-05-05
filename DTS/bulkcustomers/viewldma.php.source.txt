@@ -1,0 +1,452 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsUser = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsUser = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsUser = sprintf("SELECT userkey, user_level, firstname, lastname FROM registrants WHERE userkey = %s AND user_level > 1", GetSQLValueString($colname_rsUser, "int"));
+$rsUser = mysql_query($query_rsUser, $Assessment) or die(mysql_error());
+$row_rsUser = mysql_fetch_assoc($rsUser);
+$totalRows_rsUser = mysql_num_rows($rsUser);
+
+$maxRows_rsLDMA = 20;
+$pageNum_rsLDMA = 0;
+if (isset($_GET['pagenum_rsldma'])) {
+  $pageNum_rsLDMA = $_GET['pagenum_rsldma'];
+}
+$startRow_rsLDMA = $pageNum_rsLDMA * $maxRows_rsLDMA;
+
+$colname_rsLDMA = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLDMA = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMA = sprintf("SELECT ldma.ldmakey, ldma.userkey, ldma.bulkcustomerkey, registrants.firstname, registrants.lastname, registrants.userkey, ldmascores.ldmakey, ldmascores.lasname, ldmascores.ldmascoringkey, ldmascores.lasnumber_1, ldma.finalized, ldma.`date` FROM ldma, registrants, ldmascores WHERE ldma.bulkcustomerkey = %s AND ldma.userkey=registrants.userkey and ldmascores.ldmakey=ldma.ldmakey and (ldma.finalized = 1 or ldma.finalized = 2) ORDER BY ldma.`date` desc", GetSQLValueString($colname_rsLDMA, "int"));
+$query_limit_rsLDMA = sprintf("%s limit %d, %d", $query_rsLDMA, $startRow_rsLDMA, $maxRows_rsLDMA);
+$rsLDMA = mysql_query($query_limit_rsLDMA, $Assessment) or die(mysql_error());
+$row_rsLDMA = mysql_fetch_assoc($rsLDMA);
+
+if (isset($_GET['totalrows_rsldma'])) {
+  $totalRows_rsLDMA = $_GET['totalrows_rsldma'];
+} else {
+  $all_rsLDMA = mysql_query($query_rsLDMA);
+  $totalRows_rsLDMA = mysql_num_rows($all_rsLDMA);
+}
+$totalPages_rsLDMA = ceil($totalRows_rsLDMA/$maxRows_rsLDMA)-1;
+
+$colname_rsLDMA2 = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLDMA2 = (get_magic_quotes_gpc()) ? $_SESSION['log_userkey'] : addslashes($_SESSION['log_userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMA2 = sprintf("SELECT ldma.ldmakey, ldma.userkey, ldma.bulkcustomerkey, registrants.firstname, registrants.lastname, registrants.userkey, ldma.completed, ldma.`date` FROM ldma, registrants WHERE ldma.bulkcustomerkey = %s AND ldma.userkey=registrants.userkey and ldma.completed = 0 ORDER BY ldma.`date` desc", GetSQLValueString($colname_rsLDMA2, "int"));
+$rsLDMA2 = mysql_query($query_rsLDMA2, $Assessment) or die(mysql_error());
+$row_rsLDMA2 = mysql_fetch_assoc($rsLDMA2);
+
+if (isset($_GET['totalrows_rsldma2'])) {
+  $totalRows_rsLDMA2 = $_GET['totalrows_rsldma2'];
+} else {
+  $all_rsLDMA2 = mysql_query($query_rsLDMA2);
+  $totalRows_rsLDMA2 = mysql_num_rows($all_rsLDMA2);
+}
+$totalPages_rsLDMA2 = ceil($totalRows_rsLDMA2/$maxRows_rsLDMA2)-1;
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+$colname_rsLDMA3 = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLDMA3 = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMA3 = sprintf("SELECT ldma.ldmakey, ldma.userkey, ldma.bulkcustomerkey, registrants.firstname, registrants.lastname, registrants.userkey, ldma.completed, ldma.`date` FROM ldma, registrants WHERE ldma.bulkcustomerkey = %s AND ldma.userkey=registrants.userkey and ldma.completed = 1 and ldma.scored = 0  ORDER BY ldma.`date` desc", GetSQLValueString($colname_rsLDMA3, "int"));
+$rsLDMA3 = mysql_query($query_rsLDMA3, $Assessment) or die(mysql_error());
+$row_rsLDMA3 = mysql_fetch_assoc($rsLDMA3);
+$totalRows_rsLDMA3 = mysql_num_rows($rsLDMA3);
+
+$colname_rsLDMA4 = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLDMA4 = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMA4 = sprintf("SELECT ldma.ldmakey, ldma.userkey, ldma.bulkcustomerkey, registrants.firstname, registrants.lastname, registrants.userkey, ldmascores.ldmakey, ldmascores.lasname, ldmascores.ldmascoringkey, ldma.scored, ldma.finalized, ldma.`date` FROM ldma, registrants, ldmascores WHERE ldma.bulkcustomerkey = %s AND ldma.userkey=registrants.userkey and ldmascores.ldmakey=ldma.ldmakey and ldma.finalized < 1 and ldma.scored > 0 ORDER BY ldma.`date` desc", GetSQLValueString($colname_rsLDMA4, "int"));
+$rsLDMA4 = mysql_query($query_rsLDMA4, $Assessment) or die(mysql_error());
+$row_rsLDMA4 = mysql_fetch_assoc($rsLDMA4);
+$totalRows_rsLDMA4 = mysql_num_rows($rsLDMA4);
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateldma2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: View LDMA</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+.twoColFixRtHdr #container #mainContent h6 a {
+	color: #767A76;
+}
+-->
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #FFF9F3;
+	background-image: url(/images/skin/LDMAcontainer2.jpg);
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LDMAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 3;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 0px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+	background-image: url(/images/skin/LDMAmenu4.jpg);
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/LDMAfooter2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #menu1 div {
+	color: #FFE1D0;
+}
+.twoColFixRtHdr #container #menu1 #MenuBar2 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><?php include '../includes/menu/menu_bulk_assess_links.php'; ?><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>Results for <?php echo $row_rsUser['firstname']; ?> <?php echo $row_rsUser['lastname']; ?></h1>
+  <p class="pspaced">If you do not see results for all of your clients on this page, some of them may not have entered the correct Reseller/ Teacher/Researcher ID. If you are missing results, <a href="../contactus.php">contact us</a> and we will try to help. Please do not give clients your user name.</p>
+  <p class="pspaced">&nbsp;</p>
+  <p align="left" class="copyright"><a href="../downloads/downloadldma.php">Download LDMA records</a> (Clicking this link will place a file called LDMA.csv in your downloads folder. <br />
+  </p>
+  <p align="left" class="copyright">Record <?php echo ($startRow_rsLDMA + 1) ?>&nbsp;to <?php echo min($startRow_rsLDMA + $maxRows_rsLDMA, $totalRows_rsLDMA) ?>&nbsp;of <?php echo $totalRows_rsLDMA ?>: &nbsp;<a href="<?php printf("%s?pageNum_rsLDMA=%d%s", $currentPage, 0, $queryString_rsLDMA); ?>">First</a> | <a href="<?php printf("%s?pageNum_rsLDMA=%d%s", $currentPage, max(0, $pageNum_rsLDMA - 1), $queryString_rsLDMA); ?>">Previous</a> | <a href="<?php printf("%s?pageNum_rsLDMA=%d%s", $currentPage, min($totalPages_rsLDMA, $pageNum_rsLDMA + 1), $queryString_rsLDMA); ?>">Next</a> | <a href="<?php printf("%s?pageNum_rsLDMA=%d%s", $currentPage, $totalPages_rsLDMA, $queryString_rsLDMA); ?>">Last</a></p>
+  <table width="98%">
+    <tr>
+      <td class="tablehead">Number</td>
+      <td width="140" class="tablehead">Date</td>
+      <td class="tablehead">Name</td>
+      <td class="tablehead">Phase</td>
+      <td class="tablehead">Score</td>
+      <td class="tablehead">Summary</td>
+      <td class="tablehead">Report</td>
+      <td class="tablehead">Printable</td>
+    </tr>
+    <?php do { ?>
+    <tr>
+      <td><div align="center"><?php echo $row_rsLDMA['ldmakey']; ?></div></td>
+      <td width="140"><div align="center"><?php echo $row_rsLDMA['date']; ?></div></td>
+      <td><div align="left"><?php echo $row_rsLDMA['firstname']; ?>&nbsp;<?php echo $row_rsLDMA['lastname']; ?></div></td>
+      <td><div align="center"><?php echo $row_rsLDMA['lasname']; ?></div></td>
+      <td class="tablebody"><div align="right"><?php echo $row_rsLDMA['lasnumber_1']; ?></div></td>
+      <td class="tablebody"><div align="center"><a href="bulklectagraph1.php?userkey=<?php echo $row_rsLDMA['userkey']; ?>">select</a></div></td>
+      <td><div align="center"><a href="../scoring_ldma/ldmareport.php?ldmakey=<?php echo $row_rsLDMA['ldmakey']; ?>&amp;userkey=<?php echo $row_rsLDMA['userkey']; ?>&amp;lasname=<?php echo $row_rsLDMA['lasname']; ?>&amp;ldmascoringkey=<?php echo $row_rsLDMA['ldmascoringkey']; ?>">select</a></div></td>
+      <td><div align="center"><a href="../scoring_ldma/ldmareportprint.php?ldmakey=<?php echo $row_rsLDMA['ldmakey']; ?>&amp;userkey=<?php echo $row_rsLDMA['userkey']; ?>&amp;lasname=<?php echo $row_rsLDMA['lasname']; ?>&amp;ldmascoringkey=<?php echo $row_rsLDMA['ldmascoringkey']; ?>">select</a></div></td>
+    </tr>
+    <?php } while ($row_rsLDMA = mysql_fetch_assoc($rsLDMA)); ?>
+  </table>
+  <h3>Scored, not finalized</h3>
+  <p>The scores and reports in this list are subject to change. Please do not deliver reports selected from this list. They are for your eyes only.</p>
+  <table width="98%">
+    <tr>
+      <td class="tablehead">Number</td>
+      <td width="140" class="tablehead">Date</td>
+      <td class="tablehead">User/case no</td>
+      <td class="tablehead">Name</td>
+      <td class="tablehead">Phase</td>
+      <td class="tablehead">Report</td>
+      </tr>
+    <?php do { ?>
+    <tr>
+      <td><div align="center"><?php echo $row_rsLDMA4['ldmakey']; ?></div></td>
+      <td width="140"><div align="center"><?php echo $row_rsLDMA4['date']; ?></div></td>
+      <td><div align="center"><?php echo $row_rsLDMA4['userkey']; ?></div></td>
+      <td><div align="left"><?php echo $row_rsLDMA4['firstname']; ?>&nbsp;<?php echo $row_rsLDMA4['lastname']; ?></div></td>
+      <td><div align="center"><?php echo $row_rsLDMA4['lasname']; ?></div></td>
+      <td><div align="center"><a href="../scoring_ldma/ldmareport.php?ldmakey=<?php echo $row_rsLDMA4['ldmakey']; ?>&amp;userkey=<?php echo $row_rsLDMA4['userkey']; ?>&amp;lasname=<?php echo $row_rsLDMA4['lasname']; ?>&amp;ldmascoringkey=<?php echo $row_rsLDMA4['ldmascoringkey']; ?>">select</a></div></td>
+      </tr>
+    <?php } while ($row_rsLDMA4 = mysql_fetch_assoc($rsLDMA4)); ?>
+  </table>
+  <h3>In the scoring queue  </h3>
+  <table width="500" border="0">
+    <tr>
+      <td class="tablehead">ldmakey</td>
+      <td class="tablehead">Date</td>
+      <td class="tablehead">userkey</td>
+      </tr>
+    <?php do { ?>
+      <tr>
+        <td><div align="center"><?php echo $row_rsLDMA3['ldmakey']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLDMA3['date']; ?></div></td>
+        <td><?php echo $row_rsLDMA3['firstname']; ?> <?php echo $row_rsLDMA3['lastname']; ?></td>
+        </tr>
+      <?php } while ($row_rsLDMA3 = mysql_fetch_assoc($rsLDMA3)); ?>
+  </table>
+<h3>Not completed by test-taker</h3>
+  <p>If an assessment for a given test-taker does not appear in the top list, it may appear in this list of incomplete assessments. When clients  fail to complete  assessments, it may be because they have not understood the submission process. If you ask a client to try again, please ask him (or her) to carefully read and follow the instructions on the essay page to make sure the assessment is submitted properly. (BTW, when clients show up in both lists, they have started  the assessment more than once.) </p>
+  <p align="left" class="copyright">Record <?php echo ($startRow_rsLDMA2 + 1) ?>&nbsp;to <?php echo min($startRow_rsLDMA2 + $maxRows_rsLDMA2, $totalRows_rsLDMA2) ?>&nbsp;of <?php echo $totalRows_rsLDMA2 ?>: &nbsp;<a href="<?php printf("%s?pageNum_rsLDMA2=%d%s", $currentPage, 0, $queryString_rsLDMA2); ?>">First</a> | <a href="<?php printf("%s?pageNum_rsLDMA2=%d%s", $currentPage, max(0, $pageNum_rsLDMA2 - 1), $queryString_rsLDMA2); ?>">Previous</a> | <a href="<?php printf("%s?pageNum_rsLDMA2=%d%s", $currentPage, min($totalPages_rsLDMA2, $pageNum_rsLDMA2 + 1), $queryString_rsLDMA2); ?>">Next</a> | <a href="<?php printf("%s?pageNum_rsLDMA2=%d%s", $currentPage, $totalPages_rsLDMA2, $queryString_rsLDMA2); ?>">Last</a></p>
+  <table width="98%">
+    <tr>
+      <td class="tablehead">Number</td>
+      <td width="140" class="tablehead">Date</td>
+      <td class="tablehead">User/case number</td>
+      <td class="tablehead">Name</td>
+    </tr>
+    <?php do { ?>
+    <tr>
+      <td><div align="center"><?php echo $row_rsLDMA2['ldmakey']; ?></div></td>
+      <td width="140"><div align="center"><?php echo $row_rsLDMA2['date']; ?></div></td>
+      <td><div align="center"><?php echo $row_rsLDMA2['userkey']; ?></div></td>
+      <td><div align="left"><?php echo $row_rsLDMA2['firstname']; ?>&nbsp;<?php echo $row_rsLDMA2['lastname']; ?></div></td>
+      </tr>
+    <?php } while ($row_rsLDMA2 = mysql_fetch_assoc($rsLDMA2)); ?>
+  </table>
+  <p></p>
+  <p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsUser);
+
+mysql_free_result($rsLDMA);
+
+mysql_free_result($rsLDMA2);
+
+mysql_free_result($rsRegistrants);
+
+mysql_free_result($rsLDMA3);
+
+mysql_free_result($rsLDMA4);
+?>

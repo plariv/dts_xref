@@ -1,0 +1,216 @@
+<? 
+include_once ("../includes/dts_functions.php");
+
+// Calculates perspective taking, perspective seeking, and the 4 scale scores.
+/*
+	Dilemma weightings are currently OFF - not affecting scores.
+	To apply them:
+	- Under P taking and seeking, find the 2 weightings rows and uncomment them.
+	- For each scale score in the query, replace the divisor number by (n * di.weighting)
+ */
+function calculate_ldma_scale_scores ($table, $lakey, $lacodeskey = 0) {
+
+	$sql_lacodes = "";
+	if ($lacodeskey > 0) { $sql_lacodes = " AND c.lacodeskey = ".SQLstr($lacodeskey, 'int'); }
+
+	// Calculate P taking and seeking scores
+	if (1) {
+
+		// fetch coding data for this record
+		$sql = sprintf("SELECT c.*, di.dilemmakey, di.weighting
+			FROM {$table} c 
+				JOIN la_data d ON c.lakey = d.lakey
+				JOIN la_dilemmas di ON d.dilemmakey = di.dilemmakey
+			WHERE c.lakey = %s {$sql_lacodes} ",
+				SQLstr($lakey, 'int'));
+		$rsCodes = mysql_query($sql) or die("ERROR fetching coding data for this record.");
+		if (mysql_num_rows($rsCodes) == 0) { die("ERROR: couldn't fetch coding data for lakey {$lakey}."); }
+		$codes = mysql_fetch_assoc($rsCodes);
+
+		// fetch list of all perspectives, with their weight for this dilemma
+		$sql = sprintf("SELECT code_ptaken, code_psought, perspective, perspective_level, 
+				dilemma_%s AS implicit_explicit
+			FROM la_ldma_perspectives ",
+				zeropad(intval($codes['dilemmakey']), 2));
+		$rsPerspectives = mysql_query($sql) or die("ERROR fetching list of LDMA perspectives: ".mysql_error());
+		$perspectives = array();
+		while ($row = mysql_fetch_assoc($rsPerspectives)) {
+			// store this perspective's taken-slot
+			$perspectives[zeropad($row['code_ptaken'], 3)] = array(
+				'type' => 'taken', 
+				'name' => $row['perspective'], 
+				'level' => $row['perspective_level'], 
+				'implicit_explicit' => $row['implicit_explicit']);
+			// store this perspective's sought-slot
+			$perspectives[zeropad($row['code_psought'], 3)] = array(
+				'type' => 'sought', 
+				'name' => $row['perspective'], 
+				'level' => $row['perspective_level'], 
+				'implicit_explicit' => $row['implicit_explicit']);
+		}
+
+		// perspective taking score; perspective seeking score
+		$score = array('taken' => 0, 'sought' => 0);
+
+		// for each perspective slot
+		for ($c = '001'; $c <= 200; $c = zeropad($c + 1, 3)) {
+			if (!isset($perspectives[$c])) { continue; }
+
+			// the score for the perspective = 
+			//   the QUALITY of how fully this perspective was handled in the performance
+			//     (this is equal to the la_code_menus key stored in the la_codes table)
+			//   x the LEVEL of complexity of the perspective
+			//   x the IMPLICITNESS of the perspective given this dilemma (x2 if it's implicit)
+			//   % the DILEMMA WEIGHTING (larger weightings "penalize" easier dilemmas)
+			$score_this_perspective = $codes['code'.$c] 
+				* $perspectives[$c]['level']
+				* $perspectives[$c]['implicit_explicit'];
+			$this_perspective_type = $perspectives[$c]['type'];
+			$score[$this_perspective_type] += $score_this_perspective;
+
+		}
+
+		// divide the P taking & seeking scores by dilemma weighting
+		// (DISABLED - Weightings are no longer taken into account now.)
+		// $score['taken'] = $score['taken'] / $codes['weighting'];
+		// $score['sought'] = $score['sought'] / $codes['weighting'];
+
+		// save the final p taking and p seeking scores
+		$sql = sprintf("UPDATE {$table} c SET c.code451 = %s, c.code452 = %s 
+			WHERE c.lakey = %s {$sql_lacodes} ",
+				SQLstr($score['taken'], 'int'),
+				SQLstr($score['sought'], 'int'),
+				SQLstr($lakey, 'int'));
+		$result = mysql_query($sql) or die("ERROR updating p taking and seeking scores.");
+		// echo $sql.'<br>';
+
+	} // END SECTION: P taking and seeking 
+
+	// Calculate the 4 scale scores: P coordination, dm process, contextual thinking, collaborative capacity
+	if (1) {
+
+			$sql = sprintf("UPDATE {$table} c 
+				JOIN la_data d ON c.lakey = d.lakey
+				LEFT JOIN la_dilemmas di ON d.dilemmakey = di.dilemmakey
+				LEFT JOIN la_code_menus m203 ON c.code203 = m203.pulldownkey
+				LEFT JOIN la_code_menus m206 ON c.code206 = m206.pulldownkey
+				LEFT JOIN la_code_menus m207 ON c.code207 = m207.pulldownkey
+				LEFT JOIN la_code_menus m215 ON c.code215 = m215.pulldownkey
+				LEFT JOIN la_code_menus m216 ON c.code216 = m216.pulldownkey
+				LEFT JOIN la_code_menus m226 ON c.code226 = m226.pulldownkey
+				LEFT JOIN la_code_menus m339 ON c.code339 = m339.pulldownkey
+				LEFT JOIN la_code_menus m342 ON c.code342 = m342.pulldownkey
+				LEFT JOIN la_code_menus m343 ON c.code343 = m343.pulldownkey
+				LEFT JOIN la_code_menus m344 ON c.code344 = m344.pulldownkey
+				LEFT JOIN la_code_menus m345 ON c.code345 = m345.pulldownkey
+				LEFT JOIN la_code_menus m347 ON c.code347 = m347.pulldownkey
+				LEFT JOIN la_code_menus m406 ON c.code406 = m406.pulldownkey # IS being used
+				
+				SET 
+				
+				# PERSPECTIVE COORDINATION
+				c.code453 = 
+					(
+						c.code201 + # ptaking: deliberation
+						c.code202 + # ptaking: understanding 
+						IFNULL(m207.perspectives_seeking_deliberation_score, 0) + 
+						c.code208 + # pseeking: understanding
+						c.code224 + # perspectives: tensions
+						c.code227		# limits of perspective
+					) / 6,
+
+				# CONTEXTUAL THINKING 
+				c.code454 = 
+					(
+						IFNULL(m203.perspective_taking_situation_score, 0) + 
+						IFNULL(c.code209, 0) +  # pseeking: situation
+						IFNULL(m226.organizational_culture_context_values, 0) + 
+						IFNULL(m342.dm_problem_source_values, 0)
+					) / 4,
+				
+				# DECISION MAKING PROCESS
+				c.code455 = 
+					(
+						IFNULL(m339.info_gather_learning_values, 0) + 
+						IFNULL(m344.dm_goal_values, 0) + 
+						IFNULL(m345.dm_process_generality_values, 0) + 
+						IFNULL(m347.dm_review_outcome_values, 0)
+					) / 4,
+				
+				# COLLABORATIVE CAPACITY
+				c.code456 = 
+					(
+						IFNULL(m343.dm_process_collab_values, 0) + 
+						IFNULL(m206.perspective_seeking_buyin_score, 0) + 
+						IFNULL(c.code214, 0) +  # Communicating perspectives: relationships
+						IFNULL(m215.perspectives_communicating_informing_score, 0) + 
+						IFNULL(m216.perspectives_communicating_decision_score, 0)
+					) / 5
+
+				WHERE c.lakey = %s {$sql_lacodes} ",
+					SQLstr($lakey, 'int'));
+			
+			$result = mysql_query($sql) or die("ERROR updating scale scores: ".mysql_error());
+			// echo $sql.'<br>';
+
+	} // END SECTION: The 4 scale scores
+
+}
+
+// calculates all scale averages, and updates them in the themes table.
+function calculate_ldma_scale_averages_for_man_level ($manlevelgeneralkey, $test_time) {
+	
+	// clear out previous data for this man level
+	$sql = sprintf("DELETE FROM man_levels_theme_averages 
+		WHERE instrument_id = 'LDMA' AND manlevelgeneralkey = %s AND test_time = %s",
+			SQLstr($manlevelgeneralkey, 'int'),
+			SQLstr($test_time, 'int'));
+	$result = mysql_query($sql) or die("ERROR removing previous stored averages for this manlevel.");
+
+	// get averages for all scale scores for this management level
+	$sql = sprintf("SELECT 
+			ROUND(AVG(c.code451)) AS avg_ptaken, 
+			ROUND(AVG(c.code452)) AS avg_psought, 
+			ROUND(AVG(c.code453), 1) AS avg_pcoord, 
+			ROUND(AVG(c.code454), 1) AS avg_context, 
+			ROUND(AVG(c.code455), 1) AS avg_dmprocess, 
+			ROUND(AVG(c.code456), 1) AS avg_collab, 
+			COUNT(DISTINCT d.lakey) AS num_assessments
+		FROM la_data d 
+			JOIN la_codes c ON d.lakey = c.lakey
+			JOIN demogs_man_level dm ON d.manlevelkey = dm.manlevelkey
+			JOIN demogs_man_level_general dmg ON dm.man_level_number = dmg.man_level_number
+		WHERE d.instrument_id IN('LDMA', 'LDMA_JOURNAL') AND dmg.manlevelgeneralkey = %s
+			AND d.test_time = %s",
+			SQLstr($manlevelgeneralkey, 'int'),
+			SQLstr($test_time, 'int'));
+	$rs = mysql_query($sql) or die("ERROR fetching average scores for this manlevel.");
+	$row = mysql_fetch_assoc($rs);
+
+	// only continue if at least 10 records exist for this management level & test time
+	if ($row['num_assessments'] >= 10) {
+		// store averages
+		$k = intval($manlevelgeneralkey);
+		$t = intval($test_time);
+		$n = intval($row['num_assessments']);
+		$sql = sprintf("INSERT INTO man_levels_theme_averages
+			(manlevelgeneralkey, instrument_id, test_time, theme_name, average, based_on_num_records)
+			VALUES 
+			({$k}, 'LDMA', {$t}, 'perspective_taking', %s, {$n}),
+			({$k}, 'LDMA', {$t}, 'perspective_seeking', %s, {$n}),
+			({$k}, 'LDMA', {$t}, 'perspective_coordination', %s, {$n}),
+			({$k}, 'LDMA', {$t}, 'contextual_thinking', %s, {$n}),
+			({$k}, 'LDMA', {$t}, 'decision_making_process', %s, {$n}),
+			({$k}, 'LDMA', {$t}, 'collaborative_capacity', %s, {$n}) ",
+				SQLstr($row['avg_ptaken'], 'int'),
+				SQLstr($row['avg_psought'], 'int'),
+				SQLstr($row['avg_pcoord'], 'double'),
+				SQLstr($row['avg_context'], 'double'),
+				SQLstr($row['avg_dmprocess'], 'double'),
+				SQLstr($row['avg_collab'], 'double'));
+		$result = mysql_query($sql) or die("ERROR storing average scores for this manlevel.");
+
+	}
+}
+
+?>

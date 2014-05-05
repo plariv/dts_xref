@@ -1,0 +1,1 @@
+<a href="../SMS/m-start.php">Take the SMS Survey</a> | <a href="../SMS/indiv_selectsms.php">SMS Survey results</a> | <a href="../SMJ/journalentry.php">Write an SMS Journal entry</a> | <a href="../SMJ/indiv_journalentries.php">SMS Journal entries</a>

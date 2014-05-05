@@ -1,0 +1,194 @@
+<?php include_once ("includes/dts_functions.php");
+$boilerplate = prepBoilerplate('register');
+?>
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: Join mailing list</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<link href="WA_SecurityAssist/styles/Refined_Pacifica.css" rel="stylesheet" type="text/css" />
+<link href="WA_SecurityAssist/styles/Verdana.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+
+/* tooltip styling. by default the element to be styled is .tooltip  */
+.tooltip {
+	display:none;
+	font-size:90%;
+	font-weight: 400;
+	line-height:140%;
+	width: 150px;
+	background: #F1F7F6;
+	padding-right: 20px;
+	padding-left: 20px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-left: 10px;
+	-moz-box-shadow: 2px 2px 5px #888;
+	-webkit-box-shadow: 2px 2px 5px #888;
+	box-shadow: 2px 2px 5px #888;
+	z-index: 999;
+}
+
+.hotspot {
+	cursor: pointer; cursor: hand	
+	height:100%; 
+	width:100%; 
+	position:relative;
+}
+.twoColFixRtHdr #container-780 p {
+	padding-right: 30px;
+}
+.twoColFixRtHdr #container-780 h3 {
+	color: #007376;
+	padding-top: 15px;
+}
+
+.collapse_tab {
+	cursor: pointer;
+	position: relative;
+}
+.collapse_content {
+	display: none;
+	width: 100%;
+}
+
+.missing {
+	
+}
+
+</style>
+
+<script src="includes/jquery.js" type="text/javascript"></script>
+<script src="includes/jquery.tools.min.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+
+// JQUERY to manage hidden elements on the page
+$(document).ready(function() {
+	
+	$('.hotspot').tooltip({
+		position: 'bottom center', 
+		effect: 'fade', 
+		fadeInSpeed: 100,
+		fadeOutSpeed: 100,
+		delay:300,
+		layout: '<span/>',
+		events: {
+			def: 'mouseover, mouseleave'
+		}
+	}); 
+	
+	$('.collapse_tab').click(function(){
+		var content = $(this).parent().find('.collapse_content');
+		content.slideToggle(200);
+	});
+	
+	 // Validate confidence field on submit
+	$('form').submit(function(){
+		$('.missing').removeClass('missing');
+		// check for required elements
+		if ($('textarea').val() == "") {
+			$('textarea').addClass('.missing');
+			alert("The text box cannot be empty.");
+			return false;
+		}
+	});
+	
+});
+
+
+</script>
+
+
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    
+    <?php echo $boilerplate['newsletter_already_registered']; ?>
+    
+      
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

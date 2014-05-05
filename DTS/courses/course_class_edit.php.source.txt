@@ -1,0 +1,333 @@
+<?php 
+include_once '../includes/dts_functions.php';	
+
+if (!WA_Auth_RulePasses("Logged in as senior")) { 
+	WA_Auth_RestrictAccess("../security/logIn.php"); } 
+$userkey = $_SESSION['log_userkey'];
+
+if (!isset($_GET['classkey'])) { 
+	header("Location: courses_list.php?message=specify_key"); exit(); }
+$classkey = $_GET['classkey']; 
+
+// update details on this class
+if (isset($_POST['update'])) { 
+	
+  // Save the date as Sunday
+  $date_of_class = $_POST['date_of_class'];
+  $n = date('N', strtotime($date_of_class));
+  // ONLY move back to Sunday, if today is not already Sunday.
+  if ($n < 7) {
+    $date_of_class = date('Y-m-d', strtotime("-{$n} days", strtotime($date_of_class))); }
+
+	$sql_update = sprintf("UPDATE course_classes cl
+		SET number = %s, title_short = %s, title_long = %s, description = %s, guiding_questions = %s, learning_goals = %s, readings = %s, readings_optional = %s, link_to_lecture = %s, assignment = %s, materials = %s, date_of_class = %s, date_assignment_due = %s, is_visible_to_students = %s
+		WHERE cl.key = %s ",
+      // SQLrstr used rather than SQLstr for HTML divs, to prevent extra newlines.
+			SQLstr($_POST['number'], 'int'),
+			SQLstr($_POST['title_short'], 'text'),
+      SQLstr($_POST['title_long'], 'text'),
+			SQLrstr($_POST['description'], 'text'),
+      SQLrstr($_POST['guiding_questions'], 'text'),
+      SQLrstr($_POST['learning_goals'], 'text'),
+      SQLrstr($_POST['readings'], 'text'),
+      SQLrstr($_POST['readings_optional'], 'text'),
+      SQLstr($_POST['link_to_lecture'], 'text'),
+      SQLrstr($_POST['assignment'], 'text'),
+      SQLrstr($_POST['materials'], 'text'),
+      SQLstr($date_of_class, 'date'),
+      SQLstr($_POST['date_assignment_due'], 'date'),
+      SQLstr($_POST['is_visible_to_students'], 'int'),
+			SQLstr($_POST['key'], 'int'));
+	$result = mysql_query($sql_update) or die("ERROR updating this class: ".mysql_error().$sql_update);
+
+	header("Location: syllabus.php?coursekey=".$_POST['coursekey']); exit();
+}
+
+
+
+// fetch details on this class
+$sql = sprintf("SELECT c.key AS coursekey, c.title AS course_title, cl.*,
+		r.firstname, r.lastname
+	FROM course_classes cl
+		JOIN courses c ON cl.coursekey = c.key
+		JOIN registrants r ON cl.created_by_userkey = r.userkey
+	WHERE cl.key = %s",
+		SQLstr($classkey, 'int'));
+$rsClass = mysql_query($sql) 
+	or die("ERROR fetching details on this class: ".mysql_error());
+if (mysql_num_rows($rsClass) <> 1) { 
+	die("ERROR: A class wasn't found for key {$classkey}."); }
+$class = mysql_fetch_assoc($rsClass);
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: Edit class <?php echo $class['number']; ?> for course: <?php echo $class['course_title']; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<script src="../includes/jquery.js"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<script src="../includes/jquery.dotimeout.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+<script src="../includes/jquery.highlight.js" type="text/javascript"></script>
+<link href="../includes/js_res/jquery.ui.smoothness.css" rel="stylesheet" type="text/css" />
+
+<script src="../includes/ckeditor/ckeditor.js"></script>
+
+<script src="../includes/jquery.timepicker.js" type="text/javascript"></script>
+<link href="../includes/jquery.timepicker.css" rel="stylesheet" type="text/css"></script>
+
+<?php include_once '../includes/html_editor/html_editor.html'; ?>
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+	
+  $('.ckeditor').parent().css('width', '700px');
+  
+  $('.date').datepicker({ 
+    dateFormat: 'yy-mm-dd', 
+    numberOfMonths: 1,
+    showOtherMonths: true,
+    selectOtherMonths: true,
+    changeMonth: true,
+    changeYear: true
+  });
+
+  $('#link_to_lecture').keyup(function(){
+    $('#lecture_test').hide(200);
+  });
+
+  $('#link_to_lecture').blur(function(){
+    $('#lecture_test').show(200).attr('href', $(this).val());
+  });
+
+});
+
+</script>
+
+
+<style type="text/css">
+
+	a { color: #008A8C; cursor: pointer; }
+  table { max-width: 850px; }
+	td { font-size: 14px; }
+	.input-small { width: 80px; }
+	.input-big { width: 400px; }
+
+</style>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1><?php echo $class['course_title']; ?>: Edit class <?php echo $class['number']; ?></h1>
+  
+  <p><a href='syllabus.php?coursekey=<?php echo $class['coursekey']; ?>'>
+    « syllabus</a></p>
+
+  <table>
+  <form action='' method='post'>
+  	<tr>
+  		<td>Created by</td>
+  		<td><?php echo $class['firstname'].' '.$class['lastname']; ?></td>
+  	</tr>
+  	<tr>
+  		<td>Created on</td>
+  		<td><?php echo date('Y-m-d', strtotime($class['date_created'])); ?></td>
+  	</tr>
+  	<tr>
+  		<td>Last updated</td>
+  		<td><?php echo date('Y-m-d', strtotime($class['date_updated'])); ?></td>
+  	</tr>
+
+  	<tr>
+  		<td>Number</td>
+  		<td><input type='text' class='input-small' name='number' size='60' 
+  			value='<?php echo $class['number']; ?>' /></td>
+  	</tr>
+    <tr>
+      <td>Date of class</td>
+      <td>
+        You're actually selecting the <em>week</em> of the class (ie, the Sunday before the class).<br />
+        <input type='text' class='date input-small' name='date_of_class' 
+        value='<?php echo $class['date_of_class']; ?>' /></td>
+    </tr>
+
+  	<tr>
+  		<td>Title</td>
+  		<td></td>
+  	</tr>
+    <tr>
+      <td align='right'>short</td>
+      <td>
+        <input type='text' class='input-big' name='title_short' size='60' 
+        value='<?php echo $class['title_short']; ?>' /></td>
+    </tr>
+    <tr>
+      <td align='right'>full</td>
+      <td>
+        <input type='text' class='input-big' name='title_long' size='60' 
+        value='<?php echo $class['title_long']; ?>' /></td>
+    </tr>
+
+    <tr>
+      <td>Link to lecture</td>
+      <td>
+        Specify the full path, starting with https://...<br />
+        <input type='text' class='input-big' id='link_to_lecture' name='link_to_lecture' size='60' 
+          value='<?php echo $class['link_to_lecture']; ?>' />
+        <a id='lecture_test' target='_blank'>test</a>
+      </td>
+    </tr>
+
+  	<tr>
+  		<td>Description</td>
+  		<td>
+        Feel free to include images here. See the cheatsheet for a reminder.<br />
+        <textarea class='ckeditor' name='description'><?php 
+  			echo $class['description']; ?></textarea></td>
+  	</tr>
+    <tr>
+      <td>Guiding questions</td>
+      <td><textarea class='ckeditor' name='guiding_questions'><?php 
+        echo $class['guiding_questions']; ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Learning goals</td>
+      <td><textarea class='ckeditor' name='learning_goals'><?php 
+        echo $class['learning_goals']; ?></textarea></td>
+    </tr>
+
+    <tr>
+      <td>Readings</td>
+      <td><textarea class='ckeditor' name='readings'><?php 
+        echo $class['readings']; ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Readings - optional</td>
+      <td><textarea class='ckeditor' name='readings_optional'><?php 
+        echo $class['readings_optional']; ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Materials</td>
+      <td><textarea class='ckeditor' name='materials'><?php 
+        echo $class['materials']; ?></textarea></td>
+    </tr>
+
+    <tr>
+      <td>Assignment</td>
+    </tr>
+    <tr>
+      <td align='right'>assignment</td>
+      <td><textarea class='ckeditor' name='assignment'><?php 
+        echo $class['assignment']; ?></textarea></td>
+    </tr>
+    <tr>
+      <td align='right'>date due</td>
+      <td><input type='text' class='date input-small' name='date_assignment_due' 
+        value='<? echo $class['date_assignment_due']; ?>' /></td>
+    </tr>
+
+    <tr>
+      <td>Visible to students:</td>
+      <td><select name='is_visible_to_students'>
+        <option value='0' <? if (!$class['is_visible_to_students']) { echo "selected='selected'"; } ?>>NO, just employees</option>
+        <option value='1' <? if ($class['is_visible_to_students']) { echo "selected='selected'"; } ?>>YES, students can view this class</option>
+        </select>
+      </td>
+    </tr>
+
+  	<tr>
+  		<td></td>
+  		<td>
+  			<input type='hidden' name='key' value='<?php echo $class['key']; ?>' />
+        <input type='hidden' name='coursekey' value='<?php echo $class['coursekey']; ?>' />
+  			<input type='submit' name='update' value='Save' />
+  		</td>
+  </form>
+  </table>
+  
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

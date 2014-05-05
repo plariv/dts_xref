@@ -1,0 +1,186 @@
+<? include_once '../includes/dts_functions.php';
+
+$userkey = ''; if (isset($_SESSION['log_userkey'])) { $userkey = $_SESSION['log_userkey']; }
+
+$_SESSION['instrument_id'] = "FOLA";
+
+if (!isset($_GET['videokey'])) { die("ERROR: Videokey is required in order to view a recording."); exit(); }
+$videokey = $_GET['videokey'];
+
+
+
+// By default, this user must be registered and paid in order to view the video. But admins can bypass this.
+$sql_access = prepsql(" cr.userkey = ? ", $userkey); 
+if (WA_Auth_RulePasses("Logged in as analyst")) { $sql_access = " 1=1 "; }
+
+// Fetch the information for this video. verify that it exists.
+$sql = prepsql("SELECT v.*, cl.title_long, cl.description
+	FROM videorecordings v
+		LEFT JOIN courses c ON v.access_coursekey = c.key
+		LEFT JOIN course_registrations cr ON c.key = cr.coursekey AND cr.is_paid_in_full = 1
+		LEFT JOIN course_classes cl ON c.key = cl.coursekey AND v.for_module = cl.number
+	WHERE v.videokey = ? AND v.path <> '' AND (v.access_public = 1 OR {$sql_access})",
+		$videokey);
+$rsVideo = query($sql, 'rsVideo');
+$video = $rsVideo->fetch_assoc();
+
+// Insert a record for this viewing event.
+if ($rsVideo->num_rows > 0) { 
+	$sql = prepsql("INSERT INTO videorecordings_viewings (videokey, userkey) VALUES (?, ?)",
+		$video['videokey'], $userkey);
+	query($sql, 'videorecordings_viewings');
+}
+
+//topher($sql);
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>FOLA: View recording</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --> 
+  
+<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  
+	<!-- <p><a href="javascript:history.go(-1)">back to the syllabus</a></p> -->
+
+  <h1><? echo ($video['title_long'] <> '' ? $video['title_long'] : $video['title']); ?></h1>
+  <? echo $video['description']; ?>
+  
+  <? if ($rsVideo->num_rows == 0) { ?>
+		<p><strong>This recording doesn't exist, or you don't have access to it.</strong> Please double-check the link you used to access this page, or <a href='/contactus.php'>contact us</a> for help.</p>
+	<? } else { ?>
+  	
+		<br class='clearfloat' />
+
+		<!-- 
+			Flowplayer is pretty simple to set up: 
+			1) include the JS script.
+			3) create the div with a path to the video. (here, with styling to preserve aspect ratio)
+			4) call the flowplayer() function with the div name and the path to the player SWF.
+		-->
+    <script type="text/javascript" src="/includes/flowplayer/flowplayer-3.2.12.min.js"></script>
+
+    <!-- CSS styling for the FlowPlayer div -->
+    <style>
+    	/* This wrapper is used to maintain the video aspect ratio. The videos are 2:1 ratio, so ; */
+    	#video_wrapper {
+    		position: relative;
+    		width: 100%;
+    		padding-bottom: 55%;
+    		margin-top: 10px;
+    	}
+
+    	#video_div {
+    		position: absolute;
+    		display: block;
+    		top: 0px; left: 0px; right: 0px; bottom: 0px;
+    		background-color: #93CCCB;
+    	}
+    </style>
+
+    <div id='video_wrapper'>
+			<div id="video_div" href="<? echo $video['path']; ?>"></div> 
+		</div>
+
+		<!-- this will install flowplayer inside previous DIV tag. -->
+		<script>
+			flowplayer("video_div", "/includes/flowplayer/flowplayer-3.2.16.swf");
+		</script>
+	
+  <? } ?>
+  
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+
+
+
+?>

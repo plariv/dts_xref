@@ -1,0 +1,343 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once("../WADbSearch/HelperPHP.php"); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+// WA QueryString Binding (Copyright 2007, WebAssist.com)
+$WA_QSBind_FilteredString = WA_QSBind_QueryString((isset($_SERVER["QUERY_STRING"])?strval($_SERVER["QUERY_STRING"]):""), "sort");
+function WA_QSBind_QueryString($tStr, $exList) {
+  $exArr = array();
+  $retArr = array();
+  $varArr = array();
+  $exList = explode(",", str_replace(" ", "", $exList));
+  $tStr = preg_replace("/\&amp;/i", "&", $tStr);
+  for ($n=0; $n<sizeof($exList); $n++) {
+    $exArr[$exList[$n]] = true;
+  }
+  $qsArr = explode("&", $tStr);
+  for ($n=0; $n<sizeof($qsArr); $n++) {
+    $tstArr = explode("=", $qsArr[$n]);
+    if (!isset($exArr[$tstArr[0]]) || !$exArr[$tstArr[0]]) {
+      $retArr[] = $qsArr[$n];
+      $varArr[$tstArr[0]] = sizeof($retArr)-1;
+    }
+  }
+  if (sizeof($retArr)) {
+    return implode("&", $retArr);
+  }
+  return "";
+}
+?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as senior")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+//WA Database Search Include
+require_once("../WADbSearch/HelperPHP.php");
+?>
+<?php
+//WA Database Search (Copyright 2005, WebAssist.com)
+//Recordset: rsRegistrations;
+//Searchpage: registrations.php;
+//Form: form1;
+$WADbSearch1_DefaultWhere = "";
+if (!session_id()) session_start();
+if ((isset($_POST["WADbSearch1"])) && ($_POST["WADbSearch1"] != "")) {
+  $WADbSearch1 = new FilterDef;
+  $WADbSearch1->initializeQueryBuilder("MYSQL","1");
+  //keyword array declarations
+  $KeyArr0 = array("firstname");
+  $KeyArr1 = array("lastname");
+  $KeyArr2 = array("email");
+	$KeyArr3 = array("userkey");
+
+  //comparison list additions
+  $WADbSearch1->keywordComparison($KeyArr0,"".((isset($_POST["firstName"]))?$_POST["firstName"]:"")  ."","AND","Includes",",%20","%20","%22","%22",0);
+  $WADbSearch1->keywordComparison($KeyArr1,"".((isset($_POST["lastName"]))?$_POST["lastName"]:"")  ."","AND","Includes",",%20","%20","%22","%22",0);
+  $WADbSearch1->keywordComparison($KeyArr2,"".((isset($_POST["Email"]))?$_POST["Email"]:"")  ."","AND","Includes",",%20","%20","%22","%22",0);
+	$WADbSearch1->keywordComparison($KeyArr3,"".((isset($_POST["userkey"]))?$_POST["userkey"]:"")  ."","AND","Includes",",%20","%20","%22","%22",0);
+
+  //save the query in a session variable
+  if (1 == 1) {
+    $_SESSION["WADbSearch1_registrations"]=$WADbSearch1->whereClause;
+  }
+}
+else     {
+  $WADbSearch1 = new FilterDef;
+  $WADbSearch1->initializeQueryBuilder("MYSQL","1");
+  //get the filter definition from a session variable
+  if (1 == 1)     {
+    if (isset($_SESSION["WADbSearch1_registrations"]) && $_SESSION["WADbSearch1_registrations"] != "")     {
+      $WADbSearch1->whereClause = $_SESSION["WADbSearch1_registrations"];
+    }
+    else     {
+      $WADbSearch1->whereClause = $WADbSearch1_DefaultWhere;
+    }
+  }
+  else     {
+    $WADbSearch1->whereClause = $WADbSearch1_DefaultWhere;
+  }
+}
+$WADbSearch1->whereClause = str_replace("\\''", "''", $WADbSearch1->whereClause);
+$WADbSearch1whereClause = '';
+?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}?>
+
+
+
+
+<?php
+//WA DataAssist Sort (Copyright 2007, WebAssist.com)
+//Recordset: rsRegistrations;
+$WADA_Sort_1 = new WADA_SortObject();
+$WADA_Sort_1->DefaultSort = "";
+$WADA_Sort_1->ColumnList = "".((isset($_GET["sort"]))?$_GET["sort"]:"")  ."^register_date^user_level^firstname^lastname";
+$WADA_Sort_1->SortOrderList = "Ascending^Ascending^Ascending^Ascending^Ascending";
+$WADA_Sort_1->ToggleOn = true;
+if ((((isset($_GET["sort"]))?$_GET["sort"]:"") != "")) {
+  $WADA_Sort_1->SetToClause = $WADA_Sort_1->getDefaultSetToClause();
+  if ($WADA_Sort_1->ToggleOn && isset($_SESSION["WADA_OrderClause_registrations"])) {
+    $WADA_Sort_1->ToggleClause = $_SESSION["WADA_OrderClause_registrations"];
+  }
+}
+else if (isset($_SESSION["WADA_OrderClause_registrations"])) {
+  $WADA_Sort_1->SetToClause = $_SESSION["WADA_OrderClause_registrations"];
+}
+$WADA_Sort_1->initialize();
+$_SESSION["WADA_OrderClause_registrations"] = $WADA_Sort_1->SetToClause;
+?>
+<?php
+
+
+
+$currentPage = $_SERVER['PHP_SELF'];
+
+
+
+
+$maxRows_rsRegistrations = 20;
+$pageNum_rsRegistrations = 0;
+if (isset($_GET['pageNum_rsRegistrations'])) {
+  $pageNum_rsRegistrations = $_GET['pageNum_rsRegistrations'];
+}
+$startRow_rsRegistrations = $pageNum_rsRegistrations * $maxRows_rsRegistrations;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrations = "SELECT userkey, register_date, user_level, user_name, firstname, lastname, email, password FROM registrants";
+setQueryBuilderSource($query_rsRegistrations,$WADA_Sort_1,false);
+setQueryBuilderSource($query_rsRegistrations,$WADbSearch1,false);
+$query_limit_rsRegistrations = sprintf("%s LIMIT %d, %d", $query_rsRegistrations, $startRow_rsRegistrations, $maxRows_rsRegistrations);
+$rsRegistrations = mysql_query($query_limit_rsRegistrations, $Assessment) or die(mysql_error());
+$row_rsRegistrations = mysql_fetch_assoc($rsRegistrations);
+
+if (isset($_GET['totalRows_rsRegistrations'])) {
+  $totalRows_rsRegistrations = $_GET['totalRows_rsRegistrations'];
+} else {
+  $all_rsRegistrations = mysql_query($query_rsRegistrations);
+  $totalRows_rsRegistrations = mysql_num_rows($all_rsRegistrations);
+}
+$totalPages_rsRegistrations = ceil($totalRows_rsRegistrations/$maxRows_rsRegistrations)-1;
+
+$queryString_rsRegistrations = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsRegistrations") == false && 
+        stristr($param, "totalRows_rsRegistrations") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsRegistrations = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsRegistrations = sprintf("&totalRows_rsRegistrations=%d%s", $totalRows_rsRegistrations, $queryString_rsRegistrations);
+
+$queryString_rsRegistrations = WA_QSBind_QueryString($queryString_rsRegistrations, "sort")
+
+
+
+
+
+?>
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Registrants</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" --><!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>CHECK AND REPAIR REGISTRATIONS  </h1>
+<form name="form1" action="registrations.php" method="post">
+  <table cellpadding="2" cellspacing="0" border="0">
+    <tr>
+      <td><label for="firstName">First name</label></td>
+      <td><input type="text" name="firstName" value="" /></td>
+      <td><label for="lastName">Last name</label></td>
+      <td><input type="text" name="lastName" value="" /></td>
+   	</tr>
+    <tr>
+      <td>Userkey</td>
+      <td><input type="text" name="userkey" value="" /></td>
+      <td>Email</td>
+      <td><input type="text" name="Email" value="" /></td>
+    </tr>
+    <tr>
+    	<td colspan="3"></td>
+      <td><input type="submit" name="WADbSearch1" value="SEARCH" /> 
+      | <a href="registrations.php">clear filter</a></td>
+      </tr>
+    <tr>
+      <td align="RIGHT" colspan="8">&nbsp;</td>
+    </tr>
+  </table>
+</form>
+
+<p>Records <?php echo ($startRow_rsRegistrations + 1) ?> to <?php echo min($startRow_rsRegistrations + $maxRows_rsRegistrations, $totalRows_rsRegistrations) ?> of <?php echo $totalRows_rsRegistrations ?>    <a href="<?php printf("%s?pageNum_rsRegistrations=%d%s", $currentPage, 0, $queryString_rsRegistrations); ?>">First</a> | <a href="<?php printf("%s?pageNum_rsRegistrations=%d%s", $currentPage, max(0, $pageNum_rsRegistrations - 1), $queryString_rsRegistrations); ?>">Previous</a> | <a href="<?php printf("%s?pageNum_rsRegistrations=%d%s", $currentPage, min($totalPages_rsRegistrations, $pageNum_rsRegistrations + 1), $queryString_rsRegistrations); ?>">Next</a> | <a href="<?php printf("%s?pageNum_rsRegistrations=%d%s", $currentPage, $totalPages_rsRegistrations, $queryString_rsRegistrations); ?>">Last</a></p>
+<table class="minimalist-a" width="1200">
+  <tr>
+    <th>User key</th>
+    <th><a href="registrations.php?sort=register_date">Date</a></th>
+    <th><a href="registrations.php?sort=user_level">Level</a></th>
+    <th>User name</th>
+    <th><a href="registrations.php?sort=firstname"> First name</a></th>
+    <th><a href="registrations.php?sort=lastname">Last name</a></th>
+    <th>Email</th>
+    <th>Password</th>
+    <th>View</th>
+    <th>Edit</th>
+    <th>Delete</th>
+  </tr>
+  <?php do { ?>
+    <tr>
+      <td><div align="center"><?php echo $row_rsRegistrations['userkey']; ?></div></td>
+      <td><div align="center"><?php echo $row_rsRegistrations['register_date']; ?></div></td>
+      <td><div align="center"><?php echo $row_rsRegistrations['user_level']; ?></div></td>
+      <td><?php echo $row_rsRegistrations['user_name']; ?></td>
+      <td><?php echo $row_rsRegistrations['firstname']; ?></td>
+      <td><?php echo $row_rsRegistrations['lastname']; ?></td>
+      <td><?php echo $row_rsRegistrations['email']; ?></td>
+      <td><?php echo $row_rsRegistrations['password']; ?></td>
+      <td><div align="center">&nbsp;<a href="registrant_activity.php?userkey=<?php echo $row_rsRegistrations['userkey']; ?>">view</a>&nbsp;</div></td>
+      <td><div align="center">&nbsp;<a href="registrationsedit.php?userkey=<?php echo $row_rsRegistrations['userkey']; ?>">edit</a>&nbsp;</div></td>
+      <td class="tablerow">&nbsp;</td>
+    </tr>
+    <?php } while ($row_rsRegistrations = mysql_fetch_assoc($rsRegistrations)); ?>
+</table>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrations);
+?>

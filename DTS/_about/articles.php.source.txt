@@ -1,0 +1,305 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Articles</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.td {
+	margin-left: 0px;
+	padding-left: 0px;
+}
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible p {
+	margin-bottom: 4px;
+}
+-->
+</style>
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+<h1>Selected articles, reports, and presentations</h1>
+<div id="TabbedPanels1" class="TabbedPanels">
+<ul class="TabbedPanelsTabGroup">
+              <li class="TabbedPanelsTab">Articles</li>
+              <li class="TabbedPanelsTab">Reports</li>
+              <li class="TabbedPanelsTab">Presentations</li>
+              <li class="TabbedPanelsTab">Colleagues</li>
+              <li class="TabbedPanelsTab">Topics</li>
+              <li class="TabbedPanelsTab">In plain(er) English</li>
+            </ul>
+            <div class="TabbedPanelsContentGroup">
+              <div class="TabbedPanelsContent">
+                <p>Dawson, T. L. (1994). <a href="../PDF/MoralEd.pdf">Moral education: A review of constructivist theory and research.</a> Unpublished position paper, University of California at Berkeley, Berkeley, CA.</p>
+                <p>Dawson, T. L. (2000). <a href="../PDF/MoralGood.pdf">Moral reasoning and evaluative reasoning about the good life</a>. <i>Journal of Applied Measurement, 1</i> (372-397).</p>
+                <p>Dawson, T. L. (2001). <a href="../PDF/Layers.pdf">Layers of structure: A comparison of two approaches to developmental assessment</a>. <i>Genetic Epistemologist, 29 (4),</i> 1-10<i>.</i></p>
+                <p>Dawson, T. L. (2002). <a href="../PDF/NewTools.pdf">New tools, new insights: Kohlberg’s moral reasoning stages revisited</a>. <i>International Journal of Behavioral Development, 26, </i>154-166.<i></i></p>
+                <p>Dawson, T. L. (2002). <a href="../PDF/MGE.pdf">A comparison of three developmental stage scoring systems</a>. <i>Journal of Applied Measurement, 3</i>, 146-189.<i></i></p>
+                <p>Dawson, T. L. (2003). <a href="../PDF/AstageIsAstage.pdf">A stage is a stage is a stage: A direct comparison of two scoring systems</a>. <i>Journal of Genetic Psychology, 164</i>, 335-364.<i></i></p>
+                <p>Dawson, T. L. (2004). <a href="../PDF/3Approaches.pdf">Assessing intellectual development: Three approaches, one sequence</a>. <i>Journal of Adult Development, 11, </i>71-85<i>.</i></p>
+                <p>Dawson, T. L. (2006). Stage-like patterns in the development of conceptions of energy. In X. Liu &amp; W. Boone (Eds.), <i>Applications of Rasch measurement in science education</i> (pp. 111-136). Maple Grove, MN: JAM Press.</p>
+                <p>Dawson, T. L., &amp; Fischer, K. W. (2006). <a href="../PDF/ImplicationsAssessment.pdf">Implications of assessment for learners</a>. <i>Measurement, 4</i>(4).</p>
+                <p>Dawson, T. L., Fischer, K. W., &amp; Stein, Z. (2006). <a href="../PDF/QualitativeQuantitative.pdf">Reconsidering qualitative and quantitative research approaches: A cognitive developmental perspective</a>. <i>New Ideas in Psychology, 24</i>, 229-239.</p>
+                <p>Dawson, T. L., &amp; Gabrielian, S. (2003). <a href="../PDF/AuthorityContract.pdf">Developing conceptions of authority and contract across the life-span: Two perspectives</a>. <i>Developmental Review, 23</i>, 162-218.<i></i></p>
+                <p>Dawson, T. L., &amp; Stein, Z. (2008). <a href="../PDF/DMcycles.pdf">Cycles of research and application in education: Learning pathways for energy concepts.</a><em> Mind, Brain, &amp; Education, 2(2),</em> 90-103.</p>
+                <p>Dawson, T. L. &amp; Stein, Z. (in prep.). <a href="../PDF/Relativism.pdf">The development of relativism</a>.</p>
+                <p>Dawson, T. L., &amp; Stein, Z. (in press). <em>We are all learning here: Cycles of research and application in adult development.</em> In C. Hoare (Ed.), The oxford handbook of reciprocal adult development and learning. New York: Oxford.</p>
+                <p>Dawson, T. L., Xie, Y., &amp; Wilson, M. (2003). <a href="../PDF/DomainGeneral.pdf">Domain-general and domain-specific developmental assessments: Do they measure the same thing?</a> <i>Cognitive Development</i>, <i>18, </i>61-78.<i></i></p>
+                <p>Dawson, T. L., &amp; Wilson, M. (2004). <a href="../PDF/LAAS.pdf">The LAAS: A computerized developmental scoring system for small- and large-scale assessments</a>. <i>Educational Assessment, 9</i>, 153-191.</p>
+                <p>Dawson-Tunik, T. L. (2004). <a href="../PDF/GoodEducation.pdf">“A good education is…” The development of evaluative thought across the life-span</a>. <i>Genetic, Social, and General Psychology Monographs, 130, </i>4-112<i>.</i></p>
+                <p>Dawson-Tunik, T. L. (2006). <a href="../PDF/AdultConcepts.pdf">The meaning and measurement of conceptual development in adulthood</a>. In C. Hoare (Ed.), <i>The intersection of adult development and learning: A handbook of theory, research, and practice</i> (pp. 433-454). London: Oxford.</p>
+                <p>Dawson-Tunik, T. L., Fischer, K. W., Stein, Z. (2004). <a href="../PDF/StagesCenter.pdf">Do stages belong at the center of developmental theory? A commentary on Piaget's stages</a>. <i>New Ideas in Psychology, 22,</i> 255-263.</p>
+                <p>Dawson-Tunik, T. L., Commons, M., Wilson, M., &amp; Fischer, K. (2005). <a href="../PDF/Shape.pdf">The shape of development</a>. <i>The European Journal of Developmental Psychology, 2, </i>163-196.</p>
+                <p>Dawson, T. L., Goodheart, E. A., Wilson, M., &amp; Commons, M. L. (2010). Concrete, abstract, formal, and systematic operations as observed in a &quot;Piagetian&quot; Balance Beam Task Series. <em>Advances in Rasch Measurement, 11,</em> 1-13.</p>
+                <p>Dawson, T., &amp; Heikkinen, K. (2009). <a href="../PDF/2009_10TheoKatieLeadReview.pdf">Identifying within-level differences in leadership decision making.</a> </em>Integral Leadership Review</em><em>, 9</em>(5).</p>
+                <p>Fischer, K. W., &amp; Dawson, T. L. (2002). <a href="../PDF/NewKind.pdf">A new kind of developmental science: Using models to integrate theory and research.</a><i> Monographs of the Society for Research in Child Development, 67 </i>(1, Serial No. 173), 156-167.</p>
+<p>Stein, Z. (2009). <a href="../PDF/Stein_Lexical_inventory.pdf">What's in a word? Re-tooling experimental methods and indices of abstractness.</a> Harvard Graduate School of Education.</p>
+                <p>Stein, Z. (2007). <a href="../PDF/Stein2007.pdf">Modeling the demands of interdisciplinary: Toward a framework for evaluating interdisciplinary endeavors</a>. <em>Integral Review</em>, 4.</p>
+                <p>Stein, Z., Connell, M., &amp; Gardner, H. (2008).<a href="../PDF/Stein_Connell_Gardner_JOPE.pdf"> Exercising quality control in interdisciplinary education: Toward an epistemologically responsible approach. Journal of the Philosophy of Education</a>, 42(3-4), 401-414.</p>
+                <p>Stein, Z., Dawson, T. L., &amp; Fischer, K. W. (in press). <a href="../PDF/Stein_Dawson_Fischer_Re-designing_Testing_FINAL.pdf">Redesigning testing: Operationalizing the new science of learning.</a> <em>New science of learning: Computers, cognition and collaboration in education.</em></p>
+                <p>Stein, Z., della Chiesa, B., Hinton, C., &amp; Fischer, K. W. (2010). <a href="../PDF/SteinEthicsEducationalNeuroscience.pdf">Ethical issues in educational neuroscience: Raising children in a brave new world</a>. In I. Sahakian (Ed.), Oxford Handbook of Neuroethics. London: Oxford University Press.</p>
+                <p>Stein, Z., &amp; Fischer, K. W. (2008). <a href="../PDF/SteinFischerJEPT.pdf">Directions for mind, brain, and education: Methods, models, and morality</a>. Educational Philosophy and Theory.</p>
+                <p>Stein, Z., &amp; Heikkinen, K. (2008). <a href="../PDF/ZakKatie.pdf">On operationalizing aspects of altitude: An introduction to the Lectical™ Assessment System for integral researchers.</a> <em>Journal of Integral Theory and Practice 3</em>(1), 105-138.</p>
+<p>Stein, Z., &amp; Hiekkinen, K. (2009). <a href="../PDF/Stein&amp;Heikkinen_IR_2009.pdf">Metrics, models, and measurement in developmental psychology</a>. <em>Integral Review, 5</em>(1), 4-24.</p>
+                <p></p>
+                <p>&nbsp;</p>
+</div>
+              <div class="TabbedPanelsContent">
+                <p>Dawson, T. L. (2008). <a href="../PDF/LAS.pdf">The LAS</a>. Northampton, MA: Developmental Testing Service, Inc.</p>
+                <p>Dawson, T. L. (2008). <a href="../PDF/Metacognition.pdf"><em>Metacognition and learning in adulthood: A literature review.</em></a> Northampton, MA: Developmental Testing Service, Inc.</p>
+                <p>Dawson, T. L. (2008). <a href="../PDF/ValuesCenteredLeadership2.pdf"><em>Values centered leadership: A review of the relevant research</em></a>. Northampton, MA: Developmental Testing Service, Inc.)</p>
+                <p>Dawson, T. L., &amp; Stein, Z. (2006). <a href="../PDF/MBEFinalReport072606.pdf"><em>Mind Brain &amp; Education study: Final report.</em></a> Northampton, MA: Developmental Testing Service, Inc.</p>
+                <p>Dawson-Tunik, T. L. (2006, April). <em><a href="../Movies/LBDecisionMaking.mov">The National Decision-Making Curriculum: Designing and evaluating developmentally informed curricula.</a></em> Learning and the Brain, Cambridge, MA. </p>
+                <p>Dawson, T. L., &amp; Stein, Z. (2006). <em><a href="../PDF/GenYreport.pdf">Leadership preferences, environment preferences, and motivators of GenY employees.</a></em> Northampton, MA: Developmental Testing Service, Inc.</p>
+                <p>Dawson, T. L. (2005, June). It's all good: <em><a href="../Movies/Relativism.mov">Moral relativism and the millennial generation. </a></em>Paper presented at the Annual Meeting of the Jean Piaget Society, Vancouver.</p>
+                <p>Dawson, T. L., &amp; Stein, Z. (2005). <em><a href="../PDF/SonReport.pdf">Reasoning about morality in sons of lesbian and traditional parents: A developmental analysis.</a></em> Northampton, MA: The Developmental Testing Service, Inc.</p>
+                <p>Dawson, T. L., &amp; Stein, Z. (2005). <em><a href="../PDF/ParentReportContent.pdf">A comparison of the content of the interviews of 30 lesbian and 30 traditional parents.</a></em> Northampton, MA: The Developmental Testing Service, Inc.</p>
+                <p>Dawson-Tunik, T. L. &amp; Stein, Z. (2004, July). <em><a href="../PDF/CriticalThinking.pdf">Critical Thinking Seminar pre and post assessment results.</a></em> Hatfield, MA: Developmental Testing Service, Inc.</p>
+                <p>Dawson, T. L., &amp; Stein, Z. (2006). <em><a href="../PDF/DecisionMakingReport.pdf">National decision-making curriculum. Results of the pre- and post-instruction developmental assessments</a>.</em> Northampton, MA: Developmental Testing Service.</p>
+                <p>Dawson, T. L., &amp; Stein, Z. (2004). <em><a href="../PDF/NLSReport.pdf">National Leadership Study results.</a></em> Hatfield, MA: Developmental Testing Service, Inc.</p>
+                <p> Stein, Z. &amp; Dawson, T. L. (2004). <em><a href="../PDF/ItsAllGood.pdf">It's all good: Moral relativism and the millennial mind</a>.</em> Paper presented at the The Millennial Mind, Baltimore, MD.</p>
+              </div>
+              <div class="TabbedPanelsContent">
+
+                <p>Dawson, T. L., &amp; Stein, Z. (2008, August). <a href="../PDF/080808Integral.pdf"><em>Developmental differences in the understanding of Integral Theory: A statement of the problem and description of research methods</em> (slides)</a>. Paper presented at the First Bienniel Integral Theory Conference. <a href="../Audio/080808.mp3"><strong>MP3</strong></a> (The audio goes with the slides.)</p>
+                <p>Dawson, T. L. (2008, June). <a href="../PDF/DiscoTestDesigning.pdf"><em>Designing DiscoTests.</em></a> Paper presented at the Annual Meeting of the Jean Piaget Society. </p>
+                <p>Dawson, T. L. (2008, June). <a href="../PDF/DiscoTestAnatomy.pdf"><em>Anatomy of a DiscoTest.</em></a> Paper presented at the Annual Meeting of the Jean Piaget Society. </p>
+                <p>Dawson, T. L. &amp; Stein, Z. (2007, November). <em><a href="../PDF/EpisRelative.pdf">It's all good: A fresh look at ethical relativism</a>.</em> Presented at the Annual Meeting of the Association for Moral Education, New York.</p>
+                <p>Dawson, T. L. (2007, November). <em><a href="../PDF/IMBES2007.pdf">The ultimate Tower of Babel makeover: Using cognitive developmental science to align educational standards, curricula, &amp; assessments</a>.</em> Presented at the International Mind, Brain, and Education Society Conference. Fort Worth, TX.</p>
+                <p>Stein, Z. (2008, August). <em><a href="../PDF/SteinUnderstandingITP.pdf">Developmental differences in the understanding of Integral theory and practice: An introduction to the problem and the Developmental Maieutic Approach</a>.</em> Paper presented at the First Bienniel Integral Theory Conference. </p>
+                <p>Stein, Z. (2008, August). <a href="../PDF/Stein_ITC_2008.pdf"><em>Intuitions of altitude: Researching the conditions of the possibility for developmental assessment.</em></a> Paper presented at the First Bienniel Integral Theory Conference. <a href="../Audio/Intuitions.mp3"><strong>MP3</strong></a> (The audio goes with the slides.)</p>
+                <p>Stein, Z., Schwartz, M., &amp; Dawson, T. L. (2009).<em> <a href="../PDF/2009-0528NTSlaunch.pdf">Testing the limits of testing.</a></em> Symposium presented at the IMBES Conference. </p>
+              </div>
+              <div class="TabbedPanelsContent">
+                <p>(For lists of references relating to cognitive development and testing, go to our <a href="references.php">references</a> page.)</p>
+				<p><a href="http://www.gse.harvard.edu/~ddl/publication.htm">Fischer, K. W.</a> (Link goes to the articles page at Harvard where you can download his work.)</p>
+                <p><a href="mailto:paul2marshall@hotmail.com">Marshall, P. E.</a> (2009). <a href="../PDF/DissertationPaulMarshall.pdf"><span class="italics">Positive psychology and constructivist developmental psychology: A theoretical enquiry into how a developmental stage conception might provide further insights into specific areas of positive psychology.</span></a> Unpublished Msc dissertation. University of East London, School of Psychology. (Paul writes a mean lit review!)</p>
+                <p>Schwartz, M. S., Sadler, P. M., Sonnert, G., &amp; Tai, R. H. (2008).<a href="http://www3.interscience.wiley.com/journal/121580319/abstract?CRETRY=1&amp;SRETRY=0"> Depth versus breadth: How content coverage in high school science courses relates to later success in college science coursework.</a> <span class="italics">Science Education.</span> (excellent recent article on the relative benefits of teaching for depth and breadth)</p>
+              </div>
+              <div class="TabbedPanelsContent">
+
+              <h3>Reflective judgment and behavior</h3>
+                 <p>Dawson, T. L. (2008). <a href="../PDF/Metacognition.pdf"><em>Metacognition and learning in adulthood: A literature review.</em></a> Northampton, MA: Developmental Testing Service, Inc.</p>
+                 <p><a href="referencesrj.php">Reference list</a> of articles focused on the relation between levels of reflective judgment and behavior.</p>
+
+              <h3>Ethical reasoning and behavior</h3>
+                 <p><a href="referencesmj.php">Reference list</a> of articles focused on the relation between levels of moral judgment and behavior.</p>
+                 <p>Dawson, T. L. (2008). <a href="../PDF/ValuesCenteredLeadership2.pdf">Values-centered leadership: A review</a><a href="../PDF/Metacognition.pdf">.</a> Northampton, MA: Developmental Testing Service, Inc.</p>
+
+              <h3>Leadership reasoning and behavior</h3>
+                 <p><a href="../PDF/LeadershipDomainStructure.pdf">Leadership domain structure</a></p>
+                 <p><a href="../PDF/leadsorttask.pdf">Leadership sort task</a></p>
+                 <p><a href="referenceslead.php">Reference list</a> of articles focused on the relation between conceptions of leadership and behavior.</p>
+
+              <h3>Testing</h3>
+                 <p><a href="tradvsdev.php">Traditional vs. developmental assessment</a></p>
+                 <p><a href="http://theodawson.net"><img src="../images/skin/star2.gif" alt="new" width="14" height="14" align="baseline" /> BLOG</a></p>
+
+              <h3>Creativity</h3>
+                 <p><a href="c-research.php">Creativity references</a></p>
+<p></p>
+              </div>
+              <div class="TabbedPanelsContent">
+                <h3>Audio and video</h3>
+                 <p><span class="emphasis"><img src="../images/skin/star2.gif" alt="new" width="14" height="14" align="baseline" /> Learn about our developmental model: <a href="../PDF/080808DM.pdf">Slides</a> and <a href="../Audio/080808DM.mp3">MP3</a> (The audio goes with the slides.)</p>
+                 <p><a href="../Audio/Theo-Dawson.wma">Interview of Dr. Dawson</a> (1): The early days of DTS and Lectical Assessments.</p>
+                 <p><a href="../Audio/theodawson_050609.mp3">Interview of Dr. Dawson</a> (2): The background and use of Lectical Assessments.</p>
+                 <p><a href="../Audio/2009_0507TheoTestBackgroundPartI.mp3">Interview of Dr. Dawson</a> (3a): The history of developmental assessment.</p>
+                 <p><a href="../Audio/2009_0507TheoTestBackgroundPartII.mp3">Interview of Dr. Dawson</a> (3b): How the history of developmental assessment influenced the development of the LAS and Lectical Assessments.</p>
+                 <p><a href="../_assets/_audio/2014_01_Tim_Winton_with_Theo_learning_assessment.mp3">Interview of Dr. Dawson by Tim Winton</a> (4a): The ideal relationship between learning and assessment</p>
+                 <p><a href="../_assets/_audio/2014_01_Tim_Winton_with_Theo_describing_phases.mp3">Interview of Dr. Dawson by Tim Winton</a> (4b): Developing Lectical Assessments</p>
+                 <p><a href="../_assets/_audio/2014_01_Tim_Winton_with_Theo_levels_tiers.mp3">Interview of Dr. Dawson by Tim Winton</a> (4c): Developmental levels and tiers</p>
+                 <p><a href="../_assets/_audio/2014_01_Tim_Winton_with_Theo_ldma.mp3">Interview of Dr. Dawson by Tim Winton</a> (4d): The LDMA</p>
+<p><a href="../interviewing/interviewing.php">How to conduct a clinical interview</a>: This page provides a narrative discussion and video demonstration showing how to couduct a clinical cognitive-developmental interview.</p>
+                <h3>Lectical™ assessments</h3>
+                  <p><a href="../PDF/2012_0929_virtuous_cycles.pdf">Virtuous cycles of learning</a> (white paper)</p> 
+                  <p><a href="takingassessments.php">How to take a Lectical™ Assessment</a></p>
+                
+               <h3>DiscoTest</h3>
+                  <p><img src="../images/skin/star2.gif" alt="new" width="14" height="14" align="baseline" /> <a href="http://discotest.org/movies/DiscoTest.swf">DiscoTest: Assessments you'll want to teach to</a> (interactive flash presentation)</p>
+                  <p><a href="http://www.discotest.org/visitors/anatomy.php">About DiscoTest</a></p>
+                  <p><a href="../PDF/LASschools.pdf">DiscoTest brochure</a> for schools and school districts.</p>
+                  
+               <h3>The LAS</h3>
+                  <p><img src="../images/skin/star2.gif" alt="new" width="14" height="14" align="baseline" /> <a href="../PDF/LAS.pdf">Introduction to the Lectical™ Assessment System</a></p>
+                  <p><a href="las_reliability_validity.php">Validity, reliability, and sensitivity of the LAS</a></p>
+                  <p><img src="../images/skin/star2.gif" alt="new" width="14" height="14" align="baseline" /> <a href="scoring_comparison.php">A comparison of the LAS with other scoring systems</a></p>
+                  <p><img src="../images/skin/star2.gif" alt="new" width="14" height="14" align="baseline" /> <a href="clas.php">CLAS<sup>®</sup>: The Computer Assisted Lectical Assessment System</a></p>
+                  <p><img src="../images/skin/star2.gif" alt="new" width="14" height="14" align="baseline" /> <a href="measurement.php">About measurement</a></p>
+                  <p><a href="research.pdf">Doing research with the LAS</a></p>
+                  <p><a href="skill_map.pdf">Skill mapping</a></p>
+                  <p><a href="devmaieutics.php">Developmental maieutics</a></p>
+                  <p><a href="../PDF/LearningSequences.pdf">Constructing developmental sequences</a></p>
+                  <p><a href="hierarchical_complexity.php">Hierarchical complexity</a></p>
+                  <p><a href="skill_levels.php">Skill levels</a></p>
+                  <p>Dawson, T., &amp; Heikkinen, K. (2009). <a href="http://www.integralleadershipreview.com/">Identifying within-level differences in leadership decision making.</a> <em>Integral Leadership Review</em><em>, 9</em>(5).</p> 
+                  <p><a href="../PDF/LevelComparison.pdf">Level comparisons</a>: Table aligning Lectical Levels with the levels of other cognitive-developmental assessment systems.</p>
+                   
+               <h3>Lesson plans</h3>
+                  <p><a href="../PDF/2011_1028_creativity_lesson.pdf">Creativity</a></p>
+                 
+               <h3>For researchers</h3>
+                  <p><a href="../interviewing/interviewing_interviewers.php">Interviewing</a></p>
+                  
+               <h3>Vitae</h3>
+				  <p><a href="../PDF/CVZak.pdf">Stein's CV</a></p>
+                  <p><a href="../PDF/CVTheo.pdf">Theo's CV</a></p>
+                  <p>&nbsp;</p>
+			</div>
+		</div>
+	</div>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+
+  <script type="text/javascript">
+<!--
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+//-->
+  </script>
+<!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+  <!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" --><!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

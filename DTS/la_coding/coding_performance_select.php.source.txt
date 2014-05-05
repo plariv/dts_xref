@@ -1,0 +1,2530 @@
+<?php 
+include_once ("../includes/dts_functions.php");
+$bp = prepBoilerplate('admin'); // boilerplate text for emails
+
+// bench();
+
+// restrict access if not logged in with at least teacher-coder access.
+if (!WA_Auth_RulePasses("Logged in to registrants")) { WA_Auth_RestrictAccess("../security/logIn.php"); }
+$userkey = $_SESSION['log_userkey'];
+$user_level = $_SESSION['log_user_level'];
+
+
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_name = str_replace("_", " ", $_SESSION['instrument_id']);
+$instrument_id_base = str_replace("_JOURNAL", "", $_SESSION['instrument_id']);
+if (strpos($instrument_id, "JOURNAL")) {
+	$type = "journal";
+} else {
+	$type = "test";
+}
+
+
+$currentPage = $_SERVER['PHP_SELF'];
+
+
+// Prepares the sort/search functionality for each query. This function looks at $_POST and $_GET and sets $_SESSION['sort'] and $_SESSION['search'] if appropriate input is found.
+initializeSortSearch();
+
+
+
+
+/* ROLES
+	Role is kept as a session variable.
+	Roles "tag" a person saying that they want to have such-and-such access to an area. The same people might want to access a page with multiple different purposes and wearing multiple hats, so we can't rely on user level alone to decide where to send people. 
+	Being tagged with a role DOES NOT automatically give you access to everything that the role might be linked to. On each page where role matters, there should be code that checks your security level and only allows you to see what you have a right to see.
+	Roles include: "1st coder", "2nd coder", "3rd coder", "1st scorer", "teacher coder"
+	Role determines how the queries are written, so what data show up for you.
+		variable for the table name
+		variable for filter for you as bulk user key (in case of teachers etc.)
+	Role and instrument_id, in combination, decide what page you are sent to as the starting coding page.
+	Having the SESSION variable set as role doesn't give viewer a white card to view things accessible to that role. On each page where role matters, you still have to prove that you have the access that role claims for you.
+ */
+
+// If a role was specified in a URL variable, set that role - then refresh.
+if (isset($_GET['role'])) {
+	$_SESSION['role'] = $_GET['role'];
+	header("Location: coding_performance_select.php");
+	exit();
+}
+
+
+$role = "";
+$is_lectica_employee = false;
+$is_trainee = false;
+$is_junior = false;
+$is_senior  = false;
+$is_teacher = false;
+$is_student = false;
+
+// If you pass clearance as a coder, you are assigned whatever role you asked for.
+if (WA_Auth_RulePasses("Logged in as coder")) {
+	
+	// define who is a trainee and who is a "graduated" junior
+
+	$trainee_userkeys = array(
+		//1000002535, // Carol
+		//1000001019,  // Jennifer
+		// 1000011192, // Bryan
+		// 1000002220 // Jonas
+	);
+	$junior_userkeys = array(
+		// 1000001153 // Lauren
+	);
+	$senior_userkeys = array(
+		// 1000000539, // Theo
+		// 4623, 			// Zak
+		// 5124, 			// Zack VR
+		// 1000000533  // Clint
+	);
+	
+	if ($instrument_id == 'LDMA' AND in_array($userkey, $trainee_userkeys)) { 
+		$role = "trainee"; 
+		$is_trainee = true; 
+	}
+	else if ($instrument_id == 'LDMA' AND in_array($userkey, $junior_userkeys)) { 
+		$role = "1st-coder";
+		$is_junior = true; 
+	}
+	else if ($instrument_id == 'LDMA' AND in_array($userkey, $senior_userkeys)) { 
+		$role = "1st-coder";
+		$is_senior = true; 
+	}
+	else if (isset($_SESSION['role'])) { $role = $_SESSION['role']; }
+	else { $role = "1st-coder"; }
+	
+	$is_lectica_employee = true;
+} 
+// If you clear as a teacher-coder, your designated role is teacher-coder, and all queries are filtered accordingly.
+else if (WA_Auth_RulePasses("Logged in as teacher coder")) {
+	$role = "teacher-coder";
+	$is_teacher = true;
+} 
+else if (WA_Auth_RulePasses("Logged in as teacher assistant")) {
+	$role = "teacher-assistant";
+	$is_teacher = true;
+} 
+// If you didn't pass either clearance level, you must be a student coder. Only see your own records.
+else { 
+	$role = "student-coder";
+}
+
+if ($role == "teacher-coder") { $is_teacher = true; }
+if ($role == "student-coder") { $is_student = true; }
+
+
+
+
+
+
+
+
+
+
+//					IF statements for making status changes to records
+
+
+// Mark record as coding completed
+if (isset($_GET['coding_complete'])) {
+
+	$updateSQL = sprintf("UPDATE la_data SET coded_1_complete=1 WHERE lakey=%s",
+                       SQLstr($_GET['coding_complete'], "int"));
+
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = $currentPage;
+  header(sprintf("Location: %s", $updateGoTo));
+}
+
+
+//								PUT RECORD IN LIMBO
+
+if (isset($_GET['limbo']) AND intval($_GET['limbo']) > 0) { 
+	$updateSQL = "UPDATE la_data SET flag=1 WHERE lakey = ".SQLstr($_GET['limbo'], "int");
+	mysql_query($updateSQL, $Assessment) or die("Add to limbo: ".mysql_error());
+	header("Location: ".$currentPage);
+	exit();
+}
+
+//								TAKE RECORD OUT OF LIMBO
+
+if (isset($_GET['unlimbo']) AND intval($_GET['unlimbo']) > 0) { 
+	$updateSQL = "UPDATE la_data SET flag=0 WHERE lakey = ".SQLstr($_GET['unlimbo'], "int");
+	mysql_query($updateSQL, $Assessment) or die("Remove from limbo: ".mysql_error());
+	header("Location: ".$currentPage);
+	exit();
+}
+
+//								FINALIZE RECORD
+
+if (isset($_GET['finalize']) AND intval($_GET['finalize']) > 0) { 
+	$updateSQL = sprintf("UPDATE la_data SET finalized=2, date_finalized=%s WHERE lakey = %s ",
+		SQLstr(date('Y-m-d'), "date"),
+		SQLstr($_GET['finalize'], "int"));
+	mysql_query($updateSQL, $Assessment) or die("Finalize record: ".mysql_error());
+	
+	// Get email address info for this user
+	$query_rsClient = "SELECT r.firstname, r.lastname, r.email AS taker_email, rb.email AS bc_email
+	FROM la_data d JOIN registrants r ON d.userkey = r.userkey
+	LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+	WHERE d.lakey = ".SQLstr($_GET['finalize'], "int");
+	$rsClient = mysql_query($query_rsClient, $Assessment) or die("rsClient: ".mysql_error());
+	$row_rsClient = mysql_fetch_assoc($rsClient);
+	
+	// Send out the alert email
+	$subject = "{$row_rsClient['firstname']} {$row_rsClient['lastname']}'s {$instrument_id} has been finalized";
+	$body = "View {$row_rsClient['firstname']}'s report at http://devtestservice.org/la_reports/bc_select.php . \n Instrument ID: {$instrument_id} \n Record number: {$_GET['finalize']} ";
+	sendEmail($row_rsClient['bc_email'], "service@lectica.org", 
+		"service@lectica.org", $subject, $body);
+	
+	// Refresh the page
+	header("Location: ".$currentPage);
+	exit();
+}
+
+//								UN-FINALIZE RECORD
+
+if (isset($_GET['unfinalize']) AND intval($_GET['unfinalize']) > 0) { 
+	$updateSQL = "UPDATE la_data SET finalized=0 WHERE lakey = ".SQLstr($_GET['unfinalize'], "int");
+	mysql_query($updateSQL, $Assessment) or die("Unfinalize record: ".mysql_error());
+	
+	// **** NOTE: the client does NOT get alerted when we retract a report, only when we release / finalize one.
+	
+	// Refresh the page
+	header("Location: ".$currentPage);
+	exit();
+}
+
+//								RELEASE RECORD
+
+if (isset($_GET['release']) AND intval($_GET['release']) > 0) { 
+	$updateSQL = sprintf("UPDATE la_data 
+		SET finalized = 1, coded_1_complete = 1, date_released = NOW() WHERE lakey = %s ",
+			SQLstr($_GET['release'], 'int'));
+	mysql_query($updateSQL) or die("Release record: ".mysql_error());
+	
+	// Get email address info for this user
+	$query_rsClient = sprintf("SELECT r.firstname, r.lastname, r.email AS taker_email, rb.email AS bc_email
+		FROM la_data d 
+			JOIN registrants r ON d.userkey = r.userkey
+			LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+		WHERE d.lakey = %s ",
+			SQLstr($_GET['release'], 'int'));
+	$rsClient = mysql_query($query_rsClient) or die("rsEmailRelease: ".mysql_error());
+	$row_rsClient = mysql_fetch_assoc($rsClient);
+	
+	// Send out the alert email
+	
+	$email_to = $row_rsClient['taker_email'];
+	$email_from = "service@lectica.org";
+	$email_cc = array("service@lectica.org");
+	if ($row_rsClient['bc_email'] <> "") { $email_cc[] = $row_rsClient['bc_email']; }
+	
+	$subject = "";
+	$body = "";
+	
+	$name = $row_rsClient['firstname']." ".$row_rsClient['lastname'];
+	$instrument_name = str_replace("_JOURNAL", " Journal", $instrument_id);
+	$instrument_base = str_replace("_JOURNAL", "", $instrument_id);
+	
+	$subject .= $bp['email_report_title'];
+	$subject = str_replace("[NAME]", $name, $subject);
+	$subject = str_replace("[INSTRUMENT_NAME]", $instrument_name, $subject);
+	
+	$body .= $bp['email_report'];
+	$body = str_replace("[NAME]", $name, $body);
+	$body = str_replace("[INSTRUMENT_NAME]", $instrument_name, $body);
+	$body = str_replace("[INSTRUMENT_BASE]", $instrument_base, $body);
+	
+	sendEmail($email_to, $email_from, $email_cc, $subject, $body);
+	
+	// Refresh the page
+	header("Location: ".$currentPage);
+	exit();
+}
+
+// Star a record for coder training
+if (isset($_GET['codertraining_star'])) { 
+	$sql = sprintf("UPDATE la_data SET codertraining_starred = %s WHERE lakey = %s", 
+		SQLstr($_GET['codertraining_star'], 'int'),
+		SQLstr($_GET['lakey'], 'int'));
+	$result = mysql_query($sql) or die(mysql_error());
+	header("Location: ?"); exit();
+}
+
+
+
+
+
+
+
+//												PREPARE FILTERS FOR BOTH TABLES			
+
+// based on the coder's role and instrument_id.
+$filter_tables = "";
+
+// Only show teachers the results linked with their resellerkey
+if ($role == "teacher-coder") { $filter_tables .= " AND d.resellerkey = ".SQLstr($userkey, 'int'); }
+// Sharon's assistant teachers: Marty and Toni
+if ($userkey == 1000013223) { // Marty
+	$filter_tables .= " AND (r.group = '2014_SPR_MT_1') "; }
+// if ($userkey == 1000014193) { // Toni
+// 	$filter_tables .= sprintf(" AND (r.group = '2013_fall_4_TB') "); }
+// Only show student-coders, their own records.
+if ($role == "student-coder") { 
+	$filter_tables .= sprintf(" AND d.userkey = %s ", SQLstr($userkey, 'int')); 
+}
+// For tests (not journals), don't show until has been scored.
+// Several rubric-scored instruments should be treated as exceptions to this.
+if ($type == "test" AND $role == "1st-coder" 
+		AND $instrument_id <> "SMA" AND $instrument_id <> "SMJ" 
+		AND $instrument_id <> "LIMA" AND $instrument_id <> "LDPA") { 
+	$filter_tables .= " AND d.scored_1 = 1 AND s.lasnumber_1 > 0 "; 
+}
+// topher($filter_tables);
+
+// bench("prep page variables");
+
+
+
+
+
+// Text from management level table, for reference
+$query_rsManagementLevel = "SELECT * FROM demogs_man_level ORDER BY man_level_number ASC";
+$rsManagementLevel = mysql_query($query_rsManagementLevel, $Assessment) or die(mysql_error());
+$row_rsManagementLevel = mysql_fetch_assoc($rsManagementLevel);
+$totalRows_rsManagementLevel = mysql_num_rows($rsManagementLevel);
+
+// Find dilemmas relating to this instrument. If instrument_id is a JOURNAL type, ignore the " JOURNAL" suffix.
+$query_rsLaDilemmas = sprintf("SELECT * FROM la_dilemmas WHERE instrument_id = %s", 
+		SQLstr($instrument_id_base, "text"));
+$rsLaDilemmas = mysql_query($query_rsLaDilemmas, $Assessment) or die(mysql_error());
+$row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas);
+$totalRows_rsLaDilemmas = mysql_num_rows($rsLaDilemmas);
+
+
+//bench("man + dilemmas");
+
+
+// 						QUERIES FOR SEARCH FILTERS
+
+if (!$is_trainee) { 
+
+	$query_rsFilterGroups = sprintf("SELECT COUNT(DISTINCT d.lakey) AS numpeople, r.group
+	FROM la_data d
+	JOIN registrants r ON d.userkey = r.userkey
+	WHERE d.instrument_id = %s AND r.group <> '' AND r.group IS NOT NULL
+		AND d.coding_started <> 2 
+	GROUP BY r.group", 
+			SQLstr($instrument_id, "text")); 
+	$rsFilterGroups = mysql_query($query_rsFilterGroups, $Assessment) or die("rsFilterGroups: ".mysql_error());
+	$row_rsFilterGroups = mysql_fetch_assoc($rsFilterGroups);
+	$totalRows_rsFilterGroups = mysql_num_rows($rsFilterGroups);
+	
+	// bench("groups");
+	
+	$query_rsTestTime = sprintf("SELECT COUNT(DISTINCT d.lakey) AS numpeople, d.test_time
+	FROM la_data d
+	WHERE d.instrument_id = %s AND d.test_time IS NOT NULL
+		AND d.coding_started <> 2 
+	GROUP BY d.test_time", 
+			SQLstr($instrument_id, "text")); 
+	$rsTestTime = mysql_query($query_rsTestTime, $Assessment) or die("rsTestTime: ".mysql_error());
+	$row_rsTestTime = mysql_fetch_assoc($rsTestTime);
+	$totalRows_rsTestTime = mysql_num_rows($rsTestTime);
+	
+	// bench("test time");
+	
+	$query_rsDilemma = sprintf("SELECT COUNT(DISTINCT d.lakey) AS numpeople, d.dilemmakey, di.dilemma_name
+	FROM la_data d 
+	JOIN la_dilemmas di ON d.dilemmakey = di.dilemmakey
+	WHERE d.instrument_id = %s AND d.userkey <> '999' AND d.userkey <> '888' 
+	GROUP BY di.dilemma_name ORDER BY di.dilemma_name", 
+			SQLstr($instrument_id, "text")); 
+	// topher($query_rsDilemma); topher();
+	$rsDilemma = mysql_query($query_rsDilemma) or die("rsDilemma: ".mysql_error());
+	$row_rsDilemma = mysql_fetch_assoc($rsDilemma);
+	
+	// bench("dilemma");
+	
+	$query_rsFilterAssign = sprintf("SELECT a.*, dil.dilemma_name, dil.dilemmakey, 
+		COUNT(DISTINCT d.lakey) AS numpeople 
+	FROM la_data d
+	JOIN la_assignments a ON d.assignmentkey = a.assignmentkey
+	LEFT JOIN students_assignments sa ON sa.assignmentkey = a.assignmentkey 
+	LEFT JOIN registrants r ON r.userkey = sa.userkey 
+	LEFT JOIN la_dilemmas dil ON a.assign_dilemmakey = dil.dilemmakey
+	WHERE d.instrument_id = %s AND d.coding_started <> 2 
+	GROUP BY a.assignmentkey",
+			SQLstr($instrument_id, "text")); 
+	$rsFilterAssign = mysql_query($query_rsFilterAssign, $Assessment) or die("rsFilterAssign: ".mysql_error());
+	$row_rsFilterAssign = mysql_fetch_assoc($rsFilterAssign);
+	$totalRows_rsFilterAssign = mysql_num_rows($rsFilterAssign);
+	
+	// bench("assignments");
+	
+	$query_rsFilterManLevels = sprintf("SELECT dem.man_level, dem.manlevelkey, 
+	COUNT(DISTINCT d.lakey) AS numpeople 
+	FROM registrants r
+	JOIN demogs_man_level dem ON r.manlevelkey = dem.manlevelkey
+	JOIN la_data d ON r.userkey = d.userkey
+	WHERE d.instrument_id = %s AND d.coding_started <> 2   
+	GROUP BY dem.manlevelkey ORDER BY dem.man_level_number",
+			SQLstr($instrument_id, "text")); 
+	$rsFilterManLevels = mysql_query($query_rsFilterManLevels, $Assessment) or die("rsFilterManLevels: ".mysql_error());
+	$row_rsFilterManLevels = mysql_fetch_assoc($rsFilterManLevels);
+	$totalRows_rsFilterManLevels = mysql_num_rows($rsFilterManLevels);
+	
+	// bench("manlevels");
+	
+	$query_rsFilterBc = sprintf("SELECT COUNT(DISTINCT d.lakey) AS numpeople, d.resellerkey, 
+	IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer
+	FROM la_data d
+	LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+	WHERE d.instrument_id = %s AND rb.userkey IS NOT NULL 
+	 AND d.coding_started <> 2
+	GROUP BY d.resellerkey ORDER by bulkcustomer ", 
+			SQLstr($instrument_id, "text")); 
+	$rsFilterBc = mysql_query($query_rsFilterBc, $Assessment) or die("rsFilterGroups: ".mysql_error());
+	$row_rsFilterBc = mysql_fetch_assoc($rsFilterBc);
+	$totalRows_rsFilterBc = mysql_num_rows($rsFilterBc);
+	
+	$query_rsFilterCoders = sprintf("SELECT COUNT(d.lakey) AS numpeople, rs.userkey, rs.firstname 
+		FROM la_data d
+			LEFT JOIN la_scores s ON d.lakey = s.lakey
+			LEFT JOIN registrants rs ON (d.coderkey_1 = rs.userkey 
+				OR d.coderkey_2 = rs.userkey OR d.coderkey_3 = rs.userkey)
+		WHERE d.instrument_id = %s AND rs.userkey IS NOT NULL 
+			AND d.coding_started <> 2
+		GROUP BY rs.userkey
+		ORDER BY rs.firstname", 
+			SQLstr($instrument_id, "text")); 
+	$rsFilterCoders = mysql_query($query_rsFilterCoders) or die("rsFilterCoders: ".mysql_error());
+	$row_rsFilterCoders = mysql_fetch_assoc($rsFilterCoders);
+	$totalRows_rsFilterCoders = mysql_num_rows($rsFilterCoders);
+	
+	$query_rsFilterConf1 = sprintf("SELECT COUNT(d.lakey) AS numpeople, c.coded_confidence
+		FROM la_data d
+			JOIN la_codes c ON d.lakey = c.lakey
+		WHERE d.instrument_id = %s AND d.coded_1 = 1
+			AND d.coding_started <> 2
+		GROUP BY c.coded_confidence ", 
+			SQLstr($instrument_id, "text")); 
+	$rsFilterConf1 = mysql_query($query_rsFilterConf1) or die("rsFilterConf1: ".mysql_error());
+	$row_rsFilterConf1 = mysql_fetch_assoc($rsFilterConf1);
+	$totalRows_rsFilterConf1 = mysql_num_rows($rsFilterConf1);
+	
+	// topher($query_rsFilterCoder1); topher();
+	
+	// A special clause to add to queries to search for text across all probe fields.
+	$searchText = "";
+	if (isset($_POST['(s)essay_text']) AND $_POST['(s)essay_text'] <> "") { 
+		$theText = SQLstr('%'.$_POST['(s)essay_text'].'%', "text");
+		$searchText = " AND ( d.probe01 LIKE {$theText} OR d.probe02 LIKE {$theText} 
+			OR d.probe03 LIKE {$theText} OR d.probe04 LIKE {$theText} 
+			OR d.probe05 LIKE {$theText} )";
+	}
+
+	// bench("Filter queries");
+
+} // ENDIF: block for filter queries
+
+
+
+// Trainee queue and history
+if ($is_trainee OR $is_junior OR $is_senior) { 
+	// Training queue: any records marked as used_for_codertraining.
+	// Exclude any records I have already coded.
+	// sort by: 
+	// 1) if I've started coding this record, prioritize that to the top
+	// 2) if this record is starred, all trainees should code it
+	// 3) records that more people have coded, should get prioritized. 
+	// 4) of the most "popular" records, 
+	// 5) if those three factors are equal, shuffle randomly. 
+
+	$is_graduated = false;
+
+	$sql_traineeQueue = sprintf("SELECT d.lakey, d.codertraining_starred, 
+			IF(c_todo.lakey > 0, 1, 0) AS my_queued, 
+			IFNULL(c_todo.lacodeskey, 'new') AS lacodeskey, 
+			COUNT(c_grav.lakey) AS popularity,
+			MAX(c_grav.coded_date) AS freshness
+		FROM la_data d
+			# Records I have started but not completed: top of the list
+			LEFT JOIN la_codes_4 c_todo ON d.lakey = c_todo.lakey 
+				AND c_todo.coderkey = %s AND IFNULL(c_todo.coded, 0) = 0
+			# Records I have already coded: exclude
+			LEFT JOIN la_codes_4 c_me ON d.lakey = c_me.lakey 
+				AND c_me.coderkey = %s AND c_me.coded = 1
+			LEFT JOIN la_codes_4 c_grav ON d.lakey = c_grav.lakey
+		WHERE d.instrument_id = 'LDMA' AND d.used_for_codertraining = 1
+			AND c_me.lakey IS NULL AND d.coderkey_1 <> %s
+		GROUP BY d.lakey
+		ORDER BY my_queued DESC, 
+			codertraining_starred DESC,
+			popularity DESC, 
+			freshness DESC, 
+			RAND() ",
+				SQLstr($userkey, 'int'),
+				SQLstr($userkey, 'int'),
+				SQLstr($userkey, 'int'));
+	$rsTraineeQueue = mysql_query($sql_traineeQueue) 
+		or die("ERROR building trainee queue: ".mysql_error());
+
+	// If you've coded all of the trainee records... yay! you've graduated!
+	// Junior coders are AUTOMATICALLY graduated.
+	if (mysql_num_rows($rsTraineeQueue) == 0 OR $is_junior) {
+		$sql_traineeQueue = sprintf("SELECT d.lakey
+			FROM la_data d
+			WHERE d.instrument_id = 'LDMA' AND d.finalized = 1 
+				AND d.projectkey <> 6005 AND d.projectkey <> 6006 AND d.projectkey <> 6014 
+				AND (d.coding_started = 2 OR (d.coding_started = 1 AND d.coded_1 = 0 AND d.coderkey_1 = %s))
+			ORDER BY d.coding_started ASC, RAND() ",
+				SQLstr($userkey, 'int'));
+		$rsTraineeQueue = mysql_query($sql_traineeQueue) 
+			or die("ERROR building (graduated) trainee queue: ".mysql_error());
+		$is_graduated = true;
+	}
+
+	$trainee_queue = mysql_fetch_assoc($rsTraineeQueue);
+	
+	// Training history table: show any trainee-pool records that I have coded.
+	// sort by the date this viewer has coded the record.
+	$start_traineeCoded = 0;
+	if (isset($_GET['start_traineeCoded'])) { $start_traineeCoded = $_GET['start_traineeCoded']; } 
+	// Trainees only see records they've coded; seniors see records anyone has coded.
+	$sql_icoded = sprintf(" AND c_me.coderkey = %s ", SQLstr($userkey, 'int'));
+	if ($is_senior) { $sql_icoded = ""; }
+	
+	$sql_limit = sprintf(" LIMIT %s, 20 ", SQLstr($start_traineeCoded, 'int'));
+	if (isset($_GET['download_trainee_table'])) { $sql_limit = "";}
+
+	$sql_traineeCoded = sprintf("SELECT
+			d.lakey, IFNULL(d.codertraining_starred, 0) AS codertraining_starred, s.lasnumber_1,
+			r1.firstname AS r1_firstname, d.date_coded_1, 
+			c1.coded_confidence AS c1_conf,
+			c1.code451 AS c1_p_taking,
+			c1.code452 AS c1_p_seeking,
+			c1.code453 AS c1_coord,
+			c1.code454 AS c1_context,
+			c1.code455 AS c1_dmprocess,
+			c1.code456 AS c1_collab,
+			c1.argumentation_overall   AS c1_arg,
+
+			c4.lacodeskey AS lacodeskey_4, 
+			r4.firstname AS r4_firstname, 
+			c4.coded_date AS date_coded_4, 
+			c4.coded_confidence AS c4_conf,
+			c4.code451 AS c4_p_taking,
+			c4.code452 AS c4_p_seeking,
+			c4.code453 AS c4_coord,
+			c4.code454 AS c4_context,
+			c4.code455 AS c4_dmprocess,
+			c4.code456 AS c4_collab,
+			c4.argumentation_overall AS c4_arg,
+
+			(c4.code451 - c1.code451) AS diff_p_taking,
+			(c4.code452 - c1.code452) AS diff_p_seeking,
+			(c4.code453 - c1.code453) AS diff_coord,
+			(c4.code454 - c1.code454) AS diff_context,
+			(c4.code455 - c1.code455) AS diff_dmprocess,
+			(c4.code456 - c1.code456) AS diff_collab,
+			(c4.argumentation_overall - c1.argumentation_overall)   AS diff_arg,
+
+			MAX(c_me.coded_date) AS date_i_coded
+
+		FROM la_data d
+			JOIN la_dilemmas di ON d.dilemmakey = di.dilemmakey
+			JOIN la_scores s ON d.lakey = s.lakey
+			JOIN la_codes c1 ON d.lakey = c1.lakey
+			JOIN registrants r1 ON d.coderkey_1 = r1.userkey
+			# Require that I've coded this record
+			JOIN la_codes_4 c_me ON d.lakey = c_me.lakey AND c_me.coded = 1 {$sql_icoded}
+			JOIN la_codes_4 c4 ON d.lakey = c4.lakey AND c4.coded = 1
+			JOIN registrants r4 ON c4.coderkey = r4.userkey
+		WHERE d.instrument_id = 'LDMA' AND d.used_for_codertraining = 1
+		GROUP BY d.lakey, c4.coderkey 
+		ORDER BY date_i_coded DESC, d.lakey 
+		{$sql_limit} ");
+	$rsTraineeCoded = mysql_query($sql_traineeCoded) 
+		or die("ERROR building trainee history: ".mysql_error());
+	// die($sql_traineeCoded);
+	// calculate # of assessments
+	$sql_traineeCoded = str_replace(", c4.coderkey", "", $sql_traineeCoded);
+	$rsTraineeCodedCountLT = mysql_query($sql_traineeCoded);
+	
+	// download CSV file of the trainees
+	if (isset($_GET['download_trainee_table'])) {
+		downloadData($rsTraineeCoded, date('Y-m-d')."_trainee_scores");
+	}
+
+}
+
+
+
+// Standard recordsets 1, 2, and 3 are hidden for trainees.
+if (!$is_trainee) {
+
+	// Defines for table 1: how many records to show at a time, what page number we're on, and consequently what data row we're starting on.
+	$maxRows_rsLaData01 = 5;
+	$pageNum_rsLaData01 = 0;
+	if (isset($_GET['pageNum_rsLaData01'])) { $pageNum_rsLaData01 = $_GET['pageNum_rsLaData01']; }
+	$startRow_rsLaData01 = max($pageNum_rsLaData01 * $maxRows_rsLaData01, 0);
+	
+	// Table 1: things that haven't been coded yet for this role.
+	/* The table-1 query has to be built to be very flexible. It must account for the needs of all possible coder-roles and coding scenarios, including:
+	 - the requirement that the la_codes table NOT exist (c.lakey IS NULL)
+	 - the requirement that data have been scored (only for tests, not journals)
+	 - limiting results to those with a teacher's userkey as resellerkey
+	 - possible registrant-based limitations in the future
+	 The query should be set up such that all of these requirements / exclusions can be checked in the WHERE clause, and can thus be wrapped up neatly in the $filter_table1 string.
+	 
+	 **** Records currently go from the top table into the bottom table 
+	 
+	Because this table doesn't necessarily require a record to have been scored, the query needs to add the other standard requirements to ensure that only 
+	 */
+	 
+	// Other restrictions on table 1:
+	$filter01 = "";
+	$filter01a = "";
+	if ($instrument_id == "SMJ" OR $instrument_id == "SMA") { 
+		// filter01a: negates coding_started requirement.
+		$filter01a = " OR d.coded_1 = 0 OR d.coded_1 IS NULL ";
+	}
+	 
+	$sql = sprintf("SELECT d.lakey, d.instrument_id, d.test_time, d.userkey, 
+			d.resellerkey, d.manlevelkey, d.dilemmakey, di.dilemma_name, 
+			ROUND(s.lasnumber_1, 1) AS lasnumber_1, d.date_completed, 
+			a.assignmentkey, a.date_end, a.date_release, d.flag, 
+			IF(a.date_release IS NOT NULL AND (a.date_end >= d.date_completed
+				 OR a.date_release >= d.date_completed + INTERVAL 14 DAY), 
+				 a.date_release, (d.date_completed + INTERVAL 14 DAY)) AS date_due,
+			r.firstname, r.lastname, r.group, 
+			IF(rb.company <> '', LEFT(rb.company, 15), CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer,
+			CASE 
+				WHEN d.completed = 0 THEN 'started'
+				WHEN d.flag = 1 AND (d.coded_1 = 0 OR d.coded_1 IS NULL) THEN 'limbo'
+				WHEN d.bc_allowedtoview = 0 THEN 'access denied'
+				WHEN d.completed = 1 AND (d.coded_1 = 0 OR d.coded_1 IS NULL) THEN 'completed'
+				WHEN d.coded_1 = 1 AND d.coded_1_complete = 0 THEN 'coded'
+				WHEN d.coded_1 = 1 AND d.flag = 1 THEN 'coded, in limbo'
+				WHEN d.coded_1_complete = 1 AND d.finalized = 0 THEN 'coding complete'
+				WHEN d.finalized = 2 THEN 'finalized'
+				WHEN d.finalized = 1 THEN 'released'
+				WHEN d.finalized = 3 THEN 'locked'
+			END AS status
+		FROM la_data d 
+			LEFT JOIN la_scores s ON d.lakey = s.lakey
+			LEFT JOIN registrants r ON d.userkey = r.userkey
+			LEFT JOIN registrants rb ON d.resellerkey = rb.userkey 
+			LEFT JOIN la_dilemmas di ON d.dilemmakey = di.dilemmakey
+			LEFT JOIN la_assignments a ON d.assignmentkey = a.assignmentkey 
+		WHERE d.instrument_id = %s AND d.completed = 1 
+			AND (d.coding_started = 0 OR d.coding_started IS NULL {$filter01a}) # set coding_started = 2 to hide.
+			# ensure this assignments was not set as 'do not code'
+			AND (a.hidden_coders = 0 OR a.hidden_coders IS NULL)
+			AND d.resellerkey <> 1000013376
+			".$filter_tables.$filter01, 
+				SQLstr($instrument_id, "text"));
+	$sql .= $searchText.querySortSearch($sql, "", "date_due ASC");
+	$query_limit_rsLaData01 = sprintf("%s LIMIT %d, %d", $sql, $startRow_rsLaData01, $maxRows_rsLaData01);
+	$rsLaData01 = mysql_query($query_limit_rsLaData01, $Assessment) or die("rsLaData01: ".mysql_error());
+	$row_rsLaData01 = mysql_fetch_assoc($rsLaData01);
+	// echo str_replace("\n", "<br />", $query_limit_rsLaData01); 
+	
+
+
+	$all_rsLaData01 = mysql_query($sql);
+	$totalRows_rsLaData01 = mysql_num_rows($all_rsLaData01);
+	$totalPages_rsLaData01 = ceil($totalRows_rsLaData01/$maxRows_rsLaData01)-1;
+	
+} // ENDIF: !$is_trainee
+
+// Table 2: show if you are a graduated trainee.
+if (!$is_trainee OR $is_graduated) {
+	
+	//	Table 2
+	
+	$maxRows_rsLaData02 = 10;
+	$pageNum_rsLaData02 = 0;
+	if (isset($_GET['pageNum_rsLaData02'])) { $pageNum_rsLaData02 = $_GET['pageNum_rsLaData02']; }
+	$startRow_rsLaData02 = max($pageNum_rsLaData02 * $maxRows_rsLaData02, 0);
+	
+	/* The update-codes table query works for both tests and journal entries. If it's a journal entry, then you don't have score data, so those columns are just left null. Note that each table gets its own "nickname" for the purpose of the query, so la_data is d, la_scores is s, la_codes_(primary table) is ca, and so forth. */ 
+	// Other restrictions on table 2:
+	$filter02 = "";
+	// Teacher-assistants to SMA only see things Sharon and Theo have coded
+	if ($role == "teacher-assistant" AND $instrument_id == "SMA") { 
+		// $filter02 .= " AND ( (d.coderkey_1 = 1000000083 AND d.coderkey_2 = 1000000539 
+		// 										  AND d.coded_1 = 1 AND d.coded_2 = 1) 
+		//									  OR r.group = '2013_MT_1' ) ";
+		$filter02 .= " AND r.group = '2013_MT_1' ";
+	}
+	if ($instrument_id == "SMJ" OR $instrument_id == "SMA") { 
+		$filter02 .= " AND d.coded_1 = 1 ";
+	}
+	// for all coders, hide the old Crawford School records (interviews).
+	$filter02 .= " AND IFNULL(d.projectkey, 0) NOT IN(6005, 6014) ";
+
+	$sql_ldma_scales = "";
+	// LDMA scales
+	if ($instrument_id_base == 'LDMA') {
+		$sql_ldma_scales = "
+			c1.code451 AS c1_p_taking,
+			c1.code452 AS c1_p_seeking,
+			c1.code453 AS c1_coord,
+			c1.code454 AS c1_context,
+			c1.code455 AS c1_dmprocess,
+			c1.code456 AS c1_collab,
+			c1.argumentation_overall AS c1_arg,
+			c2.code451 AS c2_p_taking,
+			c2.code452 AS c2_p_seeking,
+			c2.code453 AS c2_coord,
+			c2.code454 AS c2_context,
+			c2.code455 AS c2_dmprocess,
+			c2.code456 AS c2_collab,
+			c2.argumentation_overall AS c2_arg,
+			c3.code451 AS c3_p_taking,
+			c3.code452 AS c3_p_seeking,
+			c3.code453 AS c3_coord,
+			c3.code454 AS c3_context,
+			c3.code455 AS c3_dmprocess,
+			c3.code456 AS c3_collab,
+			c3.argumentation_overall AS c3_arg,
+		";
+	}
+
+
+	$query_rsLaData02 = sprintf("SELECT 
+			d.lakey, d.instrument_id, d.test_time, d.date_completed, d.dilemmakey, di.dilemma_name, 
+			d.resellerkey, d.manlevelkey, 
+			d.flag, d.finalized, d.date_finalized, d.date_released, d.admin_notes, 
+			a.assignmentkey, a.date_end, a.date_release, 
+			IF(a.date_release IS NOT NULL AND (a.date_end >= d.date_completed
+				 OR a.date_release >= d.date_completed + INTERVAL 14 DAY), 
+				 a.date_release, (d.date_completed + INTERVAL 14 DAY)) AS date_due,
+			s.scored_1, 
+			r.userkey, r.firstname, r.lastname, r.group, 
+			IF(rb.company <> '', LEFT(rb.company, 15), CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer,
+			d.coded_1, d.date_coded_1, d.coded_2, d.date_coded_2, d.coded_3, d.date_coded_3, 
+			d.coded_4, d.date_coded_4, d.coded_1_complete, 
+			coderkey_1, coderkey_2, coderkey_3, coderkey_4, 
+			CONCAT(rc1.firstname, ':', d.coded_1) AS coder_1, 
+			CONCAT(rc2.firstname, ':', d.coded_2) AS coder_2, 
+			CONCAT(rc3.firstname, ':', d.coded_3) AS coder_3, 
+			CONCAT(rc4.firstname, ':', d.coded_4) AS coder_4, 
+			d.date_recoded_1, rrc1.firstname AS recoder_1, d.coded_1_theo, 
+			c1.date_created AS created_c1, c2.date_created AS created_c2, c3.date_created AS created_c3, 
+			c4.date_created AS created_c4, 
+			c1.timestamp AS timestamp_c1, c2.timestamp AS timestamp_c2, c3.timestamp AS timestamp_c3, 
+			c4.timestamp AS timestamp_c4, 
+			c1.coded_confidence AS confidence_1, c2.coded_confidence AS confidence_2, 
+			CONCAT(IF(c1.code_recommend <> '', 'S', ''), IF(c1.codercomment <> '', 'P', '')) AS comments_1,
+			CONCAT(IF(c2.code_recommend <> '', 'S', ''), IF(c2.codercomment <> '', 'P', '')) AS comments_2,
+			c1.code_recommend AS code_recommend_1, c1.codercomment AS codercomment_1,
+			c2.code_recommend AS code_recommend_2, c2.codercomment AS codercomment_2,
+			CONCAT(IFNULL(d.coderkey_1, 0), ' ', IFNULL(d.coderkey_2, 0), ' ', IFNULL(d.coderkey_3, 0)) 
+				AS search_coderkey,
+			
+			# scores
+			CASE
+				WHEN d.instrument_id = 'LLRA_JOURNAL' THEN c1.code493
+				WHEN d.instrument_id = 'LERA_JOURNAL' THEN c1.code491
+				WHEN d.instrument_id = 'LRJA_JOURNAL' THEN c1.code491
+				WHEN d.instrument_id = 'LIMA_JOURNAL' THEN c1.code493
+				WHEN d.instrument_id = 'SMA' 					THEN c1.code491
+				WHEN d.instrument_id = 'LDPA' 				THEN c1.code491
+				WHEN d.instrument_id = 'LIMA' 				THEN c1.code491
+				ELSE s.lasnumber_1
+			END AS score_1,
+			CASE
+				WHEN d.instrument_id = 'LLRA_JOURNAL' THEN c2.code493
+				WHEN d.instrument_id = 'LERA_JOURNAL' THEN c2.code491
+				WHEN d.instrument_id = 'LRJA_JOURNAL' THEN c2.code491
+				WHEN d.instrument_id = 'LIMA_JOURNAL' THEN c2.code493
+				WHEN d.instrument_id = 'SMA' 					THEN c2.code491
+				WHEN d.instrument_id = 'LDPA' 				THEN c2.code491
+				WHEN d.instrument_id = 'LIMA' 				THEN c2.code491
+				ELSE s.lasnumber_2
+			END AS score_2,
+			CASE
+				WHEN d.instrument_id = 'LLRA_JOURNAL' THEN c1.code493 - c2.code493
+				WHEN d.instrument_id = 'LERA_JOURNAL' THEN c1.code491 - c2.code491
+				WHEN d.instrument_id = 'LRJA_JOURNAL' THEN c1.code491 - c2.code491
+				WHEN d.instrument_id = 'LIMA_JOURNAL' THEN c1.code493 - c2.code493
+				WHEN d.instrument_id = 'SMA' 					THEN c1.code491 - c2.code491
+				WHEN d.instrument_id = 'LDPA'					THEN c1.code491 - c2.code491
+				WHEN d.instrument_id = 'LIMA'					THEN c1.code491 - c2.code491
+				ELSE s.lasnumber_1 - s.lasnumber_2
+			END AS diff_1_2,
+			c1.code481, c1.code482, c1.code483, 
+
+			# LDMA scales
+			{$sql_ldma_scales}
+			
+			CASE 
+				WHEN d.completed = 0 THEN 'incomplete'
+				WHEN d.flag = 1 AND (d.coded_1 = 0 OR d.coded_1 IS NULL) THEN 'limbo'
+				WHEN d.completed = 1 AND (d.coding_started = 2) THEN 'code for fun'
+				WHEN d.completed = 1 AND (d.coded_1 = 0 OR d.coded_1 IS NULL) THEN 'coding started'
+				WHEN d.coded_1 = 1 AND d.coded_1_complete = 0 THEN 'coded'
+				WHEN d.coded_1 = 1 AND d.flag = 1 THEN 'coded, in limbo'
+				WHEN d.coded_1_complete = 1 AND d.finalized = 0 THEN 'coding completed'
+				WHEN d.bc_allowedtoview = 0 THEN 'access denied'
+				WHEN d.finalized = 2 THEN 'finalized'
+				WHEN d.finalized = 1 THEN 'released'
+				WHEN d.finalized = 3 THEN 'locked'
+			END AS status, 
+			CASE 
+				WHEN d.completed = 0 THEN 1
+				WHEN d.flag = 1 THEN 6
+				WHEN d.completed = 1 AND (d.coding_started = 2) THEN 11
+				WHEN d.completed = 1 AND (d.coded_1 = 0 OR d.coded_1 IS NULL) THEN 3
+				WHEN d.bc_allowedtoview = 0 THEN 7
+				WHEN d.coded_1 = 1 AND d.coded_1_complete = 0 THEN 4
+				WHEN d.coded_1_complete = 1 AND d.finalized = 0 THEN 5
+				WHEN d.finalized = 2 THEN 9
+				WHEN d.finalized = 1 THEN 10
+				WHEN d.finalized = 3 THEN 8
+			END AS status_order, 
+			IF(d.finalized = 0, 0, 1) AS sort_finalized,
+			1 AS one
+		
+		FROM la_data d 
+			LEFT JOIN la_scores s ON d.lakey = s.lakey 
+			LEFT JOIN registrants r ON d.userkey = r.userkey 
+			LEFT JOIN registrants rb ON d.resellerkey = rb.userkey 
+			LEFT JOIN registrants rc1 ON d.coderkey_1 = rc1.userkey 
+			LEFT JOIN registrants rrc1 ON d.recoderkey_1 = rrc1.userkey 
+			LEFT JOIN registrants rc2 ON d.coderkey_2 = rc2.userkey 
+			LEFT JOIN registrants rc3 ON d.coderkey_3 = rc3.userkey 
+			LEFT JOIN registrants rc4 ON d.coderkey_4 = rc4.userkey 
+			LEFT JOIN la_codes   c1 ON d.lakey = c1.lakey
+			LEFT JOIN la_codes_2 c2 ON d.lakey = c2.lakey
+			LEFT JOIN la_codes_3 c3 ON d.lakey = c3.lakey
+			LEFT JOIN la_codes_4 c4 ON d.lakey = c4.lakey
+			LEFT JOIN la_dilemmas di ON d.dilemmakey = di.dilemmakey
+			LEFT JOIN la_assignments a ON d.assignmentkey = a.assignmentkey 
+		WHERE (d.coding_started = 1 OR d.coding_started = 2) AND d.instrument_id = %s 
+			AND d.completed <> 2 AND (a.hidden_coders = 0 OR a.hidden_coders IS NULL OR d.coded_1 = 1)
+			".$filter_tables.$filter02, 
+				SQLstr($instrument_id, "text"));
+	// $sort = "status_order ASC";
+	$sort = "sort_finalized ASC, c1.timestamp DESC";
+	if ($instrument_id == "SMJ") { $sort = "d.coded_1 ASC, d.date_coded_1 DESC, d.date_completed DESC"; }
+	// if ($userkey == 1000000539) { $sort = "coded_1_theo ASC"; }
+	$query_rsLaData02 .= $searchText.
+		querySortSearch($query_rsLaData02, "", $sort);
+	// echo str_replace("\n", "<br>", $query_rsLaData02);
+	$all_rsLaData02 = mysql_query($query_rsLaData02, $Assessment) or die("rsLaData02: ".mysql_error());
+	$totalRows_rsLaData02 = mysql_num_rows($all_rsLaData02);
+	$totalPages_rsLaData02 = ceil($totalRows_rsLaData02/$maxRows_rsLaData02)-1;
+	$query_rsLaData02 .= " LIMIT ".$startRow_rsLaData02.", ".$maxRows_rsLaData02." ";
+	$rsLaData02 = mysql_query($query_rsLaData02, $Assessment) or die("rsLaData02: ".mysql_error());
+	$row_rsLaData02 = mysql_fetch_assoc($rsLaData02);
+	
+	$query_rsCountLimbo = sprintf("SELECT d.lakey
+		FROM la_data d 
+			LEFT JOIN registrants r ON d.userkey = r.userkey
+			LEFT JOIN la_scores s ON d.lakey = s.lakey 
+			LEFT JOIN la_assignments a ON d.assignmentkey = a.assignmentkey 
+		WHERE (d.coding_started = 1 OR d.coding_started = 2) AND d.instrument_id = %s 
+			AND d.completed <> 2 AND (a.hidden_coders = 0 OR a.hidden_coders IS NULL OR d.coded_1 = 1)
+			AND d.flag = 1
+			".$filter_tables.$filter02, 
+				SQLstr($instrument_id, "text"));
+	$rsCountLimbo = mysql_query($query_rsCountLimbo) or die("rsCountLimbo: ".mysql_error());
+	$totalRows_rsCountLimbo = mysql_num_rows($rsCountLimbo);
+	
+} // ENDIF: !$is_trainee OR $is_graduated
+
+if (!$is_trainee) {
+	
+	//	Table 3: not yet completed by test taker
+	$maxRows_rsLaData03 = 5;
+	$pageNum_rsLaData03 = 0;
+	if (isset($_GET['pageNum_rsLaData03'])) {
+		$pageNum_rsLaData03 = $_GET['pageNum_rsLaData03'];
+	}
+	$startRow_rsLaData03 = max($pageNum_rsLaData03 * $maxRows_rsLaData03, 0);
+	
+	// Other restrictions on table 3:
+	$filter03 = "";
+	// Teacher-assistants don't see incomplete.
+	if ($role == "teacher-assistant") { $filter03 .= " AND 1=0 "; }
+	
+	$query_rsLaData03 = sprintf("SELECT d.lakey, d.instrument_id, d.test_time, d.resellerkey, 
+			d.timestamp, d.date_completed, d.completed, a.assignmentkey, a.date_release, 
+			d.scored_1, d.dilemmakey, di.dilemma_name,
+			r.userkey, r.group, d.manlevelkey, 
+			IF(rb.company <> '', LEFT(rb.company, 15), CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer,
+			CASE 
+				WHEN d.completed = 0 THEN 'started'
+				WHEN d.flag = 1 AND (d.coded_1 = 0 OR d.coded_1 IS NULL) THEN 'limbo'
+				WHEN d.bc_allowedtoview = 0 THEN 'access denied'
+				WHEN d.completed = 1 AND (d.coded_1 = 0 OR d.coded_1 IS NULL) THEN 'completed'
+				WHEN d.coded_1 = 1 AND d.coded_1_complete = 0 THEN 'coded'
+				WHEN d.coded_1 = 1 AND d.flag = 1 THEN 'coded, in limbo'
+				WHEN d.coded_1_complete = 1 AND d.finalized = 0 THEN 'coding complete'
+				WHEN d.finalized = 2 THEN 'finalized'
+				WHEN d.finalized = 1 THEN 'released'
+				WHEN d.finalized = 3 THEN 'locked'
+			END AS status
+		FROM la_data d
+			JOIN registrants r ON d.userkey = r.userkey
+			LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+			LEFT JOIN la_dilemmas di ON d.dilemmakey = di.dilemmakey
+			LEFT JOIN la_assignments a ON d.assignmentkey = a.assignmentkey
+		WHERE d.completed = 0 AND d.instrument_id = %s ".$filter03, 
+			SQLstr($instrument_id, "text"));
+	$query_rsLaData03 .= $searchText.querySortSearch($query_rsLaData03, "timestamp ASC");
+	$all_rsLaData03 = mysql_query($query_rsLaData03, $Assessment) or die("rsLaData03: ".mysql_error());
+	$totalRows_rsLaData03 = mysql_num_rows($all_rsLaData03);
+	$totalPages_rsLaData03 = ceil($totalRows_rsLaData03/$maxRows_rsLaData03)-1;
+	$query_rsLaData03 .= " LIMIT ".$startRow_rsLaData03.", ".$maxRows_rsLaData03." ";
+	$rsLaData03 = mysql_query($query_rsLaData03, $Assessment) or die("rsLaData03: ".mysql_error());
+	$row_rsLaData03 = mysql_fetch_assoc($rsLaData03);
+	
+}
+	
+
+
+/**** QUERY STRINGS - these prepare the SQL queries to scroll through multiple pages of records in tables 1, 2, and 3 on this performance select page.  */
+
+$queryString_rsLaData01 = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+	$params = explode("&", $_SERVER['QUERY_STRING']);
+	$newParams = array();
+	foreach ($params as $param) {
+		if (stristr($param, "pageNum_rsLaData01") == false && 
+				stristr($param, "totalRows_rsLaData01") == false) {
+			array_push($newParams, $param);
+		}
+	}
+	if (count($newParams) != 0) {
+		$queryString_rsLaData01 = "&" . htmlentities(implode("&", $newParams));
+	}
+}
+$queryString_rsLaData01 = sprintf("&totalRows_rsLaData01=%d%s", $totalRows_rsLaData01, $queryString_rsLaData01);
+
+$queryString_rsLaData02 = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+	$params = explode("&", $_SERVER['QUERY_STRING']);
+	$newParams = array();
+	foreach ($params as $param) {
+		if (stristr($param, "pageNum_rsLaData02") == false && 
+				stristr($param, "totalRows_rsLaData02") == false) {
+			array_push($newParams, $param);
+		}
+	}
+	if (count($newParams) != 0) {
+		$queryString_rsLaData02 = "&" . htmlentities(implode("&", $newParams));
+	}
+}
+$queryString_rsLaData02 = sprintf("&totalRows_rsLaData02=%d%s", $totalRows_rsLaData02, $queryString_rsLaData02);
+
+
+// bench("Data table queries");
+
+
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Select a <?php if ($type == "test") { ?>performance to 2nd-code<?php } else if ($type == "journal") { ?>journal entry to code<?php } ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+<link href="../includes/js_res/jquery.ui.smoothness.css" rel="stylesheet" type="text/css" />
+
+<script src="../includes/fullcalendar/fullcalendar.min.js" type="text/javascript"></script>
+<link href="../includes/fullcalendar/fullcalendar.css" rel="stylesheet" type="text/css" />
+
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryTabbedPanelsVertical.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+
+
+<style type="text/css">
+
+.tooltip {
+	display:none;
+	background:#FFF;
+	width: 130px;
+	padding-top: 0px;
+	padding-bottom: 3px;
+	padding-right: 20px;
+	padding-left: 20px;
+	-moz-box-shadow: 6px 6px 5px #666;
+	-webkit-box-shadow: 6px 6px 5px #666;
+	box-shadow: 6px 6px 5px #666;
+	z-index: 1;
+	border: 1px solid #B1B1B1;
+}
+
+.comment_tooltip {
+	display:none;
+	text-align:left;
+	background:#FFF;
+	width: 300px;
+	padding-top: 4px;
+	padding-bottom: 5px;
+	padding-right: 20px;
+	padding-left: 20px;
+	-moz-box-shadow: 6px 6px 5px #666;
+	-webkit-box-shadow: 6px 6px 5px #666;
+	box-shadow: 6px 6px 5px #666;
+	z-index: 999;
+	border: 1px solid #B1B1B1;
+}
+
+.hotspot, .comment_hotspot {
+	cursor: pointer; cursor: hand	
+	height:100%; 
+	width:100%;
+	text-decoration: none;
+}
+.container .inner_container .mainContent table {
+	margin-top: 5px;
+	margin-bottom: 20px;
+}
+
+.altrow { background-color: #ddd; }
+
+</style>
+
+
+<script type="text/javascript">
+
+// JQUERY to manage hidden elements on the page
+$(document).ready(function() {
+	
+	$('#filter_box').hide();
+	$('#filter_header').click(function(){
+		$('#filter_box').toggle(200);
+	});
+	
+	var tipShowing = false;
+	
+	$('.hotspot').tooltip({
+		position: 'center right', 
+		// offset: [-0, -0],
+		effect: 'fade', 
+		fadeInSpeed: 100,
+		fadeOutSpeed: 100,
+		delay:30,
+		events: {
+			def: 'click,mouseleave'
+		},
+		onShow: function() {
+			tipShowing = true;
+		},
+		onHide: function() {
+			tipShowing = false;
+		}
+	});
+	
+	// any <span> inside a .codercell div, should change class on mouseover.
+	$('.hotspot').mouseover(function() {
+		if (!tipShowing) {
+			this.style.backgroundColor = "#d0d0d0";	
+		}
+	});
+	
+	$('.hotspot').mouseout(function() {
+		this.style.backgroundColor = "";
+	});
+	
+	$('.comment_hotspot').tooltip({
+		position: 'bottom center',
+		// offset: [-130, 0], 
+		effect: 'fade', 
+		fadeInSpeed: 100,
+		fadeOutSpeed: 100,
+		delay:300,
+		layout: '<span/>',
+		events: {
+			def: 'mouseover, mouseleave'
+		}
+	}); 
+	
+	$('.limbo_link').click(function(){
+		$(this).hide();
+		$(this).parent().find('.limbo_text').show();
+		$(this).parent().find('.limbo_why').show();
+		$(this).parent().find('.limbo_commit').show();
+		$(this).parent().parent().css('width', '450px');
+	});
+	
+	$('.limbo_commit').click(function(){
+		var textarea = $(this).parent().find('.limbo_why');
+		var lakey = textarea.attr('lakey');
+		var text = textarea.val();
+		// I could set up the same AJAX responder on this page, but don't see reason to
+		// the one on the scoring page works just fine.
+		$(this).parent().parent().parent().load('../la_scoring/scoring_performance_select.php', {
+			put_in_limbo: 1,
+			lakey: lakey,
+			text: text
+		});
+	});
+	
+	$('.date').datepicker({ 
+		dateFormat: 'yy-mm-dd', 
+		numberOfMonths: 1,
+		showOtherMonths: true,
+		selectOtherMonths: true
+	});
+	
+});
+
+</script>
+
+<style>
+
+.minimalist-a .crunched { margin: 0; }
+.minimalist-a .crunched td { padding: 0; margin: 0; }
+
+</style>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+  <? if ($instrument_id_base == "LDMA" OR $instrument_id_base == "LMBE" 
+						OR $instrument_id_base == "LSUA") { ?>
+  <a href="code_strengths_view.php">S&amp;R details</a>
+	<? } // 
+	if (($instrument_id == "SMA" OR $instrument_id == "SMJ") AND $is_teacher) { ?>
+  	<a href="../la_reports/report_bulkcustomer.php">summary report</a>
+  <? } // ?>
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    
+    <h1>
+    	<? if ($is_trainee OR $is_junior) { echo "LDMA TRAINING: SELECT A RECORD"; } 
+			else { ?>SELECT AN <? echo $instrument_id_name; ?> PERFORMANCE TO CODE<? } ?>
+    </h1>
+
+    <div style="min-width: 1800px;">
+    
+    <? // if (isset($_SESSION['sort'])) { echo "SESSION sort = ".$_SESSION['sort']; } ?>
+    
+    <div id="CollapsiblePanel2" class="CollapsiblePanel">
+    <? if (!$is_teacher AND !$is_student AND !$is_trainee AND !$is_junior) { ?>
+      <div class="CollapsiblePanelTab">DEADLINES</div>
+      <div class="CollapsiblePanelContent">
+        
+			<? deadlinesCalendar($currentPage); ?> 
+    
+      </div>
+      
+      <? } // end IF: if you are not a teacher-coder ?>
+    </div>
+    
+    <? // bench("Deadlines calendar"); ?>
+    
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+    	<? // Management level will be relevant to multiple instruments. 
+	    if (!$is_teacher AND !$is_student AND !$is_trainee AND !$is_junior) { ?>
+	    <div class="CollapsiblePanelTab">MANAGEMENT LEVEL DESCRIPTIONS</div>
+	    <div class="CollapsiblePanelContent">
+	      <table width="600" border="0">
+	        <tr>
+	          <th scope="col">Mgmt. level key</th>
+	          <th scope="col">Level in hierarchy</th>
+	          <th scope="col">Description</th>
+          </tr>
+	        <? 
+            do {  ?>
+	        <tr>
+	          <td><? echo $row_rsManagementLevel['manlevelkey']; ?></td>
+	          <td><? echo $row_rsManagementLevel['man_level_number']; ?></td>
+	          <td><? echo $row_rsManagementLevel['man_level']; ?></td>
+          </tr>
+	        <?
+						} while ($row_rsManagementLevel = mysql_fetch_assoc($rsManagementLevel)); ?>
+        </table>
+	    </div>
+      <? } ?>
+    </div>
+  
+    
+    <? if ($totalRows_rsLaDilemmas > 0 AND !$is_trainee AND !$is_junior) { ?>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">DILEMMA DESCRIPTIONS</div>
+      <div class="CollapsiblePanelContent">
+          
+          <div id="TabbedPanels1" class="VTabbedPanels">
+            <ul class="TabbedPanelsTabGroup">
+              <? do {  ?>
+              	<li class="TabbedPanelsTab">
+                D<? echo $row_rsLaDilemmas['dilemmakey']; ?>: 
+								<? echo $row_rsLaDilemmas['dilemma_name']; ?></li>
+              <? } while ($row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas)); 
+							$rows = mysql_num_rows($rsLaDilemmas);
+							if ($rows > 0) {
+								mysql_data_seek($rsLaDilemmas, 0);
+								$row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas);  } ?>
+            </ul>
+            <div class="TabbedPanelsContentGroup">
+              <? do {  ?>
+              	<div class="TabbedPanelsContent"><table width="500"><tr><td>
+                <h3>Dilemma #<? echo $row_rsLaDilemmas['dilemmakey']; ?>: <? echo $row_rsLaDilemmas['dilemma_name']; ?> [<? echo $row_rsLaDilemmas['dilemma_sector']; ?>]</h3>
+                <p><? echo $row_rsLaDilemmas['dilemma']; ?></p>
+              </td></tr></table></div>
+              <? } while ($row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas)); 
+							$rows = mysql_num_rows($rsLaDilemmas);
+							if ($rows > 0) {
+								mysql_data_seek($rsLaDilemmas, 0);
+								$row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas);  } ?>
+            </div>
+          </div>
+          
+
+      </div>
+    </div>
+    <? } ?>
+    
+    <br class="clearfloat" />
+    
+    <? if (!$is_trainee AND !$is_junior) { ?>
+    
+    <h3><a id="filter_header" style="cursor:pointer; "><strong>FILTER RESULTS</strong></a></h3>
+    <? if (isset($_SESSION['search']) AND $_SESSION['search'] <> "") { 
+			$searchDesc = $_SESSION['search'];
+			$searchDesc = str_replace(array("(s)", "(h)"), "", $searchDesc);
+			$searchDesc = str_replace("(low):", " >= '", $searchDesc);
+			$searchDesc = str_replace("(high):", " <= '", $searchDesc);
+			$searchDesc = str_replace("(e):", " = '", $searchDesc);
+			$searchDesc = str_replace(":", " contains '", $searchDesc);
+			$searchDesc = str_replace(",", "' AND ", $searchDesc);
+			$searchDesc = substr($searchDesc, 0, strlen($searchDesc)-5); ?>
+      <p>
+      	Current search: <? echo $searchDesc; ?> | 
+      	<a href="?search=clear">clear search</a>
+      </p>
+		<? } ?>
+
+		<? if (isset($_SESSION['sort']) AND $_SESSION['sort'] <> '') { ?>
+			<p>Sorting by <? echo $_SESSION['sort']; ?> <a href="?sort=clear">clear sort</a></p>
+		<? } ?>
+    
+    <div id="filter_box">
+	    <table border="0">
+		    <form id="form1" name="form1" method="post" action="">
+		    <tr>
+		      <td></td>
+		      <td align="right"><input type="submit" name="SUBMIT" id="SUBMIT" value="FILTER" /></td>
+		    </tr>
+		    <tr>
+		    	<td><div align="right">userkey</div></td>
+		      <td><span id="sprytextfield1">
+		        <input name="(s)userkey" type="text" value="<? 
+						echo (isset($_POST['(s)userkey']) ? $_POST['(s)userkey'] : ""); ?>" size="10" />
+		      </span></td>
+		    </tr>
+		    <tr>
+		      <td align="left"><div align="right">record number</div></td>
+		      <td align="left"><span id="sprytextfield2">
+		        <input name="(s)lakey" type="text" value="<? 
+							echo (isset($_POST['(s)lakey']) ? $_POST['(s)lakey'] : ""); ?>" size="10" />
+		      </span></td>
+		    </tr>
+		    <? if ($user_level >= 26 OR $instrument_id == "SMJ" OR $instrument_id == "SMA") { ?>
+		    <tr>
+		      <td><div align="right">first name</div></td>
+		      <td><input name="(s)firstname" type="text" value="<? 
+						echo (isset($_POST['(s)firstname']) ? $_POST['(s)firstname'] : ""); ?>" size="15" />
+		      </td>
+		    </tr>
+		    <tr>
+		      <td><div align="right">last name</div></td>
+		      <td><input name="(s)lastname" type="text" value="<? 
+		      echo (isset($_POST['(s)lastname']) ? $_POST['(s)lastname'] : ""); ?>" size="15" /></td>
+		    </tr>
+		    <? } ?>
+		    <tr>
+		      <td><div align="right">group ID</div></td>
+		      <td><span id="spryselect7">
+		      <select name="(s)r:group" id="(s)r:group">
+		        <? $post_group = "";
+							if (isset($_POST['(s)r:group'])) { $post_group = $_POST['(s)r:group']; } ?>
+		        <option selected="selected" value="" <? if (!(strcmp("", $post_group))) 
+							{echo "selected=\"selected\"";} ?>> - view all - </option>
+		        <? 
+		          do { 
+		            $thisGroup = $row_rsFilterGroups['group']; ?>
+		        <option value="<? echo $thisGroup; ?>" <? if (!(strcmp($post_group, $thisGroup))) 
+		              {echo "selected=\"selected\"";} ?>><? echo $thisGroup.
+										" (".$row_rsFilterGroups['numpeople'].")"; ?></option>
+		        <? 
+		          } while ($row_rsFilterGroups = mysql_fetch_assoc($rsFilterGroups)); ?>
+		      </select>
+		      </span></td>
+		    </tr>
+		    <tr>
+		      <td align="left"><div align="right">bulk customer</div></td>
+		      <td align="left"><span id="spryselect3">
+		        <select name="(s)resellerkey" class="pulldown_width_150" id="(s)resellerkey">
+		          <? $post_resellerkey = "";
+							if (isset($_POST['(s)resellerkey'])) 
+							{ $post_resellerkey = $_POST['(s)resellerkey']; } ?>
+		          <option value="" <? if (!(strcmp("", $post_resellerkey))) 
+							{echo "selected=\"selected\"";} ?>>
+		            - view all - </option>
+		          <? do { 
+							$thisBc = $row_rsFilterBc['bulkcustomer']; ?>
+		          <option value="<? echo $row_rsFilterBc['resellerkey']; ?>" 
+								<? if (!(strcmp($post_resellerkey, $row_rsFilterBc['resellerkey']))) 
+								{echo "selected=\"selected\"";} ?>><? echo $thisBc; ?></option>
+		          <? } while ($row_rsFilterBc = mysql_fetch_assoc($rsFilterBc)); ?>
+		          </select>
+		      	</span>
+		      </td>
+		    </tr>
+		    <tr>
+		      <td align="left"><div align="right">assignment</div></td>
+		      <td><span id="spryselect9">
+		      	<select name="(s)assignmentkey" class="pulldown_width_150" id="(s)assignmentkey">
+		      	<? $search_assn = "";
+							if (isset($_POST['(s)assignmentkey'])) 
+								{ $search_assn = $_POST['(s)assignmentkey']; } ?>
+		        <option value="" <? if (!(strcmp("", $search_assn))) 
+											{ echo "selected=\"selected\""; } ?>> - view all - </option>
+		        <? 
+										// List groups available to me (based on the test takers already in our system) 
+										do {   
+		      	if ($row_rsFilterAssign['assignmentkey'] <> "") { ?>
+		        <option value="<? echo $row_rsFilterAssign['assignmentkey']?>" 
+								<? if (!(strcmp($row_rsFilterAssign['assignmentkey'], $search_assn))) 
+								{ echo "selected=\"selected\""; } 
+								?>>
+		          <? 
+								if (WA_Auth_RulePasses("Logged in as analyst")) { $row_rsFilterAssign['assignmentkey']; }
+								echo str_replace("_", " ", $row_rsFilterAssign['instrument_id']); 
+								?>
+		          , group <? echo $row_rsFilterAssign['assign_group']; 
+								?>: <? echo ($row_rsFilterAssign['dilemma_name'] <> "" ? 
+									$row_rsFilterAssign['dilemma_name']." dilemma, " : ""); 
+								?> from <? echo $row_rsFilterAssign['date_start']; ?> to 
+								<? echo $row_rsFilterAssign['date_end']; ?></option>
+		        <? } } while ($row_rsFilterAssign = mysql_fetch_assoc($rsFilterAssign));
+								$rows = mysql_num_rows($rsFilterAssign);
+								if($rows > 0) {
+										mysql_data_seek($rsFilterAssign, 0);
+									$row_rsFilterAssign = mysql_fetch_assoc($rsFilterAssign);
+								} ?>
+		      	</select></span>
+		      </td>
+		    </tr>
+		    <tr>
+		      <td><div align="right">management level</div></td>
+		      <td><span id="spryselect10">
+		        <select name="(s)manlevelkey(e)" class="pulldown_width_150" id="(s)manlevelkey(e)">
+		          <? $search_manlevel = "";
+		        if (isset($_POST['(s)manlevelkey(e)'])) 
+		          { $search_manlevel = $_POST['(s)manlevelkey(e)']; } ?>
+		          <option value="" <? if(!strcmp($search_manlevel, "")) 
+		        { echo "selected=\"selected\""; } ?>>- view all -</option>
+		          <? do { ?>
+		          <option value="<? echo $row_rsFilterManLevels['manlevelkey']?>" 
+						<? if(!strcmp( $search_manlevel, $row_rsFilterManLevels['manlevelkey'] )) 
+		        { echo "selected=\"selected\""; } ?>>
+		                  <? 
+		        echo $row_rsFilterManLevels['man_level']." (".$row_rsFilterManLevels['numpeople'].")"; ?>
+		        </option>
+		        <? } while ($row_rsFilterManLevels = mysql_fetch_assoc($rsFilterManLevels));
+						$rows = mysql_num_rows($rsFilterManLevels);
+						if($rows > 0) {
+								mysql_data_seek($rsFilterManLevels, 0);
+							$row_rsFilterManLevels = mysql_fetch_assoc($rsFilterManLevels);
+						} ?>
+		       	</select></span>
+		      </td>
+		    </tr>
+		    <tr>
+		      <td><div align="right">test time</div></td>
+		      <td><span id="spryselect8">
+		      <select name="(s)test_time" id="(s)test_time">
+		        <? $post_test_time = "";
+							if (isset($_POST['(s)test_time'])) { $post_test_time = $_POST['(s)test_time']; } ?>
+		        <option selected="selected" value="" <? if (!(strcmp("", $post_test_time))) 
+							{echo "selected=\"selected\"";} ?>> - view all - </option>
+		        <? 
+		          do { ?>
+		        <option value="<? echo $row_rsTestTime['test_time']; ?>" <? 
+									if (!(strcmp($post_test_time, $row_rsTestTime['test_time']))) 
+		              {echo "selected=\"selected\"";} ?>><? echo $row_rsTestTime['test_time'].
+										" (".$row_rsTestTime['numpeople'].")"; ?></option>
+		        <? 
+		          } while ($row_rsTestTime = mysql_fetch_assoc($rsTestTime)); ?>
+		      </select>
+		      </span></td>
+		    </tr>
+		    <tr>
+		      <td><div align="right">dilemma</div></td>
+		      <td>
+		      <select name="(s)dilemma_name(e)" id="(s)dilemma_name(e)">
+		        <? $post_dilemma = "";
+							if (isset($_POST['(s)dilemma_name(e)'])) { $post_dilemma = $_POST['(s)dilemma_name(e)']; } ?>
+		        <option selected="selected" value="" <? if ($post_dilemma == "") 
+							{ echo "selected='selected'"; } ?>> - view all - </option><? 
+		        do { ?>
+		        	<option value="<? echo $row_rsDilemma['dilemma_name']; ?>" <? 
+								if ($row_rsDilemma['dilemma_name'] == $post_dilemma) 
+								{ echo "selected='selected'"; } ?>>
+									<? echo $row_rsDilemma['dilemma_name'].
+									" (".$row_rsDilemma['numpeople'].")"; ?></option><? 
+		        } while ($row_rsDilemma = mysql_fetch_assoc($rsDilemma)); ?>
+		      </select>
+		      </td>
+		    </tr>
+		    <tr>
+		      <td><div align="right"> completion date </div></td>
+		      <td> from <span id="sprytextfield4">
+		        <input name="(s)date_completed(low)" type="text" class="date" value="<? 
+						echo (isset($_POST['(s)date_completed(low)']) ? $_POST['(s)date_completed(low)'] : ""); ?>" 
+		        size="10" />
+		        <span class="textfieldInvalidFormatMsg">Invalid format.</span></span> to <span id="sprytextfield5">
+		          <input name="(s)date_completed(high)" type="text" class="date" value="<? 
+							echo (isset($_POST['(s)date_completed(high)']) ? $_POST['(s)date_completed(high)'] : ""); ?>" 
+		          size="10" />
+		          <span class="textfieldInvalidFormatMsg">Invalid format.</span></span>
+		      </td>
+		    </tr>
+		    <tr>  
+		      <td><div align="right">score </div></td>
+		      <td>from <span id="sprytextfield6">
+		        <input name="(h)score_1(low)" type="text" value="<? 
+		          echo (isset($_POST['(h)score_1(low)']) ? $_POST['(h)score_1(low)'] : ""); 
+		          ?>" size="5" />
+		        </span> to <span id="sprytextfield7">
+		        <input name="(h)score_1(high)" type="text" value="<? 
+		          echo (isset($_POST['(h)score_1(high)']) ? $_POST['(h)score_1(high)'] : ""); 
+		          ?>" size="5" />
+		        </span>
+		      </td>
+		    </tr>
+		    <tr>
+		      <td align="left"><div align="right">status</div></td>
+		      <td><span id="spryselect2">
+		      <select name="(h)status" class="pulldown_width_150" id="(h)status">
+		        <? $search_status = "";
+							if (isset($_POST['(h)status'])) 
+								{ $search_status = $_POST['(h)status']; } ?>
+		        <option value="" <? if (!(strcmp("", $search_status))) 
+								{ echo "selected=\"selected\""; } ?>> - view all - </option>
+		        <option value="<? echo "not started"; ?>" 
+								<? if (!(strcmp("not started", $search_status))) 
+								{ echo "selected=\"selected\""; } ?>>not started</option>
+		        <option value="<? echo "coding started"; ?>" 
+								<? if (!(strcmp("coding started", $search_status))) 
+								{ echo "selected=\"selected\""; } ?>>coding started</option>
+		        <option value="<? echo "coded"; ?>" 
+								<? if (!(strcmp("coded", $search_status))) 
+								{ echo "selected=\"selected\""; } ?>>coded</option>
+		        <option value="<? echo "coding completed"; ?>" 
+								<? if (!(strcmp("coding completed", $search_status))) 
+								{ echo "selected=\"selected\""; } ?>>coding completed</option>
+		        <option value="<? echo "limbo"; ?>" 
+								<? if (!(strcmp("limbo", $search_status))) 
+								{ echo "selected=\"selected\""; } ?>>in limbo</option>
+		        <option value="<? echo "scored"; ?>" 
+								<? if (!(strcmp("scored", $search_status))) 
+								{ echo "selected=\"selected\""; } ?>>scored</option>
+		        <option value="<? echo "finalized"; ?>" 
+								<? if (!(strcmp("finalized", $search_status))) 
+								{ echo "selected=\"selected\""; } ?>>finalized</option>
+		        <option value="<? echo "released"; ?>" 
+								<? if (!(strcmp("released", $search_status))) 
+								{ echo "selected=\"selected\""; } ?>>released</option>
+		        <option value="<? echo "code for fun"; ?>" 
+								<? if (!(strcmp("code for fun", $search_status))) 
+								{ echo "selected=\"selected\""; } ?>>code for fun</option>
+		      </select>
+		      <span class="selectRequiredMsg"><br />
+						Please select an item.</span></span>
+		      </td>
+		    </tr>
+		    <tr>
+		      <td><div align="right">coded by</div></td>
+		      <td><span id="spryselect4">
+		        <select name="(h)search_coderkey" id="(h)search_coderkey">
+		          <? $coderkey = "";
+		        if (isset($_POST['(h)search_coderkey'])) { $coderkey = $_POST['(h)search_coderkey']; } ?>
+		          <option value="" <? if ($coderkey == "") 
+		        {echo "selected='selected'";} ?>> - view all - </option>
+		          <? 
+		          do { ?>
+		            <option value="<? echo $row_rsFilterCoders['userkey']; ?>" 
+		              <? if ($coderkey == $row_rsFilterCoders['userkey']) 
+		              { echo "selected='selected'"; } ?>><? 
+									echo $row_rsFilterCoders['firstname'].
+		                " (".$row_rsFilterCoders['numpeople'].")"; ?></option>
+		            <? 
+		          } while ($row_rsFilterCoders = mysql_fetch_assoc($rsFilterCoders)); ?>
+		        </select>
+		      </span>
+		      </td>
+		    </tr>
+		    <tr>
+		      <td><div align="right">1st-confidence</div></td>
+		      <td><span id="spryselect4">
+		        <select name="(h)confidence_1" id="(h)confidence_1">
+		          <? $confidence_1 = "";
+		        if (isset($_POST['(h)confidence_1'])) { $confidence_1 = $_POST['(h)confidence_1']; } ?>
+		          <option value="" <? if ($confidence_1 == "") 
+		        {echo "selected='selected'";} ?>> - view all - </option>
+		          <? 
+		          do { ?>
+		            <option value="<? echo $row_rsFilterConf1['coded_confidence']; ?>" 
+		              <? if ($confidence_1 == $row_rsFilterConf1['coded_confidence']) 
+		              { echo "selected='selected'"; } ?>><? 
+									echo $row_rsFilterConf1['coded_confidence'].
+		                " (".$row_rsFilterConf1['numpeople'].")"; ?></option>
+		            <? 
+		          } while ($row_rsFilterConf1 = mysql_fetch_assoc($rsFilterConf1)); ?>
+		        </select>
+		      </span>
+		      </td>
+		    </tr>
+		    <tr>
+		      <td align="left"><div align="right">text contains</div></td>
+		      <td align="left"><span id="sprytextfield3">
+		        <input name="(s)essay_text" type="text" value="<? 
+		        echo (isset($_POST['(s)essay_text']) ? $_POST['(s)essay_text'] : ""); ?>" size="30" />
+		      </span></td>
+		    </tr>
+		    <tr>
+		      <td></td>
+		      <td align="right"><input type="submit" name="SUBMIT" id="SUBMIT" value="FILTER" /></td>
+		    </tr>
+		    </form>
+	    </table>
+    </div>
+    
+    <? } // ENDIF: hide filters for trainees ?>
+    
+  <? if ($is_trainee OR $is_junior) { 
+  	if ($is_graduated) { ?><p>You've graduated! Click the link to 1st-code an old record.</p><? } ?>
+	  <h3><? 
+	  	// Graduated trainees get to code low-stakes old records.
+	  	if ($is_graduated) {
+	  		?>Code for real: <a href="coding_start.php?lakey=<? 
+	  			echo $trainee_queue['lakey']; ?>&coder=1">next record</a><?
+	  	} 
+	  	// Trainees are just directed to their next record in the queue of 50. 
+	  	// (or to their incomplete in-progress record, if they have one)
+	  	else {
+	  		?>Trainee code: <a href="coding_start.php?lakey=<? 
+	        echo $trainee_queue['lakey']; ?>&coder=4&lacodeskey=<? 
+	        echo $trainee_queue['lacodeskey']; ?>">next record</a> <?
+	  		if ($trainee_queue['popularity'] > 1) { 
+	        echo sprintf(" (%s others already coded)", $trainee_queue['popularity']);
+				}
+	  	} ?>
+		</h3>
+	  <p>
+	    <? echo sprintf("%s records in queue", mysql_num_rows($rsTraineeQueue)); ?>
+	  </p>
+  <? } ?>
+
+  <!-- 1st-CODE table: show only for full 1st-coders, not trainees. -->
+  <? if (!$is_trainee AND !$is_junior) { ?>
+    
+    
+    <h3><a name="table1"></a>Not yet coded</h3>
+    
+    <p>Record <? echo ($startRow_rsLaData01 + 1) ?>&nbsp;to <? echo min($startRow_rsLaData01 + $maxRows_rsLaData01, $totalRows_rsLaData01) ?>&nbsp;of <? echo $totalRows_rsLaData01 ?> &nbsp;&nbsp;
+    <a href="<? printf("%s?pageNum_rsLaData01=%d%s", $currentPage, 0, $queryString_rsLaData01); ?>#table1">First</a> | 
+    <a href="<? printf("%s?pageNum_rsLaData01=%d%s", $currentPage, max(0, $pageNum_rsLaData01 - 1), $queryString_rsLaData01); ?>#table1">Previous</a> | 
+    <a href="<? printf("%s?pageNum_rsLaData01=%d%s", $currentPage, min($totalPages_rsLaData01, $pageNum_rsLaData01 + 1), $queryString_rsLaData01); ?>#table1">Next</a> | 
+    <a href="<? printf("%s?pageNum_rsLaData01=%d%s", $currentPage, $totalPages_rsLaData01, $queryString_rsLaData01); ?>#table1">Last</a></p>
+    
+    <!--<table width="620">-->
+    <table class='minimalist-a'>
+      <tr>
+        <th>
+        	<div align="left"><a href="coding_performance_select.php?sort=lakey#table1">Record</a></div></th>
+        <th>
+        	<a href="coding_performance_select.php?sort=date_completed#table1">Completed</a></th>
+        
+        <? if (!$is_student) { ?>
+        
+        <th>
+        	<a href="coding_performance_select.php?sort=date_due#table1">Due</a></th>
+        <th>
+        	<a href="coding_performance_select.php?sort=r.group#table1">Group</a></th>
+        <th>
+        	<a href="coding_performance_select.php?sort=<? 
+						if ($role == "teacher-coder" OR $role == "teacher-assistant") { echo "lastname"; } 
+						else { echo "userkey"; } ?>#table1">Test taker</a></th>
+        
+        <? if ($role <> "teacher-coder" AND $role <> "teacher-assistant") { ?>
+        	<th><div align="left">
+          	<a href="coding_performance_select.php?sort=bulkcustomer#table1">
+       	    Bulk Customer</a></div></th>
+        <? } ?>
+        
+        <? if (strpos($instrument_id, "JOURNAL") == FALSE AND $role == "teacher-coder") { ?>
+       	  <th><a href="coding_performance_select.php?sort=lasnumber_1#table1">Score</a></th>
+        <? } ?>
+        
+				<? if ($instrument_id_base == "LDMA") { ?>
+					<th><a href="coding_performance_select.php?sort=manlevelkey#table1">Man. level</a></th>
+				<? } ?>
+        
+        <? if ($totalRows_rsLaDilemmas > 0) { ?>
+          <th><a href="coding_performance_select.php?sort=dilemmakey#table1">Dilemma</a></th>
+        <? } ?>
+        
+        <th>View</th>
+        
+        <? } // ENDIF: hide for student status ?>
+        
+        <th>Code</th>
+      </tr>
+      
+      <? 
+			if ($totalRows_rsLaData01 > 0) { 
+				do { ?>
+        <tr>
+          <td><? echo $row_rsLaData01['lakey']; ?></td>
+          <td><div align="center">
+            <? 
+						echo date('Y-m-d', strtotime($row_rsLaData01['date_completed'])); ?>
+          </div></td>
+          
+          <? if (!$is_student) { ?>
+          
+          <td><div align="center">
+            <? 
+						echo date('Y-m-d', strtotime($row_rsLaData01['date_due'])); 
+						if ($row_rsLaData01['date_release'] == "") { 
+							echo "<a class='comment_hotspot'>*</a>";
+							echo "<span class='comment_tooltip'>This record doesn't have an assignment.</span>"; 
+						}
+						else if ($row_rsLaData01['date_completed'] >= 
+										 date('Y-m-d', strtotime('+1 day', strtotime($row_rsLaData01['date_end'])))) { 
+							echo "<a class='comment_hotspot'>*</a> <span class='comment_tooltip'>
+								This record was completed after the due date.<br>
+								(assignment due on ".$row_rsLaData01['date_end'].")</span>"; 
+						} ?>
+          </div></td>
+          <td align="center"><? echo $row_rsLaData01['group']; ?></td>
+          <td>
+            <? 
+						if ($role == "teacher-coder" OR $role == "teacher-assistant") { 
+							echo $row_rsLaData01['firstname']." ".$row_rsLaData01['lastname']; 
+						} else { echo "<div align='center'>".$row_rsLaData01['userkey']."</div>"; } ?>
+          </td>
+            
+        <? if ($role <> "teacher-coder" AND $role <> "teacher-assistant") { ?>
+          <td><? echo $row_rsLaData01['bulkcustomer']; ?></td>
+        <? } ?>
+        
+        <? if (strpos($instrument_id, "JOURNAL") == FALSE AND $role == "teacher-coder") { ?>
+          <td align="center"><? echo $row_rsLaData01['lasnumber_1']; ?></td>
+        <? } ?>
+          
+				<? if ($instrument_id_base == "LDMA") { ?>
+          <td align="center"><? echo $row_rsLaData01['manlevelkey']; ?></td>
+        <? } ?>
+        
+        <? if ($totalRows_rsLaDilemmas > 0) { ?>
+          <td align="center"><? echo $row_rsLaData01['dilemmakey']; ?></td>
+        <? } ?>
+        
+          <td align="center"><a href="../la_scoring/view.php?lakey=<? 
+						echo $row_rsLaData01['lakey']; ?>">view</a></td>
+          
+          <? } // ENDIF: hide for student status ?>
+          
+          <td align="center"><a href="coding_start.php?lakey=<? 
+						echo $row_rsLaData01['lakey']; ?>&coder=1">code</a></td>
+        </tr>
+        <? 
+				} while ($row_rsLaData01 = mysql_fetch_assoc($rsLaData01));
+			} ?>
+    </table>
+
+  <? } // ENDIF: if !$is_trainee ?>
+
+  <!-- CODED table: show for graduated trainees and normalfolk. -->
+  <? if (!$is_trainee OR $is_graduated) {  ?>
+    
+    <h3><a name="table2"></a>Coded</h3>
+    
+    <p> Record <? echo ($startRow_rsLaData02 + 1) ?>&nbsp;to <? echo min($startRow_rsLaData02 + $maxRows_rsLaData02, $totalRows_rsLaData02) ?>&nbsp;of <? echo $totalRows_rsLaData02 ?> &nbsp;&nbsp;
+    &nbsp;
+    <a href="<? printf("%s?pageNum_rsLaData02=%d%s", $currentPage, 0, $queryString_rsLaData02); ?>#table2">First</a> | 
+    <a href="<? printf("%s?pageNum_rsLaData02=%d%s", $currentPage, max(0, $pageNum_rsLaData02 - 1), $queryString_rsLaData02); ?>#table2">Previous</a> | 
+    <a href="<? printf("%s?pageNum_rsLaData02=%d%s", $currentPage, min($totalPages_rsLaData02, $pageNum_rsLaData02 + 1), $queryString_rsLaData02); ?>#table2">Next</a> | 
+    <a href="<? printf("%s?pageNum_rsLaData02=%d%s", $currentPage, $totalPages_rsLaData02, $queryString_rsLaData02); ?>#table2">Last</a> &nbsp; &nbsp; &nbsp;  
+    <? if ($totalRows_rsCountLimbo > 0) { ?>
+    	<a class='red' href='?search=(h)status:limbo,'><? echo $totalRows_rsCountLimbo; ?> in limbo</a>
+    <? } ?></p>
+      
+		<!-- <table width="1000"> -->    
+	<table class='minimalist-a'>
+      <tr>
+        <th>
+        	<div align="left"><a href="coding_performance_select.php?sort=lakey#table2">Record</a></div></th>
+        <th>View</th>
+        <th>
+        	<a href="coding_performance_select.php?sort=date_completed#table2">Completed</a></th>
+        
+        <? if (!$is_student) { ?>
+          
+        <th><a href="coding_performance_select.php?sort=date_due#table2">Due</a></th>
+        <th><a href="coding_performance_select.php?sort=date_coded_1#table2">Coded</a></th>
+        <th><a href="coding_performance_select.php?sort=date_recoded_1#table2">Recoded</a></th>
+        
+        <th>
+        	<a href="coding_performance_select.php?sort=r.group#table2">Group</a></th>
+        <th>
+        	<a href="coding_performance_select.php?sort=<? 
+						if ($role == "teacher-coder" OR $role == "teacher-assistant") { echo "lastname"; } 
+						else { echo "userkey"; } ?>#table2">Test taker</a></th>
+        
+        <? } // ENDIF: hide for student status ?>
+        
+        <? if (!$is_teacher AND !$is_student) { ?>
+        	<th><div align="left"><a href="coding_performance_select.php?sort=bulkcustomer#table2">
+       	    Bulk Customer</a></div></th>
+        <? } ?>
+                
+        <? if ($instrument_id_base == "LDMA") { ?>
+		  <th><a href="coding_performance_select.php?sort=manlevelkey#table2">Man level</a></th>
+				<? } ?>
+        
+        <? if ($totalRows_rsLaDilemmas > 0) { ?>
+        	<th><a href="coding_performance_select.php?sort=dilemmakey#table2">Dilemma</a></th>
+        <? } ?>
+        
+        <? // if ($role <> "teacher-assistant") { ?>
+        	<th><a href="coding_performance_select.php?sort=coder_1#table2">C1</a></th>
+        <? // } // ?>
+        
+        <? if (!$is_student) { ?>
+        
+					<? if ($userkey == 1000000539) { ?>
+          	<th><a href="coding_performance_select.php?sort=coded_1_theo#table2">Theo'd</a></th>
+          <? } // ?>
+          
+        <th><a href="coding_performance_select.php?sort=coder_2#table2">C2</a></th>
+        
+       	<th><a href="coding_performance_select.php?sort=coder_3#table2">C3</a></th>
+				
+				<? 
+				if ($role <> "teacher-coder" AND $role <> "teacher-assistant") { ?>
+        	<th><a href="coding_performance_select.php?sort=coder_4#table2">C4</a></th>
+        	<? 
+				} ?>
+        
+        <? if ($role <> "teacher-assistant") { ?>
+        
+          <th><a href="coding_performance_select.php?sort=confidence_1#table2">Conf 1</a></th>
+          <th><a href="coding_performance_select.php?sort=confidence_2#table2">Conf 2</a></th>
+          
+          <th><a href="coding_performance_select.php?sort=comments_1#table2">Com 1</a></th>
+          <th><a href="coding_performance_select.php?sort=comments_2#table2">Com 2</a></th>
+          
+          <? $score_present = array("LDMA", "LSUA", "LLRA_JOURNAL", "LERA_JOURNAL", "LRJA_JOURNAL", 
+						"LIMA_JOURNAL", "SMA", "LDPA", "LIMA");
+					if (in_array($instrument_id, $score_present)) { ?>
+            <th><a href="coding_performance_select.php?sort=score_1#table2">Score 1</a></th>
+            <th><a href="coding_performance_select.php?sort=score_1#table2">Score 2</a></th>
+            <th><a href="coding_performance_select.php?sort=diff_1_2#table2">Diff 1-2</a></th><?
+          } ?>
+          
+          <? if ($instrument_id == "SMJ") { ?>
+            
+            <th><a href="coding_performance_select.php?sort=code481#table2">Score ST</a></th>
+            <th><a href="coding_performance_select.php?sort=code482#table2">Score T1</a></th>
+            <th><a href="coding_performance_select.php?sort=code483#table2">Score T2</a></th>
+          
+          <? } ?>
+          
+          <th><a href="coding_performance_select.php?sort=status_order#table2">Status</a></th>
+        
+        <? } // ENDIF: hide columnsfor teacher assistant ?>
+        <? } // ENDIF: hide for student status ?>
+      </tr>
+      
+      <!-- REPEATING REGION for each (relevant) entry in the table -->
+      <? 
+			if ($totalRows_rsLaData02 > 0) { 
+				do { ?>
+        <tr>
+          <td align="center"><? echo $row_rsLaData02['lakey']; ?></td>
+          <td align="center"><a href="../la_scoring/view.php?lakey=<? 
+						echo $row_rsLaData02['lakey']; ?>">view</a></td>
+          <td><div align="center"><? echo date('Y-m-d', strtotime($row_rsLaData02['date_completed'])); ?></div></td>
+          
+          <? if (!$is_student) { ?>
+          
+          <td><div align="center"><? echo date('Y-m-d', strtotime($row_rsLaData02['date_due']));
+						if ($row_rsLaData02['date_release'] == "") { 
+							echo "<a class='comment_hotspot'>*</a>";
+							echo "<span class='comment_tooltip'>This record doesn't have an assignment.</span>"; 
+						}
+						else if ($row_rsLaData02['date_completed'] >= 
+										 date('Y-m-d', strtotime('+1 day', strtotime($row_rsLaData02['date_end'])))) { 
+							echo "<a class='comment_hotspot'>*</a> <span class='comment_tooltip'>
+								This record was completed after the due date.<br>
+								(assignment due on ".$row_rsLaData02['date_end'].")</span>"; 
+						} ?></div></td>
+          <td align="center">
+	          <? if ($row_rsLaData02['date_coded_1'] > 0) { 
+							echo date('Y-m-d', strtotime($row_rsLaData02['date_coded_1']));
+						} ?>
+          </td>
+        	<td><? 
+        		if ($row_rsLaData02['date_recoded_1'] <> '') { 
+        			echo date('Y-m-d', strtotime($row_rsLaData02['date_recoded_1']));
+        		} ?>
+        	</td>
+          
+          <td><div align="center"><? echo $row_rsLaData02['group']; ?></div></td>
+          <td><div align="center">
+            <? 
+						if ($role == "teacher-coder" OR $role == "teacher-assistant") { 
+						 echo "<div align='left'>".$row_rsLaData02['firstname']." ".
+						 	$row_rsLaData02['lastname']."</div>"; 
+						} 
+						else { echo $row_rsLaData02['userkey']; } ?>
+          </div></td>
+          
+          <? } // ENDIF: hide for student status ?>
+          
+        	<? if (!$is_student AND !$is_teacher) { ?>
+          	<td><? echo $row_rsLaData02['bulkcustomer']; ?></td>
+          <? } ?>
+          
+					<? 
+					/**** I'm not quite sure that the manlevel information should only appear for LDMA records. 
+					It's easy to make them appear universally. */
+					if ($instrument_id_base == "LDMA") { ?>
+						<td><div align="center"><? echo $row_rsLaData02['manlevelkey']; ?></div></td>
+					<? } ?> 
+        
+        
+        <? if ($totalRows_rsLaDilemmas > 0) { ?>
+          <td><div align="center"><? echo $row_rsLaData02['dilemmakey']; ?></div></td>
+        <? } ?>
+          
+        
+        
+          <td>		<!-- START cell for 1st-coder -->
+          	<div class="hotspot" align="center"><? 
+							if ($row_rsLaData02['coded_1'] == 0) { 
+								echo "&nbsp;-&nbsp;";
+							} else {
+								echo $row_rsLaData02['coder_1'];
+							} ?>
+						</div>
+						
+						<!-- The popup of links for the 1st coder -->
+						<div class="tooltip">
+							<p>
+								<? if ($row_rsLaData02['created_c1'] <> "") { ?>
+	              	Started <? echo date('M jS', strtotime($row_rsLaData02['created_c1'])); ?><br />
+	               	Updated <? echo date('M jS', strtotime($row_rsLaData02['timestamp_c1'])); ?><br />
+	               	<? if ($row_rsLaData02['recoder_1'] <> '') { ?>
+	               		Recoded by <? echo $row_rsLaData02['recoder_1']; ?><br />
+	               		&nbsp; &nbsp; on <? echo date('M jS', strtotime($row_rsLaData02['date_recoded_1'])); ?><br />
+	               	<? } ?>
+	              <? } ?>
+								<a href="coding_start.php?lakey=<? echo $row_rsLaData02['lakey']; ?>&coder=1">
+									update</a>
+	              <br />
+								<a href="../la_reports/report_individual.php?lakey=<? 
+									echo $row_rsLaData02['lakey']; ?>&mode=checkreport&coder=1">
+	                view report</a>
+							</p>
+
+							<? if ($instrument_id_base == 'LDMA' AND $row_rsLaData02['coded_1'] == 1) { ?>
+								<table class='crunched'>
+									<tr>
+										<td>P taking</td>
+										<td><? echo $row_rsLaData02['c1_p_taking']; ?></td>
+									</tr>
+									<tr>
+										<td>P seeking</td>
+										<td><? echo $row_rsLaData02['c1_p_seeking']; ?></td>
+									</tr>
+									<tr>
+										<td>P coord</td>
+										<td><? echo $row_rsLaData02['c1_coord']; ?></td>
+									</tr>
+									<tr>
+										<td>Context</td>
+										<td><? echo $row_rsLaData02['c1_context']; ?></td>
+									</tr>
+									<tr>
+										<td>DM process</td>
+										<td><? echo $row_rsLaData02['c1_dmprocess']; ?></td>
+									</tr>
+									<tr>
+										<td>Collab</td>
+										<td><? echo $row_rsLaData02['c1_collab']; ?></td>
+									</tr>
+									<tr>
+										<td>Arg</td>
+										<td><? echo $row_rsLaData02['c1_arg']; ?></td>
+									</tr>
+								</table>
+							<? } ?>
+						</div>
+          </td>
+          
+        
+        
+        <? if (!$is_student) { ?>
+          
+          <? if ($userkey == 1000000539) { ?>
+          	<td align="center"><? echo $row_rsLaData02['coded_1_theo']; ?></td>
+          <? } // ?>
+          
+          <td>		<!-- START cell for 2nd-coder -->
+            <div class="hotspot" align="center"><? 
+              if ($row_rsLaData02['coder_2'] <> "") { 
+								echo $row_rsLaData02['coder_2'];
+							} else {
+								echo "&nbsp;-&nbsp;"; 
+							} ?>
+            </div>
+            
+            <!-- The popup of links for the 2nd coder -->
+            <div class="tooltip">
+              <p>
+              <? if ($row_rsLaData02['created_c2'] <> "") { ?>
+                Started <? echo date('M jS', strtotime($row_rsLaData02['created_c2'])); ?><br />
+                Updated <? echo date('M jS', strtotime($row_rsLaData02['timestamp_c2'])); ?><br />
+              <? } ?>
+              <a href="coding_start.php?lakey=<? echo $row_rsLaData02['lakey']; ?>&coder=2"><? 
+                if ($row_rsLaData02['coder_2'] <> "") { ?>update<? }
+                else { ?>2nd-code<? } ?></a>
+              <? 
+              if ($row_rsLaData02['coded_2'] == 1) { ?>
+                <br />
+                <a href="../la_reports/report_individual.php?lakey=<? 
+                  echo $row_rsLaData02['lakey']; ?>&mode=checkreport&coder=2">view report</a><? 
+              } ?>
+              </p>
+
+							<? if ($instrument_id_base == 'LDMA' AND $row_rsLaData02['coded_2'] == 1) { ?>
+								<table class='crunched'>
+									<tr>
+										<td>P taking</td>
+										<td><? echo $row_rsLaData02['c2_p_taking']; ?></td>
+									</tr>
+									<tr>
+										<td>P seeking</td>
+										<td><? echo $row_rsLaData02['c2_p_seeking']; ?></td>
+									</tr>
+									<tr>
+										<td>P coord</td>
+										<td><? echo $row_rsLaData02['c2_coord']; ?></td>
+									</tr>
+									<tr>
+										<td>Context</td>
+										<td><? echo $row_rsLaData02['c2_context']; ?></td>
+									</tr>
+									<tr>
+										<td>DM process</td>
+										<td><? echo $row_rsLaData02['c2_dmprocess']; ?></td>
+									</tr>
+									<tr>
+										<td>Collab</td>
+										<td><? echo $row_rsLaData02['c2_collab']; ?></td>
+									</tr>
+									<tr>
+										<td>Arg</td>
+										<td><? echo $row_rsLaData02['c2_arg']; ?></td>
+									</tr>
+								</table>
+							<? } ?>
+            </div>
+          </td>
+          
+          <td>		<!-- START cell for 3rd-coder -->
+          	<div class="hotspot" align="center"><? 
+							if ($row_rsLaData02['coder_3'] <> "") { 
+								echo $row_rsLaData02['coder_3'];
+							} else { 
+								echo "&nbsp;-&nbsp;";
+							} ?>
+						</div>
+						
+						<!-- The popup of links for the 3rd coder -->
+						<div class="tooltip">
+              <p>
+							<? if ($row_rsLaData02['created_c3'] <> "") { ?>
+                Started <? echo date('M jS', strtotime($row_rsLaData02['created_c3'])); ?><br />
+               	Updated <? echo date('M jS', strtotime($row_rsLaData02['timestamp_c3'])); ?><br />
+              <? } ?>
+              <a href="coding_start.php?lakey=<? echo $row_rsLaData02['lakey']; ?>&coder=3"><? 
+								if ($row_rsLaData02['coder_3'] <> "") { ?>update<? }
+								else { ?>3rd-code<? } ?></a>
+              <? 
+              if ($row_rsLaData02['coded_3'] == 1) { ?>
+              	<br />
+                <a href="../la_reports/report_individual.php?lakey=<? 
+									echo $row_rsLaData02['lakey']; ?>&mode=checkreport&coder=3">view report</a><? 
+							} ?>
+              </p>
+
+							<? if ($instrument_id_base == 'LDMA' AND $row_rsLaData02['coded_3'] == 1) { ?>
+								<table class='crunched'>
+									<tr>
+										<td>P taking</td>
+										<td><? echo $row_rsLaData02['c3_p_taking']; ?></td>
+									</tr>
+									<tr>
+										<td>P seeking</td>
+										<td><? echo $row_rsLaData02['c3_p_seeking']; ?></td>
+									</tr>
+									<tr>
+										<td>P coord</td>
+										<td><? echo $row_rsLaData02['c3_coord']; ?></td>
+									</tr>
+									<tr>
+										<td>Context</td>
+										<td><? echo $row_rsLaData02['c3_context']; ?></td>
+									</tr>
+									<tr>
+										<td>DM process</td>
+										<td><? echo $row_rsLaData02['c3_dmprocess']; ?></td>
+									</tr>
+									<tr>
+										<td>Collab</td>
+										<td><? echo $row_rsLaData02['c3_collab']; ?></td>
+									</tr>
+									<tr>
+										<td>Arg</td>
+										<td><? echo $row_rsLaData02['c3_arg']; ?></td>
+									</tr>
+								</table>
+							<? } ?>
+            </div>
+          </td>
+          
+        <? if ($role <> "teacher-coder" AND $role <> "teacher-assistant") { ?>
+        
+          <td>		<!-- START cell for 4th-coder -->
+          	<div class="hotspot" align="center"><? 
+							if ($row_rsLaData02['coder_4'] <> "") { 
+								echo $row_rsLaData02['coder_4'];
+							} else { 
+								echo "&nbsp;-&nbsp;";
+							} ?>
+						</div>
+						
+						<!-- The popup of links for the 4th coder -->
+						<div class="tooltip">
+              <p>
+							<? if ($row_rsLaData02['created_c4'] <> "") { ?>
+              	Started <? echo date('M jS', strtotime($row_rsLaData02['created_c4'])); ?><br />
+               	Updated <? echo date('M jS', strtotime($row_rsLaData02['timestamp_c4'])); ?><br />
+              <? } ?>
+              <a href="coding_start.php?lakey=<? echo $row_rsLaData02['lakey']; ?>&coder=4"><? 
+								if ($row_rsLaData02['coder_4'] <> "") { ?>update<? }
+								else { ?>4th-code<? } ?></a>
+              <? 
+              if ($row_rsLaData02['coded_4'] == 1) { ?>
+              	<br />
+                <a href="../la_reports/report_individual.php?lakey=<? 
+									echo $row_rsLaData02['lakey']; ?>&mode=checkreport&coder=4">view report</a><? 
+							} ?>
+              
+              </p>
+            </div>
+          </td>
+          <? // ENDIF: hide these 2 columns from the teacher-coder view
+				} ?>
+        
+        <? if ($role <> "teacher-assistant") { ?>
+        
+          <td align="center"><? echo $row_rsLaData02['confidence_1']; ?></td>
+          <td align="center"><? echo $row_rsLaData02['confidence_2']; ?></td>
+          
+          <td align="center">
+            <a class='comment_hotspot'><? echo $row_rsLaData02['comments_1']; ?></a>
+            <span class='comment_tooltip'><? 
+              if ($row_rsLaData02['code_recommend_1'] <> "") { ?>
+                <strong>Suggestion</strong>: 
+                <? echo $row_rsLaData02['code_recommend_1']; ?><br /><? 
+              } 
+              if ($row_rsLaData02['codercomment_1'] <> "") { ?>
+                <strong>Performance comment</strong>: 
+                <? echo $row_rsLaData02['codercomment_1']; 
+              } ?>
+            </span>
+          </td>
+          <td align="center">
+            <a class='comment_hotspot'><? echo $row_rsLaData02['comments_2']; ?></a>
+            <span class='comment_tooltip'><? 
+              if ($row_rsLaData02['code_recommend_2'] <> "") { ?>
+                <strong>Suggestion</strong>: 
+                <? echo $row_rsLaData02['code_recommend_2']; ?><br /><? 
+              } 
+              if ($row_rsLaData02['codercomment_2'] <> "") { ?>
+                <strong>Performance comment</strong>: 
+                <? echo $row_rsLaData02['codercomment_2']; 
+              } ?>
+            </span>
+          </td>
+            
+          <? // RUBRIC SCORE COLUMNS
+          $score_present = array("LDMA", "LSUA", "LLRA_JOURNAL", "LERA_JOURNAL", "LRJA_JOURNAL", 
+						"LIMA_JOURNAL", "SMA", "LDPA", "LIMA");
+					if (in_array($instrument_id, $score_present)) { ?>
+            <td align="center"><? 
+            	if ($userkey == 1000002220 AND $row_rsLaData02['score_2'] == 0 
+            		AND $instrument_id_base == 'LRJA') {
+            		echo "?";
+            	} else {
+              	echo ($row_rsLaData02['score_1'] > 0 ? $row_rsLaData02['score_1'] : ""); 
+              } ?>
+            </td>
+            <td align="center"><? 
+              echo ($row_rsLaData02['score_2'] > 0 ? $row_rsLaData02['score_2'] : ""); ?></td>
+            <td align="center"><? 
+              $diff = ($row_rsLaData02['diff_1_2'] < 8 ? $row_rsLaData02['diff_1_2'] : "");
+              if (abs($diff) > .2) { echo "<span class='red'>{$diff}</span>"; } 
+              else echo $diff; ?></td><?
+          } ?>
+          
+          <? if ($instrument_id == "SMJ") { ?>
+            <td><? echo $row_rsLaData02['code481']; ?></td><!-- student score -->
+            <td><? echo $row_rsLaData02['code482']; ?></td><!-- teacher score: 'all' section -->
+            <td><? echo $row_rsLaData02['code483']; ?></td><!-- teacher score: 'T only' section -->
+          <? } ?>
+        
+          <!-- The status column indicates limbo, finalized, and released status, etc. -->
+          <td>
+          	<div class="hotspot" align="center">&nbsp;<? 
+							if ($row_rsLaData02['flag'] == "1") { ?>
+								<span class="red">in limbo</span><? 
+							} 
+							else if ($row_rsLaData02['finalized'] == 2) { 
+								echo "f:".date('Y-m-d', strtotime($row_rsLaData02['date_finalized'])); 
+							} 
+							else if ($row_rsLaData02['finalized'] == 1) {
+								echo "r:".date('Y-m-d', strtotime($row_rsLaData02['date_released']));
+							}
+							else if ($row_rsLaData02['status'] == "locked") { 
+								?><span class="red">locked</span><? 
+							} else {
+								echo $row_rsLaData02['status']; 
+							} ?>&nbsp;
+            </div>
+            
+            <!-- The popup of 'record status management' links -->
+            <div class="tooltip">
+              <p><? 
+								if ($row_rsLaData02['admin_notes'] <> "") { 
+									echo "Admin notes: ".$row_rsLaData02['admin_notes']." <br>";
+								}
+								if ($row_rsLaData02['status'] == "access denied") { ?>
+                	The bulk client needs to contact the test taker and 
+                  request permission to view the report.<br /><?
+								} 
+								if ($row_rsLaData02['flag'] == "1") { ?>
+                	<a href="<? echo $currentPage; ?>?unlimbo=<? 
+										echo $row_rsLaData02['lakey']; ?>">remove from limbo</a><?
+								} else { 
+									if ($row_rsLaData02['coded_1_complete'] == 0 AND !$is_teacher) { ?>
+                    <a href="<? echo $currentPage; ?>?coding_complete=<? 
+                      echo $row_rsLaData02['lakey']; ?>">mark as complete</a><br />
+                    <?
+                  }
+									if ($row_rsLaData02['finalized'] == 0) { 
+										if ($row_rsLaData02['coded_1_complete'] == 1
+												AND $instrument_id <> "LDPA" AND $instrument_id <> "SMA") { 
+											if ($type == "journal" OR $instrument_id == "LIMA") { ?>
+                        <a href="<? echo $currentPage; ?>?finalize=<? 
+                          echo $row_rsLaData02['lakey']; ?>">finalize</a><br /><?
+											} else {
+												?>(cannot finalize)<br /><?
+											}
+										} ?>
+										<a class="limbo_link">put in limbo</a><br />
+                    <span class="limbo_text" style="display:none">Notes on why:</span><br />
+                    <textarea class="limbo_why" lakey="<? echo $row_rsLaData02['lakey']; ?>" 
+                      style="display:none"><? echo $row_rsLaData02['admin_notes']; ?></textarea><br />
+                    <input type="submit" class="limbo_commit" 
+                    	value="put in limbo" style="display:none" /><?
+									} // ENDIF: finalized == 0
+									if ($row_rsLaData02['finalized'] == 2 
+											OR ($row_rsLaData02['coded_1'] == 1 
+													AND ($instrument_id == "SMA" OR $instrument_id == "LDPA"))) { 
+										if ($type == "journal" OR $instrument_id == "SMA" OR $instrument_id == "LDPA"
+												OR $instrument_id == "LIMA") { ?>
+                      <a href="<? echo $currentPage; ?>?release=<? 
+                        echo $row_rsLaData02['lakey']; ?>">release</a><br /><?
+										} else { 
+											?>(cannot release)<br /><?
+										}
+									} 
+									if ($row_rsLaData02['finalized'] > 0) { 
+										if ($type == "journal" OR $instrument_id == "SMA" OR $instrument_id == "LDPA"
+												OR $instrument_id == "LIMA") { ?>
+                      <a href="<? echo $currentPage; ?>?unfinalize=<? 
+                        echo $row_rsLaData02['lakey']; ?>">unfinalize</a><br /><?
+										} else {
+											?>(cannot unfinalize)<br /><?
+										}
+									} 
+								} // END ELSE (if this record is NOT in limbo) 
+								?>
+              </p>
+            </div>
+            
+          </td>
+					
+        <? } // ENDIF: if this is not a teacher-assistant ?>
+					
+        <? } // ENDIF: hide these cols for student status ?>
+          
+        </tr>
+        <? 
+				} while ($row_rsLaData02 = mysql_fetch_assoc($rsLaData02));
+			}
+			?>
+	</table>
+
+  <? } // ENDIF: if !$is_trainee OR $is_graduated ?>
+
+  <!-- INCOMPLETES table: show only for normal 1st-coders -->
+	<? if (!$is_student AND !$is_trainee AND !$is_junior) { ?>
+
+		<h3>View incomplete records</h3>
+    <p>Record <? echo ($startRow_rsLaData03 + 1) ?> to <? echo min($startRow_rsLaData03 + $maxRows_rsLaData03, $totalRows_rsLaData03) ?> of <? echo $totalRows_rsLaData03 ?> &nbsp; 
+    	<a href="<? printf("%s?pageNum_rsLaData03=%d", $currentPage, 0); ?>">First</a> | 
+    	<a href="<? printf("%s?pageNum_rsLaData03=%d", $currentPage, max(0, $pageNum_rsLaData03 - 1)); ?>">Previous</a> | 
+    	<a href="<? printf("%s?pageNum_rsLaData03=%d", $currentPage, min($totalPages_rsLaData03, $pageNum_rsLaData03 + 1)); ?>">Next</a> | 
+    	<a href="<? printf("%s?pageNum_rsLaData03=%d", $currentPage, $totalPages_rsLaData03); ?>">Last</a>
+    </p>
+    <table class='minimalist-a'>
+      <tr>
+        <th><div align="left">Record</div></th>
+        <th><div align="center">Started</div></th>
+        <th><div align="center">Due</div></th>
+        <th><div align="center">Test taker</div></th>
+        <th><div align="left">Bulk customer</div></th>
+        <th><div align="center">Group</div></th>
+        <th>View </th>
+      </tr>
+      <? 
+			if ($totalRows_rsLaData03 > 0) { 
+				do { ?>
+      <tr>
+        <td><? echo $row_rsLaData03['lakey']; ?></td>
+        <td align="center"><? echo date('Y-m-d', strtotime($row_rsLaData03['timestamp'])); ?></td>
+        <td align="center"><? echo ($row_rsLaData03['date_release'] <> "" ? 
+                $row_rsLaData03['date_release'] : "<em>no assignment</em>"); ?></td>
+        <td align="center"><? echo $row_rsLaData03['userkey']; ?></td>
+        <td><? echo ($row_rsLaData03['bulkcustomer'] <> "" ? 
+              $row_rsLaData03['bulkcustomer'] : "-none-"); ?></td>
+        <td align="center"><? echo $row_rsLaData03['group']; ?></td>
+        <td align="center"><div align="center"><a href="../la_scoring/view.php?lakey=<? echo $row_rsLaData03['lakey']; ?>">view</a></div></td>
+      </tr>
+      <? 
+				} while ($row_rsLaData03 = mysql_fetch_assoc($rsLaData03)); 
+			} ?>
+    </table>
+		<p>&nbsp;</p>
+
+	<? } // ENDIF: if !$is_student AND !$is_trainee ?>
+
+    
+    
+	<!-- TRAINEE coding history -->
+	<? if ($is_trainee OR $is_junior OR $is_senior) { // TRAINEE SECTION ?>
+		
+	  <? if ($is_senior) { ?>
+	  	<h3>Trainee coding history</h3>
+
+	  	<p><a href='?download_trainee_table=yes'>download</a></p>
+	  <? } ?>
+	  
+		<p>Record <? echo $start_traineeCoded + 1; ?> 
+	  	to <? echo $start_traineeCoded + mysql_num_rows($rsTraineeCoded) + mysql_num_rows($rsTraineeCodedCountLT); ?>
+	  	&nbsp; &nbsp;
+	    <a href="?start_traineeCoded=0">First</a> | 
+	    <a href="?start_traineeCoded=<? echo max($start_traineeCoded - 20, 0); ?>">Prev</a> | 
+	    <a href="?start_traineeCoded=<? echo $start_traineeCoded + 20; ?>">Next</a>
+	  </p>
+
+	<table class='minimalist-a'>
+	  	<tr>
+	    	<th>Lakey</th>
+	    	<th></th>
+	      	<th>LAS</th>
+	    	<th>Coder</th>
+	    	<th>Date</th>
+	    	<th>Conf</th>
+	    	<th>Ptake</th>
+	    	<th>dif</th>
+	    	<th>Pseek</th>
+	    	<th>dif</th>
+	    	<th>Coord</th>
+	    	<th>dif</th>
+	    	<th>Contxt</th>
+	    	<th>dif</th>
+	    	<th>DM</th>
+	    	<th>dif</th>
+	    	<th>Collab</th>
+	    	<th>dif</th>
+	      	<th>Arg</th>
+	    	<th>dif</th>
+	      	<th></th>
+	    </tr>
+	    
+	  	<? 
+			$lakey = 0;
+			$altrow = true;
+			
+			function is_close_enough ($row, $scale) {
+				$c1 = $row['c1_'.$scale];
+				$me = $row['c4_'.$scale];
+				
+				$diff = abs($c1 - $me);
+				
+				if ($scale == "arg") { // arg scale goes 1-5
+					$cutoff = 0.75;
+				} else { // all other scales: 1.05
+					$cutoff = 1.05;
+				}
+				
+				if ($diff >= $cutoff) { return " class='red'"; }
+				else { return ""; }
+			}
+
+			function diff ($row, $scale) {
+				$c1 = $row['c1_'.$scale];
+				$me = $row['c4_'.$scale];
+				
+				$diff = round($me - $c1, 1);
+				return "<span class='text_light'>{$diff}</span>"; 
+			}
+			
+			while ($row = mysql_fetch_assoc($rsTraineeCoded)) { 
+				
+				// detect new lakey group
+				if ($row['lakey'] <> $lakey) {
+					$altrow = !$altrow;
+					$lakey = $row['lakey']; 
+					// row coloring
+					$class=""; if ($altrow) { $class = "altrow"; } 
+					// print out coder 1 row ?>
+	        <tr class='<? echo $class; ?>'>
+	        	<td><? echo $row['lakey']; ?></td>
+	        	<td>
+	          	<a href='?codertraining_star=<? echo ($row['codertraining_starred'] == 1 ? 0 : 1); ?>&lakey=<? 
+								echo $row['lakey']; ?>'>
+								<img src='../_assets/_images/icons/star_<? echo $row['codertraining_starred']; ?>_20.png' /></a>
+	          </td>
+	        	<td><? echo $row['lasnumber_1']; ?></td>
+	        	<td><? echo $row['r1_firstname']; ?></td>
+	        	<td><? echo date('Y-m-d', strtotime($row['date_coded_1'])); ?></td>
+	          <td><? echo $row['c1_conf']; ?></td>
+	          <td align='right'><? echo round($row['c1_p_taking'], 1); ?></td>
+	    			<td></td>
+	          <td align='right'><? echo round($row['c1_p_seeking'], 1); ?></td>
+	    			<td></td>
+	          <td align='right'><? echo round($row['c1_coord'], 1); ?></td>
+	    			<td></td>
+	          <td align='right'><? echo round($row['c1_context'], 1); ?></td>
+	    			<td></td>
+	          <td align='right'><? echo round($row['c1_dmprocess'], 1); ?></td>
+	    			<td></td>
+	          <td align='right'><? echo round($row['c1_collab'], 1); ?></td>
+	    			<td></td>
+	          <td align='right'><? echo round($row['c1_arg'], 1); ?></td>
+	    			<td></td>
+	          <td><a href='coding_start.php?lakey=<? echo $row['lakey']; ?>&coder=1'>code</a></td>
+	        </tr><?
+				}  
+				
+				// row coloring
+				$class=""; if ($altrow) { $class = "altrow"; } 
+				// print out coder 1 row ?>
+				<tr class='<? echo $class; ?>'>
+					<td></td>
+					<td></td>
+	        <td></td>
+					<td><? echo $row['r4_firstname']; ?></td>
+					<td><? echo date('Y-m-d', strtotime($row['date_coded_4'])); ?></td>
+	        <td><? echo $row['c4_conf']; ?></td>
+	        <td align='right' <? echo is_close_enough($row, 'p_taking'); ?>>
+	        	<? echo round($row['c4_p_taking'], 1); ?></td>
+	        <td align='right'><? echo diff($row, 'p_taking'); ?></td>
+	        <td align='right' <? echo is_close_enough($row, 'p_seeking'); ?>>
+	        	<? echo round($row['c4_p_seeking'], 1); ?></td>
+	        <td align='right'><? echo diff($row, 'p_seeking'); ?></td>
+	        <td align='right' <? echo is_close_enough($row, 'coord'); ?>>
+	        	<? echo round($row['c4_coord'], 1); ?></td>
+	        <td align='right'><? echo diff($row, 'coord'); ?></td>
+	        <td align='right' <? echo is_close_enough($row, 'context'); ?>>
+	        	<? echo round($row['c4_context'], 1); ?></td>
+	        <td align='right'><? echo diff($row, 'context'); ?></td>
+	        <td align='right' <? echo is_close_enough($row, 'dmprocess'); ?>>
+	        	<? echo round($row['c4_dmprocess'], 1); ?></td>
+	        <td align='right'><? echo diff($row, 'dmprocess'); ?></td>
+	        <td align='right' <? echo is_close_enough($row, 'collab'); ?>>
+	        	<? echo round($row['c4_collab'], 1); ?></td>
+	        <td align='right'><? echo diff($row, 'collab'); ?></td>
+	        <td align='right' <? echo is_close_enough($row, 'arg'); ?>>
+	        	<? echo round($row['c4_arg'], 1); ?></td>
+	        <td align='right'><? echo diff($row, 'arg'); ?></td>
+					<td><a href='coding_start.php?lakey=<? 
+						echo $row['lakey']; ?>&coder=4&lacodeskey=<? 
+						echo $row['lacodeskey_4']; ?>'>code</a>
+	        </td>
+				</tr><?
+				
+			} ?>
+	  </table>
+
+	<? } // ENDIF: trainees section ?>
+
+		
+    
+</div> <!-- END div that maintains page width (so tables don't squish) -->
+
+
+	
+    <p>&nbsp;</p>
+<script type="text/javascript">
+
+<? if (!$is_trainee AND !$is_junior) { // all spry widgets are unavailable to trainees ?>
+
+	<? if ($totalRows_rsLaDilemmas > 0) { ?>
+		var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+		var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+	<? } ?>
+	
+	var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+	var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+	var sprytextfield3 = new Spry.Widget.ValidationTextField("sprytextfield3", "none", {isRequired:false, validateOn:["blur", "change"]});
+	var sprytextfield7 = new Spry.Widget.ValidationTextField("sprytextfield7", "none", {isRequired:false, validateOn:["blur"]});
+	var sprytextfield6 = new Spry.Widget.ValidationTextField("sprytextfield6", "none", {isRequired:false, validateOn:["blur"]});
+	var spryselect10 = new Spry.Widget.ValidationSelect("spryselect10", {validateOn:["blur", "change"], isRequired:false});
+	var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {isRequired:false, validateOn:["blur", "change"]});
+	var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {isRequired:false, validateOn:["blur", "change"]});
+	var spryselect9 = new Spry.Widget.ValidationSelect("spryselect9", {isRequired:false, validateOn:["change", "blur"]});
+	var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {isRequired:false, validateOn:["change", "blur"]});
+	var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {isRequired:false, validateOn:["blur", "change"]});
+	var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {isRequired:false, validateOn:["blur", "change"]});
+	var spryselect8 = new Spry.Widget.ValidationSelect("spryselect8", {isRequired:false, validateOn:["blur", "change"]});
+	var sprytextfield5 = new Spry.Widget.ValidationTextField("sprytextfield5", "date", {isRequired:false, validateOn:["blur"], format:"yyyy-mm-dd", useCharacterMasking:true});
+	var sprytextfield4 = new Spry.Widget.ValidationTextField("sprytextfield4", "date", {isRequired:false, validateOn:["blur"], format:"yyyy-mm-dd", useCharacterMasking:true});
+	var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "none", {isRequired:false, validateOn:["blur", "change"]});
+	
+<? } // ENDIF: all spry widgets are unavailable to trainees ?>
+
+</script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+
+			
+			
+?>

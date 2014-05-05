@@ -1,0 +1,1011 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><?php require_once('../Connections/Assessment.php'); ?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Reliability and validity</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+div.Caption1 {
+	text-align:center;
+	font-size:9.0pt;
+	font-family:"Myriad Pro It";
+	color:#292929;
+}
+li.Caption1 {
+	text-align:center;
+	font-size:9.0pt;
+	font-family:"Myriad Pro It";
+	color:#292929;
+}
+p.Caption1 {
+	text-align:center;
+	font-size:9.0pt;
+	font-family:"Myriad Pro It";
+	color:#292929;
+}
+.inner_container .column1 table tr td {
+	font-size: 110%;
+}
+.inner_container .column1 table tr th {
+	font-size: 110%;
+}
+.inner_container .column1 table tr td .select-c tr td	{
+	font-size: 100%;
+}
+.inner_container .column1 table tr td .select-c tr th	{
+	font-size: 100%;
+}
+.inner_container .column1 table tr td .minimalist-a tbody tr td {
+	font-size: 100%;
+}
+.inner_container .column1 table tr td .minimalist-a tbody tr th {
+	font-size: 100%;
+}	
+.inner_container .column1 table tr .tablerow {
+	font-size: 110%;
+}
+/* tooltip styling. by default the element to be styled is .tooltip  */
+.tooltip {
+	display:none;
+	background:#FFF;
+	font-size:90%;
+	line-height:140%;
+	min-width: 200px;
+	max-width: 300px;
+	background: #FFC;
+	padding-right: 20px;
+	padding-left: 20px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-left: 10px;
+	-moz-box-shadow: 2px 2px 5px #888;
+	-webkit-box-shadow: 2px 2px 5px #888;
+	box-shadow: 2px 2px 5px #888;
+	z-index: 999;
+}
+
+.hotspot {
+	cursor: pointer; cursor: hand	
+	height:100%; 
+	width:100%; 
+	position:relative;
+}
+</style>
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+<script type="text/javascript">
+
+// JQUERY to manage hidden elements on the page
+$(document).ready(function() {
+	
+	$('.hotspot').tooltip({
+		position: 'bottom center', 
+		effect: 'fade', 
+		fadeInSpeed: 100,
+		fadeOutSpeed: 100,
+		delay:300,
+		layout: '<span/>',
+		events: {
+			def: 'mouseover, mouseleave'
+		}
+	}); 
+	
+	$('.hotspot').mouseover(function() {
+		this.style.backgroundColor = "#d0d0d0";	
+	});
+	
+	$('.hotspot').mouseout(function() {
+		this.style.backgroundColor = "";
+	});
+	
+});
+
+
+</script>
+<style type="text/css">
+.tooltip1 {	display:none;
+	background:#FFF;
+	font-size:90%;
+	line-height:140%;
+	min-width: 200px;
+	max-width: 300px;
+	background: #FFC;
+	padding-right: 20px;
+	padding-left: 20px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-left: 10px;
+	-moz-box-shadow: 2px 2px 5px #888;
+	-webkit-box-shadow: 2px 2px 5px #888;
+	box-shadow: 2px 2px 5px #888;
+	z-index: 999;
+}
+</style>
+<style type="text/css">
+.tooltip2 {	display:none;
+	background:#FFF;
+	font-size:90%;
+	line-height:140%;
+	min-width: 200px;
+	max-width: 300px;
+	background: #FFC;
+	padding-right: 20px;
+	padding-left: 20px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-left: 10px;
+	-moz-box-shadow: 2px 2px 5px #888;
+	-webkit-box-shadow: 2px 2px 5px #888;
+	box-shadow: 2px 2px 5px #888;
+	z-index: 999;
+}
+</style>
+<style type="text/css">
+.tooltip21 {display:none;
+	background:#FFF;
+	font-size:90%;
+	line-height:140%;
+	min-width: 200px;
+	max-width: 300px;
+	background: #FFC;
+	padding-right: 20px;
+	padding-left: 20px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-left: 10px;
+	-moz-box-shadow: 2px 2px 5px #888;
+	-webkit-box-shadow: 2px 2px 5px #888;
+	box-shadow: 2px 2px 5px #888;
+	z-index: 999;
+}
+</style>
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+    <h1>The validity, reliability, &amp; sensitivity of Lectical<sup>®</sup> Assessments* </h1>
+    <h2>Validity</h2>
+    <p>When thinking about the validity of our assessments, we focus primarily upon construct validity**. Construct validity is usually thought of as the degree to which assessments measure what they are designed to measure, but since our assessments do much more than provide a score, we think of construct validity more broadly—as the degree to which our assessments accomplish what they are designed to accomplish. When we design and deliver assessments, we consider (1) the extent to which their scores capture the Lectical<sup>®</sup> dimension (the skill level of the performance); (2)  how well they target the domain or topic of interest; (3) their relevance, particularly with respect to the relevance of their feedback; and (4)  their utility, particularly with respect to the value of their feedback.<br />
+      <br />
+    </p>
+    <p align="center">Figure 1: Validity considerations for Lectical Assessments and DiscoTests</p>
+    <p><img src="../images/about/validity.png" width="95%" alt="validity" /></p>
+    <h2>Reliability</h2>
+    <p>We track two forms of  reliability: (1) internal consistency, which we  examine with Rasch modeling software, and (2) inter-rater reliability.<br />
+      <br />
+    </p>
+    <p align="center">Figure 2: Maintaining the reliability of our scores    </p>
+    <p align="center"><img src="../images/about/reliability.png" width="95%"  alt="reliability" /></p>
+    <p>&nbsp;</p>
+    <h2>Research</h2>
+    <p>We have been conducting research on (and with) our assessments for several years. Some of this research has been published in peer reviewed journals. Other research is documented in reports. The following section shows how some of our publications and reports relate to various aspects of reliability and validity. (Click on  titles to view pdf documents.)<br />
+    </p>
+    <table width="95%">
+      <thead>
+      <tr>
+        <th width="35%" style='text-align:left;'>Convergent validity</th>
+        <th>References</th>
+      </tr>
+      </thead>
+      <tr>
+        <td width="35%" rowspan="6">Psychometric modeling and qualitative analyses reveal that
+          the LAS and several longitudinally validated domain specific cognitive
+          developmental assessment systems assess the same dimension of performance.</td>
+        <td>Dawson, T. L. (2000). <a href="../PDF/MoralGood.pdf">Moral reasoning and evaluative
+          reasoning about the good life</a>. <em>Journal
+          of Applied Measurement, 1,</em> 372-397. </td>
+      </tr>
+      <tr>
+        <td>Dawson, T. L. (2002). <a href="../PDF/MGE.pdf">A comparison of three developmental
+          stage scoring systems</a>.<em> Journal of
+          Applied Measurement, 3,</em> 146-189. </td>
+      </tr>
+      <tr>
+        <td>Dawson, T. L. (2003). <a href="../PDF/AstageIsAstage.pdf">A stage is a stage is a stage: A direct comparison of two scoring systems</a>. <i>Journal of Genetic Psychology, 164</i>, 335-364.<i></i></td>
+      </tr>
+      <tr>
+        <td>Dawson, T. L., &amp; Gabrielian, S. (2003). <a href="../PDF/AuthorityContract.pdf">Developing conceptions of authority and contract across the life-span: Two perspectives</a>. <i>Developmental Review, 23</i>, 162-218.<i></i></td>
+      </tr>
+      <tr>
+        <td>Dawson, T. L., Xie, Y., &amp; Wilson, M. (2003). <a href="../PDF/DomainGeneral.pdf">Domain-general and domain-specific developmental assessments: Do they measure the same thing?</a> <i>Cognitive Development</i>, <i>18, </i>61-78.<i></i></td>
+      </tr>
+      <tr>
+        <td>Dawson, T. L. (2004). <a href="../PDF/3Approaches.pdf">Assessing intellectual development: Three approaches, one sequence</a>. <i>Journal of Adult Development, 11, </i>71-85<i>.</i></td>
+      </tr>
+   </table>
+
+   <table width="95%">
+      <thead>
+      <tr>
+        <th width="35%" style='text-align:left;'>Predictive validity 1</th>
+        <th>Evidence</th>
+      </tr>
+      </thead>
+      <tr>
+        <td width="35%">LectaTests are designed to target real-world skills—skills that make us better at what we do at work and in our personal lives. If we are doing a good job, working with our assessments should support <em>behavioral</em> change. 
+        <p>&nbsp;</p></td>
+        <td>In a preliminary analysis of Clear Impact's ambitious 40-hour, 9 month, leadership training initiative involving four levels of management in a large North American city, we examined the effects of embedding up to 8  LectaTests (including pre-and post LDMAs) on manager's growth and collaborative behavior.  Most of the results reported here are  restricted to the LDMA data of supervisors who (1) completed pre and post LDMAs and (2) had two or more supervisees who had completed pre and post LDMAs. <img src="https://www.lectica.org/_assets/_images/outreach/2013_0513_virtuous_cycles_clear_impact.png" width="100%" alt="" /></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>
+        <table class="select-c" width="100%" border="0">
+          <tr>
+            <th colspan="4">Regression results</th>
+            </tr>
+          <tr>
+            <th width="54%" height="30">&nbsp;</th>
+            <th width="12%">n</th>
+            <th width="12%">r</th>
+            <th width="12%">p</th>
+          </tr>
+          <tr>
+            <td	style="padding-right: 14px";
+>The number of LectaTests taken by supervisors predicts their own Lectical growth </td>
+            <td	style="text-align: center">161</td>
+            <td style="text-align: center">.19</td>
+            <td style="text-align: center">.01</td>
+          </tr>
+          <tr>
+            <td	style="padding-right: 14px"> Greater Lectical growth of supervisors predicts higher 360 scores from direct reports</td>
+            <td style="text-align: center">9</td>
+            <td style="text-align: center">.59</td>
+            <td style="text-align: center">.09</td>
+          </tr>
+          <tr>
+            <td style="padding-right: 14px">Higher 360 scores for supervisors  predict higher average lectical growth of direct reports</td>
+            <td style="text-align: center">10</td>
+            <td style="text-align: center">.60</td>
+            <td style="text-align: center">.07</td>
+          </tr>
+          <tr>
+            <td style="padding-right: 14px">Higher average Lectical growth of direct reports predicts higher 360 scores from peers</td>
+            <td style="text-align: center">10</td>
+            <td style="text-align: center">.46</td>
+            <td style="text-align: center">.18</td>
+          </tr>
+        </table></td>
+      </tr>
+   </table>   
+   
+   <table width="95%">
+      <thead>
+      <tr>
+        <th width="35%" style='text-align:left;'>Predictive validity 2</th>
+        <th>&nbsp;</th>
+      </tr>
+      </thead>
+      <tr>
+        <td class = "tablerow" width="35%" rowspan="2" style='padding-top:12px;'>Upper level managers, on average, have higher-level decision making skills than lower level managers. </td>
+        <td class = "tablerow"><img src="../_assets/_images/validity/2014_0329_lectical_level_distribution.png" width="100%" alt="Lectical Score averages for different management levels" /></td>
+      </tr>
+      <tr>
+	</table>
+
+   <table width="95%">
+      <thead>
+      <tr>
+        <th width="35%" style='text-align:left;'>Unidimensionality</th>
+        <th>References</th>
+      </tr>
+      </thead>
+      <tr>
+        <td class = "tablerow" width="35%" rowspan="2">Rasch modeling shows that the LAS captures a robust
+          dimension of performance.&nbsp;</td>
+        <td class = "tablerow">Dawson-Tunik, T. L. (2004). <a href="../PDF/GoodEducation.pdf">“A good education is…” The development of evaluative thought across the life-span</a>. <i>Genetic, Social, and General Psychology Monographs, 130, </i>4-112<i>.</i></td>
+      </tr>
+      <tr>
+        <td class = "tablerow">Dawson-Tunik, T. L., Commons, M., Wilson, M., &amp; Fischer, K. (2005). <a href="../PDF/Shape.pdf">The shape of development</a>. <i>The European Journal of Developmental Psychology, 2, </i>163-196.</td>
+      </tr>
+	</table>
+
+   <table width="95%">
+      <thead>
+      <tr>
+        <th width="35%" style='text-align:left;'>Transformational learning</th>
+        <th>References</th>
+      </tr>
+      </thead>
+      <tr>
+        <td width="35%" rowspan="5">Rasch modeling shows that development along the latent
+          dimension measured by the LAS is wave-like, a pattern that is consistent with
+          the cognitive developmental postulate that development is characterized by a
+          series of nested, hierarchical reorganizations of knowledge structures
+          (rather than the simple accumulation of knowledge).</td>
+        <td>Xie, Y., &amp; Dawson, T. L. (2006). Multidimensional
+          models in a developmental context. In M. Garner, G. Engelhard, M. Wilson
+          &amp; W. Fisher (Eds.), <em>Advances in Rasch Measurement:</em> JAM
+          Press.</td>
+      </tr>
+      <tr>
+        <td>Dawson-Tunik, T. L. (2004). <a href="../PDF/GoodEducation.pdf">“A good education is…” The development of evaluative thought acros the life-span</a>. <i>Genetic, Social, and General Psychology Monographs, 130, </i>4-112<i>.</i></td>
+      </tr>
+      <tr>
+        <td>Dawson-Tunik, T. L., Commons, M., Wilson, M., &amp; Fischer, K. (2005). <a href="../PDF/Shape.pdf">The shape of development</a>. <i>The European Journal of Developmental Psychology, 2, </i>163-196.</td>
+      </tr>
+      <tr>
+        <td>Dawson-Tunik, T. L. (2005, June).<em> Cognitive
+          change is stage-like: The cumulative evidence from a decade of Rasch
+          modeling.</em> Paper presented at the Annual Meeting of the Jean Piaget
+          Society, Vancouver. </td>
+      </tr>
+      <tr>
+        <td>Dawson, T. L. (2006). Stage-like patterns in the
+          development of conceptions of energy. In X. Liu &amp; W. Boone (Eds.), <em>Applications of Rasch measurement in science education (pp.
+        111-136).</em> Maple Grove, MN: JAM Press.</td>
+      </tr>
+	</table>      
+      
+   <table width="95%">
+      <thead>
+      <tr>
+        <th width="35%" style='text-align:left;'>Internal consistency</th>
+        <th>References</th>
+      </tr>
+      </thead>
+      <tr>
+        <td class = "tablerow" width="35%" rowspan="5">The internal consistency of the LAS has historically been
+          above .90. (As of 2009, we are maintaining alphas of .95 and above. In
+          general, reliability studies show that we can have confidence in lectical
+          scores to within 1/5 to 1/4 of a level, which means we can detect 4-7 distinct phases of  performance within a typical classroom.)</td>
+        <td class = "tablerow">Dawson, T. L. (2000). <a href="../PDF/MoralGood.pdf">Moral reasoning and evaluative
+          reasoning about the good life</a>. <em>Journal
+        of Applied Measurement, 1,</em> 372-397. </td>
+      </tr>
+      <tr>
+        <td class = "tablerow">Dawson, T. L. (2002). <a href="../PDF/MGE.pdf">A comparison of three developmental
+          stage scoring systems</a>.<em> Journal of
+        Applied Measurement, 3,</em> 146-189. </td>
+      </tr>
+      <tr>
+        <td class = "tablerow">Dawson, T. L., Xie, Y., &amp; Wilson, M. (2003). <a href="../PDF/DomainGeneral.pdf">Domain-general and domain-specific developmental assessments: Do they measure the same thing?</a> <i>Cognitive Development</i>, <i>18, </i>61-78.<i></i></td>
+      </tr>
+      <tr>
+        <td class = "tablerow">Dawson-Tunik, T. L. (2004). <a href="../PDF/GoodEducation.pdf">“A good education is…” The development of evaluative thought across the life-span</a>. <i>Genetic, Social, and General Psychology Monographs, 130, </i>4-112<i>.</i></td>
+      </tr>
+      <tr>
+        <td class = "tablerow">Dawson-Tunik, T. L., Commons, M., Wilson, M., &amp; Fischer, K. (2005). <a href="../PDF/Shape.pdf">The shape of development</a>. <i>The European Journal of Developmental Psychology, 2, </i>163-196.</td>
+      </tr>
+	</table>
+
+   <table width="95%">
+      <thead>
+      <tr>
+        <th width="35%" style='text-align:left;'>Inter-rater reliability</th>
+        <th>References</th>
+      </tr>
+      </thead>
+      <tr>
+        <td width="35%" rowspan="3">Inter-rater reliability for the LAS consistently has been
+          above 85% agreement within 1/3 of a lectical level. (As of 2007, we maintain
+          an inter-rater agreement rate of 85% within 1/4 of a level.)</td>
+        <td>Dawson-Tunik, T. L. (2004). <a href="../PDF/GoodEducation.pdf">“A good education is…” The development of evaluative thought across the life-span</a>. <i>Genetic, Social, and General Psychology Monographs, 130, </i>4-112<i>.</i></td>
+      </tr>
+      <tr>
+        <td>Dawson-Tunik, T. L., Commons, M., Wilson, M., &amp; Fischer, K. (2005). <a href="../PDF/Shape.pdf">The shape of development</a>. <i>The European Journal of Developmental Psychology, 2, </i>163-196.</td>
+      </tr>
+      <tr>
+        <td>Dawson, T. L. (2006). Stage-like patterns in the
+          development of conceptions of energy. In X. Liu &amp; W. Boone (Eds.), <em>Applications of Rasch measurement in science education</em> (pp.
+        111-136). Maple Grove, MN: JAM Press.</td>
+      </tr>
+   </table>
+
+   <table width="95%">
+      <thead>
+      <tr>
+        <th width="35%" style='text-align:left;'>Statistical reliability</th>
+        <th>Alphas and variance explained by factor 1</th>
+      </tr>
+      </thead>
+      <tr>
+        <td width="35%">In Rasch analyses of the assessments developed by DTS, the lectical dimension (hierarchical complexity) consistently explains  79% – 99% of the variance in performances. </td>
+        <td>
+        <table class="minimalist-a" width="100%">
+        <thead>
+          <tr>
+            <th>Test</th>
+            <th>Project</th>
+            <th>N</th>
+            <th>item no.</th>
+            <th>Alpha</th>
+            <th>Variance explained</th>
+          </tr>
+        </thead>   
+        <tbody>
+          <tr>
+            <td>LDMA</td>
+            <td>CI</td>
+            <td style="text-align:center;">1099</td>
+            <td style="text-align:center;">5</td>
+            <td style="text-align:center;">.968</td>
+            <td style="text-align:center;">88.73%</td>
+          </tr>
+          <tr>
+            <td>FOLA</td>
+            <td>DTS</td>
+            <td style="text-align:right;">61</td>
+            <td style="text-align:center;">2</td>
+            <td style="text-align:center;">.894</td>
+            <td style="text-align:center;">91.44%</td>
+          </tr>
+          <tr>
+            <td>LMBE</td>
+            <td>LMBE</td>
+            <td style="text-align:right;">13</td>
+            <td style="text-align:center;">5</td>
+            <td style="text-align:center;">.984</td>
+            <td style="text-align:center;">95.13%</td>
+          </tr>
+          <tr>
+            <td>LLRA</td>
+            <td>LLRA</td>
+            <td style="text-align:right;">54</td>
+            <td style="text-align:center;">5</td>
+            <td style="text-align:center;">.988</td>
+            <td style="text-align:center;">95.47%</td>
+          </tr>
+          <tr>
+            <td>LRJA</td>
+            <td>LRJA</td>
+            <td style="text-align:right;">224</td>
+            <td style="text-align:center;">7</td>
+            <td style="text-align:center;">.958</td>
+            <td style="text-align:center;">79.89%</td>
+          </tr>
+         </tbody>  
+        </table>
+       </td>
+      </tr>
+	</table>
+
+   <table width="95%">
+      <thead>
+      <tr>
+        <th width="35%" style='text-align:left;'>Evaluation studies</th>
+        <th>References</th>
+      </tr>
+      </thead>
+      <tr>
+        <td width="35%" rowspan="3">Lectical assessments have been used in a number of evaluation studies. They have been shown to capture learning  over relatively short interventions and in small cohorts. (See table below for results of several piared samples <em>t</em>-tests.)</td>
+        <td>Dawson-Tunik, T. L. &amp; Stein, Z. (2004, July). <a href="../about/.../PDF/CriticalThinking.pdf"><em>Critical Thinking Seminar pre and post assessment results</em></a><em>.</em> Hatfield, MA: Developmental Testing Service, Inc.</td>
+      </tr>
+      <tr>
+        <td>Dawson, T. L., &amp; Stein, Z. (2006). <em><a href="../PDF/DecisionMakingReport.pdf">National decision-making curriculum. Results of the pre- and post-instruction developmental assessments</a>.</em> Northampton, MA: Developmental Testing Service.</td>
+      </tr>
+      <tr>
+        <td>Dawson, T. L., &amp; Stein, Z. (2006). <a href="../about/.../PDF/MBEFinalReport072606.pdf"><em>Mind Brain &amp; Education study: Final </em></a><a href="../about/.../PDF/MBEFinalReport072606.pdf"><em>report</em></a><em>.</em> Northampton, MA: Developmental Testing Service, Inc.</td>
+      </tr>
+    </table>
+
+   <h2 class="padding_top_20">Embedding LectaTests     </h2>
+   <p>This table shows growth during a current leadership training program in which LectaTests are 
+        <a class="hotspot">embedded</a> <span class="tooltip1">Embedded assessments inform instruction. For example, they may be  used as part of a lesson plan, like a written assignment might be used to help learners solidify what they are learning.</span> as formative assessments. Although class time is limited to 40 hours, participants are demonstrating development that is equivalent to what we have measured in year-long college courses (without embedding). </p>
+   <table width="95%">
+      <tr>
+        <td colspan="2">
+          <table class="minimalist-a" width="100%">
+            <thead>
+          <tr>
+            <th>Scale</th>
+            <th colspan="2" style="text-align:center;">Overall (114)</th>
+            <th colspan="2" style="text-align:center;">Upper (7)</th>
+            <th colspan="2" style="text-align:center;">Middle (43)</th>
+            <th colspan="2" style="text-align:center;">Supers (57)</th>
+            </tr>
+        </thead>   
+        <tbody>
+          <tr>
+            <td>&nbsp;</td>
+            <td width="8%" style="text-align:center;">Pre</td>
+            <td width="8%" style="text-align:center;">Post</td>
+            <td width="8%" style="text-align:center;">Pre</td>
+            <td width="8%" style="text-align:center;">Post</td>
+            <td width="8%" style="text-align:center;">Pre</td>
+            <td width="8%">Post</td>
+            <td width="8%" style="text-align:center;">Pre</td>
+            <td width="8%" style="text-align:center;">Post</td>
+          </tr>
+          <tr>
+            <td>Lectical score</td>
+            <td width="8%" style="text-align:center;">11.3</td>
+            <td width="8%" style="text-align:center;">11.5</td>
+            <td width="8%" style="text-align:center;">11.5</td>
+            <td width="8%" style="text-align:center;">11.6</td>
+            <td width="8%" style="text-align:center;">11.4</td>
+            <td width="8%" style="text-align:center;">11.6</td>
+            <td width="8%" style="text-align:center;">11.2</td>
+            <td width="8%" style="text-align:center;">11.4</td>
+          </tr>
+          <tr>
+            <td>Perspective taking</td>
+            <td width="8%" style="text-align:center;">22</td>
+            <td width="8%" style="text-align:center;">38</td>
+            <td width="8%" style="text-align:center;">30</td>
+            <td width="8%" style="text-align:center;">35</td>
+            <td width="8%" style="text-align:center;">25</td>
+            <td width="8%" style="text-align:center;">41</td>
+            <td width="8%" style="text-align:center;">19</td>
+            <td width="8%" style="text-align:center;">36</td>
+          </tr>
+          <tr>
+            <td>Perspective seeking</td>
+            <td width="8%" style="text-align:center;">8</td>
+            <td width="8%" style="text-align:center;">17</td>
+            <td width="8%" style="text-align:center;">8</td>
+            <td width="8%" style="text-align:center;">20</td>
+            <td width="8%" style="text-align:center;">10</td>
+            <td width="8%" style="text-align:center;">19</td>
+            <td width="8%" style="text-align:center;">6</td>
+            <td width="8%" style="text-align:center;">15</td>
+          </tr>
+          <tr>
+            <td>Perspective coordination</td>
+            <td width="8%" style="text-align:center;">30</td>
+            <td width="8%" style="text-align:center;">59</td>
+            <td width="8%" style="text-align:center;">27</td>
+            <td width="8%" style="text-align:center;">66</td>
+            <td width="8%" style="text-align:center;">31</td>
+            <td width="8%" style="text-align:center;">63</td>
+            <td width="8%" style="text-align:center;">28</td>
+            <td width="8%" style="text-align:center;">55</td>
+          </tr>
+          <tr>
+            <td>Collaborative capacity</td>
+            <td width="8%" style="text-align:center;">34</td>
+            <td width="8%" style="text-align:center;">56</td>
+            <td width="8%" style="text-align:center;">33</td>
+            <td width="8%" style="text-align:center;">66</td>
+            <td width="8%" style="text-align:center;">37</td>
+            <td width="8%" style="text-align:center;">59</td>
+            <td width="8%" style="text-align:center;">31</td>
+            <td width="8%" style="text-align:center;">52</td>
+          </tr>
+          <tr>
+            <td>Contextual thinking</td>
+            <td width="8%" style="text-align:center;">31</td>
+            <td width="8%" style="text-align:center;">52</td>
+            <td width="8%" style="text-align:center;">33</td>
+            <td width="8%" style="text-align:center;">65</td>
+            <td width="8%" style="text-align:center;">33</td>
+            <td width="8%" style="text-align:center;">56</td>
+            <td width="8%" style="text-align:center;">29</td>
+            <td width="8%" style="text-align:center;">48</td>
+            </tr>
+          <tr>
+            <td>Decision-making process</td>
+            <td width="8%" style="text-align:center;">28</td>
+            <td width="8%" style="text-align:center;">54</td>
+            <td width="8%" style="text-align:center;">32</td>
+            <td width="8%" style="text-align:center;">57</td>
+            <td width="8%" style="text-align:center;">28</td>
+            <td width="8%" style="text-align:center;">60</td>
+            <td width="8%" style="text-align:center;">26</td>
+            <td width="8%" style="text-align:center;">50</td>
+            </tr>
+         </tbody>  
+      </table></td>
+      </tr>
+      <tr>
+        <td colspan="2">&nbsp;</td>
+      </tr>
+      <tr>
+        <td width="35%"><p>&nbsp;</p></td>
+        <td rowspan="2"><table class="minimalist-a" width="95%">
+          <thead>
+            <tr>
+              <th style="text-align:center; width:120px">Study</th>
+              <th style="text-align:center; width:10%">N</th>
+              <th style="text-align:center;">Interval</th>
+              <th style="text-align:center;">Program length (hrs)</th>
+              <th style="text-align:center;">Embedded</th>
+              <th style="text-align:center;">Mean growth</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>IT 2004, LDMA</td>
+              <td style="text-align:center;">40</td>
+              <td style="text-align:center;">6 mos</td>
+              <td style="text-align:center;">60</td>
+              <td style="text-align:center;">No</td>
+              <td style="text-align:center;">0.06</td>
+            </tr>
+            <tr>
+              <td>IT 2005, LDMA</td>
+              <td style="text-align:center;">32</td>
+              <td style="text-align:center;">6 mos</td>
+              <td style="text-align:center;">60</td>
+              <td style="text-align:center;">Yes</td>
+              <td style="text-align:center;">0.27</td>
+            </tr>
+            <tr>
+              <td>MH 2010, LRJA</td>
+              <td style="text-align:center;">43</td>
+              <td style="text-align:center;">13 mos</td>
+              <td style="text-align:center;">42</td>
+              <td style="text-align:center;">No</td>
+              <td style="text-align:center;">0.13</td>
+            </tr>
+            <tr>
+              <td>AU 2010, LDMA</td>
+              <td style="text-align:center;">28</td>
+              <td style="text-align:center;">12 mos</td>
+              <td style="text-align:center;">43</td>
+              <td style="text-align:center;">No</td>
+              <td style="text-align:center;">0.09</td>
+            </tr>
+            <tr>
+              <td>ZV 2012, LDMA</td>
+              <td style="text-align:center;">18</td>
+              <td style="text-align:center;">4 mos</td>
+              <td style="text-align:center;">40</td>
+              <td style="text-align:center;">Yes</td>
+              <td style="text-align:center;">0.18</td>
+            </tr>
+            <tr>
+              <td>NA 2012, LDMA</td>
+              <td style="text-align:center;">24</td>
+              <td style="text-align:center;">1 mos</td>
+              <td style="text-align:center;">40</td>
+              <td style="text-align:center;">No</td>
+              <td style="text-align:center;">0.03</td>
+            </tr>
+            <tr>
+              <td>NA1 2013, LDMA</td>
+              <td style="text-align:center;">16</td>
+              <td style="text-align:center;">4 mos</td>
+              <td style="text-align:center;">40</td>
+              <td style="text-align:center;">No</td>
+              <td style="text-align:center;">0.05</td>
+            </tr>
+            <tr>
+              <td>NA2 2013, LDMA</td>
+              <td style="text-align:center;">19</td>
+              <td style="text-align:center;">4 mos</td>
+              <td style="text-align:center;">40</td>
+              <td style="text-align:center;">No</td>
+              <td style="text-align:center;">0.07</td>
+            </tr>
+            <tr>
+              <td>ST 2012, LDMA</td>
+              <td style="text-align:center;">27</td>
+              <td style="text-align:center;">6 mos</td>
+              <td style="text-align:center;">40</td>
+              <td style="text-align:center;">No</td>
+              <td style="text-align:center;">0.15</td>
+            </tr>
+            <tr>
+              <td>CI 2013, LDMA</td>
+              <td style="text-align:center;">512</td>
+              <td style="text-align:center;">9 mos</td>
+              <td style="text-align:center;">40</td>
+              <td style="text-align:center;">Yes</td>
+              <td style="text-align:center;">0.18</td>
+            </tr>
+          </tbody>
+        </table></td>
+      </tr>
+      <tr>
+        <td>The table on the right shows average growth for several evaluation studies. In some of these, LectaTests were <a class="hotspot">embedded</a> <span class="tooltip21">Embedded assessments inform instruction. For example, they may be  used as part of a lesson plan, like a written assignment might be used to help learners solidify what they are learning.</span> in curricula; in others, they were not. The average  annual  growth for undergraduates in college is about .13 of a level per year. The average growth for the 7 studies in which LectaTests were not embedded is .083, whereas the average growth for the 3 studies in which LectaTests were embedded, is .21.</td>
+      </tr>
+   </table>   
+
+
+    <h2 class="padding_top_20">Detecting change o</span>ver short periods and in small samples</h2>
+<p>In the table below, paired samples t-tests show levels of detectable growth in several program evaluations that were  conducted with Lectical Assessments. They demonstrate that our measures can detect growth as small as .05 of a level    in an average-sized classroom (NA1 2013, LDMA). Moreover, they show that measurable growth can occur with minimal instruction in a well-designed program. For example, the individuals in CI 2012 met only 4 times over the course of 3 months.</p>
+    <table class="minimalist-a" width="95%">
+      <thead>
+      <tr>
+        <th align="center">Study</th>
+        <th align="center">N</th>
+        <th align="center">Interval</th>
+        <th align="center">DF</th>
+        <th align="center">Mean time 1</th>
+        <th align="center">Mean time 2</th>
+        <th align="center">t2 - t1</th>
+        <th align="center"><em>t</em></th>
+        <th align="center"><em>p</em></th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td>IT 2005, LDMA</td>
+        <td style="text-align:center;">32</td>
+        <td>6 mos</td>
+        <td style="text-align:center;">31</td>
+        <td style="text-align:center;">10.98</td>
+        <td style="text-align:center;">11.17</td>
+        <td style="text-align:center;">0.27</td>
+        <td style="text-align:center;">7.05</td>
+        <td style="text-align:center;">.001</td>
+      </tr>
+      <tr>
+        <td>CI 2012, LDMA</td>
+        <td style="text-align:center;">31</td>
+        <td>3 mos</td>
+        <td style="text-align:center;">30</td>
+        <td style="text-align:center;">11.24</td>
+        <td style="text-align:center;">11.30</td>
+        <td style="text-align:center;">0.06</td>
+        <td style="text-align:center;">2.01</td>
+        <td style="text-align:center;">.053</td>
+      </tr>
+      <tr>
+        <td>ST 2012, LDMA</td>
+        <td style="text-align:center;">27</td>
+        <td>3 mos</td>
+        <td style="text-align:center;">26</td>
+        <td style="text-align:center;">11.18</td>
+        <td style="text-align:center;">11.27</td>
+        <td style="text-align:center;">0.09</td>
+        <td style="text-align:center;">2.64</td>
+        <td style="text-align:center;">.014</td>
+      </tr>
+      <tr>
+        <td>AU 2010, LDMA</td>
+        <td style="text-align:center;">44</td>
+        <td>12 mos</td>
+        <td style="text-align:center;">43</td>
+        <td style="text-align:center;">10.92</td>
+        <td style="text-align:center;">11.08</td>
+        <td style="text-align:center;">0.16</td>
+        <td style="text-align:center;">2.19</td>
+        <td style="text-align:center;">.034</td>
+      </tr>
+      <tr>
+        <td>CI 2013, LDMA</td>
+        <td style="text-align:center;">185</td>
+        <td>9 mos</td>
+        <td style="text-align:center;">184</td>
+        <td style="text-align:center;">11.31</td>
+        <td style="text-align:center;">11.49</td>
+        <td style="text-align:center;">0.17</td>
+        <td style="text-align:center;">14.39</td>
+        <td style="text-align:center;">.001</td>
+      </tr>
+      <tr>
+        <td>AU 2011, LDMA</td>
+        <td style="text-align:center;">57</td>
+        <td>12 mos</td>
+        <td style="text-align:center;">56</td>
+        <td style="text-align:center;">11.24</td>
+        <td style="text-align:center;">11.28</td>
+        <td style="text-align:center;">0.04</td>
+        <td style="text-align:center;">1.50</td>
+        <td style="text-align:center;">.140</td>
+      </tr>
+      <tr>
+        <td>AU 2011, LDMA</td>
+        <td style="text-align:center;">38</td>
+        <td>12 mos</td>
+        <td style="text-align:center;">37</td>
+        <td style="text-align:center;">11.25</td>
+        <td style="text-align:center;">11.32</td>
+        <td style="text-align:center;">0.07</td>
+        <td style="text-align:center;">2.28</td>
+        <td style="text-align:center;">.030</td>
+      </tr>
+      <tr>
+        <td>ZV 2012, LDMA</td>
+        <td style="text-align:center;">18</td>
+        <td>4 mos</td>
+        <td style="text-align:center;">17</td>
+        <td style="text-align:center;">11.26</td>
+        <td style="text-align:center;">11.44</td>
+        <td style="text-align:center;">0.18</td>
+        <td style="text-align:center;">5.91</td>
+        <td style="text-align:center;">.001</td>
+      </tr>
+      <tr>
+        <td>NA 2012, LDMA</td>
+        <td style="text-align:center;">24</td>
+        <td>1-3 mos</td>
+        <td style="text-align:center;">23</td>
+        <td style="text-align:center;">11.25</td>
+        <td style="text-align:center;">11.28</td>
+        <td style="text-align:center;">0.03</td>
+        <td style="text-align:center;">1.41</td>
+        <td style="text-align:center;">.170</td>
+      </tr>
+      <tr>
+        <td>NA1 2013, LDMA</td>
+        <td style="text-align:center;">16</td>
+        <td>3 mos</td>
+        <td style="text-align:center;">15</td>
+        <td style="text-align:center;">11.24</td>
+        <td style="text-align:center;">11.29</td>
+        <td style="text-align:center;">0.05</td>
+        <td style="text-align:center;">3.30</td>
+        <td style="text-align:center;">.001</td>
+      </tr>
+      <tr>
+        <td>NA2 2013, LDMA</td>
+        <td style="text-align:center;">19</td>
+        <td>3 mos</td>
+        <td style="text-align:center;">18</td>
+        <td style="text-align:center;">11.23</td>
+        <td style="text-align:center;">11.30</td>
+        <td style="text-align:center;">0.07</td>
+        <td style="text-align:center;">3.63</td>
+        <td style="text-align:center;">.001</td>
+      </tr>
+      <tr>
+        <td>MH 2010, LRJA</td>
+        <td style="text-align:center;">43</td>
+        <td>13 mos</td>
+        <td style="text-align:center;">42</td>
+        <td style="text-align:center;">11.32</td>
+        <td style="text-align:center;">11.19</td>
+        <td style="text-align:center;">0.13</td>
+        <td style="text-align:center;">2.22</td>
+        <td style="text-align:center;">.031</td>
+      </tr>
+      </tbody>
+    </table>
+    <p>&nbsp;</p>
+    <p>*All Lectical assessments meet or exceed the validity and reliability <a href="http://www.apa.org/science/programs/testing/standards.aspx">standards</a> for educational and psychological testing set jointly by the APA, AERA, and NCME.</p>
+    <p>**See: Messick, S. (1980).
+      Test validity and the ethics of assessment.<em> American
+      Psychologist, 35</em>(11), 1012-1027.</p>
+    <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+  <!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" --><!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+?>

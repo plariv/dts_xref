@@ -1,0 +1,692 @@
+<?php 
+require_once('../../Connections/Assessment.php'); 
+require_once("../../WADbSearch/HelperPHP.php");
+require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); 
+include_once '../../includes/general_custom_functions.php';
+
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../../security/logIn.php");
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+
+$userkey = $_SESSION['log_userkey'];
+
+
+
+
+
+
+//WA Database Search (Copyright 2005, WebAssist.com)
+//Recordset: rsJournalCommented;
+//Searchpage: viewjournalentries.php;
+//Form: form1;
+$WADbSearch1_DefaultWhere = "";
+if (!session_id()) session_start();
+if ((isset($_POST["WADbSearch1"])) && ($_POST["WADbSearch1"] != "")) {
+  $WADbSearch1 = new FilterDef;
+  $WADbSearch1->initializeQueryBuilder("MYSQL","1");
+  //keyword array declarations
+  $KeyArr0 = array("r1.firstname");
+  $KeyArr1 = array("r1.lastname");
+
+  //comparison list additions
+  $WADbSearch1->addComparisonFromEdit("time","startDate","AND",">=",2);
+	$WADbSearch1->addComparison("time","".WAQB_getEndDate($_POST["endDate"])  ."","AND","<=",2);
+  $WADbSearch1->keywordComparison($KeyArr0,"".((isset($_POST["firstName"]))?$_POST["firstName"]:"")  ."","AND","Includes",",%20","%20","%22","%22",0);
+  $WADbSearch1->keywordComparison($KeyArr1,"".((isset($_POST["lastName"]))?$_POST["lastName"]:"")  ."","AND","Includes",",%20","%20","%22","%22",0);
+
+  //save the query in a session variable
+  if (1 == 1) {
+    $_SESSION["WADbSearch1_viewjournalentries"]=$WADbSearch1->whereClause;
+  }
+}
+else     {
+  $WADbSearch1 = new FilterDef;
+  $WADbSearch1->initializeQueryBuilder("MYSQL","1");
+  //get the filter definition from a session variable
+  if (1 == 1)     {
+    if (isset($_SESSION["WADbSearch1_viewjournalentries"]) && $_SESSION["WADbSearch1_viewjournalentries"] != "")     {
+      $WADbSearch1->whereClause = $_SESSION["WADbSearch1_viewjournalentries"];
+    }
+    else     {
+      $WADbSearch1->whereClause = $WADbSearch1_DefaultWhere;
+    }
+  }
+  else     {
+    $WADbSearch1->whereClause = $WADbSearch1_DefaultWhere;
+  }
+}
+$WADbSearch1->whereClause = str_replace("\\''", "''", $WADbSearch1->whereClause);
+$WADbSearch1whereClause = '';
+
+
+
+
+//WA Database Search (Copyright 2005, WebAssist.com)
+//Recordset: rsJournal;
+//Searchpage: viewjournalentries.php;
+//Form: form2;
+$WADbSearch2_DefaultWhere = "";
+if (!session_id()) session_start();
+if ((isset($_POST["WADbSearch2"])) && ($_POST["WADbSearch2"] != "")) {
+  $WADbSearch2 = new FilterDef;
+  $WADbSearch2->initializeQueryBuilder("MYSQL","1");
+  //keyword array declarations
+  $KeyArr0 = array("r1.firstname");
+  $KeyArr1 = array("r1.lastname");
+
+  //comparison list additions
+  $WADbSearch2->addComparisonFromEdit("time","startDate2","AND",">=",2);
+  $WADbSearch2->addComparison("time","".WAQB_getEndDate($_POST["endDate2"])  ."","AND","<=",2);
+  $WADbSearch2->keywordComparison($KeyArr0,"".((isset($_POST["firstName2"]))?$_POST["firstName2"]:"")  ."","AND","Includes",",%20","%20","%22","%22",0);
+  $WADbSearch2->keywordComparison($KeyArr1,"".((isset($_POST["lastName2"]))?$_POST["lastName2"]:"")  ."","AND","Includes",",%20","%20","%22","%22",0);
+
+  //save the query in a session variable
+  if (1 == 1) {
+    $_SESSION["WADbSearch2_viewjournalentries"]=$WADbSearch2->whereClause;
+  }
+}
+else     {
+  $WADbSearch2 = new FilterDef;
+  $WADbSearch2->initializeQueryBuilder("MYSQL","1");
+  //get the filter definition from a session variable
+  if (1 == 1)     {
+    if (isset($_SESSION["WADbSearch2_viewjournalentries"]) && $_SESSION["WADbSearch2_viewjournalentries"] != "")     {
+      $WADbSearch2->whereClause = $_SESSION["WADbSearch2_viewjournalentries"];
+    }
+    else     {
+      $WADbSearch2->whereClause = $WADbSearch2_DefaultWhere;
+    }
+  }
+  else     {
+    $WADbSearch2->whereClause = $WADbSearch2_DefaultWhere;
+  }
+}
+$WADbSearch2->whereClause = str_replace("\\''", "''", $WADbSearch2->whereClause);
+$WADbSearch2whereClause = '';
+
+
+?>
+
+
+
+
+
+<?php
+//WA DataAssist Sort (Copyright 2007, WebAssist.com)
+//Recordset: rsJournalCommented;
+$WADA_Sort_1 = new WADA_SortObject();
+$WADA_Sort_1->DefaultSort = "";
+$WADA_Sort_1->ColumnList = "".((isset($_GET["sort"]))?$_GET["sort"]:"")  ."^journal.journalkey^time^firstname^lastname^takey";
+$WADA_Sort_1->SortOrderList = "Ascending^Ascending^Ascending^Ascending^Ascending^Ascending";
+$WADA_Sort_1->ToggleOn = true;
+if ((((isset($_GET["sort"]))?$_GET["sort"]:"") != "")) {
+  $WADA_Sort_1->SetToClause = $WADA_Sort_1->getDefaultSetToClause();
+  if ($WADA_Sort_1->ToggleOn && isset($_SESSION["WADA_OrderClause_viewjournalentries"])) {
+    $WADA_Sort_1->ToggleClause = $_SESSION["WADA_OrderClause_viewjournalentries"];
+  }
+}
+else if (isset($_SESSION["WADA_OrderClause_viewjournalentries"])) {
+  $WADA_Sort_1->SetToClause = $_SESSION["WADA_OrderClause_viewjournalentries"];
+}
+$WADA_Sort_1->initialize();
+$_SESSION["WADA_OrderClause_viewjournalentries"] = $WADA_Sort_1->SetToClause;
+?>
+<?php
+// WA QueryString Binding (Copyright 2007, WebAssist.com)
+$WA_QSBind_FilteredString = WA_QSBind_QueryString((isset($_SERVER["QUERY_STRING"])?strval($_SERVER["QUERY_STRING"]):""), "sort");
+function WA_QSBind_QueryString($tStr, $exList) {
+  $exArr = array();
+  $retArr = array();
+  $varArr = array();
+  $exList = explode(",", str_replace(" ", "", $exList));
+  $tStr = preg_replace("/\&amp;/i", "&", $tStr);
+  for ($n=0; $n<sizeof($exList); $n++) {
+    $exArr[$exList[$n]] = true;
+  }
+  $qsArr = explode("&", $tStr);
+  for ($n=0; $n<sizeof($qsArr); $n++) {
+    $tstArr = explode("=", $qsArr[$n]);
+    if (!isset($exArr[$tstArr[0]]) || !$exArr[$tstArr[0]]) {
+      $retArr[] = $qsArr[$n];
+      $varArr[$tstArr[0]] = sizeof($retArr)-1;
+    }
+  }
+  if (sizeof($retArr)) {
+    return implode("&", $retArr);
+  }
+  return "";
+}
+?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+// SORT STATUS
+// if the current sort is by 
+$Scol = "journalkey";
+if (isset($_GET['sort'])) {
+	$Scol = $_GET['sort'];
+}
+$Sorder = " ASC";
+if (isset($_GET['order'])) {
+	$Sorder = $_GET['order'];
+}
+
+
+
+
+$colname_rsCommenter = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsCommenter = $_SESSION['log_userkey'];
+}
+$query_rsCommenter = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsCommenter, "int"));
+$rsCommenter = mysql_query($query_rsCommenter, $Assessment) or die(mysql_error());
+$row_rsCommenter = mysql_fetch_assoc($rsCommenter);
+$totalRows_rsCommenter = mysql_num_rows($rsCommenter);
+
+
+$maxRows_rsJournal = 5;
+$pageNum_rsJournal = 0;
+if (isset($_GET['pageNum_rsJournal'])) {
+  $pageNum_rsJournal = $_GET['pageNum_rsJournal'];
+}
+$startRow_rsJournal = $pageNum_rsJournal * $maxRows_rsJournal;
+
+$colname_rsJournal = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsJournal = $_SESSION['log_userkey'];
+}
+$query_rsJournal = sprintf("SELECT Journal.journalkey, Journal.userkey, Journal.teacherkey, Journal.commented, journal.takey, r1.userkey, r1.firstname AS student_first, r1.lastname AS student_last, r2.firstname AS ta_name, Journal.`time` 
+FROM Journal 
+LEFT JOIN registrants r1 ON Journal.userkey = r1.userkey
+LEFT JOIN registrants r2 ON Journal.takey = r2.userkey
+WHERE (Journal.teacherkey = %s OR Journal.takey = {$_SESSION['log_userkey']}) 
+AND Journal.userkey = r1.userkey AND Journal.commented = 0 ORDER BY Journal.`time` DESC", 
+		GetSQLValueString($colname_rsJournal, "int"));
+setQueryBuilderSource($query_rsJournal,$WADbSearch2,false);
+$query_limit_rsJournal = sprintf("%s LIMIT %d, %d", $query_rsJournal, $startRow_rsJournal, $maxRows_rsJournal);
+$rsJournal = mysql_query($query_limit_rsJournal, $Assessment) or die(mysql_error());
+$row_rsJournal = mysql_fetch_assoc($rsJournal);
+
+if (isset($_GET['totalRows_rsJournal'])) {
+  $totalRows_rsJournal = $_GET['totalRows_rsJournal'];
+} else {
+  $all_rsJournal = mysql_query($query_rsJournal);
+  $totalRows_rsJournal = mysql_num_rows($all_rsJournal);
+}
+$totalPages_rsJournal = ceil($totalRows_rsJournal/$maxRows_rsJournal)-1;
+
+
+
+
+
+// Defining the JournalCommented recordset, as well as the page-browsing links
+
+$sortCommented = " ORDER BY Journal.`time` DESC";
+$validSortColumns = ", ta_name, student_first, student_last, journalkey, time ";
+if (isset($_GET['sort']) AND (strpos($validSortColumns, $_GET['sort']))) {
+	$sortCommented = " ORDER BY ".$_GET['sort']." ".$Sorder;
+	
+}
+
+$maxRows_rsJournalCommented = 10;
+$pageNum_rsJournalCommented = 0;
+if (isset($_GET['pageNum_rsJournalCommented'])) {
+  $pageNum_rsJournalCommented = $_GET['pageNum_rsJournalCommented'];
+}
+$startRow_rsJournalCommented = $pageNum_rsJournalCommented * $maxRows_rsJournalCommented;
+
+$colname_rsJournalCommented = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsJournalCommented = (get_magic_quotes_gpc()) ? $_SESSION['log_userkey'] : addslashes($_SESSION['log_userkey']);
+}
+$query_rsJournalCommented = sprintf("SELECT journal.journalkey, journal.takey, journal.userkey, journal.teacherkey, journal.time, journal_codes.journalcodeskey, journal_codes.timedate, r1.userkey, r1.firstname AS student_first, r1.lastname AS student_last, r2.firstname AS ta_name 
+FROM journal
+LEFT JOIN registrants r1 ON journal.userkey = r1.userkey
+LEFT JOIN registrants r2 ON journal.takey = r2.userkey, 
+journal_codes
+WHERE journal_codes.journalkey = journal.journalkey AND (Journal.teacherkey = %s OR Journal.takey = {$_SESSION['log_userkey']}) AND journal.commented = 1 ", 
+		GetSQLValueString($colname_rsJournalCommented, "int"));
+setQueryBuilderSource($query_rsJournalCommented,$WADbSearch1,false);
+$query_rsJournalCommented .= " ".$sortCommented;
+$query_limit_rsJournalCommented = sprintf("%s LIMIT %d, %d", $query_rsJournalCommented, $startRow_rsJournalCommented, $maxRows_rsJournalCommented);
+$rsJournalCommented = mysql_query($query_limit_rsJournalCommented, $Assessment) or die(mysql_error()."    Query: ".$query_limit_rsJournalCommented);
+$row_rsJournalCommented = mysql_fetch_assoc($rsJournalCommented);
+
+if (isset($_GET['totalRows_rsJournalCommented'])) {
+  $totalRows_rsJournalCommented = $_GET['totalRows_rsJournalCommented'];
+} else {
+  $all_rsJournalCommented = mysql_query($query_rsJournalCommented);
+  $totalRows_rsJournalCommented = mysql_num_rows($all_rsJournalCommented);
+}
+$totalPages_rsJournalCommented = ceil($totalRows_rsJournalCommented/$maxRows_rsJournalCommented)-1;
+
+
+
+/**** Querystring definitions for rsJournal and rsJournalCommented - 
+This code preserved the previous URL variables so that search terms weren't lost when the user scrolled back and forth through the pages. It seems to have been causing problems, so I've commented it out. Testing... -TH
+
+$queryString_rsJournal = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsJournal") == false && 
+        stristr($param, "totalRows_rsJournal") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsJournal = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsJournal = sprintf("&totalRows_rsJournal=%d%s", $totalRows_rsJournal, $queryString_rsJournal);
+
+$queryString_rsJournalCommented = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsJournalCommented") == false && 
+        stristr($param, "totalRows_rsJournalCommented") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsJournalCommented = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsJournalCommented = sprintf("&totalRows_rsJournalCommented=%d%s", $totalRows_rsJournalCommented, $queryString_rsJournalCommented);
+
+*/
+
+
+
+
+
+// 					DOWNLOADS for Sharon
+
+
+
+
+
+if (isset($_GET['download'])) { 
+
+	if ($_GET['download'] == "journal_comments") {
+		
+		$query_rsDownload = sprintf("SELECT r.userkey, r.firstname, r.lastname, j.journalkey, j.teacherkey, j.`date`, j.teachercomment, j.journalentry_1, j.journalentry_2, j.`time`, j.noticing_body, j.noticing_emotions, j.noticing_thoughts, 
+			j.insights_actions, j.insights_actions_beliefs, j.insights_actions_values, j.insights_actions_learned, 
+		j.insights_emotions, j.insights_emotions_beliefs, j.insights_emotions_values, j.insights_emotions_learned, 
+		j.insights_thoughts, j.insights_thoughts_beliefs, j.insights_thoughts_values, j.insights_thoughts_learned, 
+		j.insights_relationships, j.insights_relationships_beliefs, j.insights_relationships_values, 
+		j.insights_relationships_learned, 
+		j.wellbeing, j.connected_others, j.connected_deity, j.connected_nature, j.connected_world, 
+		j.compassion_self, j.compassion_others, j.compassion_beings
+		FROM Registrants r
+		JOIN Journal j ON r.userkey = j.userkey 
+		WHERE j.teacherkey = %s AND j.noticing_body IS NOT NULL 
+		ORDER BY j.`date` DESC", 
+				SQLstr($userkey, "int"));
+				
+		//die($query_rsDownload);
+		
+		$rsDownload = mysql_query($query_rsDownload, $Assessment) or die(mysql_error());
+		$totalRows_rsDownload = mysql_num_rows($rsDownload);
+		downloadData( $rsDownload, date('Y-m-d')."_SMS_journal_comments" );
+		exit();
+				
+	} else if ($_GET['download'] == "journal_codes") {
+		
+		
+		
+		//die($query_rsDownload);
+				
+	}
+	
+}
+
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mindfulness3.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Journal entries Select a journal entry</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../../SpryAssetsSMS/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<script src="../../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<link href="../../SpryAssetsSMS/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<link href="../../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+	background-color: #93B3C8;
+}
+.oneColFixCtrHdr #container {
+	width: 780px;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #7799B8;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+	background-image: url(/images/mindful/m-background.gif);
+}
+.oneColFixCtrHdr #header {
+	background-color: #DDDDDD;
+	background-image: url(/images/mindful/m-header.gif);
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+	height: 104px;
+}
+.oneColFixCtrHdr #menu {
+	background-color: #4172A1;
+	padding-top: 0;
+	padding-right: 40px;
+	padding-bottom: 0;
+	height: 20px;
+	background-image: url(/images/skin/SMSmenu.jpg);
+}
+.oneColFixCtrHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0;
+	vertical-align: text-bottom;
+}
+.oneColFixCtrHdr #mainContent {
+	padding: 0 20px;
+}
+.oneColFixCtrHdr #footer {
+	padding: 0 10px;
+}
+.oneColFixCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+-->
+</style>
+<link href="/css/styles3.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssets/SpryMenuBarHorizontalmind.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="oneColFixCtrHdr">
+
+<div id="container">
+  <div id="header">
+    <h1>&nbsp;</h1>
+  <!-- end #header --></div>
+  <div id="menu">
+       <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/landing.php">home</a></li>
+<li><a href="/mindfulness/SMS/m-articles.html">articles</a></li>
+        <li><a href="/mindfulness/SMS/m-intro.html">intro</a></li>
+        <li><a href="/mindfulness/SMS/m-survey10a.php">survey</a></li>
+        <li><a href="/mindfulness/SMS/m-suggestions.php">ideas</a></li>
+        <li><a href="/mindfulness/SMS/m-teacherinfo.php" class="MenuBarItemSubmenu">teachers</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/bc_viewsms.php">view SMS results</a></li>
+            <li><a href="/mindfulness/SMJ/teacher_viewjournalentries.php">view SMS journal</a></li>
+            <li><a href="/bulkcustomers/bulkpolicies.php">policies &amp; schedules</a></li>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+        <li><a href="#" class="MenuBarItemSubmenu">research</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+    </ul>
+    <!-- end #menu --></div>
+  <div id="mainContent">
+    <!-- InstanceBeginEditable name="Main" -->
+  <p><span class="pspaced"><?php include '../menu_bulk_SMS_links.php'; ?></span></p>
+  <h1>Journal entries for<em> </em><?php echo $row_rsCommenter['firstname']; ?> <?php echo $row_rsCommenter['lastname']; ?></h1>
+  
+  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+    <div class="CollapsiblePanelTab">DOWNLOAD RESULTS (click to view)</div>
+    <div class="CollapsiblePanelContent">
+      <p>Results are downloaded as a spreadsheet in .csv format, which can be opened in Excel or a text editor. They are delimited by asterisks &quot;*&quot; or commas &quot;,&quot;. Column names are in the first row. </p>
+      <p><a href="teacher_viewjournalentries.php?download=journal_comments"><strong>download journal entries and comments</strong></a> <br />
+        This link will download one column for each code on the first coding page. The columns are: <br />
+        noticing_body, noticing_emotions, noticing_thoughts, <br />
+        insights_actions, insights_actions_beliefs, insights_actions_values, insights_actions_learned,<br />
+insights_emotions, insights_emotions_beliefs, insights_emotions_values, insights_emotions_learned, 
+		<br />
+		insights_thoughts, insights_thoughts_beliefs, insights_thoughts_values, insights_thoughts_learned, 
+		<br />
+		insights_relationships, insights_relationships_beliefs, insights_relationships_values, 
+		insights_relationships_learned, 
+		<br />
+		wellbeing, connected_others, connected_deity, connected_nature, connected_world, 
+		<br />
+		compassion_self, compassion_others, compassion_beings.    </p>
+    </div>
+  </div>
+  <h3>UNCODED JOURNAL ENTRIES</h3>
+  
+  <form name="form2" action="teacher_viewjournalentries.php" method="post">
+  <table border="0" cellpadding="2" cellspacing="0" class="tableindent">
+    <tr>
+      <td align="right"><label for="startDate2">Date range (yyyy-mm-dd)</label></td>
+      <td><span id="sprytextfield5">
+        <input name="startDate2" type="text" value="" size="10" />
+        <span class="textfieldInvalidFormatMsg">Invalid format.</span></span>&nbsp;
+        <label for="endDate2">To:</label>
+        <span id="sprytextfield6">
+        <input name="endDate2" type="text" value="" size="10" />
+        <span class="textfieldInvalidFormatMsg">Invalid format.</span></span>&nbsp;&nbsp;&nbsp;</td>
+      <td align="right"><label for="firstName2">First name</label></td>
+      <td><span id="sprytextfield7">
+        <input type="text" name="firstName2" value="" />
+      </span></td>
+</tr>
+    <tr>
+      <td align="right">&nbsp;</td>
+      <td>&nbsp;</td>
+      <td align="right"><label for="lastName2">Last name</label></td>
+      <td><span id="sprytextfield8">
+        <input type="text" name="lastName2" value="" />
+      </span></td>
+</tr>
+    <tr>
+      <td align="center">&nbsp;</td>
+      <td align="center">&nbsp;</td>
+      <td align="center">&nbsp;</td>
+      <td align="center"><div align="right">
+        <input type="submit" name="WADbSearch2" value="Submit" />
+      </div></td>
+    </tr>
+    <tr> </tr>
+    <tr> </tr>
+  </table>
+  </form>
+  
+  <p>Record <?php echo ($startRow_rsJournal + 1) ?> &nbsp;to <?php echo min($startRow_rsJournal + $maxRows_rsJournal, $totalRows_rsJournal) ?> &nbsp;of <?php echo $totalRows_rsJournal ?>&nbsp;&nbsp;&nbsp;<a href="<?php printf("%s?pageNum_rsJournal=%d", $currentPage, 0);
+	// Used to be: printf("%s?pageNum_rsJournal=%d%s", $currentPage, 0, $queryString_rsJournal); 
+	?>">First</a>&nbsp;| <a href="<?php printf("%s?pageNum_rsJournal=%d", $currentPage, max(0, $pageNum_rsJournal - 1)); 
+	// Used to be: printf("%s?pageNum_rsJournal=%d%s", $currentPage, max(0, $pageNum_rsJournal - 1), $queryString_rsJournal);  
+	?>">Previous</a>&nbsp;| <a href="<?php printf("%s?pageNum_rsJournal=%d", $currentPage, min($totalPages_rsJournal, $pageNum_rsJournal + 1)); 
+	// Used to be: printf("%s?pageNum_rsJournal=%d%s", $currentPage, min($totalPages_rsJournal, $pageNum_rsJournal + 1), $queryString_rsJournal);
+	?>">Next</a>&nbsp;| <a href="<?php printf("%s?pageNum_rsJournal=%d", $currentPage, $totalPages_rsJournal);
+	// Used to be: printf("%s?pageNum_rsJournal=%d%s", $currentPage, $totalPages_rsJournal, $queryString_rsJournal);
+	 ?>">Last</a></p>
+  <table width="97%" border="0" class="tableindent">
+    <tr class="tablehead">
+      <td class="tablehead">Entry number</td>
+      <td class="tablehead">Date</td>
+      <td class="tablehead"><div align="center">Student name</div></td>
+      <td class="tablehead"><div align="center"> MA</div></td>
+      <td class="tablehead">Comment</td>
+    </tr>
+    <?php do { ?>
+      <tr>
+        <td><div align="center"><?php echo $row_rsJournal['journalkey']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsJournal['time']; ?></div></td>
+        <td><?php echo $row_rsJournal['student_first']." ".$row_rsJournal['student_last']; ?></td>
+        <td><?php echo $row_rsJournal['ta_name']; ?></td>
+        <td><div align="center">
+        	<a href="journal_coding_start.php?journalkey=<?php echo $row_rsJournal['journalkey']; ?>">
+          select</a></div></td>
+      </tr>
+      <?php } while ($row_rsJournal = mysql_fetch_assoc($rsJournal)); ?>
+  </table>
+    <script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+//-->
+    </script>
+      <br />
+      <h3> 
+      COMPLETED JOURNAL ENTRIES</h3>
+<form name="form1" action="teacher_viewjournalentries.php" method="post">
+  <table border="0" cellpadding="2" cellspacing="0" class="tableindent">
+    <tr>
+      <td align="right"><label for="startDate">Date range (yyyy-mm-dd)</label></td>
+      <td><span id="sprytextfield1">
+        <input name="startDate" type="text" value="" size="10" />
+        <span class="textfieldInvalidFormatMsg">Invalid format.</span></span>&nbsp;
+  <label for="endDate">To:</label>
+  <span id="sprytextfield2">
+  <input name="endDate" type="text" value="" size="10" />
+  <span class="textfieldInvalidFormatMsg">Invalid format.</span></span>&nbsp;&nbsp;&nbsp;</td>
+      <td align="right"><label for="firstName">First name</label></td>
+      <td><span id="sprytextfield3">
+        <input type="text" name="firstName" value="" />
+</span></td>
+      </tr>
+    <tr>
+      <td align="right">&nbsp;</td>
+      <td>&nbsp;</td>
+      <td align="right"><label for="lastName">Last name</label></td>
+      <td><span id="sprytextfield4">
+        <input type="text" name="lastName" value="" />
+</span></td>
+      </tr>
+    <tr>
+      <td align="center">&nbsp;</td>
+      <td align="center">&nbsp;</td>
+      <td align="center">&nbsp;</td>
+      <td align="center"><div align="right">
+        <input type="submit" name="WADbSearch1" value="Submit" />
+      </div></td>
+      </tr>
+  </table>
+</form>
+
+
+    <p>Record <?php echo ($startRow_rsJournalCommented + 1) ?> &nbsp;to <?php echo min($startRow_rsJournalCommented + $maxRows_rsJournalCommented, $totalRows_rsJournalCommented) ?> &nbsp;of <?php echo $totalRows_rsJournalCommented ?>&nbsp;&nbsp;&nbsp;<a href="<?php printf("%s?pageNum_rsJournalCommented=%d", $currentPage, 0); 
+		// Used to be: printf("%s?pageNum_rsJournalCommented=%d%s", $currentPage, 0, $queryString_rsJournalCommented);
+		?>">First</a>&nbsp;| <a href="<?php printf("%s?pageNum_rsJournalCommented=%d", $currentPage, max(0, $pageNum_rsJournalCommented - 1)); 
+		// Used to be: printf("%s?pageNum_rsJournalCommented=%d%s", $currentPage, max(0, $pageNum_rsJournalCommented - 1), $queryString_rsJournalCommented); 
+		?>">Previous</a>&nbsp;| <a href="<?php printf("%s?pageNum_rsJournalCommented=%d", $currentPage, min($totalPages_rsJournalCommented, $pageNum_rsJournalCommented + 1)); 
+		// Used to be: printf("%s?pageNum_rsJournalCommented=%d%s", $currentPage, min($totalPages_rsJournalCommented, $pageNum_rsJournalCommented + 1), $queryString_rsJournalCommented);
+		?>">Next</a>&nbsp;| <a href="<?php printf("%s?pageNum_rsJournalCommented=%d", $currentPage, $totalPages_rsJournalCommented); 
+		// Used to be: printf("%s?pageNum_rsJournalCommented=%d%s", $currentPage, $totalPages_rsJournalCommented, $queryString_rsJournalCommented); 
+		?>">Last</a></p>
+<table width="97%" class="tableindent">
+      <tr>
+        <td class="tablehead"><div align="left">
+        	<a href="teacher_viewjournalentries.php?sort=journalkey&order=<?php echo (($Scol == "journalkey" AND $Sorder == "ASC") ? "DESC" : "ASC"); ?>">Entry number</a></div></td>
+        <td class="tablehead"><div align="left">
+        	<a href="teacher_viewjournalentries.php?sort=time&order=<?php echo (($Scol == "time" AND $Sorder == "ASC") ? "DESC" : "ASC"); ?>">Date</a></div></td>
+        <td class="tablehead"><div align="left">
+        	<a href="teacher_viewjournalentries.php?sort=student_first&order=<?php echo (($Scol == "student_first" AND $Sorder == "ASC") ? "DESC" : "ASC"); ?>">First name</a></div></td>
+        <td class="tablehead"><div align="left">
+        	<a href="teacher_viewjournalentries.php?sort=student_last&order=<?php echo (($Scol == "student_last" AND $Sorder == "ASC") ? "DESC" : "ASC"); ?>">Last Name</a></div></td>
+        <td class="tablehead"><div align="left">
+        	<a href="teacher_viewjournalentries.php?sort=ta_name&order=<?php echo (($Scol == "ta_name" AND $Sorder == "ASC") ? "DESC" : "ASC"); ?>">MA</a></div></td>
+        <td class="tablehead">Summary</td>
+        <td class="tablehead">Edit</td>
+      </tr>
+      <?php do { ?>
+        <tr>
+          <td><?php echo $row_rsJournalCommented['journalkey']; ?></td>
+          <td><?php echo $row_rsJournalCommented['time']; ?></td>
+          <td><?php echo $row_rsJournalCommented['student_first']; ?></td>
+          <td><?php echo $row_rsJournalCommented['student_last']; ?></td>
+          <td><?php echo $row_rsJournalCommented['ta_name']; ?></td>
+          <td><div align="center">
+          <a href="../SMS/summary_sms.php?userkey=<?php echo $row_rsJournalCommented['userkey']; ?>">
+          	summary</a></div></td>
+          <td><div align="center">
+          <a href="journal_coding_1.php?journalkey=<?php echo $row_rsJournalCommented['journalkey']; ?>&amp;journalcodeskey=<?php echo $row_rsJournalCommented['journalcodeskey']; ?>">
+          	edit</a></div></td>
+        </tr>
+        <?php } while ($row_rsJournalCommented = mysql_fetch_assoc($rsJournalCommented)); ?>
+</table>
+    <p>&nbsp;</p>
+    <script type="text/javascript">
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "date", {isRequired:false, format:"yyyy-mm-dd", useCharacterMasking:true});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "date", {isRequired:false, format:"yyyy-mm-dd", useCharacterMasking:true});
+var sprytextfield3 = new Spry.Widget.ValidationTextField("sprytextfield3", "none", {isRequired:false});
+var sprytextfield4 = new Spry.Widget.ValidationTextField("sprytextfield4", "none", {isRequired:false});
+var sprytextfield8 = new Spry.Widget.ValidationTextField("sprytextfield8", "none", {isRequired:false});
+var sprytextfield7 = new Spry.Widget.ValidationTextField("sprytextfield7", "none", {isRequired:false});
+var sprytextfield6 = new Spry.Widget.ValidationTextField("sprytextfield6", "date", {isRequired:false, format:"yyyy-mm-dd", useCharacterMasking:true});
+var sprytextfield5 = new Spry.Widget.ValidationTextField("sprytextfield5", "date", {isRequired:false, format:"yyyy-mm-dd", useCharacterMasking:true});
+    </script>
+    <!-- InstanceEndEditable -->
+	<!-- end #mainContent --></div>
+  <div id="footer">
+    <p align="center">©2010-2011 Sharon Solloway. All rights reserved.</p>
+  <!-- end #footer --></div>
+<!-- end #container --></div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsCommenter);
+
+mysql_free_result($rsJournal);
+
+mysql_free_result($rsJournalCommented);
+?>

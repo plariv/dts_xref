@@ -1,0 +1,235 @@
+@charset "UTF-8";
+.disco08 {
+	color: #5A00DF;
+	font-weight: bold;
+}
+.disco09 {
+	color: #0320DF;
+	font-weight: bold;
+}
+.disco10 {
+	font-weight: bold;
+	color: #016FC6;
+}
+.disco11 {
+	font-weight: bold;
+	color: #01B3A4;
+}
+.disco12 {
+	color: #009F03;
+	font-weight: bold;
+}
+blockquote {
+	margin-left: 20px;
+}
+h1 {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 19px;
+	color: #474747;
+	line-height: 14px;
+	margin-top: 8px;
+	margin-right: 1px;
+	margin-bottom: 8px;
+	margin-left: 1px;
+	font-style: normal;
+	font-weight: bolder;
+	font-variant: normal;
+}
+h2 {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 12px;
+	line-height: 22px;
+	margin-top: 6px;
+	margin-bottom: 6px;
+	font-weight: bold;
+	font-style: normal;
+	color: #474747;
+}
+
+/* SpryAccordion.css - Revision: Spry Preview Release 1.4 */
+
+/* Copyright (c) 2006. Adobe Systems Incorporated. All rights reserved. */
+
+/* This is the selector for the main Accordion container. For our default style,
+ * we draw borders on the left, right, and bottom. The top border of the Accordion
+ * will be rendered by the first AccordionPanelTab which never moves.
+ *
+ * If you want to constrain the width of the Accordion widget, set a width on
+ * the Accordion container. By default, our accordion expands horizontally to fill
+ * up available space.
+ *
+ * The name of the class ("Accordion") used in this selector is not necessary
+ * to make the widget function. You can use any class name you want to style the
+ * Accordion container.
+ */
+.Accordion {
+	border-left: solid 1px gray;
+	border-right: solid 1px black;
+	border-bottom: solid 1px gray;
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 12px;
+	font-weight: normal;
+	line-height: 18px;
+	margin-bottom: 24px;
+}
+
+/* This is the selector for the AccordionPanel container which houses the
+ * panel tab and a panel content area. It doesn't render visually, but we
+ * make sure that it has zero margin and padding.
+ *
+ * The name of the class ("AccordionPanel") used in this selector is not necessary
+ * to make the widget function. You can use any class name you want to style an
+ * accordion panel container.
+*/
+.AccordionPanel {
+	margin: 0px;
+	padding: 0px;
+}
+
+/* This is the selector for the AccordionPanelTab. This container houses
+ * the title for the panel. This is also the container that the user clicks
+ * on to open a specific panel.
+ *
+ * The name of the class ("AccordionPanelTab") used in this selector is not necessary
+ * to make the widget function. You can use any class name you want to style an
+ * accordion panel tab container.
+ */
+.AccordionPanelTab {
+	background-color: #CCCCCC;
+	border-top: solid 1px black;
+	border-bottom: solid 1px gray;
+	margin: 2px;
+	padding: 1px;
+	cursor: pointer;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	font-family: Georgia, "Times New Roman", Times, serif;
+	font-size: 14px;
+	font-style: normal;
+	font-weight: normal;
+	color: #181818;
+	letter-spacing: 1px;
+	line-height: 16px;
+}
+
+/* This is the selector for a Panel's Content area. It's important to note that
+ * you should never put any padding on the panel's content area if you plan to
+ * use the Accordions panel animations. Placing a non-zero padding on the content
+ * area can cause the accordion to abruptly grow in height while the panels animate.
+ *
+ * Anyone who styles an Accordion *MUST* specify a height on the Accordion Panel
+ * Content container.
+ *
+ * The name of the class ("AccordionPanelContent") used in this selector is not necessary
+ * to make the widget function. You can use any class name you want to style an
+ * accordion panel content container.
+ */
+.AccordionPanelContent {
+	padding: 0px;
+	height: 260px;
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 12px;
+	font-style: normal;
+	line-height: 18px;
+	font-weight: lighter;
+	font-variant: normal;
+	margin-top: 2pt;
+	margin-right: 12px;
+	margin-bottom: 2px;
+	margin-left: 12px;
+	color: #575757;
+	overflow: hidden;
+}
+
+/* This is an example of how to change the appearance of the panel tab that is
+ * currently open. The class "AccordionPanelOpen" is programatically added and removed
+ * from panels as the user clicks on the tabs within the Accordion.
+ */
+.AccordionPanelOpen .AccordionPanelTab {
+	background-color: #EEEEEE;
+}
+
+/* This is an example of how to change the appearance of the panel tab as the
+ * mouse hovers over it. The class "AccordionPanelTabHover" is programatically added
+ * and removed from panel tab containers as the mouse enters and exits the tab container.
+ */
+.AccordionPanelTabHover {
+	color: #555555;
+}
+.AccordionPanelOpen .AccordionPanelTabHover {
+	color: #555555;
+}
+
+/* This is an example of how to change the appearance of all the panel tabs when the
+ * Accordion has focus. The "AccordionFocused" class is programatically added and removed
+ * whenever the Accordion gains or loses keyboard focus.
+ */
+.AccordionFocused .AccordionPanelTab {
+	background-color: #B6E0F2;
+}
+
+/* This is an example of how to change the appearance of the panel tab that is
+ * currently open when the Accordion has focus.
+ */
+.AccordionFocused .AccordionPanelOpen .AccordionPanelTab {
+	background-color: #80D6F3;
+}
+.emphasis {
+	color: #474747;
+	font-weight: bold;
+}
+p {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 12px;
+	font-style: normal;
+	line-height: 18px;
+	font-weight: normal;
+	color: #4D4D4D;
+	margin-top: 5px;
+	margin-right: 0px;
+	margin-bottom: 5px;
+	margin-left: 0px;
+}
+.style1 {	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	margin-top: 1px;
+	margin-bottom: 1px;
+	font-size: 12px;
+	font-weight: bold;
+	color: #044E7B;
+}
+a:link {
+	color: #9E2E26;
+}
+a:visited {
+	color: #9E5C01;
+}
+a:active {
+	color: #0000B8;
+}
+a:hover {
+	color: #CA0702;
+}
+h4 {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 12px;
+	font-style: normal;
+	line-height: 16px;
+	font-weight: normal;
+	margin: 2px;
+	color: #575757;
+}
+li {
+	margin: 0px;
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 12px;
+	color: #575757;
+	line-height: 18px;
+}
+ul {
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
+ol {
+	margin: 0px;
+}
+a img { border: none; }

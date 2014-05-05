@@ -1,0 +1,343 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_insert"])) && ($_POST["MM_insert"] == "form1")) {
+  $insertSQL = sprintf("INSERT INTO lera (lerakey, userkey, projectkey, bulkcustomerkey) VALUES (%s, %s, %s, %s)",
+                       GetSQLValueString($_POST['lerakey'], "int"),
+                       GetSQLValueString($_POST['userkey'], "int"),
+                       GetSQLValueString($_POST['projectkey'], "int"),
+                       GetSQLValueString($_POST['bulkcustomerkey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($insertSQL, $Assessment) or die(mysql_error());
+  $insert_ID = mysql_insert_id();
+
+  $insertGoTo = "assess__lera01_essays.php?lerakey=$insert_ID&bulkcustomerkey={$_POST['bulkcustomerkey']}";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+    $insertGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $insertGoTo));
+}
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT user_name, userkey FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsResearchers = "SELECT bulkcustomerkey, current, username4students, projectkey FROM BulkCustomerInfo WHERE lectical = 1 ORDER BY BulkCustomerInfo.username4students ASC";
+$rsResearchers = mysql_query($query_rsResearchers, $Assessment) or die(mysql_error());
+$row_rsResearchers = mysql_fetch_assoc($rsResearchers);
+$totalRows_rsResearchers = mysql_num_rows($rsResearchers);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTesttimes = "SELECT * FROM TestTime";
+$rsTesttimes = mysql_query($query_rsTesttimes, $Assessment) or die(mysql_error());
+$row_rsTesttimes = mysql_fetch_assoc($rsTesttimes);
+$totalRows_rsTesttimes = mysql_num_rows($rsTesttimes);
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelera2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LERA conditions</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../DTSassets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../DTSassets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LERAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+      <!-- end #menu1 -->
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>CONTEXTUAL INFORMATION (page 2 of 10) </h1>
+  <p><strong>Note:</strong>If you return to this page after hitting the &quot;submit&quot; button, please check to make sure you have entered responses for all of the required (<span class="red">*</span>) items. </p>
+<p>&nbsp;</p>
+  <form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+    <table>
+      <tr valign="baseline">
+        <td width="302">If you have been directed to take this assessment by another party, please select the User ID provided by this individual. (If you will be paying for this assessment yourself, select &quot;myself.&quot;)<span class="red">*</span></td>
+        <td width="439"><span id="spryselect2">
+          <select name="bulkcustomerkey" class="pulldownwidth200">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsResearchers['bulkcustomerkey']?>"><?php echo $row_rsResearchers['username4students']?></option>
+            <?php
+} while ($row_rsResearchers = mysql_fetch_assoc($rsResearchers));
+  $rows = mysql_num_rows($rsResearchers);
+  if($rows > 0) {
+      mysql_data_seek($rsResearchers, 0);
+	  $row_rsResearchers = mysql_fetch_assoc($rsResearchers);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    </table>
+      <div align="right">
+        <input name="lerakey" type="hidden" id="lerakey" value="<?php echo((isset($_POST["lerakey"]))?$_POST["lerakey"]:"") ?>" />
+    <input type="hidden" name="userkey" value="<?php echo $_SESSION['log_userkey']; ?>" />
+<input type="hidden" name="projectkey" value="<?php echo $row_rsResearchers['projectkey']; ?>" />
+         <input type="submit" value="SUBMIT AND GO TO PAGE 3" />
+       <input type="hidden" name="MM_insert" value="form1" />
+      </div>
+  </form>
+  <h3>&nbsp;</h3>
+  <p></p>
+  <p>&nbsp;</p>
+  <script type="text/javascript">
+<!--
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"]});
+//-->
+  </script>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrants);
+
+mysql_free_result($rsResearchers);
+
+mysql_free_result($rsTesttimes);
+?>

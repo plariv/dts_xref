@@ -1,0 +1,571 @@
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as assistant")){
+	WA_Auth_RestrictAccess("../../security/logIn.php");
+}
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE journal_codes SET code_1=%s, code_2=%s, code_3=%s, code_4=%s, code_5=%s, code_6=%s, code_7=%s, code_8=%s, code_9=%s, code_10=%s, code_11=%s, code_12=%s, code_13=%s, code_14=%s, code_15=%s, code_16=%s, code_17=%s, code_18=%s, code_19=%s, code_20=%s, code_21=%s, code_22=%s, code_23=%s, code_24=%s, code_25=%s, code_26=%s, code_27=%s, code_28=%s, code_29=%s, code_30=%s, code_31=%s, code_32=%s, code_33=%s, code_34=%s, code_35=%s, code_36=%s, code_37=%s, code_38=%s, code_39=%s, code_40=%s, code_41=%s, code_42=%s, code_43=%s, code_44=%s, code_45=%s, code_46=%s, code_47=%s, code_48=%s, code_49=%s, code_50=%s, code_51=%s, code_52=%s, code_53=%s, code_54=%s, code_55=%s, code_56=%s, code_57=%s, code_58=%s, code_59=%s, code_60=%s WHERE journalcodeskey=%s",
+                       GetSQLValueString(isset($_POST['code_1']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_2']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_3']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_4']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_5']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_6']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_7']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_8']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_9']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_10']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_11']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_12']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_13']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_14']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_15']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_16']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_17']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_18']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_19']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_20']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_21']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_22']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_23']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_24']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_25']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_26']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_27']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_28']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_29']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_30']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_31']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_32']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_33']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_34']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_35']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_36']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_37']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_38']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_39']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_40']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_41']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_42']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_43']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_44']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_45']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_46']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_47']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_48']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_49']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_50']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_51']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_52']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_53']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_54']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_55']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_56']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_57']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_58']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_59']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['code_60']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['journalcodeskey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "journal_coding_3.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));
+}
+
+
+
+
+
+
+$colname_rsJournal2 = "-1";
+if (isset($_GET['journalkey'])) {
+  $colname_rsJournal2 = $_GET['journalkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsJournal2 = sprintf("SELECT Journal.journalkey, Journal.commented, Journal.journalentry_1, Journal.journalentry_2, Journal.teachercomment, Journal.userkey, Registrants.userkey, Registrants.firstname, Registrants.lastname FROM Journal, Registrants WHERE Journal.journalkey = %s AND (journal.teacherkey = %s OR journal.takey = %s) AND Registrants.userkey = Journal.userkey", 
+	GetSQLValueString($colname_rsJournal2, "int"),
+	GetSQLValueString($_SESSION['log_userkey'], "int"),
+	GetSQLValueString($_SESSION['log_userkey'], "int"));
+$rsJournal2 = mysql_query($query_rsJournal2, $Assessment) or die(mysql_error());
+$row_rsJournal2 = mysql_fetch_assoc($rsJournal2);
+$totalRows_rsJournal2 = mysql_num_rows($rsJournal2);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsJournalCodes = "SELECT * FROM journal_codes WHERE journalcodeskey = 1";
+$rsJournalCodes = mysql_query($query_rsJournalCodes, $Assessment) or die(mysql_error());
+$row_rsJournalCodes = mysql_fetch_assoc($rsJournalCodes);
+$totalRows_rsJournalCodes = mysql_num_rows($rsJournalCodes);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsJournalCoding = "SELECT * FROM journal_codes WHERE journalcodeskey = {$_GET['journalcodeskey']}";
+$rsJournalCoding = mysql_query($query_rsJournalCoding, $Assessment) or die(mysql_error());
+$row_rsJournalCoding = mysql_fetch_assoc($rsJournalCoding);
+$totalRows_rsJournalCoding = mysql_num_rows($rsJournalCoding);
+
+
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mindfulness3.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Code SMJ - Page 2</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<script src="../../SpryAssetsSMS/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="../../SpryAssetsSMS/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+.oneColFixCtrHdr #container #mainContent #form1 .tableindent tr td p {
+	line-height: 18px;
+	margin-left: 0px;
+}
+.oneColFixCtrHdr #container #mainContent #form1 .tableindent tr td {
+	line-height: 18px;
+	margin-left: 0px;
+}
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+	background-color: #93B3C8;
+}
+.oneColFixCtrHdr #container {
+	width: 780px;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #7799B8;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+	background-image: url(/images/mindful/m-background.gif);
+}
+.oneColFixCtrHdr #header {
+	background-color: #DDDDDD;
+	background-image: url(/images/mindful/m-header.gif);
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+	height: 104px;
+}
+.oneColFixCtrHdr #menu {
+	background-color: #4172A1;
+	padding-top: 0;
+	padding-right: 40px;
+	padding-bottom: 0;
+	height: 20px;
+	background-image: url(/images/skin/SMSmenu.jpg);
+}
+.oneColFixCtrHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0;
+	vertical-align: text-bottom;
+}
+.oneColFixCtrHdr #mainContent {
+	padding: 0 20px;
+}
+.oneColFixCtrHdr #footer {
+	padding: 0 10px;
+}
+.oneColFixCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+-->
+</style>
+<link href="/css/styles3.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssets/SpryMenuBarHorizontalmind.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="oneColFixCtrHdr">
+
+<div id="container">
+  <div id="header">
+    <h1>&nbsp;</h1>
+  <!-- end #header --></div>
+  <div id="menu">
+       <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/landing.php">home</a></li>
+<li><a href="/mindfulness/SMS/m-articles.html">articles</a></li>
+        <li><a href="/mindfulness/SMS/m-intro.html">intro</a></li>
+        <li><a href="/mindfulness/SMS/m-survey10a.php">survey</a></li>
+        <li><a href="/mindfulness/SMS/m-suggestions.php">ideas</a></li>
+        <li><a href="/mindfulness/SMS/m-teacherinfo.php" class="MenuBarItemSubmenu">teachers</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/bc_viewsms.php">view SMS results</a></li>
+            <li><a href="/mindfulness/SMJ/teacher_viewjournalentries.php">view SMS journal</a></li>
+            <li><a href="/bulkcustomers/bulkpolicies.php">policies &amp; schedules</a></li>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+        <li><a href="#" class="MenuBarItemSubmenu">research</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+    </ul>
+    <!-- end #menu --></div>
+  <div id="mainContent">
+    <!-- InstanceBeginEditable name="Main" -->
+<h1>Code journal entry for <?php echo $row_rsJournal2['firstname']; ?> <?php echo $row_rsJournal2['lastname']; ?> (page 2 of 6)</h1>
+<p><strong>Return to:</strong> <a href="journal_coding_1.php?journalcodeskey=<?php echo $_GET['journalcodeskey']; ?>&amp;journalkey=<?php echo $_GET['journalkey']; ?>">page 1</a></p>
+<p class="pspaced">If you wish, you can keep track of the content of students' responses by coding their content. A check mark in one of the boxes indicates that the student has made a statement that reflects the code/comment on the left. The comments you check will become part of a paragraph on the student's report page.</p>
+<div id="CollapsiblePanel1" class="CollapsiblePanel">
+  <div class="CollapsiblePanelTab">JOURNAL ENTRY</div>
+  <div class="CollapsiblePanelContent">
+    <p><?php echo $row_rsJournal2['journalentry_1']; ?></p>
+    <p><?php echo $row_rsJournal2['journalentry_2']; ?></p>
+    </div>
+</div>
+
+<form name="form1" method="POST" id="form1" action="<?php echo $editFormAction; ?>">
+<p align="right"><input type="submit" name="button2" id="button2" value="SUBMIT" /></p>
+
+      <table cellpadding="2" cellspacing="0" class="tableindent">
+            <tr>
+            <td colspan="2"><strong>AWARENESS</strong></td>
+            </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_1'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_1" id="code_1" /></td>
+            <td><label for="code_1"><?php echo $row_rsJournalCodes['exemplar_1']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_2'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_2" id="code_2" /></td>
+            <td><?php echo $row_rsJournalCodes['exemplar_2']; ?></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_3'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_3" id="code_3" /></td>
+            <td><label for="code_3"><?php echo $row_rsJournalCodes['exemplar_3']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_4'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_4" id="code_4" /></td>
+            <td><label for="code_4"><?php echo $row_rsJournalCodes['exemplar_4']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_5'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_5" id="code_5" /></td>
+            <td><label for="code_5"><?php echo $row_rsJournalCodes['exemplar_5']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_6'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_6" id="code_6" /></td>
+            <td><label for="code_6"><?php echo $row_rsJournalCodes['exemplar_6']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_7'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_7" id="code_7" /></td>
+            <td><label for="code_7"><?php echo $row_rsJournalCodes['exemplar_7']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_8'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_8" id="code_8" /></td>
+            <td><label for="code_8"><?php echo $row_rsJournalCodes['exemplar_8']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_9'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_9" id="code_9" /></td>
+            <td><label for="code_9"><?php echo $row_rsJournalCodes['exemplar_9']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_10'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_10" id="code_10" /></td>
+            <td><label for="code_10"><?php echo $row_rsJournalCodes['exemplar_10']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_11'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_11" id="code_11" /></td>
+            <td><label for="code_11"><?php echo $row_rsJournalCodes['exemplar_11']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_12'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_12" id="code_12" /></td>
+            <td><label for="code_12"><?php echo $row_rsJournalCodes['exemplar_12']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_13'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_13" id="code_13" /></td>
+            <td><label for="code_13"><?php echo $row_rsJournalCodes['exemplar_13']; ?></label></td>
+        </tr>
+          <tr>
+            <td colspan="2"><strong>SELF-AWARENESS</strong></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_14'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_14" id="code_14" /></td>
+            <td><label for="code_14"><?php echo $row_rsJournalCodes['exemplar_14']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_15'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_15" id="code_15" /></td>
+            <td><label for="code_15"><?php echo $row_rsJournalCodes['exemplar_15']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_16'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_16" id="code_16" /></td>
+            <td><label for="code_16"><?php echo $row_rsJournalCodes['exemplar_16']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_17'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_17" id="code_17" /></td>
+            <td><label for="code_17"><?php echo $row_rsJournalCodes['exemplar_17']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_18'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_18" id="code_18" /></td>
+            <td><label for="code_18"><?php echo $row_rsJournalCodes['exemplar_18']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_19'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_19" id="code_19" /></td>
+            <td><label for="code_19"><?php echo $row_rsJournalCodes['exemplar_19']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_20'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_20" id="code_20" /></td>
+            <td><label for="code_20"><?php echo $row_rsJournalCodes['exemplar_20']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_21'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_21" id="code_21" /></td>
+            <td><label for="code_21"><?php echo $row_rsJournalCodes['exemplar_21']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_22'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_22" id="code_22" /></td>
+            <td><label for="code_22"><?php echo $row_rsJournalCodes['exemplar_22']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_23'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_23" id="code_23" /></td>
+            <td><label for="code_23"><?php echo $row_rsJournalCodes['exemplar_23']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_24'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_24" id="code_24" /></td>
+            <td><label for="code_24"><?php echo $row_rsJournalCodes['exemplar_24']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_25'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_25" id="code_25" /></td>
+            <td><label for="code_25"><?php echo $row_rsJournalCodes['exemplar_25']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_26'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_26" id="code_26" /></td>
+            <td><label for="code_26"><?php echo $row_rsJournalCodes['exemplar_26']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_27'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_27" id="code_27" /></td>
+            <td><label for="code_27"><?php echo $row_rsJournalCodes['exemplar_27']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_28'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_28" id="code_28" /></td>
+            <td><label for="code_28"><?php echo $row_rsJournalCodes['exemplar_28']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_29'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_29" id="code_29" /></td>
+            <td><label for="code_29"><?php echo $row_rsJournalCodes['exemplar_29']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_30'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_30" id="code_30" /></td>
+            <td><label for="code_30"><?php echo $row_rsJournalCodes['exemplar_30']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_31'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_31" id="code_31" /></td>
+            <td><label for="code_31"><?php echo $row_rsJournalCodes['exemplar_31']; ?></label></td>
+        </tr>
+          <tr>
+            <td colspan="2"><strong>PERCEPTION</strong></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_32'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_32" id="code_32" /></td>
+            <td><label for="code_32"><?php echo $row_rsJournalCodes['exemplar_32']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_33'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_33" id="code_33" /></td>
+            <td><label for="code_33"><?php echo $row_rsJournalCodes['exemplar_33']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_34'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_34" id="code_34" /></td>
+            <td><label for="code_34"><?php echo $row_rsJournalCodes['exemplar_34']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_35'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_35" id="code_35" /></td>
+            <td><label for="code_35"><?php echo $row_rsJournalCodes['exemplar_35']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_36'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_36" id="code_36" /></td>
+            <td><label for="code_36"><?php echo $row_rsJournalCodes['exemplar_36']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_37'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_37" id="code_37" /></td>
+            <td><label for="code_37"><?php echo $row_rsJournalCodes['exemplar_37']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_38'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_38" id="code_38" /></td>
+            <td><label for="code_38"><?php echo $row_rsJournalCodes['exemplar_38']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_39'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_39" id="code_39" /></td>
+            <td><label for="code_39"><?php echo $row_rsJournalCodes['exemplar_39']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_40'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_40" id="code_40" /></td>
+            <td><label for="code_40"><?php echo $row_rsJournalCodes['exemplar_40']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_41'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_41" id="code_41" /></td>
+            <td><label for="code_41"><?php echo $row_rsJournalCodes['exemplar_41']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_42'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_42" id="code_42" /></td>
+            <td><label for="code_42"><?php echo $row_rsJournalCodes['exemplar_42']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_43'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_43" id="code_43" /></td>
+            <td><label for="code_43"><?php echo $row_rsJournalCodes['exemplar_43']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_44'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_44" id="code_44" /></td>
+            <td><label for="code_44"><?php echo $row_rsJournalCodes['exemplar_44']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_45'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_45" id="code_45" /></td>
+            <td><label for="code_45"><?php echo $row_rsJournalCodes['exemplar_45']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_46'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_46" id="code_46" /></td>
+            <td><label for="code_46"><?php echo $row_rsJournalCodes['exemplar_46']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_47'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_47" id="code_47" /></td>
+            <td><label for="code_47"><?php echo $row_rsJournalCodes['exemplar_47']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_48'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_48" id="code_48" /></td>
+            <td><label for="code_48"><?php echo $row_rsJournalCodes['exemplar_48']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_49'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_49" id="code_49" /></td>
+            <td><label for="code_49"><?php echo $row_rsJournalCodes['exemplar_49']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_50'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_50" id="code_50" /></td>
+            <td><label for="code_50"><?php echo $row_rsJournalCodes['exemplar_50']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_51'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_51" id="code_51" /></td>
+            <td><label for="code_51"><?php echo $row_rsJournalCodes['exemplar_51']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_52'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_52" id="code_52" /></td>
+            <td><label for="code_52"><?php echo $row_rsJournalCodes['exemplar_52']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_53'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_53" id="code_53" /></td>
+            <td><label for="code_53"><?php echo $row_rsJournalCodes['exemplar_53']; ?></label></td>
+        </tr>
+          <tr>
+            <td colspan="2"><strong>POSITIVE AFFECT</strong></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_54'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_54" id="code_54" /></td>
+            <td><label for="code_54"><?php echo $row_rsJournalCodes['exemplar_54']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_55'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_55" id="code_55" /></td>
+            <td><label for="code_55"><?php echo $row_rsJournalCodes['exemplar_55']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_56'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_56" id="code_56" /></td>
+            <td><label for="code_56"><?php echo $row_rsJournalCodes['exemplar_56']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_57'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_57" id="code_57" /></td>
+            <td><label for="code_57"><?php echo $row_rsJournalCodes['exemplar_57']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_58'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_58" id="code_58" /></td>
+            <td><label for="code_58"><?php echo $row_rsJournalCodes['exemplar_58']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_59'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_59" id="code_59" /></td>
+            <td><label for="code_59"><?php echo $row_rsJournalCodes['exemplar_59']; ?></label></td>
+        </tr>
+          <tr>
+            <td><input  <?php if (!(strcmp($row_rsJournalCoding['code_60'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="code_60" id="code_60" /></td>
+            <td><label for="code_60"><?php echo $row_rsJournalCodes['exemplar_60']; ?></label></td>
+        </tr>
+      </table>
+	
+   	    <div align="right">
+    	    <p>
+    	      <input type="hidden" name="journalcodeskey" value="<?php echo $_GET['journalcodeskey']; ?>" />          
+    	      <input type="submit" name="button" id="button" value="SUBMIT" />
+  	      </p>
+        </div>
+   	  <div></div>
+   	  <input type="hidden" name="MM_update" value="form1" />
+</form>
+<p>&nbsp;</p>
+
+    <script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+//-->
+    </script>
+    <!-- InstanceEndEditable -->
+	<!-- end #mainContent --></div>
+  <div id="footer">
+    <p align="center">©2010-2011 Sharon Solloway. All rights reserved.</p>
+  <!-- end #footer --></div>
+<!-- end #container --></div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsJournal2);
+
+mysql_free_result($rsJournalCodes);
+
+mysql_free_result($rsJournalCoding);
+?>

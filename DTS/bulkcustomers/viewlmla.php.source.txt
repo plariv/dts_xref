@@ -1,0 +1,291 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsUser = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsUser = (get_magic_quotes_gpc()) ? $_SESSION['log_userkey'] : addslashes($_SESSION['log_userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsUser = sprintf("SELECT userkey, user_level, firstname, lastname FROM registrants WHERE userkey = %s AND user_level > 1", GetSQLValueString($colname_rsUser, "int"));
+$rsUser = mysql_query($query_rsUser, $Assessment) or die(mysql_error());
+$row_rsUser = mysql_fetch_assoc($rsUser);
+$totalRows_rsUser = mysql_num_rows($rsUser);
+
+$colname_rsLMLA = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLMLA = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLMLA = sprintf("SELECT lmla.lmlakey, lmla.userkey, registrants.firstname, registrants.lastname, registrants.userkey, lmlascores.lmlakey, lmla.completed, lmla.`date`, lmlascores.lasnameleader, lmlascores.lasnamerj, lmlascores.lasnamedm, lmla.bulkcustomerkey, lmlascores.lmlascoringkey FROM lmla, registrants, lmlascores WHERE lmla.bulkcustomerkey = %s AND lmla.userkey=registrants.userkey and lmlascores.lmlakey=lmla.lmlakey and lmla.finalized = 1 ORDER BY lmla.`date` desc", GetSQLValueString($colname_rsLMLA, "text"));
+$rsLMLA = mysql_query($query_rsLMLA, $Assessment) or die(mysql_error());
+$row_rsLMLA = mysql_fetch_assoc($rsLMLA);
+$totalRows_rsLMLA = mysql_num_rows($rsLMLA);
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template2php.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: View LMLA</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" --><!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #9D9F9C;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #F6F6F6;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/DTSheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 26px;
+	background-image: url(/images/skin/menu.png);
+	color: #E2E2E2;
+	margin-top: 0px;
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	height: 19px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a {
+	color: #EAEAEA;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu1 a:active {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 a:visited {
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div id="menu1">
+  <p><a href="/landing.php">home</a>&nbsp;&nbsp;&nbsp;<a href="/security/registration.php">register</a>&nbsp;&nbsp;&nbsp;<a href="/security/logIn.php">log in</a>&nbsp;&nbsp;&nbsp;<a href="/contactus.php">contact us</a>&nbsp;&nbsp;&nbsp;<a href="/security/logout.php">log out</a>&nbsp;&nbsp;
+  <!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->
+  <span class="logintext">
+  <?php if (isset($_SESSION['log_firstname'])) {  ?>
+  You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></span></p>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><?php include '../includes/menu/menu_bulk_assess_links.php'; ?><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>Results for <em><?php echo $row_rsUser['firstname']; ?> <?php echo $row_rsUser['lastname']; ?></em></h1>
+  <p class="pspaced">If you do not see results for all of your clients on this page, some of them may not have entered the correct Reseller/ Teacher/Researcher ID. If you are missing results, <a href="../contactus.php">contact us</a> and we will try to help. Please do not give clients your user name.  </p>
+  <table width="98%">
+    <tr class="tablehead">
+      <td>Number</td>
+      <td width="150">Date</td>
+      <td>Name</td>
+      <td>Leader</td>
+      <td>RJ</td>
+      <td>DM</td>
+      <td><div align="center">Report</div></td>
+    </tr>
+    <?php do { ?>
+    <tr>
+      <td class="tablebody"><div align="center"><?php echo $row_rsLMLA['lmlakey']; ?></div></td>
+      <td width="150" class="tablebody"><div align="left"><?php echo $row_rsLMLA['date']; ?></div></td>
+      <td width="160" class="tablebody"><div align="center"><?php echo $row_rsLMLA['firstname']; ?> <?php echo $row_rsLMLA['lastname']; ?>&nbsp; </div>
+        <div align="left"></div></td>
+      <td class="tablebody"><div align="center"><?php echo $row_rsLMLA['lasnameleader']; ?></div></td>
+      <td class="tablebody"><?php echo $row_rsLMLA['lasnamerj']; ?></td>
+      <td class="tablebody"><?php echo $row_rsLMLA['lasnamedm']; ?></td>
+      <td class="tablebody"><div align="center"><a href="../scoring_lmla/lmlareport.php?lmlakey=<?php echo $row_rsLMLA['lmlakey']; ?>&amp;userkey=<?php echo $row_rsLMLA['userkey']; ?>&amp;lasnameRJ=<?php echo $row_rsLMLA['lasnamerj']; ?>&amp;lasnameLeader=<?php echo $row_rsLMLA['lasnameleader']; ?>&amp;lasnameDM=<?php echo $row_rsLMLA['lasnamedm']; ?>&amp;lmlascoringkey=<?php echo $row_rsLMLA['lmlascoringkey']; ?>">select</a></div></td>
+    </tr>
+    <?php } while ($row_rsLMLA = mysql_fetch_assoc($rsLMLA)); ?>
+</table>
+  <p align="left">&nbsp;</p>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsUser);
+?>

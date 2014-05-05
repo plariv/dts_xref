@@ -1,0 +1,609 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Load the KT_back class
+require_once('../includes/nxt/KT_back.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+
+// Start trigger
+$formValidation = new tNG_FormValidation();
+$formValidation->addField("energykey", true, "numeric", "", "", "", "");
+$formValidation->addField("scorerusername", true, "text", "", "", "", "");
+$formValidation->addField("lasname", true, "text", "", "", "", "");
+$tNGs->prepareValidation($formValidation);
+// End trigger
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? "'" . doubleval($theValue) . "'" : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS = "SELECT * FROM Las";
+$rsLAS = mysql_query($query_rsLAS, $Assessment) or die(mysql_error());
+$row_rsLAS = mysql_fetch_assoc($rsLAS);
+$totalRows_rsLAS = mysql_num_rows($rsLAS);
+
+$colname_rsEnergy = "-1";
+if (isset($_GET['energykey'])) {
+  $colname_rsEnergy = $_GET['energykey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEnergy = sprintf("SELECT energykey, handspring, fallspring, besidespring, flatroll, downroll, bounce FROM Energy WHERE energykey = %s", GetSQLValueString($colname_rsEnergy, "int"));
+$rsEnergy = mysql_query($query_rsEnergy, $Assessment) or die(mysql_error());
+$row_rsEnergy = mysql_fetch_assoc($rsEnergy);
+$totalRows_rsEnergy = mysql_num_rows($rsEnergy);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname, user_name FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+$colname_rsEnglish = "-1";
+if (isset($_GET['energykey'])) {
+  $colname_rsEnglish = $_GET['energykey'];
+}
+
+// Make an insert transaction instance
+$ins_Energyscores = new tNG_multipleInsert($conn_Assessment);
+$tNGs->addTransaction($ins_Energyscores);
+// Register triggers
+$ins_Energyscores->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Insert1");
+$ins_Energyscores->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$ins_Energyscores->registerTrigger("END", "Trigger_Default_Redirect", 99, "energyconfirmation.php?energykey={GET.energykey}");
+// Add columns
+$ins_Energyscores->setTable("Energyscores");
+$ins_Energyscores->addColumn("energykey", "NUMERIC_TYPE", "POST", "energykey", "{GET.energykey}");
+$ins_Energyscores->addColumn("scorerusername", "STRING_TYPE", "POST", "scorerusername");
+$ins_Energyscores->addColumn("handspringlas", "STRING_TYPE", "POST", "handspringlas");
+$ins_Energyscores->addColumn("fallspringlas", "STRING_TYPE", "POST", "fallspringlas");
+$ins_Energyscores->addColumn("onspringlas", "STRING_TYPE", "POST", "onspringlas");
+$ins_Energyscores->addColumn("besidespringlas", "STRING_TYPE", "POST", "besidespringlas");
+$ins_Energyscores->addColumn("flatrolllas", "STRING_TYPE", "POST", "flatrolllas");
+$ins_Energyscores->addColumn("downrolllas", "STRING_TYPE", "POST", "downrolllas");
+$ins_Energyscores->addColumn("bouncelas", "STRING_TYPE", "POST", "bouncelas");
+$ins_Energyscores->addColumn("lasname", "STRING_TYPE", "POST", "lasname");
+$ins_Energyscores->setPrimaryKey("energyscoringkey", "NUMERIC_TYPE");
+
+// Make an update transaction instance
+$upd_Energyscores = new tNG_multipleUpdate($conn_Assessment);
+$tNGs->addTransaction($upd_Energyscores);
+// Register triggers
+$upd_Energyscores->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Update1");
+$upd_Energyscores->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$upd_Energyscores->registerTrigger("END", "Trigger_Default_Redirect", 99, "chooseassessment.php");
+// Add columns
+$upd_Energyscores->setTable("Energyscores");
+$upd_Energyscores->addColumn("energykey", "NUMERIC_TYPE", "POST", "energykey");
+$upd_Energyscores->addColumn("scorerusername", "STRING_TYPE", "POST", "scorerusername");
+$upd_Energyscores->addColumn("handspringlas", "STRING_TYPE", "POST", "handspringlas");
+$upd_Energyscores->addColumn("fallspringlas", "STRING_TYPE", "POST", "fallspringlas");
+$upd_Energyscores->addColumn("onspringlas", "STRING_TYPE", "POST", "onspringlas");
+$upd_Energyscores->addColumn("besidespringlas", "STRING_TYPE", "POST", "besidespringv");
+$upd_Energyscores->addColumn("flatrolllas", "STRING_TYPE", "POST", "flatrolllas");
+$upd_Energyscores->addColumn("downrolllas", "STRING_TYPE", "POST", "downrolllas");
+$upd_Energyscores->addColumn("bouncelas", "STRING_TYPE", "POST", "bouncelas");
+$upd_Energyscores->addColumn("lasname", "STRING_TYPE", "POST", "lasname");
+$upd_Energyscores->setPrimaryKey("energykey", "NUMERIC_TYPE", "GET", "energykey");
+
+// Make an instance of the transaction object
+$del_Energyscores = new tNG_multipleDelete($conn_Assessment);
+$tNGs->addTransaction($del_Energyscores);
+// Register triggers
+$del_Energyscores->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Delete1");
+$del_Energyscores->registerTrigger("END", "Trigger_Default_Redirect", 99, "../includes/nxt/back.php");
+// Add columns
+$del_Energyscores->setTable("Energyscores");
+$del_Energyscores->setPrimaryKey("energykey", "NUMERIC_TYPE", "GET", "energykey");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsEnergyscores = $tNGs->getRecordset("Energyscores");
+$row_rsEnergyscores = mysql_fetch_assoc($rsEnergyscores);
+$totalRows_rsEnergyscores = mysql_num_rows($rsEnergyscores);
+
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template2php.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Energy scoring</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #9D9F9C;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #F6F6F6;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/DTSheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 26px;
+	background-image: url(/images/skin/menu.png);
+	color: #E2E2E2;
+	margin-top: 0px;
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	height: 19px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a {
+	color: #EAEAEA;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu1 a:active {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 a:visited {
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div id="menu1">
+  <p><a href="/landing.php">home</a>&nbsp;&nbsp;&nbsp;<a href="/security/registration.php">register</a>&nbsp;&nbsp;&nbsp;<a href="/security/logIn.php">log in</a>&nbsp;&nbsp;&nbsp;<a href="/contactus.php">contact us</a>&nbsp;&nbsp;&nbsp;<a href="/security/logout.php">log out</a>&nbsp;&nbsp;
+  <!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->
+  <span class="logintext">
+  <?php if (isset($_SESSION['log_firstname'])) {  ?>
+  You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></span></p>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" --><?php echo $tNGs->displayValidationRules();?>
+      <script src="../includes/nxt/scripts/form.js" type="text/javascript"></script>
+      <script src="../includes/nxt/scripts/form.js.php" type="text/javascript"></script>
+      <script type="text/javascript">
+$NXT_FORM_SETTINGS = {
+  duplicate_buttons: true,
+  show_as_grid: true,
+  merge_down_value: true
+}
+      </script>
+      <td valign="top"><h1><img src="../images/dtsskinold/EnergyLogo.jpg" alt="lera" width="103" height="43" align="absmiddle" /> </h1>
+        <h1>SCORING PAGE FOR <?php echo $_GET['energykey']; ?></h1>
+        <p><span class="energy"><strong>Important:</strong></span> Select <em class="energy">unscorable</em> only when the entire response cannot be scored.        </p>
+        <p>
+          <?php
+	echo $tNGs->getErrorMsg();
+?>
+        </p>
+        <div class="KT_tng">
+            <div class="KT_tngform">
+              <form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+                <?php $cnt1 = 0; ?>
+                <?php do { ?>
+                  <?php $cnt1++; ?>
+<?php 
+// Show IF Conditional region1 
+if (@$totalRows_rsEnergyscores > 1) {
+?>
+                    <h2><?php echo NXT_getResource("Record_FH"); ?> <?php echo $cnt1; ?></h2>
+                    <?php } 
+// endif Conditional region1
+?>
+                  <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+                    <tr>
+                      <td class="KT_th"><label for="energykey_<?php echo $cnt1; ?>">Energy key</label></td>
+                      <td colspan="2"><input type="text" name="energykey_<?php echo $cnt1; ?>" id="energykey_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsEnergyscores['energykey']); ?>" size="7" />
+                          <?php echo $tNGs->displayFieldHint("energykey");?> <?php echo $tNGs->displayFieldError("Energyscores", "energykey", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="scorerusername_<?php echo $cnt1; ?>">Coder</label></td>
+                      <td colspan="2"><input type="text" name="scorerusername_<?php echo $cnt1; ?>" id="scorerusername_<?php echo $cnt1; ?>" value="<?php echo $row_rsRegistrants['user_name']; ?>" size="13" />
+                          <?php echo $tNGs->displayFieldHint("scorerusername");?> <?php echo $tNGs->displayFieldError("Energyscores", "scorerusername", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="handspringlas_<?php echo $cnt1; ?>">Hand spring</label></td>
+                      <td><select name="handspringlas_<?php echo $cnt1; ?>" id="handspringlas_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsLAS['lasname']?>"<?php if (!(strcmp($row_rsLAS['lasname'], $row_rsEnergyscores['handspringlas']))) {echo "SELECTED";} ?>><?php echo $row_rsLAS['lasname']?></option>
+                          <?php
+} while ($row_rsLAS = mysql_fetch_assoc($rsLAS));
+  $rows = mysql_num_rows($rsLAS);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS, 0);
+	  $row_rsLAS = mysql_fetch_assoc($rsLAS);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("Energyscores", "handspringlas", $cnt1); ?> </td>
+                      <td><label>
+                        <textarea name="handspring" cols="60" rows="18" id="Good life"><?php echo $row_rsEnergy['handspring']; ?></textarea>
+                      </label></td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="fallspringlas_<?php echo $cnt1; ?>">Fall spring</label></td>
+                      <td><select name="fallspringlas_<?php echo $cnt1; ?>" id="fallspringlas_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsLAS['lasname']?>"<?php if (!(strcmp($row_rsLAS['lasname'], $row_rsEnergyscores['fallspringlas']))) {echo "SELECTED";} ?>><?php echo $row_rsLAS['lasname']?></option>
+                          <?php
+} while ($row_rsLAS = mysql_fetch_assoc($rsLAS));
+  $rows = mysql_num_rows($rsLAS);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS, 0);
+	  $row_rsLAS = mysql_fetch_assoc($rsLAS);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("fallspringlas", "fallspringlas", $cnt1); ?> </td>
+                      <td><label>
+                        <textarea name="Good citizen" cols="60" rows="18" id="Good citizen"><?php echo $row_rsEnergy['fallspring']; ?></textarea>
+                      </label></td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="onspringlas_<?php echo $cnt1; ?>">On spring</label></td>
+                      <td><select name="onspringlas_<?php echo $cnt1; ?>" id="onspringlas_<?php echo $cnt1; ?>">
+                        <option value="" <?php if (!(strcmp("", $row_rsEnergyscores['onspringlas']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                        <?php
+do {  
+?>
+                        <option value="<?php echo $row_rsLAS['lasname']?>"<?php if (!(strcmp($row_rsLAS['lasname'], $row_rsEnergyscores['onspringlas']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLAS['lasname']?></option>
+                        <?php
+} while ($row_rsLAS = mysql_fetch_assoc($rsLAS));
+  $rows = mysql_num_rows($rsLAS);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS, 0);
+	  $row_rsLAS = mysql_fetch_assoc($rsLAS);
+  }
+?>
+                        </select>
+                      <?php echo $tNGs->displayFieldError("onspringlas", "onspringlas", $cnt1); ?> </td>
+                      <td><label>
+                        <textarea name="Morality" cols="60" rows="18" id="Morality"><?php echo $row_rsEnergy['onspring']; ?></textarea>
+                      </label></td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="besidespringlas_<?php echo $cnt1; ?>">Beside spring</label></td>
+                    <td><select name="besidespringlas_<?php echo $cnt1; ?>" id="besidespringlas_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsLAS['lasname']?>"<?php if (!(strcmp($row_rsLAS['lasname'], $row_rsEnergyscores['besidespringlas']))) {echo "SELECTED";} ?>><?php echo $row_rsLAS['lasname']?></option>
+                          <?php
+} while ($row_rsLAS = mysql_fetch_assoc($rsLAS));
+  $rows = mysql_num_rows($rsLAS);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS, 0);
+	  $row_rsLAS = mysql_fetch_assoc($rsLAS);
+  }
+?>
+                        </select>
+                      <?php echo $tNGs->displayFieldError("besidespringlas", "besidespringlas", $cnt1); ?> </td>
+                      <td><label>
+                        <textarea name="besidespring" cols="60" rows="18" id="besidespring"><?php echo $row_rsEnergy['besidespring']; ?></textarea>
+                      </label></td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="flatrolllas_<?php echo $cnt1; ?>">Flat roll</label></td>
+                      <td><select name="flatrolllas_<?php echo $cnt1; ?>" id="flatrolllas_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsLAS['lasname']?>"<?php if (!(strcmp($row_rsLAS['lasname'], $row_rsEnergyscores['flatrolllas']))) {echo "SELECTED";} ?>><?php echo $row_rsLAS['lasname']?></option>
+                          <?php
+} while ($row_rsLAS = mysql_fetch_assoc($rsLAS));
+  $rows = mysql_num_rows($rsLAS);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS, 0);
+	  $row_rsLAS = mysql_fetch_assoc($rsLAS);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("flatrolllas", "flatrolllas", $cnt1); ?> </td>
+                      <td><label>
+                        <textarea name="Flat roll" cols="60" rows="18" id="Dilemma 1"><?php echo $row_rsEnergy['flatroll']; ?></textarea>
+                      </label></td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="downrolllas_<?php echo $cnt1; ?>">Down roll</label></td>
+                      <td><select name="downrolllas_<?php echo $cnt1; ?>" id="downrolllas_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsLAS['lasname']?>"<?php if (!(strcmp($row_rsLAS['lasname'], $row_rsEnergyscores['downrolllas']))) {echo "SELECTED";} ?>><?php echo $row_rsLAS['lasname']?></option>
+                          <?php
+} while ($row_rsLAS = mysql_fetch_assoc($rsLAS));
+  $rows = mysql_num_rows($rsLAS);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS, 0);
+	  $row_rsLAS = mysql_fetch_assoc($rsLAS);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("Energyscores", "downrolllas", $cnt1); ?> </td>
+                      <td><label>
+                        <textarea name="Dilemma 2" cols="60" rows="18" id="Dilemma 2"><?php echo $row_rsEnergy['downroll']; ?></textarea>
+                      </label></td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="bouncelas_<?php echo $cnt1; ?>">Bouncing ball</label></td>
+                      <td><select name="bouncelas_<?php echo $cnt1; ?>" id="bouncelas_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsLAS['lasname']?>"<?php if (!(strcmp($row_rsLAS['lasname'], $row_rsEnergyscores['bouncelas']))) {echo "SELECTED";} ?>><?php echo $row_rsLAS['lasname']?></option>
+                          <?php
+} while ($row_rsLAS = mysql_fetch_assoc($rsLAS));
+  $rows = mysql_num_rows($rsLAS);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS, 0);
+	  $row_rsLAS = mysql_fetch_assoc($rsLAS);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("Energyscores", "bouncelas", $cnt1); ?> </td>
+                      <td><label>
+                        <textarea name="bounce" cols="60" rows="18" id="bounce"><?php echo $row_rsEnergy['bounce']; ?></textarea>
+                      </label></td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="lasname_<?php echo $cnt1; ?>">Mode</label></td>
+                      <td colspan="2"><select name="lasname_<?php echo $cnt1; ?>" id="lasname_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsLAS['lasname']?>"<?php if (!(strcmp($row_rsLAS['lasname'], $row_rsEnergyscores['lasname']))) {echo "SELECTED";} ?>><?php echo $row_rsLAS['lasname']?></option>
+                          <?php
+} while ($row_rsLAS = mysql_fetch_assoc($rsLAS));
+  $rows = mysql_num_rows($rsLAS);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS, 0);
+	  $row_rsLAS = mysql_fetch_assoc($rsLAS);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("Energyscores", "lasname", $cnt1); ?> </td>
+                    </tr>
+                  </table>
+                <label></label>
+                  <input type="hidden" name="kt_pk_Energyscores_<?php echo $cnt1; ?>" class="id_field" value="<?php echo KT_escapeAttribute($row_rsEnergyscores['kt_pk_Energyscores']); ?>" />
+                  <?php } while ($row_rsEnergyscores = mysql_fetch_assoc($rsEnergyscores)); ?>
+                <div class="KT_bottombuttons">
+                  <div>
+<?php 
+      // Show IF Conditional region1
+      if (@$_GET['energyscoringkey'] == "") {
+      ?>
+                      <input type="submit" name="KT_Insert1" id="KT_Insert1" value="<?php echo NXT_getResource("Insert_FB"); ?>" />
+                      <?php 
+      // else Conditional region1
+      } else { ?>
+                      <div class="KT_operations">
+                        <input type="submit" name="KT_Insert1" value="<?php echo NXT_getResource("Insert as new_FB"); ?>" onclick="nxt_form_insertasnew(this, 'energyscoringkey')" />
+                      </div>
+                      <input type="submit" name="KT_Update1" value="<?php echo NXT_getResource("Update_FB"); ?>" />
+                      <input type="submit" name="KT_Delete1" value="<?php echo NXT_getResource("Delete_FB"); ?>" onclick="return confirm('<?php echo NXT_getResource("Are you sure?"); ?>');" />
+                      <?php }
+      // endif Conditional region1
+      ?>
+                    <input type="button" name="KT_Cancel1" value="<?php echo NXT_getResource("Cancel_FB"); ?>" onclick="return UNI_navigateCancel(event, '../includes/nxt/back.php')" />
+                  </div>
+                </div>
+              </form>
+            </div>
+            <br class="clearfixplain" />
+        </div>
+        <p>&nbsp;</p>
+    <p>&nbsp;</p></td>
+      <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLAS);
+
+mysql_free_result($rsEnergy);
+
+mysql_free_result($rsRegistrants);
+?>

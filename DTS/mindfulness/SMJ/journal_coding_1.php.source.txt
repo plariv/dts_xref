@@ -1,0 +1,534 @@
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../../security/logIn.php");
+}
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form")) {
+  $updateSQL = sprintf("UPDATE journal 
+	SET noticing_body=%s, noticing_emotions=%s, noticing_thoughts=%s, 
+	insights_actions=%s, insights_actions_beliefs=%s, insights_actions_values=%s, insights_actions_learned=%s, insights_emotions=%s, insights_emotions_beliefs=%s, insights_emotions_values=%s, insights_emotions_learned=%s, insights_thoughts=%s, insights_thoughts_beliefs=%s, insights_thoughts_values=%s, insights_thoughts_learned=%s, insights_relationships=%s, insights_relationships_beliefs=%s, insights_relationships_values=%s, insights_relationships_learned=%s, 
+	wellbeing=%s, connected_others=%s, connected_deity=%s, connected_nature=%s,  
+	connected_world=%s, compassion_self=%s, compassion_others=%s, compassion_beings=%s,  
+	commented=%s WHERE journalkey=%s",
+		 
+		 // checkboxes 
+		 GetSQLValueString(isset($_POST['noticing_body']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['noticing_emotions']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['noticing_thoughts']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_actions']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_actions_beliefs']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_actions_values']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_actions_learned']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_emotions']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_emotions_beliefs']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_emotions_values']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_emotions_learned']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_thoughts']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_thoughts_beliefs']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_thoughts_values']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_thoughts_learned']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_relationships']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_relationships_beliefs']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_relationships_values']) ? "true" : "", "defined","1","0"),
+		 GetSQLValueString(isset($_POST['insights_relationships_learned']) ? "true" : "", "defined","1","0"),
+		 
+		 // pulldown menus
+		 GetSQLValueString($_POST['wellbeing'], "int"),
+		 GetSQLValueString($_POST['connected_others'], "int"),
+		 GetSQLValueString($_POST['connected_deity'], "int"),
+		 GetSQLValueString($_POST['connected_nature'], "int"),
+		 GetSQLValueString($_POST['connected_world'], "int"),
+		 GetSQLValueString($_POST['compassion_self'], "int"),
+		 GetSQLValueString($_POST['compassion_others'], "int"),
+		 GetSQLValueString($_POST['compassion_beings'], "int"),
+		 
+		 GetSQLValueString($_POST['commented'], "int"),
+		 GetSQLValueString($_GET['journalkey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "journal_coding_2.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));
+}
+
+
+
+$journalkey = "-1";
+if (isset($_GET['journalkey'])) {
+  $journalkey = (get_magic_quotes_gpc()) ? $_GET['journalkey'] : addslashes($_GET['journalkey']);
+}
+$log_userkey = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $log_userkey = (get_magic_quotes_gpc()) ? $_SESSION['log_userkey'] : addslashes($_SESSION['log_userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsJournal = sprintf("SELECT journal.journalkey, journal.commented, journal.journalentry_1, journal.journalentry_2, journal.teachercomment, journal.teacherkey, 
+journal.noticing_body, journal.noticing_emotions, journal.noticing_thoughts, 
+journal.insights_actions, journal.insights_actions_beliefs, journal.insights_actions_values, journal.insights_actions_learned, 
+journal.insights_emotions, journal.insights_emotions_beliefs, journal.insights_emotions_values, journal.insights_emotions_learned, 
+journal.insights_thoughts, journal.insights_thoughts_beliefs, journal.insights_thoughts_values, journal.insights_thoughts_learned, 
+journal.insights_relationships, journal.insights_relationships_beliefs, journal.insights_relationships_values, journal.insights_relationships_learned, 
+journal.wellbeing, 
+journal.connected_others, journal.connected_deity, journal.connected_nature, journal.connected_world, 
+journal.compassion_self, journal.compassion_others, journal.compassion_beings, 
+registrants.userkey, registrants.firstname, registrants.lastname 
+FROM journal, registrants 
+WHERE journal.journalkey = %s AND (journal.teacherkey = %s OR journal.takey = %s) AND registrants.userkey = journal.userkey", 
+		GetSQLValueString($journalkey, "int"), 
+		GetSQLValueString($_SESSION['log_userkey'], "int"),
+		GetSQLValueString($_SESSION['log_userkey'], "int"));
+$rsJournal = mysql_query($query_rsJournal, $Assessment) or die(mysql_error());
+$row_rsJournal = mysql_fetch_assoc($rsJournal);
+$totalRows_rsJournal = mysql_num_rows($rsJournal);
+
+/* journal_codes isn't used here.
+$colname_rsJournalCodes = "-1";
+if (isset($_GET['journalcodeskey'])) {
+  $colname_rsJournalCodes = (get_magic_quotes_gpc()) ? $_GET['journalcodeskey'] : addslashes($_GET['journalcodeskey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsJournalCodes = sprintf("SELECT * FROM journal_codes WHERE journalcodeskey = %s", GetSQLValueString($colname_rsJournalCodes, "int"));
+$rsJournalCodes = mysql_query($query_rsJournalCodes, $Assessment) or die(mysql_error());
+$row_rsJournalCodes = mysql_fetch_assoc($rsJournalCodes);
+$totalRows_rsJournalCodes = mysql_num_rows($rsJournalCodes); */
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLaCodeMenus = "SELECT pulldownkey, smj_reflection_scale FROM la_code_menus";
+$rsLaCodeMenus = mysql_query($query_rsLaCodeMenus, $Assessment) or die(mysql_error());
+$row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+$totalRows_rsLaCodeMenus = mysql_num_rows($rsLaCodeMenus);
+
+
+
+
+
+?>
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mindfulness3.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Code SMJ - Page 1</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<script src="../../SpryAssets/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<script src="../../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../../SpryAssets/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<link href="../../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+	background-color: #93B3C8;
+}
+.oneColFixCtrHdr #container {
+	width: 780px;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #7799B8;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+	background-image: url(/images/mindful/m-background.gif);
+}
+.oneColFixCtrHdr #header {
+	background-color: #DDDDDD;
+	background-image: url(/images/mindful/m-header.gif);
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+	height: 104px;
+}
+.oneColFixCtrHdr #menu {
+	background-color: #4172A1;
+	padding-top: 0;
+	padding-right: 40px;
+	padding-bottom: 0;
+	height: 20px;
+	background-image: url(/images/skin/SMSmenu.jpg);
+}
+.oneColFixCtrHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0;
+	vertical-align: text-bottom;
+}
+.oneColFixCtrHdr #mainContent {
+	padding: 0 20px;
+}
+.oneColFixCtrHdr #footer {
+	padding: 0 10px;
+}
+.oneColFixCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+-->
+</style>
+<link href="/css/styles3.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssets/SpryMenuBarHorizontalmind.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="oneColFixCtrHdr">
+
+<div id="container">
+  <div id="header">
+    <h1>&nbsp;</h1>
+  <!-- end #header --></div>
+  <div id="menu">
+       <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/landing.php">home</a></li>
+<li><a href="/mindfulness/SMS/m-articles.html">articles</a></li>
+        <li><a href="/mindfulness/SMS/m-intro.html">intro</a></li>
+        <li><a href="/mindfulness/SMS/m-survey10a.php">survey</a></li>
+        <li><a href="/mindfulness/SMS/m-suggestions.php">ideas</a></li>
+        <li><a href="/mindfulness/SMS/m-teacherinfo.php" class="MenuBarItemSubmenu">teachers</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/bc_viewsms.php">view SMS results</a></li>
+            <li><a href="/mindfulness/SMJ/teacher_viewjournalentries.php">view SMS journal</a></li>
+            <li><a href="/bulkcustomers/bulkpolicies.php">policies &amp; schedules</a></li>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+        <li><a href="#" class="MenuBarItemSubmenu">research</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+    </ul>
+    <!-- end #menu --></div>
+  <div id="mainContent">
+    <!-- InstanceBeginEditable name="Main" -->
+  <h1>Comment journal entry for <?php echo $row_rsJournal['firstname']; ?> <?php echo $row_rsJournal['lastname']; ?> (page 1 of 6)</h1>
+<p class="pspaced">Comment on the journal entry of your student, client, or mentee. If you wish, you can keep track of the content of students' responses by coding their content. A check mark in one of the boxes indicates that the student has described the state described on it's left. When you have finished making your comment, click  the submit button. </p>
+
+<div id="CollapsiblePanel1" class="CollapsiblePanel">
+  <div class="CollapsiblePanelTab">The journal entry</div>
+  <div class="CollapsiblePanelContent">
+  	<h3>Entry 1</h3>
+  	<p><?php echo $row_rsJournal['journalentry_1']; ?></p>
+    <h3>Entry 2</h3>
+  	<p><?php echo $row_rsJournal['journalentry_2']; ?></p>
+  </div>
+</div>
+
+<form name="form" action="<?php echo $editFormAction; ?>" method="POST">
+<p align="right"><input type="submit" name="button2" id="button2" value="SUBMIT" /></p>
+
+
+  <table width="100%" border="0">
+    <tr>
+    <td width="130">Mention noticing your</td>
+    <td width="424"> <input <?php if (!(strcmp($row_rsJournal['noticing_body'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="noticing_body" id="noticing_body" />
+      body sensations &nbsp;  
+      <input <?php if (!(strcmp($row_rsJournal['noticing_emotions'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="noticing_emotions" id="noticing_emotions" />
+      emotions &nbsp;  
+      <input <?php if (!(strcmp($row_rsJournal['noticing_thoughts'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="noticing_thoughts" id="noticing_thoughts" />
+      thoughts </td>
+  </tr>
+  <tr>
+    <td width="130">&nbsp;</td>
+    <td> </td>
+  </tr>
+  <tr>
+    <td width="130">Describe one or more insights into your</td>
+    <td>reflecting on how they are related to your</td>
+  </tr>
+  <tr>
+    <td width="130"><input <?php if (!(strcmp($row_rsJournal['insights_actions'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_actions" id="insights_actions" /> 
+      actions<br /></td>
+    <td><input <?php if (!(strcmp($row_rsJournal['insights_actions_beliefs'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_actions_beliefs" id="insights_actions_beliefs" />
+      beliefs &nbsp; &nbsp;
+<input <?php if (!(strcmp($row_rsJournal['insights_actions_values'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_actions_values" id="insights_actions_values" />
+        values &nbsp; &nbsp; 
+        <input <?php if (!(strcmp($row_rsJournal['insights_actions_learned'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_actions_learned" id="insights_actions_learned" />
+        what you have learned from previous feedback</td>
+  </tr>
+  
+  <tr>
+    <td width="130"><input <?php if (!(strcmp($row_rsJournal['insights_emotions'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_emotions" id="insights_emotions" /> 
+      emotions</td>
+    <td><input <?php if (!(strcmp($row_rsJournal['insights_emotions_beliefs'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_emotions_beliefs" id="insights_emotions_beliefs" />
+      beliefs &nbsp; &nbsp;  
+        <input <?php if (!(strcmp($row_rsJournal['insights_emotions_values'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_emotions_values" id="insights_emotions_values" />
+        values &nbsp; &nbsp; 
+        <input <?php if (!(strcmp($row_rsJournal['insights_emotions_learned'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_emotions_learned" id="insights_emotions_learned" />
+        what you have learned from previous feedback</td>
+  </tr>
+  
+  <tr>
+    <td width="130"><input <?php if (!(strcmp($row_rsJournal['insights_thoughts'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_thoughts" id="insights_thoughts" /> 
+      thoughts</td>
+    <td><input <?php if (!(strcmp($row_rsJournal['insights_thoughts_beliefs'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_thoughts_beliefs" id="insights_thoughts_beliefs" />
+      beliefs &nbsp; &nbsp;  
+        <input <?php if (!(strcmp($row_rsJournal['insights_thoughts_values'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_thoughts_values" id="insights_thoughts_values" />
+        values &nbsp; &nbsp; 
+        <input <?php if (!(strcmp($row_rsJournal['insights_thoughts_learned'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_thoughts_learned" id="insights_thoughts_learned" />
+        what you have learned from previous feedback</td>
+  </tr>
+  
+  <tr>
+    <td width="130"><input <?php if (!(strcmp($row_rsJournal['insights_relationships'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_relationships" id="insights_relationships" /> 
+      relationships</td>
+    <td><input <?php if (!(strcmp($row_rsJournal['insights_relationships_beliefs'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_relationships_beliefs" id="insights_relationships_beliefs" />
+      beliefs &nbsp; &nbsp;  
+        <input <?php if (!(strcmp($row_rsJournal['insights_relationships_values'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_relationships_values" id="insights_relationships_values" />
+        values &nbsp; &nbsp; 
+        <input <?php if (!(strcmp($row_rsJournal['insights_relationships_learned'] ,1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="insights_relationships_learned" id="insights_relationships_learned" />
+        what you have learned from previous feedback</td>
+  </tr>
+</table>
+<table>
+  <tr>
+    <td>Mention, describe, or reflect upon</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>feeling a sense of wellbeing</td>
+    <td><span id="spryselect1">
+      <select name="wellbeing" id="wellbeing">
+        <option value="" <?php if (!(strcmp("", $row_rsJournal['wellbeing']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+        <?php
+do {  
+?>
+        <option value="<?php echo $row_rsLaCodeMenus['pulldownkey']?>"<?php if (!(strcmp($row_rsLaCodeMenus['pulldownkey'], $row_rsJournal['wellbeing']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaCodeMenus['smj_reflection_scale']?></option>
+        <?php
+} while ($row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus) AND $row_rsLaCodeMenus['smj_reflection_scale'] <> "");
+  $rows = mysql_num_rows($rsLaCodeMenus);
+  if($rows > 0) {
+      mysql_data_seek($rsLaCodeMenus, 0);
+	  $row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+  }
+?>
+      </select>
+</span></td>
+  </tr>
+  <tr>
+    <td>feeling connected to others</td>
+    <td><span id="spryselect2">
+    <select name="connected_others" id="connected_others">
+      <option value="" <?php if (!(strcmp("", $row_rsJournal['connected_others']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+      <?php
+do {  
+?>
+      <option value="<?php echo $row_rsLaCodeMenus['pulldownkey']?>"<?php if (!(strcmp($row_rsLaCodeMenus['pulldownkey'], $row_rsJournal['connected_others']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaCodeMenus['smj_reflection_scale']?></option>
+      <?php
+} while ($row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus) AND $row_rsLaCodeMenus['smj_reflection_scale'] <> "");
+  $rows = mysql_num_rows($rsLaCodeMenus);
+  if($rows > 0) {
+      mysql_data_seek($rsLaCodeMenus, 0);
+	  $row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+  }
+?>
+    </select>
+    </span></td>
+  </tr>
+  <tr>
+    <td>feeling connected to a deity</td>
+    <td><span id="spryselect3">
+    <select name="connected_deity" id="connected_deity">
+      <option value="" <?php if (!(strcmp("", $row_rsJournal['connected_deity']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+      <?php
+do {  
+?>
+      <option value="<?php echo $row_rsLaCodeMenus['pulldownkey']?>"<?php if (!(strcmp($row_rsLaCodeMenus['pulldownkey'], $row_rsJournal['connected_deity']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaCodeMenus['smj_reflection_scale']?></option>
+      <?php
+} while ($row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus) AND $row_rsLaCodeMenus['smj_reflection_scale'] <> "");
+  $rows = mysql_num_rows($rsLaCodeMenus);
+  if($rows > 0) {
+      mysql_data_seek($rsLaCodeMenus, 0);
+	  $row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+  }
+?>
+    </select>
+    </span></td>
+  </tr>
+  <tr>
+    <td>feeling connected to nature</td>
+    <td><span id="spryselect4">
+    <select name="connected_nature" id="connected_nature">
+      <option value="" <?php if (!(strcmp("", $row_rsJournal['connected_nature']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+      <?php
+do {  
+?>
+      <option value="<?php echo $row_rsLaCodeMenus['pulldownkey']?>"<?php if (!(strcmp($row_rsLaCodeMenus['pulldownkey'], $row_rsJournal['connected_nature']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaCodeMenus['smj_reflection_scale']?></option>
+      <?php
+} while ($row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus) AND $row_rsLaCodeMenus['smj_reflection_scale'] <> "");
+  $rows = mysql_num_rows($rsLaCodeMenus);
+  if($rows > 0) {
+      mysql_data_seek($rsLaCodeMenus, 0);
+	  $row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+  }
+?>
+    </select>
+    </span></td>
+  </tr>
+  <tr>
+    <td>feeling connected to the world</td>
+    <td><select name="connected_world" id="connected_world">
+      <option value="" <?php if (!(strcmp("", $row_rsJournal['connected_world']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+      <?php
+do {  
+?>
+      <option value="<?php echo $row_rsLaCodeMenus['pulldownkey']?>"<?php if (!(strcmp($row_rsLaCodeMenus['pulldownkey'], $row_rsJournal['connected_world']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaCodeMenus['smj_reflection_scale']?></option>
+      <?php
+} while ($row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus) AND $row_rsLaCodeMenus['smj_reflection_scale'] <> "");
+  $rows = mysql_num_rows($rsLaCodeMenus);
+  if($rows > 0) {
+      mysql_data_seek($rsLaCodeMenus, 0);
+	  $row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+  }
+?>
+    </select></td>
+  </tr>
+  <tr>
+    <td>feeling compassion for yourself</td>
+    <td><select name="compassion_self" id="compassion_self">
+      <option value="" <?php if (!(strcmp("", $row_rsJournal['compassion_self']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+      <?php
+do {  
+?>
+      <option value="<?php echo $row_rsLaCodeMenus['pulldownkey']?>"<?php if (!(strcmp($row_rsLaCodeMenus['pulldownkey'], $row_rsJournal['compassion_self']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaCodeMenus['smj_reflection_scale']?></option>
+      <?php
+} while ($row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus) AND $row_rsLaCodeMenus['smj_reflection_scale'] <> "");
+  $rows = mysql_num_rows($rsLaCodeMenus);
+  if($rows > 0) {
+      mysql_data_seek($rsLaCodeMenus, 0);
+	  $row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+  }
+?>
+    </select></td>
+  </tr>
+  <tr>
+    <td>feeling compassion for others</td>
+    <td><select name="compassion_others" id="compassion_others">
+      <option value="" <?php if (!(strcmp("", $row_rsJournal['compassion_others']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+      <?php
+do {  
+?>
+      <option value="<?php echo $row_rsLaCodeMenus['pulldownkey']?>"<?php if (!(strcmp($row_rsLaCodeMenus['pulldownkey'], $row_rsJournal['compassion_others']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaCodeMenus['smj_reflection_scale']?></option>
+      <?php
+} while ($row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus) AND $row_rsLaCodeMenus['smj_reflection_scale'] <> "");
+  $rows = mysql_num_rows($rsLaCodeMenus);
+  if($rows > 0) {
+      mysql_data_seek($rsLaCodeMenus, 0);
+	  $row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+  }
+?>
+    </select></td>
+  </tr>
+  <tr>
+    <td>feeling compassion for sentient beings</td>
+    <td><select name="compassion_beings" id="compassion_beings">
+      <option value="" <?php if (!(strcmp("", $row_rsJournal['compassion_beings']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+      <?php
+do {  
+?>
+      <option value="<?php echo $row_rsLaCodeMenus['pulldownkey']?>"<?php if (!(strcmp($row_rsLaCodeMenus['pulldownkey'], $row_rsJournal['compassion_beings']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaCodeMenus['smj_reflection_scale']?></option>
+      <?php
+} while ($row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus) AND $row_rsLaCodeMenus['smj_reflection_scale'] <> "");
+  $rows = mysql_num_rows($rsLaCodeMenus);
+  if($rows > 0) {
+      mysql_data_seek($rsLaCodeMenus, 0);
+	  $row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+  }
+?>
+    </select></td>
+  </tr>
+  <tr>
+    <td>
+        <input type="hidden" name="commented" value="1" />
+        <input type="hidden" name="MM_update" value="form" />
+      </td>
+    <td><p align="right">&nbsp;</p></td>
+  </tr>
+  </table>
+<p align="right"><input type="submit" name="button1" id="button1" value="SUBMIT" /></p>
+<div align="right"></div>
+</form>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<script type="text/javascript">
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", {contentIsOpen:true});
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"], isRequired:false});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"], isRequired:false});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"], isRequired:false});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"], isRequired:false});
+</script>
+    <!-- InstanceEndEditable -->
+	<!-- end #mainContent --></div>
+  <div id="footer">
+    <p align="center">©2010-2011 Sharon Solloway. All rights reserved.</p>
+  <!-- end #footer --></div>
+<!-- end #container --></div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+
+mysql_free_result($rsJournal);
+
+mysql_free_result($rsLaCodeMenus);
+?>

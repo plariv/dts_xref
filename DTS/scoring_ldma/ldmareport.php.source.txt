@@ -1,0 +1,1501 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsldma = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsldma = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsldma = sprintf("SELECT ldmakey, `date`, manlevel, perspectives1, perspectives2, response1, response2, process FROM ldma WHERE ldmakey = %s", GetSQLValueString($colname_rsldma, "int"));
+$rsldma = mysql_query($query_rsldma, $Assessment) or die(mysql_error());
+$row_rsldma = mysql_fetch_assoc($rsldma);
+$totalRows_rsldma = mysql_num_rows($rsldma);
+
+$colname_rsStrengths = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsStrengths = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrengths = sprintf("SELECT ldmascores.ldmakey, ldmascores.essay1las, ldmascores.essay2las, ldmascores.essay3las, ldmascores.essay4las, ldmascores.essay5las, ldmascores.lasname, dmcode1perspectives.lasname1, dmcode1perspectives.dmcode1perspectives, dmcode2perspectives.lasname2, dmcode2perspectives.dmcode2perspectives, dmcode3response.lasname3, dmcode3response.dmcode3response, dmcode4response.lasname4, dmcode4response.dmcode4response, dmcode5process.lasname5, dmcode5process.dmcode5process FROM ldmascores, dmcode1perspectives, dmcode2perspectives, dmcode3response, dmcode4response, dmcode5process WHERE ldmascores.ldmakey= %s AND dmcode5process.lasname5=ldmascores.essay5las and dmcode1perspectives.lasname1=ldmascores.essay1las and dmcode2perspectives.lasname2=ldmascores.essay2las and dmcode3response.lasname3=ldmascores.essay3las and dmcode4response.lasname4=ldmascores.essay4las", GetSQLValueString($colname_rsStrengths, "int"));
+$rsStrengths = mysql_query($query_rsStrengths, $Assessment) or die(mysql_error());
+$row_rsStrengths = mysql_fetch_assoc($rsStrengths);
+$totalRows_rsStrengths = mysql_num_rows($rsStrengths);
+
+$colname_rsManlasart = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsManlasart = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlasart = sprintf("SELECT manlasart.manlasvert, manlasart.manlaspie, manlasart.lasname FROM manlasart WHERE lasname = %s", GetSQLValueString($colname_rsManlasart, "text"));
+$rsManlasart = mysql_query($query_rsManlasart, $Assessment) or die(mysql_error());
+$row_rsManlasart = mysql_fetch_assoc($rsManlasart);
+$totalRows_rsManlasart = mysql_num_rows($rsManlasart);
+
+$colname_rsmanlevelart = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsmanlevelart = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsmanlevelart = sprintf("SELECT manlevelart.manlevelkey, manlevelart.manlevel3graphs, manlevelart.manlevelgraphs, ldma.manlevel, ldma.ldmakey, manlevelart.manlevel3graphstitle, manlevelart.manlevelgraphstitle FROM manlevelart, ldma WHERE ldma.manlevel=manlevelart.manlevelkey AND ldma.ldmakey = %s", GetSQLValueString($colname_rsmanlevelart, "int"));
+$rsmanlevelart = mysql_query($query_rsmanlevelart, $Assessment) or die(mysql_error());
+$row_rsmanlevelart = mysql_fetch_assoc($rsmanlevelart);
+$totalRows_rsmanlevelart = mysql_num_rows($rsmanlevelart);
+
+$colname_rsDmintroman = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsDmintroman = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmintroman = sprintf("SELECT * FROM dmintroman WHERE lasname = %s", GetSQLValueString($colname_rsDmintroman, "text"));
+$rsDmintroman = mysql_query($query_rsDmintroman, $Assessment) or die(mysql_error());
+$row_rsDmintroman = mysql_fetch_assoc($rsDmintroman);
+$totalRows_rsDmintroman = mysql_num_rows($rsDmintroman);
+
+$colname_rsdmmanlasgendescrip = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsdmmanlasgendescrip = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsdmmanlasgendescrip = sprintf("SELECT dmmanlasgendescrip.lasname, dmmanlasgendescrip.dmmanlasgendescrip, dmmanlasgendescrip.dmmanlasperspec, dmmanlasgendescrip.dmmanlasresponse, dmmanlasgendescrip.dmmanlasprocess FROM dmmanlasgendescrip WHERE lasname = %s", GetSQLValueString($colname_rsdmmanlasgendescrip, "text"));
+$rsdmmanlasgendescrip = mysql_query($query_rsdmmanlasgendescrip, $Assessment) or die(mysql_error());
+$row_rsdmmanlasgendescrip = mysql_fetch_assoc($rsdmmanlasgendescrip);
+$totalRows_rsdmmanlasgendescrip = mysql_num_rows($rsdmmanlasgendescrip);
+
+$colname_rsmanlevelcomment = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsmanlevelcomment = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsmanlevelcomment = sprintf("SELECT manlevelcomment.manlevelkey, manlevelcomment.manlevelcomment, manlevelcomment.manlevelname, ldma.manlevel, ldma.ldmakey FROM manlevelcomment, ldma WHERE ldma.manlevel=manlevelcomment.manlevelkey AND ldma.ldmakey=%s", GetSQLValueString($colname_rsmanlevelcomment, "int"));
+$rsmanlevelcomment = mysql_query($query_rsmanlevelcomment, $Assessment) or die(mysql_error());
+$row_rsmanlevelcomment = mysql_fetch_assoc($rsmanlevelcomment);
+$totalRows_rsmanlevelcomment = mysql_num_rows($rsmanlevelcomment);
+
+$colname_rsmanleveljuxtapose = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsmanleveljuxtapose = $_GET['lasname'];
+}
+$colname2_rsmanleveljuxtapose = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname2_rsmanleveljuxtapose = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsmanleveljuxtapose = sprintf("SELECT manleveljuxtapose.lasname, manleveljuxtapose.manlevelkey, manleveljuxtapose.manleveljuxtapose, ldma.manlevel, ldma.ldmakey FROM manleveljuxtapose, ldma WHERE manleveljuxtapose.lasname = %s AND manleveljuxtapose.manlevelkey=ldma.manlevel  and ldma.ldmakey=%s", GetSQLValueString($colname_rsmanleveljuxtapose, "text"),GetSQLValueString($colname2_rsmanleveljuxtapose, "int"));
+$rsmanleveljuxtapose = mysql_query($query_rsmanleveljuxtapose, $Assessment) or die(mysql_error());
+$row_rsmanleveljuxtapose = mysql_fetch_assoc($rsmanleveljuxtapose);
+$totalRows_rsmanleveljuxtapose = mysql_num_rows($rsmanleveljuxtapose);
+
+$colname_rsdmgrowth = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsdmgrowth = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsdmgrowth = sprintf("SELECT dmgrowth.dmgrowthperspectives, dmgrowth.dmgrowthresponse, dmgrowth.dmgrowthprocess, dmgrowthorg, dmgrowth.lasname FROM dmgrowth WHERE lasname = %s", GetSQLValueString($colname_rsdmgrowth, "text"));
+$rsdmgrowth = mysql_query($query_rsdmgrowth, $Assessment) or die(mysql_error());
+$row_rsdmgrowth = mysql_fetch_assoc($rsdmgrowth);
+$totalRows_rsdmgrowth = mysql_num_rows($rsdmgrowth);
+
+$colname_rsdmlessons = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsdmlessons = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsdmlessons = sprintf("SELECT dmlessons.lasname, dmlessons.dmlesson1, dmlessons.dmlesson2, dmlessons.dmlesson3, dmlessons.dmlesson4, dmlessons.dmlesson5, dmlessons.dmlesson6 FROM dmlessons WHERE lasname = %s", GetSQLValueString($colname_rsdmlessons, "text"));
+$rsdmlessons = mysql_query($query_rsdmlessons, $Assessment) or die(mysql_error());
+$row_rsdmlessons = mysql_fetch_assoc($rsdmlessons);
+$totalRows_rsdmlessons = mysql_num_rows($rsdmlessons);
+
+$colname_rsRegistrant = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsRegistrant = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrant = sprintf("SELECT registrants.firstname, registrants.lastname, registrants.userkey, ldma.userkey, ldma.ldmakey FROM registrants, ldma WHERE registrants.userkey = ldma.userkey  AND ldma.ldmakey = %s", GetSQLValueString($colname_rsRegistrant, "int"));
+$rsRegistrant = mysql_query($query_rsRegistrant, $Assessment) or die(mysql_error());
+$row_rsRegistrant = mysql_fetch_assoc($rsRegistrant);
+$totalRows_rsRegistrant = mysql_num_rows($rsRegistrant);
+
+$colname_rsldmascores = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsldmascores = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsldmascores = sprintf("SELECT ldmakey, lasname, codercomment FROM ldmascores WHERE ldmakey = %s", GetSQLValueString($colname_rsldmascores, "int"));
+$rsldmascores = mysql_query($query_rsldmascores, $Assessment) or die(mysql_error());
+$row_rsldmascores = mysql_fetch_assoc($rsldmascores);
+$totalRows_rsldmascores = mysql_num_rows($rsldmascores);
+
+$colname_rsCoherence = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsCoherence = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherence = sprintf("SELECT ldmascores.ldmakey, ldmascores.coherence, coherenceinfer.quality, coherenceinfer.lasname, coherenceinfer.implication, ldmascores.lasname, coherenceinfer.coherenceinfer FROM ldmascores, coherenceinfer WHERE ldmascores.coherence = coherenceinfer.quality AND ldmascores.ldmakey = %s and coherenceinfer.lasname  = ldmascores.lasname", GetSQLValueString($colname_rsCoherence, "int"));
+$rsCoherence = mysql_query($query_rsCoherence, $Assessment) or die(mysql_error());
+$row_rsCoherence = mysql_fetch_assoc($rsCoherence);
+$totalRows_rsCoherence = mysql_num_rows($rsCoherence);
+
+$colname_rsldmastrength = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsldmastrength = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsldmastrength = sprintf("SELECT ldmastrength.strengthkey, ldmastrength.strength, ldmascores.strengthkey, ldmascores.ldmakey FROM ldmastrength, ldmascores WHERE ldmascores.strengthkey = ldmastrength.strengthkey AND ldmascores.ldmakey = %s", GetSQLValueString($colname_rsldmastrength, "int"));
+$rsldmastrength = mysql_query($query_rsldmastrength, $Assessment) or die(mysql_error());
+$row_rsldmastrength = mysql_fetch_assoc($rsldmastrength);
+$totalRows_rsldmastrength = mysql_num_rows($rsldmastrength);
+
+$colname_rsldmacaveat = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsldmacaveat = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsldmacaveat = sprintf("SELECT ldmacaveat.caveatkey, ldmacaveat.caveat, ldmascores.caveatkey, ldmascores.ldmakey FROM ldmacaveat, ldmascores WHERE ldmascores.caveatkey = ldmacaveat.caveatkey AND ldmascores.ldmakey=%s", GetSQLValueString($colname_rsldmacaveat, "int"));
+$rsldmacaveat = mysql_query($query_rsldmacaveat, $Assessment) or die(mysql_error());
+$row_rsldmacaveat = mysql_fetch_assoc($rsldmacaveat);
+$totalRows_rsldmacaveat = mysql_num_rows($rsldmacaveat);
+
+$colname_rsldmadecision = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsldmadecision = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsldmadecision = sprintf("SELECT ldmadecision.decisionkey, ldmadecision.decision, ldmascores.decisionkey, ldmascores.ldmakey FROM ldmadecision, ldmascores WHERE ldmascores.decisionkey = ldmadecision.decisionkey AND ldmascores.ldmakey=%s", GetSQLValueString($colname_rsldmadecision, "int"));
+$rsldmadecision = mysql_query($query_rsldmadecision, $Assessment) or die(mysql_error());
+$row_rsldmadecision = mysql_fetch_assoc($rsldmadecision);
+$totalRows_rsldmadecision = mysql_num_rows($rsldmadecision);
+
+$colname_rsldmarecommend = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsldmarecommend = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsldmarecommend = sprintf("SELECT ldmarecommend.recommendkey, ldmarecommend.recommend, ldmascores.recommendkey, ldmascores.ldmakey FROM ldmarecommend, ldmascores, ldma WHERE ldmascores.recommendkey = ldmarecommend.recommendkey AND ldmascores.ldmakey = %s", GetSQLValueString($colname_rsldmarecommend, "int"));
+$rsldmarecommend = mysql_query($query_rsldmarecommend, $Assessment) or die(mysql_error());
+$row_rsldmarecommend = mysql_fetch_assoc($rsldmarecommend);
+$totalRows_rsldmarecommend = mysql_num_rows($rsldmarecommend);
+
+$colname_rsldmaperspective = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsldmaperspective = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsldmaperspective = sprintf("SELECT ldma.spkey, ldma.ldmakey, ldmasubperspective.spkey, ldmasubperspective.spcomment FROM ldma, ldmasubperspective WHERE ldma.ldmakey = %s AND ldmasubperspective.spkey = ldma.spkey", GetSQLValueString($colname_rsldmaperspective, "int"));
+$rsldmaperspective = mysql_query($query_rsldmaperspective, $Assessment) or die(mysql_error());
+$row_rsldmaperspective = mysql_fetch_assoc($rsldmaperspective);
+$totalRows_rsldmaperspective = mysql_num_rows($rsldmaperspective);
+
+$colname_rsLasByAge = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLasByAge = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasByAge = sprintf("SELECT lasname, lasbyageart, lasbyageart2 FROM lasbyage WHERE lasname = %s", GetSQLValueString($colname_rsLasByAge, "text"));
+$rsLasByAge = mysql_query($query_rsLasByAge, $Assessment) or die(mysql_error());
+$row_rsLasByAge = mysql_fetch_assoc($rsLasByAge);
+$totalRows_rsLasByAge = mysql_num_rows($rsLasByAge);
+
+$colname_rsCoherenceOverall = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsCoherenceOverall = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceOverall = sprintf("SELECT ldmascores.ldmakey, ldmascores.coherenceoverallkey, ldmascores.lasname, coherenceoverallinfer.lasname, coherenceoverallinfer.coherencekey, coherenceoverallinfer.implication, coherenceoverallinfer.cohereoverinfer FROM ldmascores, coherenceoverallinfer WHERE ldmascores.coherenceoverallkey = coherenceoverallinfer.coherencekey AND ldmascores.ldmakey = %s and coherenceoverallinfer.lasname = ldmascores.lasname", GetSQLValueString($colname_rsCoherenceOverall, "int"));
+$rsCoherenceOverall = mysql_query($query_rsCoherenceOverall, $Assessment) or die(mysql_error());
+$row_rsCoherenceOverall = mysql_fetch_assoc($rsCoherenceOverall);
+$totalRows_rsCoherenceOverall = mysql_num_rows($rsCoherenceOverall);
+
+$colname_rscoherenceonpoint = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rscoherenceonpoint = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rscoherenceonpoint = sprintf("SELECT coherenceonpoint.onpointkey, coherenceonpoint.onpoint, ldmascores.coherenceonpointkey, ldmascores.ldmakey FROM coherenceonpoint, ldmascores WHERE ldmascores.coherenceonpointkey = coherenceonpoint.onpointkey AND ldmascores.ldmakey = %s", GetSQLValueString($colname_rscoherenceonpoint, "int"));
+$rscoherenceonpoint = mysql_query($query_rscoherenceonpoint, $Assessment) or die(mysql_error());
+$row_rscoherenceonpoint = mysql_fetch_assoc($rscoherenceonpoint);
+$totalRows_rscoherenceonpoint = mysql_num_rows($rscoherenceonpoint);
+
+$colname_rsRelevanceArg = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsRelevanceArg = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRelevanceArg = sprintf("SELECT coherencerelevancearg.coherencekey, coherencerelevancearg.coherencerelevancearg, ldmascores.coherencerelevanceargkey, ldmascores.ldmakey FROM coherencerelevancearg, ldmascores WHERE ldmascores.coherencerelevanceargkey = coherencerelevancearg.coherencekey AND ldmascores.ldmakey = %s", GetSQLValueString($colname_rsRelevanceArg, "int"));
+$rsRelevanceArg = mysql_query($query_rsRelevanceArg, $Assessment) or die(mysql_error());
+$row_rsRelevanceArg = mysql_fetch_assoc($rsRelevanceArg);
+$totalRows_rsRelevanceArg = mysql_num_rows($rsRelevanceArg);
+
+$colname_rsRelevanceExamp = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsRelevanceExamp = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRelevanceExamp = sprintf("SELECT coherencerelevanceexamp.coherenceno, coherencerelevanceexamp.coherencerelevexamp, ldmascores.coherencerelevanceexampkey, ldmascores.ldmakey, coherencerelevanceexamp.coherenceno, coherencerelevanceexamp.coherencerelevexamp FROM coherencerelevanceexamp, ldmascores WHERE ldmascores.coherencerelevanceexampkey = coherencerelevanceexamp.coherenceno AND ldmascores.ldmakey = %s", GetSQLValueString($colname_rsRelevanceExamp, "int"));
+$rsRelevanceExamp = mysql_query($query_rsRelevanceExamp, $Assessment) or die(mysql_error());
+$row_rsRelevanceExamp = mysql_fetch_assoc($rsRelevanceExamp);
+$totalRows_rsRelevanceExamp = mysql_num_rows($rsRelevanceExamp);
+
+$colname_rscoherencefragment = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rscoherencefragment = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rscoherencefragment = sprintf("SELECT coherencefragment.coherencekey, coherencefragment.coherencefragment, ldmascores.coherencefragmentkey, ldmascores.ldmakey FROM coherencefragment, ldmascores WHERE ldmascores.coherencefragmentkey = coherencefragment.coherencekey AND ldmascores.ldmakey = %s", GetSQLValueString($colname_rscoherencefragment, "int"));
+$rscoherencefragment = mysql_query($query_rscoherencefragment, $Assessment) or die(mysql_error());
+$row_rscoherencefragment = mysql_fetch_assoc($rscoherencefragment);
+$totalRows_rscoherencefragment = mysql_num_rows($rscoherencefragment);
+
+$colname_rscoherenceframing = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rscoherenceframing = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rscoherenceframing = sprintf("SELECT coherenceframing.coherencekey, coherenceframing.coherenceframing, ldmascores.coherenceframingkey, ldmascores.ldmakey FROM coherenceframing, ldmascores WHERE ldmascores.coherenceframingkey = coherenceframing.coherencekey AND ldmascores.ldmakey = %s", GetSQLValueString($colname_rscoherenceframing, "int"));
+$rscoherenceframing = mysql_query($query_rscoherenceframing, $Assessment) or die(mysql_error());
+$row_rscoherenceframing = mysql_fetch_assoc($rscoherenceframing);
+$totalRows_rscoherenceframing = mysql_num_rows($rscoherenceframing);
+
+$colname_rsCoherenceEnglish = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsCoherenceEnglish = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceEnglish = sprintf("SELECT ldmascores.ldmakey, ldmascores.coherenceenglishkey, ldmascores.lasname, coherenceenglishinfer.coherencekey, coherenceenglishinfer.lasname, coherenceenglishinfer.coherenceenglishinfer, coherenceenglishinfer.implication FROM ldmascores, coherenceenglishinfer WHERE ldmascores.coherenceenglishkey = coherenceenglishinfer.coherencekey AND ldmascores.ldmakey = %s and ldmascores.lasname = coherenceenglishinfer.lasname", GetSQLValueString($colname_rsCoherenceEnglish, "int"));
+$rsCoherenceEnglish = mysql_query($query_rsCoherenceEnglish, $Assessment) or die(mysql_error());
+$row_rsCoherenceEnglish = mysql_fetch_assoc($rsCoherenceEnglish);
+$totalRows_rsCoherenceEnglish = mysql_num_rows($rsCoherenceEnglish);
+
+$colname_rscoherencepersuade = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rscoherencepersuade = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rscoherencepersuade = sprintf("SELECT coherencepersuade.persuasivekey, coherencepersuade.persuasiveness, ldmascores.ldmakey, ldmascores.coherencepersuadekey  FROM coherencepersuade, ldmascores WHERE ldmascores.coherencepersuadekey = coherencepersuade.persuasivekey AND ldmascores.ldmakey = %s", GetSQLValueString($colname_rscoherencepersuade, "int"));
+$rscoherencepersuade = mysql_query($query_rscoherencepersuade, $Assessment) or die(mysql_error());
+$row_rscoherencepersuade = mysql_fetch_assoc($rscoherencepersuade);
+$totalRows_rscoherencepersuade = mysql_num_rows($rscoherencepersuade);
+
+$colname_rsPerspectiveOrienting = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsPerspectiveOrienting = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveOrienting = sprintf("SELECT ldmascores.ldmakey, ldmascores.perspectiveorientingkey, ldmaperspective_orienting.perspectivekey, ldmaperspective_orienting.perspective FROM ldmascores, ldmaperspective_orienting WHERE ldmakey = %s AND ldmaperspective_orienting.perspectivekey = ldmascores.perspectiveorientingkey", GetSQLValueString($colname_rsPerspectiveOrienting, "int"));
+$rsPerspectiveOrienting = mysql_query($query_rsPerspectiveOrienting, $Assessment) or die(mysql_error());
+$row_rsPerspectiveOrienting = mysql_fetch_assoc($rsPerspectiveOrienting);
+$totalRows_rsPerspectiveOrienting = mysql_num_rows($rsPerspectiveOrienting);
+
+$colname_rsPerspectiveSought = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsPerspectiveSought = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveSought = sprintf("SELECT ldmascores.ldmakey, ldmascores.perspectivesoughtkey, ldmaperspective_sought.ldmasoughtkey, ldmaperspective_sought.ldmasought FROM ldmascores, ldmaperspective_sought WHERE ldmakey = %s AND ldmaperspective_sought.ldmasoughtkey = ldmascores.perspectivesoughtkey", GetSQLValueString($colname_rsPerspectiveSought, "int"));
+$rsPerspectiveSought = mysql_query($query_rsPerspectiveSought, $Assessment) or die(mysql_error());
+$row_rsPerspectiveSought = mysql_fetch_assoc($rsPerspectiveSought);
+$totalRows_rsPerspectiveSought = mysql_num_rows($rsPerspectiveSought);
+
+$colname_rsPerspectiveYou1 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsPerspectiveYou1 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveYou1 = sprintf("SELECT ldmascores.ldmakey, ldmascores.perspectivesoughtkey, ldmascores.perspectiveyou1, ldmaperspective_taken.ldmatakenkey, ldmaperspective_taken.ldmataken FROM ldmascores, ldmaperspective_taken WHERE ldmakey = %s AND ldmaperspective_taken.ldmatakenkey =  ldmascores.perspectiveyou1", GetSQLValueString($colname_rsPerspectiveYou1, "int"));
+$rsPerspectiveYou1 = mysql_query($query_rsPerspectiveYou1, $Assessment) or die(mysql_error());
+$row_rsPerspectiveYou1 = mysql_fetch_assoc($rsPerspectiveYou1);
+$totalRows_rsPerspectiveYou1 = mysql_num_rows($rsPerspectiveYou1);
+
+$colname_rsPerspectiveEmployee2 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsPerspectiveEmployee2 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveEmployee2 = sprintf("SELECT ldmascores.ldmakey, ldmascores.perspectivesoughtkey, ldmascores.perspectiveyou1, ldmascores.perspectiveemployees2, ldmascores.perspectivemanager3, ldmascores.perspectivesenior4, ldmascores.perspectivecompany5, ldmascores.perspectivecompany5, ldmascores.perspectivecustomers6, ldmascores.perspectiveshareholders7, ldmascores.perspectivesociety8, ldmaperspective_taken.ldmatakenkey, ldmaperspective_taken.ldmataken FROM ldmascores, ldmaperspective_taken WHERE ldmakey = %s AND ldmaperspective_taken.ldmatakenkey =  ldmascores.perspectiveemployees2", GetSQLValueString($colname_rsPerspectiveEmployee2, "int"));
+$rsPerspectiveEmployee2 = mysql_query($query_rsPerspectiveEmployee2, $Assessment) or die(mysql_error());
+$row_rsPerspectiveEmployee2 = mysql_fetch_assoc($rsPerspectiveEmployee2);
+$totalRows_rsPerspectiveEmployee2 = mysql_num_rows($rsPerspectiveEmployee2);
+
+$colname_rsPerspectiveColleagues10 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsPerspectiveColleagues10 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveColleagues10 = sprintf("SELECT ldmascores.ldmakey, ldmascores.perspectivesoughtkey, ldmascores.perspectiveyou1, ldmascores.perspectiveemployees2, ldmascores.perspectivemanager3, ldmascores.perspectivesenior4, ldmascores.perspectivecompany5, ldmascores.perspectivecompany5, ldmascores.perspectivecustomers6, ldmascores.perspectiveshareholders7, ldmascores.perspectivesociety8, ldmaperspective_taken.ldmatakenkey, ldmaperspective_taken.ldmataken FROM ldmascores, ldmaperspective_taken WHERE ldmakey = %s AND ldmaperspective_taken.ldmatakenkey =  ldmascores.perspectivecolleagues10", GetSQLValueString($colname_rsPerspectiveColleagues10, "int"));
+$rsPerspectiveColleagues10 = mysql_query($query_rsPerspectiveColleagues10, $Assessment) or die(mysql_error());
+$row_rsPerspectiveColleagues10 = mysql_fetch_assoc($rsPerspectiveColleagues10);
+$totalRows_rsPerspectiveColleagues10 = mysql_num_rows($rsPerspectiveColleagues10);
+
+$colname_rsPerspectiveExpert11 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsPerspectiveExpert11 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveExpert11 = sprintf("SELECT ldmascores.ldmakey, ldmascores.perspectivesoughtkey, ldmascores.perspectiveyou1, ldmascores.perspectiveemployees2, ldmascores.perspectivemanager3, ldmascores.perspectivesenior4, ldmascores.perspectivecompany5, ldmascores.perspectivecompany5, ldmascores.perspectivecustomers6, ldmascores.perspectiveshareholders7, ldmascores.perspectivesociety8, ldmaperspective_taken.ldmatakenkey, ldmaperspective_taken.ldmataken FROM ldmascores, ldmaperspective_taken WHERE ldmakey = %s AND ldmaperspective_taken.ldmatakenkey =  ldmascores.perspectiveexpert11", GetSQLValueString($colname_rsPerspectiveExpert11, "int"));
+$rsPerspectiveExpert11 = mysql_query($query_rsPerspectiveExpert11, $Assessment) or die(mysql_error());
+$row_rsPerspectiveExpert11 = mysql_fetch_assoc($rsPerspectiveExpert11);
+$totalRows_rsPerspectiveExpert11 = mysql_num_rows($rsPerspectiveExpert11);
+
+$colname_rsPerspectiveTeam9 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsPerspectiveTeam9 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveTeam9 = sprintf("SELECT ldmascores.ldmakey, ldmascores.perspectivesoughtkey, ldmascores.perspectiveyou1, ldmascores.perspectiveemployees2, ldmascores.perspectivemanager3, ldmascores.perspectivesenior4, ldmascores.perspectivecompany5, ldmascores.perspectivecompany5, ldmascores.perspectivecustomers6, ldmascores.perspectiveshareholders7, ldmascores.perspectivesociety8, ldmaperspective_taken.ldmatakenkey, ldmaperspective_taken.ldmataken FROM ldmascores, ldmaperspective_taken WHERE ldmakey = %s AND ldmaperspective_taken.ldmatakenkey =  ldmascores.perspectiveteam9", GetSQLValueString($colname_rsPerspectiveTeam9, "int"));
+$rsPerspectiveTeam9 = mysql_query($query_rsPerspectiveTeam9, $Assessment) or die(mysql_error());
+$row_rsPerspectiveTeam9 = mysql_fetch_assoc($rsPerspectiveTeam9);
+$totalRows_rsPerspectiveTeam9 = mysql_num_rows($rsPerspectiveTeam9);
+
+$colname_rsPerspectiveManager3 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsPerspectiveManager3 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveManager3 = sprintf("SELECT ldmascores.ldmakey, ldmascores.perspectivesoughtkey, ldmascores.perspectiveyou1, ldmascores.perspectiveemployees2, ldmascores.perspectivemanager3, ldmascores.perspectivesenior4, ldmascores.perspectivecompany5, ldmascores.perspectivecompany5, ldmascores.perspectivecustomers6, ldmascores.perspectiveshareholders7, ldmascores.perspectivesociety8, ldmaperspective_taken.ldmatakenkey, ldmaperspective_taken.ldmataken FROM ldmascores, ldmaperspective_taken WHERE ldmakey = %s AND ldmaperspective_taken.ldmatakenkey =  ldmascores.perspectivemanager3", GetSQLValueString($colname_rsPerspectiveManager3, "int"));
+$rsPerspectiveManager3 = mysql_query($query_rsPerspectiveManager3, $Assessment) or die(mysql_error());
+$row_rsPerspectiveManager3 = mysql_fetch_assoc($rsPerspectiveManager3);
+$totalRows_rsPerspectiveManager3 = mysql_num_rows($rsPerspectiveManager3);
+
+$colname_rsPerspectiveSenior4 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsPerspectiveSenior4 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveSenior4 = sprintf("SELECT ldmascores.ldmakey, ldmascores.perspectivesoughtkey, ldmascores.perspectiveyou1, ldmascores.perspectiveemployees2, ldmascores.perspectivemanager3, ldmascores.perspectivesenior4, ldmascores.perspectivecompany5, ldmascores.perspectivecompany5, ldmascores.perspectivecustomers6, ldmascores.perspectiveshareholders7, ldmascores.perspectivesociety8, ldmaperspective_taken.ldmatakenkey, ldmaperspective_taken.ldmataken FROM ldmascores, ldmaperspective_taken WHERE ldmakey = %s AND ldmaperspective_taken.ldmatakenkey =  ldmascores.perspectivesenior4", GetSQLValueString($colname_rsPerspectiveSenior4, "int"));
+$rsPerspectiveSenior4 = mysql_query($query_rsPerspectiveSenior4, $Assessment) or die(mysql_error());
+$row_rsPerspectiveSenior4 = mysql_fetch_assoc($rsPerspectiveSenior4);
+$totalRows_rsPerspectiveSenior4 = mysql_num_rows($rsPerspectiveSenior4);
+
+$colname_rsPerspectiveCompany5 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsPerspectiveCompany5 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveCompany5 = sprintf("SELECT ldmascores.ldmakey, ldmascores.perspectivesoughtkey, ldmascores.perspectiveyou1, ldmascores.perspectiveemployees2, ldmascores.perspectivemanager3, ldmascores.perspectivesenior4, ldmascores.perspectivecompany5, ldmascores.perspectivecompany5, ldmascores.perspectivecustomers6, ldmascores.perspectiveshareholders7, ldmascores.perspectivesociety8, ldmaperspective_taken.ldmatakenkey, ldmaperspective_taken.ldmataken FROM ldmascores, ldmaperspective_taken WHERE ldmakey = %s AND ldmaperspective_taken.ldmatakenkey =  ldmascores.perspectivecompany5", GetSQLValueString($colname_rsPerspectiveCompany5, "int"));
+$rsPerspectiveCompany5 = mysql_query($query_rsPerspectiveCompany5, $Assessment) or die(mysql_error());
+$row_rsPerspectiveCompany5 = mysql_fetch_assoc($rsPerspectiveCompany5);
+$totalRows_rsPerspectiveCompany5 = mysql_num_rows($rsPerspectiveCompany5);
+
+$colname_rsPerspectiveCustomer6 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsPerspectiveCustomer6 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveCustomer6 = sprintf("SELECT ldmascores.ldmakey, ldmascores.perspectivesoughtkey, ldmascores.perspectiveyou1, ldmascores.perspectiveemployees2, ldmascores.perspectivemanager3, ldmascores.perspectivesenior4, ldmascores.perspectivecompany5, ldmascores.perspectivecompany5, ldmascores.perspectivecustomers6, ldmascores.perspectiveshareholders7, ldmascores.perspectivesociety8, ldmaperspective_taken.ldmatakenkey, ldmaperspective_taken.ldmataken FROM ldmascores, ldmaperspective_taken WHERE ldmakey = %s AND ldmaperspective_taken.ldmatakenkey =  ldmascores.perspectivecustomers6", GetSQLValueString($colname_rsPerspectiveCustomer6, "int"));
+$rsPerspectiveCustomer6 = mysql_query($query_rsPerspectiveCustomer6, $Assessment) or die(mysql_error());
+$row_rsPerspectiveCustomer6 = mysql_fetch_assoc($rsPerspectiveCustomer6);
+$totalRows_rsPerspectiveCustomer6 = mysql_num_rows($rsPerspectiveCustomer6);
+
+$colname_rsPerspectiveStakeholder7 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsPerspectiveStakeholder7 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveStakeholder7 = sprintf("SELECT ldmascores.ldmakey, ldmascores.perspectivesoughtkey, ldmascores.perspectiveyou1, ldmascores.perspectiveemployees2, ldmascores.perspectivemanager3, ldmascores.perspectivesenior4, ldmascores.perspectivecompany5, ldmascores.perspectivecompany5, ldmascores.perspectivecustomers6, ldmascores.perspectiveshareholders7, ldmascores.perspectivesociety8, ldmaperspective_taken.ldmatakenkey, ldmaperspective_taken.ldmataken FROM ldmascores, ldmaperspective_taken WHERE ldmakey = %s AND ldmaperspective_taken.ldmatakenkey =  ldmascores.perspectiveshareholders7", GetSQLValueString($colname_rsPerspectiveStakeholder7, "int"));
+$rsPerspectiveStakeholder7 = mysql_query($query_rsPerspectiveStakeholder7, $Assessment) or die(mysql_error());
+$row_rsPerspectiveStakeholder7 = mysql_fetch_assoc($rsPerspectiveStakeholder7);
+$totalRows_rsPerspectiveStakeholder7 = mysql_num_rows($rsPerspectiveStakeholder7);
+
+$colname_rsPerspectiveSociety8 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsPerspectiveSociety8 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveSociety8 = sprintf("SELECT ldmascores.ldmakey, ldmascores.perspectivesoughtkey, ldmascores.perspectiveyou1, ldmascores.perspectiveemployees2, ldmascores.perspectivemanager3, ldmascores.perspectivesenior4, ldmascores.perspectivecompany5, ldmascores.perspectivecompany5, ldmascores.perspectivecustomers6, ldmascores.perspectiveshareholders7, ldmascores.perspectivesociety8, ldmaperspective_taken.ldmatakenkey, ldmaperspective_taken.ldmataken FROM ldmascores, ldmaperspective_taken WHERE ldmakey = %s AND ldmaperspective_taken.ldmatakenkey =  ldmascores.perspectivesociety8", GetSQLValueString($colname_rsPerspectiveSociety8, "int"));
+$rsPerspectiveSociety8 = mysql_query($query_rsPerspectiveSociety8, $Assessment) or die(mysql_error());
+$row_rsPerspectiveSociety8 = mysql_fetch_assoc($rsPerspectiveSociety8);
+$totalRows_rsPerspectiveSociety8 = mysql_num_rows($rsPerspectiveSociety8);
+
+$colname_rsDMemphasis = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMemphasis = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMemphasis = sprintf("SELECT ldmadm_emphasis.ldma_emphasizekey, ldmadm_emphasis.ldmaemphasis, ldmascores.ldmakey, ldmascores.dmemphasizekey, ldmascores.dmbykey, ldmascores.dmreview, ldmascores.dmreflect FROM ldmadm_emphasis, ldmascores WHERE ldmadm_emphasis.ldma_emphasizekey = ldmascores.dmemphasizekey AND ldmascores.ldmakey = %s", GetSQLValueString($colname_rsDMemphasis, "int"));
+$rsDMemphasis = mysql_query($query_rsDMemphasis, $Assessment) or die(mysql_error());
+$row_rsDMemphasis = mysql_fetch_assoc($rsDMemphasis);
+$totalRows_rsDMemphasis = mysql_num_rows($rsDMemphasis);
+
+$colname_rsDMby = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMby = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMby = sprintf("SELECT ldmascores.ldmakey, ldmascores.dmemphasizekey, ldmascores.dmbykey, ldmascores.dmreview, ldmascores.dmreflect, ldmadm_by.ldmabykey, ldmadm_by.ldmaby FROM ldmascores, ldmadm_by WHERE ldmadm_by.ldmabykey = ldmascores.dmbykey AND ldmascores.ldmakey = %s", GetSQLValueString($colname_rsDMby, "int"));
+$rsDMby = mysql_query($query_rsDMby, $Assessment) or die(mysql_error());
+$row_rsDMby = mysql_fetch_assoc($rsDMby);
+$totalRows_rsDMby = mysql_num_rows($rsDMby);
+
+$colname_rsDMreview = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMreview = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMreview = sprintf("SELECT ldmascores.ldmakey, ldmascores.dmemphasizekey, ldmascores.dmbykey, ldmascores.dmreview, ldmascores.dmreflect, ldmadm_review.ldmareviewkey, ldmadm_review.ldmareview FROM ldmascores, ldmadm_review WHERE ldmascores.ldmakey = %s AND ldmadm_review.ldmareviewkey = ldmascores.dmreview and ldmascores.dmreview = 1", GetSQLValueString($colname_rsDMreview, "int"));
+$rsDMreview = mysql_query($query_rsDMreview, $Assessment) or die(mysql_error());
+$row_rsDMreview = mysql_fetch_assoc($rsDMreview);
+$totalRows_rsDMreview = mysql_num_rows($rsDMreview);
+
+$colname_rsDMreflect = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMreflect = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMreflect = sprintf("SELECT ldmascores.ldmakey, ldmascores.dmemphasizekey, ldmascores.dmbykey, ldmascores.dmreview, ldmascores.dmreflect, ldmadm_reflect.ldmareflectkey, ldmadm_reflect.ldmareflect FROM ldmascores, ldmadm_reflect WHERE ldmascores.ldmakey = %s AND ldmascores.dmreflect = ldmadm_reflect.ldmareflectkey", GetSQLValueString($colname_rsDMreflect, "int"));
+$rsDMreflect = mysql_query($query_rsDMreflect, $Assessment) or die(mysql_error());
+$row_rsDMreflect = mysql_fetch_assoc($rsDMreflect);
+$totalRows_rsDMreflect = mysql_num_rows($rsDMreflect);
+
+$colname_rsDMpersonalgoals1 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMpersonalgoals1 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMpersonalgoals1 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmpersonalgoals1", GetSQLValueString($colname_rsDMpersonalgoals1, "int"));
+$rsDMpersonalgoals1 = mysql_query($query_rsDMpersonalgoals1, $Assessment) or die(mysql_error());
+$row_rsDMpersonalgoals1 = mysql_fetch_assoc($rsDMpersonalgoals1);
+$totalRows_rsDMpersonalgoals1 = mysql_num_rows($rsDMpersonalgoals1);
+
+$colname_rsDMmanagementgoals2 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMmanagementgoals2 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMmanagementgoals2 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmmanagementgoals2", GetSQLValueString($colname_rsDMmanagementgoals2, "int"));
+$rsDMmanagementgoals2 = mysql_query($query_rsDMmanagementgoals2, $Assessment) or die(mysql_error());
+$row_rsDMmanagementgoals2 = mysql_fetch_assoc($rsDMmanagementgoals2);
+$totalRows_rsDMmanagementgoals2 = mysql_num_rows($rsDMmanagementgoals2);
+
+$colname_rsDMstrategicgoals3 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMstrategicgoals3 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMstrategicgoals3 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmstrategicgoals3", GetSQLValueString($colname_rsDMstrategicgoals3, "int"));
+$rsDMstrategicgoals3 = mysql_query($query_rsDMstrategicgoals3, $Assessment) or die(mysql_error());
+$row_rsDMstrategicgoals3 = mysql_fetch_assoc($rsDMstrategicgoals3);
+$totalRows_rsDMstrategicgoals3 = mysql_num_rows($rsDMstrategicgoals3);
+
+$colname_rsDMrules4 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMrules4 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMrules4 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmrules4", GetSQLValueString($colname_rsDMrules4, "int"));
+$rsDMrules4 = mysql_query($query_rsDMrules4, $Assessment) or die(mysql_error());
+$row_rsDMrules4 = mysql_fetch_assoc($rsDMrules4);
+$totalRows_rsDMrules4 = mysql_num_rows($rsDMrules4);
+
+$colname_rsDMpriorities5 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMpriorities5 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMpriorities5 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmpriorities5", GetSQLValueString($colname_rsDMpriorities5, "int"));
+$rsDMpriorities5 = mysql_query($query_rsDMpriorities5, $Assessment) or die(mysql_error());
+$row_rsDMpriorities5 = mysql_fetch_assoc($rsDMpriorities5);
+$totalRows_rsDMpriorities5 = mysql_num_rows($rsDMpriorities5);
+
+$colname_rsDMprinciples6 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMprinciples6 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMprinciples6 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmprinciples6", GetSQLValueString($colname_rsDMprinciples6, "int"));
+$rsDMprinciples6 = mysql_query($query_rsDMprinciples6, $Assessment) or die(mysql_error());
+$row_rsDMprinciples6 = mysql_fetch_assoc($rsDMprinciples6);
+$totalRows_rsDMprinciples6 = mysql_num_rows($rsDMprinciples6);
+
+$colname_rsDMvalues7 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMvalues7 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMvalues7 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmvalues7", GetSQLValueString($colname_rsDMvalues7, "int"));
+$rsDMvalues7 = mysql_query($query_rsDMvalues7, $Assessment) or die(mysql_error());
+$row_rsDMvalues7 = mysql_fetch_assoc($rsDMvalues7);
+$totalRows_rsDMvalues7 = mysql_num_rows($rsDMvalues7);
+
+$colname_rsDMinformation13 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMinformation13 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMinformation13 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dminformation13", GetSQLValueString($colname_rsDMinformation13, "int"));
+$rsDMinformation13 = mysql_query($query_rsDMinformation13, $Assessment) or die(mysql_error());
+$row_rsDMinformation13 = mysql_fetch_assoc($rsDMinformation13);
+$totalRows_rsDMinformation13 = mysql_num_rows($rsDMinformation13);
+
+$colname_rsDMclarification14 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMclarification14 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMclarification14 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmclarification14", GetSQLValueString($colname_rsDMclarification14, "int"));
+$rsDMclarification14 = mysql_query($query_rsDMclarification14, $Assessment) or die(mysql_error());
+$row_rsDMclarification14 = mysql_fetch_assoc($rsDMclarification14);
+$totalRows_rsDMclarification14 = mysql_num_rows($rsDMclarification14);
+
+$colname_rsDMexperience15 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMexperience15 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMexperience15 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmexperience15", GetSQLValueString($colname_rsDMexperience15, "int"));
+$rsDMexperience15 = mysql_query($query_rsDMexperience15, $Assessment) or die(mysql_error());
+$row_rsDMexperience15 = mysql_fetch_assoc($rsDMexperience15);
+$totalRows_rsDMexperience15 = mysql_num_rows($rsDMexperience15);
+
+$colname_rsDMintuition16 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMintuition16 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMintuition16 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmintuition16", GetSQLValueString($colname_rsDMintuition16, "int"));
+$rsDMintuition16 = mysql_query($query_rsDMintuition16, $Assessment) or die(mysql_error());
+$row_rsDMintuition16 = mysql_fetch_assoc($rsDMintuition16);
+$totalRows_rsDMintuition16 = mysql_num_rows($rsDMintuition16);
+
+$colname_rsDMtwoway17 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMtwoway17 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMtwoway17 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmtwoway17", GetSQLValueString($colname_rsDMtwoway17, "int"));
+$rsDMtwoway17 = mysql_query($query_rsDMtwoway17, $Assessment) or die(mysql_error());
+$row_rsDMtwoway17 = mysql_fetch_assoc($rsDMtwoway17);
+$totalRows_rsDMtwoway17 = mysql_num_rows($rsDMtwoway17);
+
+$colname_rsDMstakeholderinput18 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMstakeholderinput18 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMstakeholderinput18 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmstakeholderinput18", GetSQLValueString($colname_rsDMstakeholderinput18, "int"));
+$rsDMstakeholderinput18 = mysql_query($query_rsDMstakeholderinput18, $Assessment) or die(mysql_error());
+$row_rsDMstakeholderinput18 = mysql_fetch_assoc($rsDMstakeholderinput18);
+$totalRows_rsDMstakeholderinput18 = mysql_num_rows($rsDMstakeholderinput18);
+
+$colname_rsDMbestpractices19 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMbestpractices19 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMbestpractices19 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmbestpractices19", GetSQLValueString($colname_rsDMbestpractices19, "int"));
+$rsDMbestpractices19 = mysql_query($query_rsDMbestpractices19, $Assessment) or die(mysql_error());
+$row_rsDMbestpractices19 = mysql_fetch_assoc($rsDMbestpractices19);
+$totalRows_rsDMbestpractices19 = mysql_num_rows($rsDMbestpractices19);
+
+$colname_rsDMcorporateculture20 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMcorporateculture20 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMcorporateculture20 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmcorporateculture20", GetSQLValueString($colname_rsDMcorporateculture20, "int"));
+$rsDMcorporateculture20 = mysql_query($query_rsDMcorporateculture20, $Assessment) or die(mysql_error());
+$row_rsDMcorporateculture20 = mysql_fetch_assoc($rsDMcorporateculture20);
+$totalRows_rsDMcorporateculture20 = mysql_num_rows($rsDMcorporateculture20);
+
+$colname_rsDMpsychology21 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMpsychology21 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMpsychology21 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmpsychology21", GetSQLValueString($colname_rsDMpsychology21, "int"));
+$rsDMpsychology21 = mysql_query($query_rsDMpsychology21, $Assessment) or die(mysql_error());
+$row_rsDMpsychology21 = mysql_fetch_assoc($rsDMpsychology21);
+$totalRows_rsDMpsychology21 = mysql_num_rows($rsDMpsychology21);
+
+$colname_rsDMethics22 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMethics22 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMethics22 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmethics22", GetSQLValueString($colname_rsDMethics22, "int"));
+$rsDMethics22 = mysql_query($query_rsDMethics22, $Assessment) or die(mysql_error());
+$row_rsDMethics22 = mysql_fetch_assoc($rsDMethics22);
+$totalRows_rsDMethics22 = mysql_num_rows($rsDMethics22);
+
+$colname_rsDManalysis25 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDManalysis25 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDManalysis25 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmanalysis25", GetSQLValueString($colname_rsDManalysis25, "int"));
+$rsDManalysis25 = mysql_query($query_rsDManalysis25, $Assessment) or die(mysql_error());
+$row_rsDManalysis25 = mysql_fetch_assoc($rsDManalysis25);
+$totalRows_rsDManalysis25 = mysql_num_rows($rsDManalysis25);
+
+$colname_rsDMproscons26 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMproscons26 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMproscons26 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmproscons26", GetSQLValueString($colname_rsDMproscons26, "int"));
+$rsDMproscons26 = mysql_query($query_rsDMproscons26, $Assessment) or die(mysql_error());
+$row_rsDMproscons26 = mysql_fetch_assoc($rsDMproscons26);
+$totalRows_rsDMproscons26 = mysql_num_rows($rsDMproscons26);
+
+$colname_rsDMrisksbenefits27 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMrisksbenefits27 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMrisksbenefits27 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmrisksbenefits27", GetSQLValueString($colname_rsDMrisksbenefits27, "int"));
+$rsDMrisksbenefits27 = mysql_query($query_rsDMrisksbenefits27, $Assessment) or die(mysql_error());
+$row_rsDMrisksbenefits27 = mysql_fetch_assoc($rsDMrisksbenefits27);
+$totalRows_rsDMrisksbenefits27 = mysql_num_rows($rsDMrisksbenefits27);
+
+$colname_rsDMalternatives28 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMalternatives28 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMalternatives28 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmalternatives28", GetSQLValueString($colname_rsDMalternatives28, "int"));
+$rsDMalternatives28 = mysql_query($query_rsDMalternatives28, $Assessment) or die(mysql_error());
+$row_rsDMalternatives28 = mysql_fetch_assoc($rsDMalternatives28);
+$totalRows_rsDMalternatives28 = mysql_num_rows($rsDMalternatives28);
+
+$colname_rsDMbuyin33 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMbuyin33 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMbuyin33 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmbuyin33", GetSQLValueString($colname_rsDMbuyin33, "int"));
+$rsDMbuyin33 = mysql_query($query_rsDMbuyin33, $Assessment) or die(mysql_error());
+$row_rsDMbuyin33 = mysql_fetch_assoc($rsDMbuyin33);
+$totalRows_rsDMbuyin33 = mysql_num_rows($rsDMbuyin33);
+
+$colname_rsDMexplain34 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMexplain34 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMexplain34 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmexplain34", GetSQLValueString($colname_rsDMexplain34, "int"));
+$rsDMexplain34 = mysql_query($query_rsDMexplain34, $Assessment) or die(mysql_error());
+$row_rsDMexplain34 = mysql_fetch_assoc($rsDMexplain34);
+$totalRows_rsDMexplain34 = mysql_num_rows($rsDMexplain34);
+
+$colname_rsDMstructures40 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDMstructures40 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMstructures40 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34, ldmascores.dmstructures, ldmascores.dmemployeeresponse41, ldmascores.dmemployeefeedback45, ldmascores.dminvolveemployees46, ldmascores.dmsystemdynamics48, ldmascores.dmrightanswer49, ldmascores.dmactionplan43, ldmascores.dmmotivate44, ldmascores.perspectiveteam9, ldmascores.perspectivecolleagues10, ldmascores.perspectiveexpert11 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmstructures", GetSQLValueString($colname_rsDMstructures40, "int"));
+$rsDMstructures40 = mysql_query($query_rsDMstructures40, $Assessment) or die(mysql_error());
+$row_rsDMstructures40 = mysql_fetch_assoc($rsDMstructures40);
+$totalRows_rsDMstructures40 = mysql_num_rows($rsDMstructures40);
+
+$colname_rsDmEmployeeResponse41 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDmEmployeeResponse41 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmEmployeeResponse41 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34, ldmascores.dmstructures, ldmascores.dmemployeeresponse41, ldmascores.dmemployeefeedback45, ldmascores.dminvolveemployees46, ldmascores.dmsystemdynamics48, ldmascores.dmrightanswer49, ldmascores.dmactionplan43, ldmascores.dmmotivate44, ldmascores.perspectiveteam9, ldmascores.perspectivecolleagues10, ldmascores.perspectiveexpert11 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmemployeeresponse41", GetSQLValueString($colname_rsDmEmployeeResponse41, "int"));
+$rsDmEmployeeResponse41 = mysql_query($query_rsDmEmployeeResponse41, $Assessment) or die(mysql_error());
+$row_rsDmEmployeeResponse41 = mysql_fetch_assoc($rsDmEmployeeResponse41);
+$totalRows_rsDmEmployeeResponse41 = mysql_num_rows($rsDmEmployeeResponse41);
+
+$colname_rsDmEmployeeFeedback45 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDmEmployeeFeedback45 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmEmployeeFeedback45 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34, ldmascores.dmstructures, ldmascores.dmemployeeresponse41, ldmascores.dmemployeefeedback45, ldmascores.dminvolveemployees46, ldmascores.dmsystemdynamics48, ldmascores.dmrightanswer49, ldmascores.dmactionplan43, ldmascores.dmmotivate44, ldmascores.perspectiveteam9, ldmascores.perspectivecolleagues10, ldmascores.perspectiveexpert11 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmemployeefeedback45", GetSQLValueString($colname_rsDmEmployeeFeedback45, "int"));
+$rsDmEmployeeFeedback45 = mysql_query($query_rsDmEmployeeFeedback45, $Assessment) or die(mysql_error());
+$row_rsDmEmployeeFeedback45 = mysql_fetch_assoc($rsDmEmployeeFeedback45);
+$totalRows_rsDmEmployeeFeedback45 = mysql_num_rows($rsDmEmployeeFeedback45);
+
+$colname_rsDmInvolveEmployees46 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDmInvolveEmployees46 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmInvolveEmployees46 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34, ldmascores.dmstructures, ldmascores.dmemployeeresponse41, ldmascores.dmemployeefeedback45, ldmascores.dminvolveemployees46, ldmascores.dmsystemdynamics48, ldmascores.dmrightanswer49, ldmascores.dmactionplan43, ldmascores.dmmotivate44, ldmascores.perspectiveteam9, ldmascores.perspectivecolleagues10, ldmascores.perspectiveexpert11 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dminvolveemployees46", GetSQLValueString($colname_rsDmInvolveEmployees46, "int"));
+$rsDmInvolveEmployees46 = mysql_query($query_rsDmInvolveEmployees46, $Assessment) or die(mysql_error());
+$row_rsDmInvolveEmployees46 = mysql_fetch_assoc($rsDmInvolveEmployees46);
+$totalRows_rsDmInvolveEmployees46 = mysql_num_rows($rsDmInvolveEmployees46);
+
+$colname_rsDmSystemDynamics48 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDmSystemDynamics48 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmSystemDynamics48 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34, ldmascores.dmstructures, ldmascores.dmemployeeresponse41, ldmascores.dmemployeefeedback45, ldmascores.dminvolveemployees46, ldmascores.dmsystemdynamics48, ldmascores.dmrightanswer49, ldmascores.dmactionplan43, ldmascores.dmmotivate44, ldmascores.perspectiveteam9, ldmascores.perspectivecolleagues10, ldmascores.perspectiveexpert11 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmsystemdynamics48", GetSQLValueString($colname_rsDmSystemDynamics48, "int"));
+$rsDmSystemDynamics48 = mysql_query($query_rsDmSystemDynamics48, $Assessment) or die(mysql_error());
+$row_rsDmSystemDynamics48 = mysql_fetch_assoc($rsDmSystemDynamics48);
+$totalRows_rsDmSystemDynamics48 = mysql_num_rows($rsDmSystemDynamics48);
+
+$colname_rsDmRightAnswer49 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDmRightAnswer49 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmRightAnswer49 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34, ldmascores.dmstructures, ldmascores.dmemployeeresponse41, ldmascores.dmemployeefeedback45, ldmascores.dminvolveemployees46, ldmascores.dmsystemdynamics48, ldmascores.dmrightanswer49, ldmascores.dmactionplan43, ldmascores.dmmotivate44, ldmascores.perspectiveteam9, ldmascores.perspectivecolleagues10, ldmascores.perspectiveexpert11 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmrightanswer49", GetSQLValueString($colname_rsDmRightAnswer49, "int"));
+$rsDmRightAnswer49 = mysql_query($query_rsDmRightAnswer49, $Assessment) or die(mysql_error());
+$row_rsDmRightAnswer49 = mysql_fetch_assoc($rsDmRightAnswer49);
+$totalRows_rsDmRightAnswer49 = mysql_num_rows($rsDmRightAnswer49);
+
+$colname_rsDmActionPlan43 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDmActionPlan43 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmActionPlan43 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34, ldmascores.dmstructures, ldmascores.dmemployeeresponse41, ldmascores.dmemployeefeedback45, ldmascores.dminvolveemployees46, ldmascores.dmsystemdynamics48, ldmascores.dmrightanswer49, ldmascores.dmactionplan43, ldmascores.dmmotivate44, ldmascores.perspectiveteam9, ldmascores.perspectivecolleagues10, ldmascores.perspectiveexpert11 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmactionplan43", GetSQLValueString($colname_rsDmActionPlan43, "int"));
+$rsDmActionPlan43 = mysql_query($query_rsDmActionPlan43, $Assessment) or die(mysql_error());
+$row_rsDmActionPlan43 = mysql_fetch_assoc($rsDmActionPlan43);
+$totalRows_rsDmActionPlan43 = mysql_num_rows($rsDmActionPlan43);
+
+$colname_rsDmMotivate44 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDmMotivate44 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmMotivate44 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34, ldmascores.dmstructures, ldmascores.dmemployeeresponse41, ldmascores.dmemployeefeedback45, ldmascores.dminvolveemployees46, ldmascores.dmsystemdynamics48, ldmascores.dmrightanswer49, ldmascores.dmactionplan43, ldmascores.dmmotivate44, ldmascores.perspectiveteam9, ldmascores.perspectivecolleagues10, ldmascores.perspectiveexpert11, ldmascores.dmtools47 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmmotivate44", GetSQLValueString($colname_rsDmMotivate44, "int"));
+$rsDmMotivate44 = mysql_query($query_rsDmMotivate44, $Assessment) or die(mysql_error());
+$row_rsDmMotivate44 = mysql_fetch_assoc($rsDmMotivate44);
+$totalRows_rsDmMotivate44 = mysql_num_rows($rsDmMotivate44);
+
+$colname_rsDmTools47 = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDmTools47 = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmTools47 = sprintf("SELECT ldmadm_include.ldmaincludekey, ldmadm_include.ldmainclude, ldmascores.ldmakey, ldmascores.dmpersonalgoals1, ldmascores.dmmanagementgoals2, ldmascores.dmstrategicgoals3, ldmascores.dmrules4, ldmascores.dmpriorities5, ldmascores.dmprinciples6, ldmascores.dmvalues7, ldmascores.dminformation13, ldmascores.dmclarification14, ldmascores.dmexperience15, ldmascores.dmintuition16, ldmascores.dmtwoway17, ldmascores.dmstakeholderinput18, ldmascores.dmbestpractices19, ldmascores.dmcorporateculture20, ldmascores.dmpsychology21, ldmascores.dmethics22, ldmascores.dmanalysis25, ldmascores.dmproscons26, ldmascores.dmrisksbenefits27, ldmascores.dmalternatives28, ldmascores.dmbuyin33, ldmascores.dmexplain34, ldmascores.dmstructures, ldmascores.dmemployeeresponse41, ldmascores.dmemployeefeedback45, ldmascores.dminvolveemployees46, ldmascores.dmsystemdynamics48, ldmascores.dmrightanswer49, ldmascores.dmactionplan43, ldmascores.dmmotivate44, ldmascores.perspectiveteam9, ldmascores.perspectivecolleagues10, ldmascores.perspectiveexpert11, ldmascores.dmtools47 FROM ldmascores, ldmadm_include WHERE ldmascores.ldmakey = %s AND ldmadm_include.ldmaincludekey = ldmascores.dmtools47", GetSQLValueString($colname_rsDmTools47, "int"));
+$rsDmTools47 = mysql_query($query_rsDmTools47, $Assessment) or die(mysql_error());
+$row_rsDmTools47 = mysql_fetch_assoc($rsDmTools47);
+$totalRows_rsDmTools47 = mysql_num_rows($rsDmTools47);
+
+$colname_rsScoreComment = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsScoreComment = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsScoreComment = sprintf("SELECT ldmascores.ldmakey, ldmascores.lasnumber_1, lasnumber.lasnumber, lasnumber.lasexplanation FROM ldmascores, lasnumber WHERE ldmascores.ldmakey = %s AND lasnumber.lasnumber = ldmascores.lasnumber_1", GetSQLValueString($colname_rsScoreComment, "int"));
+$rsScoreComment = mysql_query($query_rsScoreComment, $Assessment) or die(mysql_error());
+$row_rsScoreComment = mysql_fetch_assoc($rsScoreComment);
+$totalRows_rsScoreComment = mysql_num_rows($rsScoreComment);
+
+$colname_rsregistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsregistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsregistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsregistrants, "int"));
+$rsregistrants = mysql_query($query_rsregistrants, $Assessment) or die(mysql_error());
+$row_rsregistrants = mysql_fetch_assoc($rsregistrants);
+$totalRows_rsregistrants = mysql_num_rows($rsregistrants);
+
+$colname_rsDilemma = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDilemma = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDilemma = sprintf("SELECT ldmadilemma.ldmadilemma, ldmadilemma.ldmadilemmakey, ldma.ldmadilemmakey, ldma.ldmakey  FROM ldmadilemma, ldma WHERE ldmadilemma.ldmadilemmakey = ldma.ldmadilemmakey AND ldma.ldmakey = %s", GetSQLValueString($colname_rsDilemma, "int"));
+$rsDilemma = mysql_query($query_rsDilemma, $Assessment) or die(mysql_error());
+$row_rsDilemma = mysql_fetch_assoc($rsDilemma);
+$totalRows_rsDilemma = mysql_num_rows($rsDilemma);
+
+$colname_rsLASnumberart = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsLASnumberart = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLASnumberart = sprintf("SELECT lasnumberart.lasartkey, lasnumberart.lasnumber, lasnumberart.manlasart, lasnumberart.starart, lasnumberart.compareart, ldmascores.ldmakey, ldmascores.lasnumber_1 FROM lasnumberart, ldmascores WHERE ldmascores.ldmakey = %s AND ldmascores.lasnumber_1 = lasnumberart.lasnumber", GetSQLValueString($colname_rsLASnumberart, "int"));
+$rsLASnumberart = mysql_query($query_rsLASnumberart, $Assessment) or die(mysql_error());
+$row_rsLASnumberart = mysql_fetch_assoc($rsLASnumberart);
+$totalRows_rsLASnumberart = mysql_num_rows($rsLASnumberart);
+// echo $query_rsLASnumberart;
+
+$colname_rsCoherenceProbe = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsCoherenceProbe = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceProbe = sprintf("SELECT ldmascores.coherenceonpointkey, ldmascores.ldmakey, coherenceprobe.coherenceprobekey, coherenceprobe.coherenceprobe, ldmascores.coherenceprobekey FROM ldmascores, coherenceprobe WHERE ldmascores.coherenceprobekey =  coherenceprobe.coherenceprobekey AND ldmascores.ldmakey = %s", GetSQLValueString($colname_rsCoherenceProbe, "int"));
+$rsCoherenceProbe = mysql_query($query_rsCoherenceProbe, $Assessment) or die(mysql_error());
+$row_rsCoherenceProbe = mysql_fetch_assoc($rsCoherenceProbe);
+$totalRows_rsCoherenceProbe = mysql_num_rows($rsCoherenceProbe);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsldmaboilerplate1 = "SELECT * FROM ldmaboilerplate WHERE ldmaboilerplatekey = 1";
+$rsldmaboilerplate1 = mysql_query($query_rsldmaboilerplate1, $Assessment) or die(mysql_error());
+$row_rsldmaboilerplate1 = mysql_fetch_assoc($rsldmaboilerplate1);
+$totalRows_rsldmaboilerplate1 = mysql_num_rows($rsldmaboilerplate1);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsldmaboilerplate2 = "SELECT * FROM ldmaboilerplate WHERE ldmaboilerplatekey = 2";
+$rsldmaboilerplate2 = mysql_query($query_rsldmaboilerplate2, $Assessment) or die(mysql_error());
+$row_rsldmaboilerplate2 = mysql_fetch_assoc($rsldmaboilerplate2);
+$totalRows_rsldmaboilerplate2 = mysql_num_rows($rsldmaboilerplate2);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsldmaboilerplate3 = "SELECT * FROM ldmaboilerplate WHERE ldmaboilerplatekey = 3";
+$rsldmaboilerplate3 = mysql_query($query_rsldmaboilerplate3, $Assessment) or die(mysql_error());
+$row_rsldmaboilerplate3 = mysql_fetch_assoc($rsldmaboilerplate3);
+$totalRows_rsldmaboilerplate3 = mysql_num_rows($rsldmaboilerplate3);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsldmaboilerplate4 = "SELECT * FROM ldmaboilerplate WHERE ldmaboilerplatekey = 4";
+$rsldmaboilerplate4 = mysql_query($query_rsldmaboilerplate4, $Assessment) or die(mysql_error());
+$row_rsldmaboilerplate4 = mysql_fetch_assoc($rsldmaboilerplate4);
+$totalRows_rsldmaboilerplate4 = mysql_num_rows($rsldmaboilerplate4);
+
+$colname_rsCoherenceVocabulary = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsCoherenceVocabulary = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceVocabulary = sprintf("SELECT coherencevocabulary.vocabularykey,  ldmascores.ldmakey, coherencevocabulary.vocabularycomment, ldmascores.coherencevocabularykey FROM coherencevocabulary , ldmascores WHERE ldmascores.coherencevocabularykey = coherencevocabulary.vocabularykey AND ldmascores.ldmakey = %s", GetSQLValueString($colname_rsCoherenceVocabulary, "int"));
+$rsCoherenceVocabulary = mysql_query($query_rsCoherenceVocabulary, $Assessment) or die(mysql_error());
+$row_rsCoherenceVocabulary = mysql_fetch_assoc($rsCoherenceVocabulary);
+$totalRows_rsCoherenceVocabulary = mysql_num_rows($rsCoherenceVocabulary);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceVocabularyIntro = "SELECT coherencevocabulary.vocabularykey, coherencevocabulary.vocabularyintro, ldmascores.coherencevocabularykey FROM coherencevocabulary, ldmascores WHERE coherencevocabulary.vocabularykey = 1 AND ldmascores.coherencevocabularykey > 0";
+$rsCoherenceVocabularyIntro = mysql_query($query_rsCoherenceVocabularyIntro, $Assessment) or die(mysql_error());
+$row_rsCoherenceVocabularyIntro = mysql_fetch_assoc($rsCoherenceVocabularyIntro);
+$totalRows_rsCoherenceVocabularyIntro = mysql_num_rows($rsCoherenceVocabularyIntro);
+
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateldma2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LDMA report</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssetsAssessments/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssetsAssessments/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.left {
+	float: left;
+	}
+.right {
+	float: right; /* since this element is floated, a width must be given */
+	width: 400px;
+	margin: 0px;
+	padding: 0px;
+}
+#mantable {
+	width: 255px;
+	float: left;
+	height: 170px;
+	margin: 0px;
+}
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible #mantable table {
+	margin-top: 6px;
+}
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible #mantable table .tablehead td {
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible #mantable table tr td {
+	padding-right: 10px;
+	padding-left: 10px;
+}
+-->
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #FFF9F3;
+	background-image: url(/images/skin/LDMAcontainer2.jpg);
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LDMAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 3;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 0px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+	background-image: url(/images/skin/LDMAmenu4.jpg);
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/LDMAfooter2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #menu1 div {
+	color: #FFE1D0;
+}
+.twoColFixRtHdr #container #menu1 #MenuBar2 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>Report for <?php echo $row_rsRegistrant['firstname']; ?> <?php echo $row_rsRegistrant['lastname']; ?></h1>
+  <p><strong>Assessment date:</strong> <?php echo $row_rsldma['date']; ?></p>
+  <p>&nbsp;</p>
+  <div id="TabbedPanels1" class="TabbedPanels">
+<ul class="TabbedPanelsTabGroup">
+              <li class="TabbedPanelsTab">Results</li>
+              <li class="TabbedPanelsTab">Reasoning in phase <?php echo $_GET['lasname']; ?></li>
+              <li class="TabbedPanelsTab">Suggestions</li>
+              <li class="TabbedPanelsTab">Comparison</li>
+  <li class="TabbedPanelsTab">Levels &amp; tasks</li>
+              <li class="TabbedPanelsTab">Management</li>
+<li class="TabbedPanelsTab">Essays</li>
+    </ul>
+            <div class="TabbedPanelsContentGroup">
+              <div class="TabbedPanelsContent">
+                <p><?php echo $row_rsScoreComment['lasexplanation']; ?></p>
+<h3>Your performance indicates that you are likely to think…</h3>
+                <p><?php echo $row_rsStrengths['dmcode1perspectives']; ?></p>
+                <p><?php echo $row_rsStrengths['dmcode2perspectives']; ?></p>
+                <p><?php echo $row_rsStrengths['dmcode3response']; ?></p>
+                <p><?php echo $row_rsStrengths['dmcode4response']; ?></p>
+                <h3>In your decision-making process, you are likely to…</h3>
+                <p><?php echo $row_rsStrengths['dmcode5process']; ?></p>
+                <h3>Personal remarks</h3>
+                <p><?php echo $row_rscoherenceframing['coherenceframing']; ?> <?php echo $row_rsRelevanceExamp['coherencerelevexamp']; ?> <?php echo $row_rscoherenceonpoint['onpoint']; ?> <?php echo $row_rscoherencepersuade['persuasiveness']; ?> <?php echo $row_rsCoherenceProbe['coherenceprobe']; ?> <?php echo $row_rscoherencefragment['coherencefragment']; ?> <?php echo $row_rsRelevanceArg['coherencerelevancearg']; ?> <?php echo $row_rsCoherenceOverall['implication']; ?> <?php echo $row_rsCoherenceOverall['cohereoverinfer']; ?><?php echo $row_rsCoherence['coherenceinfer']; ?> <?php echo $row_rsCoherence['implication']; ?><?php echo $row_rsCoherenceVocabularyIntro['vocabularyintro']; ?><?php echo $row_rsCoherenceVocabulary['vocabularycomment']; ?></p>
+                <p><?php echo $row_rsldmaperspective['spcomment']; ?><?php echo $row_rsPerspectiveOrienting['perspective']; ?> <?php echo $row_rsldmaboilerplate1['ldmaboilerplate']; ?> <?php echo $row_rsPerspectiveYou1['ldmataken']; ?> <?php echo $row_rsPerspectiveEmployee2['ldmataken']; ?> <?php echo $row_rsPerspectiveTeam9['ldmataken']; ?> <?php echo $row_rsPerspectiveManager3['ldmataken']; ?> <?php echo $row_rsPerspectiveColleagues10['ldmataken']; ?> <?php echo $row_rsPerspectiveExpert11['ldmataken']; ?> <?php echo $row_rsPerspectiveSenior4['ldmataken']; ?> <?php echo $row_rsPerspectiveCompany5['ldmataken']; ?> <?php echo $row_rsPerspectiveCustomer6['ldmataken']; ?> <?php echo $row_rsPerspectiveStakeholder7['ldmataken']; ?> <?php echo $row_rsPerspectiveSociety8['ldmataken']; ?> <?php echo $row_rsldmaboilerplate2['ldmaboilerplate']; ?> <?php echo $row_rsPerspectiveSought['ldmasought']; ?></p>
+                <p><?php echo $row_rsldmadecision['decision']; ?><?php echo $row_rsDMemphasis['ldmaemphasis']; ?> <?php echo $row_rsDMby['ldmaby']; ?> <?php echo $row_rsldmaboilerplate3['ldmaboilerplate']; ?> <?php echo $row_rsDmEmployeeResponse41['ldmainclude']; ?> <?php echo $row_rsDMpersonalgoals1['ldmainclude']; ?> <?php echo $row_rsDMmanagementgoals2['ldmainclude']; ?> <?php echo $row_rsDMstrategicgoals3['ldmainclude']; ?> <?php echo $row_rsDMrules4['ldmainclude']; ?> <?php echo $row_rsDMpriorities5['ldmainclude']; ?> <?php echo $row_rsDMprinciples6['ldmainclude']; ?> <?php echo $row_rsDMvalues7['ldmainclude']; ?> <?php echo $row_rsDMinformation13['ldmainclude']; ?> <?php echo $row_rsDMclarification14['ldmainclude']; ?> <?php echo $row_rsDmEmployeeFeedback45['ldmainclude']; ?> <?php echo $row_rsDMexperience15['ldmainclude']; ?> <?php echo $row_rsDMintuition16['ldmainclude']; ?> <?php echo $row_rsDMtwoway17['ldmainclude']; ?> <?php echo $row_rsDMstakeholderinput18['ldmainclude']; ?> <?php echo $row_rsDMbestpractices19['ldmainclude']; ?> <?php echo $row_rsDMcorporateculture20['ldmainclude']; ?> <?php echo $row_rsDMpsychology21['ldmainclude']; ?> <?php echo $row_rsDMethics22['ldmainclude']; ?> <?php echo $row_rsDManalysis25['ldmainclude']; ?> <?php echo $row_rsDmRightAnswer49['ldmainclude']; ?> <?php echo $row_rsDmInvolveEmployees46['ldmainclude']; ?> <?php echo $row_rsDMproscons26['ldmainclude']; ?> <?php echo $row_rsDMrisksbenefits27['ldmainclude']; ?> <?php echo $row_rsDmTools47['ldmainclude']; ?> <?php echo $row_rsDmSystemDynamics48['ldmainclude']; ?> <?php echo $row_rsDMalternatives28['ldmainclude']; ?> <?php echo $row_rsDmActionPlan43['ldmainclude']; ?> <?php echo $row_rsDMexplain34['ldmainclude']; ?> <?php echo $row_rsDmMotivate44['ldmainclude']; ?> <?php echo $row_rsDMbuyin33['ldmainclude']; ?> <?php echo $row_rsldmaboilerplate4['ldmaboilerplate']; ?> <?php echo $row_rsDMreview['ldmareview']; ?> <?php echo $row_rsDMstructures40['ldmainclude']; ?></p>
+                <p><?php echo $row_rsldmascores['codercomment']; ?><?php echo $row_rsldmastrength['strength']; ?> <?php echo $row_rsldmacaveat['caveat']; ?></p>
+                <p><?php echo $row_rsldmarecommend['recommend']; ?><em><?php echo $row_rsCoherenceEnglish['coherenceenglishinfer']; ?> <?php echo $row_rsCoherenceEnglish['implication']; ?></em></p>
+                <p>&nbsp;</p>
+                <div class="boxLDMA"><p>Lectical assessments are assessments of performances, not people. All individuals function in a developmental range, and a single assessment cannot represent that range. Further, our assessments are discipline specific. Individuals generally function at different levels in different disciplines. Consequently, performance on one assessment in any one domain cannot be taken as a general indicator of overall cognitive ability.                </p></div>
+                <p>&nbsp;</p>
+              </div>
+              <div class="TabbedPanelsContent">
+              <h2>Reasoning in phase <?php echo $_GET['lasname']; ?></h2>
+                  <h3>General comments</h3>
+                  <p><?php echo $row_rsdmmanlasgendescrip['dmmanlasgendescrip']; ?></p>
+                  <h3>Perspectives</h3>
+                  <p><?php echo $row_rsdmmanlasgendescrip['dmmanlasperspec']; ?></p>
+                  <h3>Solutions</h3>
+                  <p><?php echo $row_rsdmmanlasgendescrip['dmmanlasresponse']; ?></p>
+                  <h3>The decision-making process</h3>
+                  <p><?php echo $row_rsdmmanlasgendescrip['dmmanlasprocess']; ?></p>
+                  <p>&nbsp;</p>
+                  <div class="boxLDMA">
+                    <p>We did not base your score on the particular conceptual content of your performance. We base our scores on what cognitive developmental researchers call the &quot;hierarchical&quot; (level of hierarchical integration) and &quot;horizontal&quot; (degree of elaboration within a level) complexity of  performances. The first two digits in your score denote the hierarchical integration; the third  digit denotes the degree of elaboration. To read a short description of our scoring system, the Lectical Assessment System (LAS), <a href="../PDF/LAAS.pdf">click here</a>.</p></div>
+              </div>
+              <div class="TabbedPanelsContent">
+                  <h2>Suggestions</h2>
+                  <p>As Malcolm Gladwell argu<span>es in the book, <em>Outliers</em>, it takes about 10,000 hours of  study (10 years) to become an expert in any complex field—no matter how talented you are. We would add that no matter how much of an expert you become—on yourself, in your area of professional expertise, or in the interpersonal sphere—there is always room for </span>growth. </p>
+                  <p>Our learning suggestions are targeted one to two phases beyond your current phase of performance. The resources in this list should make you stretch just enough to challenge your current thinking. If a resource is too easy, you should probably move on. If it is too difficult, start with something a little less challenging. </p>
+                  <h3>Common areas for growth in phase <?php echo $_GET['lasname']; ?> include...</h3>
+                  <p><?php echo $row_rsdmgrowth['dmgrowthperspectives']; ?><?php echo $row_rsdmgrowth['dmgrowthresponse']; ?><?php echo $row_rsdmgrowth['dmgrowthprocess']; ?><?php echo $row_rsdmgrowth['dmgrowthorg']; ?></p>
+            <h3>Phase <?php echo $_GET['lasname']; ?> learning suggestions</h3>
+                  <p>As you work with the resources suggested on this page, keep in mind that deep learning requires practice. You are far more likely to incorporate new knowledge into your skill repertoire if you take every opportunity to (1) put it to work, and (2) reflect upon outcomes. Putting knowledge to work means applying it in real-world contexts. Try out new skills in low-stakes contexts first, then gradually begin to apply them in higher-stakes contexts until you've mastered them. Reflecting on outcomes means evaluating  the results of  your efforts. This works best if you keep a record—such as a journal—and share your experiences with other members of your community of practice. If you are a senior manager or CEO, you may want to think about how corporate culture supports or prevents this kind of thinking and discourse.</p>
+                  <p>You should also keep in mind that the recommendations we make here are focused on helping you to develop your knowledge and improve your reasoning and decision making skills. These are important, but they are by no means the only things that affect performance. Lifestyle, emotion, life experiences, and a range of dispositional factors are also likely to affect your performance (and your developmental progress). Because of this, we strongly recommend that you work closely with a trusted mentor who has an opportunity to get to know you as a multifaceted human being.</p>
+                  <ul>
+                    <li>
+                      <p><span><?php echo $row_rsdmlessons['dmlesson1']; ?></span></p>
+                    </li>
+                    <li>
+                      <p><span><?php echo $row_rsdmlessons['dmlesson2']; ?></span></p>
+                    </li>
+                    <li>
+                      <p><span><?php echo $row_rsdmlessons['dmlesson3']; ?></span></p>
+                    </li>
+                    <li>
+                      <p><span><?php echo $row_rsdmlessons['dmlesson4']; ?></span></p>
+                    </li>
+                    <li>
+                      <p><span><?php echo $row_rsdmlessons['dmlesson5']; ?></span></p>
+                    </li>
+                    <li>
+                      <p><span><?php echo $row_rsdmlessons['dmlesson6']; ?></span></p>
+                    </li>
+                  </ul>
+                <div class="boxLDMA"><p>We  encourage you to take seriously any comments we make about areas for growth. Development from one level to the next cannot occur until there is adequate elaboration of concepts and skills within  one's current level. Moreover, the adequacy of one's skills and concepts at a new level is contingent upon the breadth and depth of elaboration at the previous level. Unless you are on the verge of transitioning into a new level, most of our comments are intended to promote optimal elaboration of skills and concepts at your current level. </p></div>
+                  <h3 align="left"><span>Implicit versus explicit knowledge</span></h3>
+                  <p align="left"><span>Some of our knowlege is readily avaialble to us. We are conscious of it and can share it with others. Psychologists refer to this kind of knowledge as <em>explicit</em>. Explicit knowledge is fairly easy to share on an assessment like this one. However, people often know more about a particular subject than they can communicate in an assessment like this one. This is because much of what we learn through experience does not automatically become part of our explicit knowledge. It's in a form that's difficult to share. We call this kind of knowledge <em>tacit</em> or <em>implicit</em>. You can also think of it as intuitive knowledge. Tacit knowledge is not a bad thing. It helps us make quick choices in familiar situations; we'd be in big trouble if we had to think through every single situation in our lives before we made a decision! But tacit knowledge has its limits.</span></p>
+<p align="left"><span><strong>First</strong>, because we aren't able to bring it into focus, we can't share tacit knowledge with others. This is the case in businesses in which the person at the top is an &quot;intuitive&quot; leader. Because his or her leadership skills are tacit, they can't be shared. In situations like this, it is not uncommon for an institution to last only as long as its leader. </span></p>
+                  <p align="left"><span><strong>Second</strong>, it is limited by our experience, which means it isn't terribly useful for dealing with novelty. Because tacit knowledge is experienced-based, it is most useful in situations that are like those we have confronted in the past. Unfortunately, the modern world is constantly providing us with new challenges. To meet these challenges, we  need conscious methods for evaluating  knowledge and experience.</span></p>
+                  <p align="left"><span><strong>Third</strong>, sometimes our tacit knowledge is sub-optimal. For example, people who learn the skills required to survive on the rough side of town or in an abusive relationship often fare poorly when they try to function outside of those contexts, because their  tacit knowledge isn't useful in their new surroundings. Before they can learn more adaptive skills, they usually need to bring their tacit knowledge into consciousness. </span></p>
+                  <p><span><strong>Fourth</strong>, relying on tacit knowledge limits our development. When we habitually rely on our tacit knowledge, learning not only slows down, it's quality is compromised. Optimal learning requires that we reflect consciously upon our own experiences and actively seek other perspectives to</span> fill in the gaps. </p>
+                  <p><strong>Finally</strong>, relying upon tacit knowledge limits our ability to collaborate with others.                  </p>
+              <div class="boxLDMA"><p>You may find it useful to revisit your report at a later date. As we update our knowledge about learning at each phase, we add to our learning suggestions. This means, from time to time, that you may discover new resources here, even if you don't take another assessment.</p></div>
+                  <p></p>
+              </div>
+              <div class="TabbedPanelsContent">
+                <h2>Your score relative to the adult population</h2>
+                <p>The figure below shows the approximate distribution of American adults' skill levels—in areas of expertise. There is no single source for the numbers that inform this figure. They reflect the research literature, our own data, and consultations with other developmentalists. We are least clear about the ends of the distribution—especially the top end—but despite this we feel confident that the general picture is accurate. Most American adults perform in level 10.</p>
+                <p>The figure shows a symmetrical bell curve, in which the average score adults receive in an area of expertise is  in the middle of the curve. Most people (68% of them, or 34% + 34%)  perform within one segment of the average score. Each of the second segments (to the right and left of the two middle segments) represent 14% of the population, and each of the segments on the far right and left represent 2% of the adult population. Percentages are shown on the horizontal axis. The location of your <em>numerical</em> score (<?php echo $row_rsLASnumberart['lasnumber_1']; ?>) is indicated by a vertical line with translucent bars on each side. Those bars represent the range in which your &quot;true&quot; score is most likely to fall.<br />
+                  <br />
+                </p>
+                <p><img src="<?php echo $row_rsLASnumberart['compareart']; ?>" alt="Graph of level versus management levels" width="687" height="244" hspace="0" align="baseline" /></p>
+                <p></p>
+                <p>&nbsp;</p>
+                <h3></h3>
+              </div>
+              <div class="TabbedPanelsContent">
+                <h2>The reasoning skills of managers and the complexity of the workplace </h2>
+                <p>The scoring procedures we used to score your assessment also can be used to score the task demands of a wide range of jobs, problems, or issues. This makes it possible to compare the task demands of  particular jobs (or job categories) with the levels at which managers think about those tasks.<br />
+                </p>
+                <div id="mantable">
+                <table>
+                  <tr class="tablehead">
+                    <td>Management level</td>
+                    <td><div align="center">Mean phase</div></td>
+                  </tr>
+                  <tr>
+                    <td>Senior</td>
+                    <td><div align="center">12:3</div></td>
+                  </tr>
+                  <tr>
+                    <td>Upper</td>
+                    <td><div align="center">11:3</div></td>
+                  </tr>
+                  <tr>
+                    <td>Mid</td>
+                    <td><div align="center">11:1</div></td>
+                  </tr>
+                  <tr>
+                    <td>Supervisory/entry</td>
+                    <td><div align="center">11:1</div></td>
+                  </tr>
+                  <tr>
+                    <td>Pre</td>
+                    <td><div align="center">10:4</div></td>
+                  </tr>
+                </table>
+                </div>
+                <p>Here, we explore the relation between generalized management levels and managers' performance on  lectical assessments targeting several management skills. The table on the left shows the average LAS scores for 510 government leaders occupying 5 different management levels. These manager/leaders were tested between 2002 and 2006 as part of a series of studies conducted for the federal government. (Reports on this research are available on the <a href="../codingldma/articles.html">articles</a> page of this site.)</p>
+                <h3><span>Tasks and levels</span></h3>
+                <p><span>The figure below shows the relation between the task demands of 7 levels of management (1 = not a manager, 2 = pre-manager, 3 = supervisor, 4 = mid-level manager, 5 = upper-level manager, 6 = senior manager/CEO small business, and 7 = CEO large corporation) and the average performance levels of managers occupying these management positions. </span><br />
+                  <br />
+                  <img src="../images/DemandVsCapability.gif" alt="demands vs. ability" width="400" height="344" align="right" class="imageright" /></p>
+<p>In this simplified image, the task demands of most management positions increase in a linear fashion from level 0 pre-management) to level 7 (CEO, large multinational corporation), spanning levels 10-13+. The capabilities of managers do not, for the most part, match these task demands, especially above level 2 (supervisory level). This means that the decision-making of average managers is likely to be less complex than many of the issues they confront. In concrete terms, this means failing to understand or take into account important aspects these issues, resulting in sub-optimal decision making.</p>
+<p>The disturbing pattern shown in the figure is pervasive—we see it everywhere we look—and it reflects a hard truth. Few, if any, of us are capable of meeting the task demands of the most complex situations in today’s world. We have concluded  that in many situations our best hope for meeting these demands is to (1) work strategically on the development of our own skills and knowledge, (2) learn to work closely with others who represent a wide range of perspectives and areas of expertise, and (3) use the best tools available to scaffold our thinking.</p>
+<p>The task demands of the highest levels of management/leadership in most large (and many smaller) institutions are far beyond the reach of individual leaders. At these levels, leaders must work with others to identify and integrate a wide range of knowledge, information, and perspectives. In these cases, the performance level of the group can be a full level higher than the performance levels of the individuals who make up the group. </p>
+<p>Because your personal growth and performance as a leader depend upon your capacity for working with others, we urge you to work diligently to improve your interpersonal skills, particularly those required for collaboration.<br />
+</p>
+<p>&nbsp;</p>
+              </div>
+              <div class="TabbedPanelsContent">
+                <img src="<?php echo $row_rsLASnumberart['manlasart']; ?>" alt="Graph of level versus management levels" hspace="0" align="left" class="imageleft2" />
+              <h2>Phase <?php echo $_GET['lasname']; ?>&nbsp;and <?php echo $row_rsmanlevelcomment['manlevelname']; ?></h2>
+                <p><?php echo $row_rsDmintroman['dmintroman']; ?></p>
+<p>The figure on the left shows the relation between developmental levels and the task demands of various positions in a large corporation—where the complexity of high level responsibilities tax the mental capacity of even the most developed decision makers. The star represents the <em>numerical score</em> for your performance. (The numerical score is represented in <em>tenths</em> of a level. Your numerical score is <?php echo $row_rsLASnumberart['lasnumber']; ?>.) The higher your managerial position, the less likely it is that you will be able to master the full complexity of your responsibilities. If the gap between your score and the task demands of your job is large, you are likely to be struggling. (See &quot;levels &amp; tasks&quot; to learn more about the gap between human capabilities and the complexity of  management positions.)</p>
+<p>An appropriate level of decision-making skill is necessary but not sufficient for managerial success. Other skills, such as strategic thinking and reasoning about the leadership role, collaboration skills, interpersonal awareness, emotional maturity, motivation, and personality contribute to predictions of performance.</p>
+<p>(The following section will be blank if you did not report a management level.)</p>
+<h3>The task demands of <strong><?php echo $row_rsmanlevelcomment['manlevelname']; ?></strong></h3>
+<p><span><?php echo $row_rsmanlevelcomment['manlevelcomment']; ?></span></p>
+<h3><span><strong>Your performance in relation to the task demands of <?php echo $row_rsmanlevelcomment['manlevelname']; ?></strong></span></h3>
+<p><span><?php echo $row_rsmanleveljuxtapose['manleveljuxtapose']; ?></span></p>
+<p>&nbsp;</p>
+<div class="boxLDMA">
+  <p>Management positions with the same name can be associated with a wide range of task demands. We recommend that you interpret our comments with caution, particularly if your position is at or above the senior level and you work in a small institution.</p></div>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+              </div>
+<div class="TabbedPanelsContent">
+                <div class="boxLDMA"><p>There is a limit to what you can write in an assessment essay. Occasionally, something is missing just because you did not think about it the day you wrote your responses. We may label the omission as an area of weakness. If you find yourself disagreeing with any of our observations, seek a second opinion from a mentor or counselor who knows you well. </p></div>
+<h2>Your essays</h2>
+<h3><strong>Dilemma</strong></h3>
+<p><?php echo $row_rsDilemma['ldmadilemma']; ?></p>
+<p><em><strong>Essay 1: </strong>What are the important things to consider in this situation? In one or two paragraphs, explain what they are and why they are important.</em></p>
+                <p><?php echo nl2br ($row_rsldma['perspectives1']); ?></p>
+          <p><em><strong>Essay 2: </strong>Are some of the the considerations you discussed in your response to question 1 more important than others? If so, what are they and why are they more important?</em></p>
+    <p><?php echo nl2br ($row_rsldma['perspectives2']); ?></p>
+    <p><em><strong>Essay 3: </strong>What do you think is an appropriate response to this kind of situation? Please explain why this response is appropriate.</em></p>
+    <p><?php echo nl2br ($row_rsldma['response1']); ?></p>
+<p><em><strong>Essay 4: </strong>Describe another reasonable response to this kind of situation. Compare the potential risks and benefits of this response with those of your original response.</em></p>
+    <p><?php echo nl2br ($row_rsldma['response2']); ?></p>
+    <p><em><strong>Essay 5: </strong>What process would you recommend for deciding how to respond to situations of this kind? Please describe this decision -making process in a way that would allow another person to replicate it.</em></p>
+          <p><?php echo nl2br ($row_rsldma['process']); ?></p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+</div>
+ </div>
+  </div>
+<br class="clearfloat" />   
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+<script type="text/javascript">
+<!--
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+//-->
+        </script>
+        <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrant);
+
+mysql_free_result($rsldmascores);
+
+mysql_free_result($rsCoherence);
+
+mysql_free_result($rsldmastrength);
+
+mysql_free_result($rsldmacaveat);
+
+mysql_free_result($rsldmarecommend);
+
+mysql_free_result($rsldmaperspective);
+
+mysql_free_result($rsLasByAge);
+
+mysql_free_result($rsCoherenceOverall);
+
+mysql_free_result($rscoherenceonpoint);
+
+mysql_free_result($rsRelevanceArg);
+
+mysql_free_result($rsRelevanceExamp);
+
+mysql_free_result($rscoherencefragment);
+
+mysql_free_result($rscoherenceframing);
+
+mysql_free_result($rsCoherenceEnglish);
+
+mysql_free_result($rscoherencepersuade);
+
+mysql_free_result($rsPerspectiveOrienting);
+
+mysql_free_result($rsPerspectiveSought);
+
+mysql_free_result($rsPerspectiveYou1);
+
+mysql_free_result($rsPerspectiveEmployee2);
+
+mysql_free_result($rsPerspectiveTeam9);
+
+mysql_free_result($rsPerspectiveColleagues10);
+
+mysql_free_result($rsPerspectiveExpert11);
+
+mysql_free_result($rsPerspectiveManager3);
+
+mysql_free_result($rsDMemphasis);
+
+mysql_free_result($rsDMby);
+
+mysql_free_result($rsDMreview);
+
+mysql_free_result($rsDMreflect);
+
+mysql_free_result($rsDMpersonalgoals1);
+
+mysql_free_result($rsDMmanagementgoals2);
+
+mysql_free_result($rsDMstrategicgoals3);
+
+mysql_free_result($rsDMrules4);
+
+mysql_free_result($rsDMpriorities5);
+
+mysql_free_result($rsDMprinciples6);
+
+mysql_free_result($rsDMvalues7);
+
+mysql_free_result($rsDMinformation13);
+
+mysql_free_result($rsDMclarification14);
+
+mysql_free_result($rsDMexperience15);
+
+mysql_free_result($rsDMintuition16);
+
+mysql_free_result($rsDMtwoway17);
+
+mysql_free_result($rsDMstakeholderinput18);
+
+mysql_free_result($rsDMbestpractices19);
+
+mysql_free_result($rsDMcorporateculture20);
+
+mysql_free_result($rsDMpsychology21);
+
+mysql_free_result($rsDMethics22);
+
+mysql_free_result($rsDManalysis25);
+
+mysql_free_result($rsDMproscons26);
+
+mysql_free_result($rsDMrisksbenefits27);
+
+mysql_free_result($rsDMalternatives28);
+
+mysql_free_result($rsDMbuyin33);
+
+mysql_free_result($rsDMexplain34);
+
+mysql_free_result($rsDMstructures40);
+
+mysql_free_result($rsDmEmployeeFeedback45);
+
+mysql_free_result($rsDmInvolveEmployees46);
+
+mysql_free_result($rsDmSystemDynamics48);
+
+mysql_free_result($rsDmRightAnswer49);
+
+mysql_free_result($rsDmActionPlan43);
+
+mysql_free_result($rsDmMotivate44);
+
+mysql_free_result($rsDmTools47);
+
+mysql_free_result($rsScoreComment);
+
+mysql_free_result($rsregistrants);
+
+mysql_free_result($rsDilemma);
+
+mysql_free_result($rsLASnumberart);
+
+mysql_free_result($rsCoherenceProbe);
+
+mysql_free_result($rsldmaboilerplate1);
+
+mysql_free_result($rsldmaboilerplate2);
+
+mysql_free_result($rsldmaboilerplate3);
+
+mysql_free_result($rsldmaboilerplate4);
+
+mysql_free_result($rsCoherenceVocabulary);
+
+mysql_free_result($rsCoherenceVocabularyIntro);
+
+mysql_free_result($rsldmadecision);
+
+mysql_free_result($rsldma);
+
+mysql_free_result($rsStrengths);
+
+mysql_free_result($rsManlasart);
+
+mysql_free_result($rsmanlevelart);
+
+mysql_free_result($rsDmintroman);
+
+mysql_free_result($rsdmmanlasgendescrip);
+
+mysql_free_result($rsmanlevelcomment);
+
+mysql_free_result($rsmanleveljuxtapose);
+
+mysql_free_result($rsdmgrowth);
+
+mysql_free_result($rsdmlessons);
+
+?>

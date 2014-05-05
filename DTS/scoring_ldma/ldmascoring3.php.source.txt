@@ -1,0 +1,892 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['php_self'];
+if (isset($_SERVER['query_string'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['query_string']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE ldmascores SET contentcoder=%s, lasname=%s, menurecommend1=%s, perspectiveorientingkey=%s, perspectiveyou1=%s, perspectiveemployees2=%s, perspectiveteam9=%s, perspectivemanager3=%s, perspectivecolleagues10=%s, perspectiveexpert11=%s, perspectivesenior4=%s, perspectivecompany5=%s, perspectivecustomers6=%s, perspectiveshareholders7=%s, perspectivesociety8=%s, perspectivesoughtkey=%s, dmemphasizekey=%s, dmbykey=%s WHERE ldmakey=%s",
+                       GetSQLValueString($_POST['contentcoder'], "int"),
+                       GetSQLValueString($_POST['lasname'], "text"),
+                       GetSQLValueString($_POST['menurecommend1'], "text"),
+                       GetSQLValueString($_POST['perspectiveorientingkey'], "int"),
+                       GetSQLValueString($_POST['perspectiveyou1'], "int"),
+                       GetSQLValueString($_POST['perspectiveemployees2'], "int"),
+                       GetSQLValueString($_POST['perspectiveteam9'], "int"),
+                       GetSQLValueString($_POST['perspectivemanager3'], "int"),
+                       GetSQLValueString($_POST['perspectivecolleagues10'], "int"),
+                       GetSQLValueString($_POST['perspectiveexpert11'], "int"),
+                       GetSQLValueString($_POST['perspectivesenior4'], "int"),
+                       GetSQLValueString($_POST['perspectivecompany5'], "int"),
+                       GetSQLValueString($_POST['perspectivecustomers6'], "int"),
+                       GetSQLValueString($_POST['perspectiveshareholders7'], "int"),
+                       GetSQLValueString($_POST['perspectivesociety8'], "int"),
+                       GetSQLValueString($_POST['perspectivesoughtkey'], "int"),
+                       GetSQLValueString($_POST['dmemphasizekey'], "int"),
+                       GetSQLValueString($_POST['dmbykey'], "int"),
+                       GetSQLValueString($_GET['ldmakey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "ldmascoring4.php";
+  if (isset($_SERVER['query_string'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['query_string'];
+  }
+  header(sprintf("location: %s", $updateGoTo));
+}
+
+$colname_rsLDMAessays = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsLDMAessays = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMAessays = sprintf("SELECT ldmakey, perspectives1, perspectives2, response1, response2, process FROM ldma WHERE ldmakey = %s", GetSQLValueString($colname_rsLDMAessays, "int"));
+$rsLDMAessays = mysql_query($query_rsLDMAessays, $Assessment) or die(mysql_error());
+$row_rsLDMAessays = mysql_fetch_assoc($rsLDMAessays);
+$totalRows_rsLDMAessays = mysql_num_rows($rsLDMAessays);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMemphasis = "SELECT * FROM ldmadm_emphasis ORDER BY ldmaemphasisorder asc";
+$rsDMemphasis = mysql_query($query_rsDMemphasis, $Assessment) or die(mysql_error());
+$row_rsDMemphasis = mysql_fetch_assoc($rsDMemphasis);
+$totalRows_rsDMemphasis = mysql_num_rows($rsDMemphasis);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMby = "SELECT * FROM ldmadm_by ORDER BY ldmabyorder asc";
+$rsDMby = mysql_query($query_rsDMby, $Assessment) or die(mysql_error());
+$row_rsDMby = mysql_fetch_assoc($rsDMby);
+$totalRows_rsDMby = mysql_num_rows($rsDMby);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveOrienting = "SELECT * FROM ldmaperspective_orienting ORDER BY perspectiveorder asc";
+$rsPerspectiveOrienting = mysql_query($query_rsPerspectiveOrienting, $Assessment) or die(mysql_error());
+$row_rsPerspectiveOrienting = mysql_fetch_assoc($rsPerspectiveOrienting);
+$totalRows_rsPerspectiveOrienting = mysql_num_rows($rsPerspectiveOrienting);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectivesSelf1 = "SELECT * FROM ldmaperspective_taken WHERE ldmatakenkey = 1";
+$rsPerspectivesSelf1 = mysql_query($query_rsPerspectivesSelf1, $Assessment) or die(mysql_error());
+$row_rsPerspectivesSelf1 = mysql_fetch_assoc($rsPerspectivesSelf1);
+$totalRows_rsPerspectivesSelf1 = mysql_num_rows($rsPerspectivesSelf1);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectivesSought = "SELECT * FROM ldmaperspective_sought ORDER BY ldmasoughtorder asc, ldmaperspective_sought.ldmasought asc";
+$rsPerspectivesSought = mysql_query($query_rsPerspectivesSought, $Assessment) or die(mysql_error());
+$row_rsPerspectivesSought = mysql_fetch_assoc($rsPerspectivesSought);
+$totalRows_rsPerspectivesSought = mysql_num_rows($rsPerspectivesSought);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveManager3 = "SELECT * FROM ldmaperspective_taken WHERE ldmatakenkey = 3";
+$rsPerspectiveManager3 = mysql_query($query_rsPerspectiveManager3, $Assessment) or die(mysql_error());
+$row_rsPerspectiveManager3 = mysql_fetch_assoc($rsPerspectiveManager3);
+$totalRows_rsPerspectiveManager3 = mysql_num_rows($rsPerspectiveManager3);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveEmployees2 = "SELECT * FROM ldmaperspective_taken WHERE ldmatakenkey = 2";
+$rsPerspectiveEmployees2 = mysql_query($query_rsPerspectiveEmployees2, $Assessment) or die(mysql_error());
+$row_rsPerspectiveEmployees2 = mysql_fetch_assoc($rsPerspectiveEmployees2);
+$totalRows_rsPerspectiveEmployees2 = mysql_num_rows($rsPerspectiveEmployees2);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveTeam9 = "SELECT * FROM ldmaperspective_taken WHERE ldmatakenkey = 9";
+$rsPerspectiveTeam9 = mysql_query($query_rsPerspectiveTeam9, $Assessment) or die(mysql_error());
+$row_rsPerspectiveTeam9 = mysql_fetch_assoc($rsPerspectiveTeam9);
+$totalRows_rsPerspectiveTeam9 = mysql_num_rows($rsPerspectiveTeam9);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveColleagues10 = "SELECT * FROM ldmaperspective_taken WHERE ldmatakenkey = 10";
+$rsPerspectiveColleagues10 = mysql_query($query_rsPerspectiveColleagues10, $Assessment) or die(mysql_error());
+$row_rsPerspectiveColleagues10 = mysql_fetch_assoc($rsPerspectiveColleagues10);
+$totalRows_rsPerspectiveColleagues10 = mysql_num_rows($rsPerspectiveColleagues10);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveExpert11 = "SELECT * FROM ldmaperspective_taken WHERE ldmatakenkey = 11";
+$rsPerspectiveExpert11 = mysql_query($query_rsPerspectiveExpert11, $Assessment) or die(mysql_error());
+$row_rsPerspectiveExpert11 = mysql_fetch_assoc($rsPerspectiveExpert11);
+$totalRows_rsPerspectiveExpert11 = mysql_num_rows($rsPerspectiveExpert11);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveSenior4 = "SELECT * FROM ldmaperspective_taken WHERE ldmatakenkey = 4";
+$rsPerspectiveSenior4 = mysql_query($query_rsPerspectiveSenior4, $Assessment) or die(mysql_error());
+$row_rsPerspectiveSenior4 = mysql_fetch_assoc($rsPerspectiveSenior4);
+$totalRows_rsPerspectiveSenior4 = mysql_num_rows($rsPerspectiveSenior4);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectivesCompany5 = "SELECT * FROM ldmaperspective_taken WHERE ldmatakenkey = 5";
+$rsPerspectivesCompany5 = mysql_query($query_rsPerspectivesCompany5, $Assessment) or die(mysql_error());
+$row_rsPerspectivesCompany5 = mysql_fetch_assoc($rsPerspectivesCompany5);
+$totalRows_rsPerspectivesCompany5 = mysql_num_rows($rsPerspectivesCompany5);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveCustomer6 = "SELECT * FROM ldmaperspective_taken WHERE ldmatakenkey = 6";
+$rsPerspectiveCustomer6 = mysql_query($query_rsPerspectiveCustomer6, $Assessment) or die(mysql_error());
+$row_rsPerspectiveCustomer6 = mysql_fetch_assoc($rsPerspectiveCustomer6);
+$totalRows_rsPerspectiveCustomer6 = mysql_num_rows($rsPerspectiveCustomer6);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveShareholder7 = "SELECT * FROM ldmaperspective_taken WHERE ldmatakenkey = 7";
+$rsPerspectiveShareholder7 = mysql_query($query_rsPerspectiveShareholder7, $Assessment) or die(mysql_error());
+$row_rsPerspectiveShareholder7 = mysql_fetch_assoc($rsPerspectiveShareholder7);
+$totalRows_rsPerspectiveShareholder7 = mysql_num_rows($rsPerspectiveShareholder7);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveSociety8 = "SELECT * FROM ldmaperspective_taken WHERE ldmatakenkey = 8";
+$rsPerspectiveSociety8 = mysql_query($query_rsPerspectiveSociety8, $Assessment) or die(mysql_error());
+$row_rsPerspectiveSociety8 = mysql_fetch_assoc($rsPerspectiveSociety8);
+$totalRows_rsPerspectiveSociety8 = mysql_num_rows($rsPerspectiveSociety8);
+
+$colname_rsLDMAscores = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsLDMAscores = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMAscores = sprintf("SELECT ldmascoringkey, ldmakey, contentcoder, lasname, menurecommend1, perspectiveorientingkey, perspectiveyou1, perspectiveemployees2, perspectiveteam9, perspectivemanager3, perspectivecolleagues10, perspectiveexpert11, perspectivesenior4, perspectivecompany5, perspectivecustomers6, perspectiveshareholders7, perspectivesociety8, perspectivesoughtkey, dmemphasizekey, dmbykey, dmemployeeresponse41, dmpersonalgoals1, dmmanagementgoals2, dmstrategicgoals3, dmrules4, dmpriorities5, dmprinciples6, dmvalues7, dminformation13, dmpractical42, dmclarification14, dmexperience15, dmintuition16, dmtwoway17, dmstakeholderinput18, dmbestpractices19, dmcorporateculture20, dmpsychology21, dmethics22, dmanalysis25, dmemployeefeedback45, dminvolveemployees46, dmtools47, dmsystemdynamics48, dmproscons26, dmrisksbenefits27, dmalternatives28, dmrightanswer49, dmactionplan43, dmmotivate44, dmbuyin33, dmexplain34, dmstructures, dmreview FROM ldmascores WHERE ldmakey = %s", GetSQLValueString($colname_rsLDMAscores, "int"));
+$rsLDMAscores = mysql_query($query_rsLDMAscores, $Assessment) or die(mysql_error());
+$row_rsLDMAscores = mysql_fetch_assoc($rsLDMAscores);
+$totalRows_rsLDMAscores = mysql_num_rows($rsLDMAscores);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateldmascore2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: </title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../DTSassets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../DTSassets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../DTSassets/SpryValidationTextarea.js" type="text/javascript"></script>
+<link href="../DTSassets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../DTSassets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../DTSassets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #DD7567;
+	background-image: url(/images/skin/LDMAbackground.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #FFF9F3;
+	background-image: url(/images/skin/LDMAcontainer2.jpg);
+} 
+.twoColFixRtHdr #header {
+	background-image: url(../images/skin/LDMAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #E38F59;
+	background-image: url(/images/skin/LDMAmenu2.jpg);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #E38F59;
+	background-image: url(/images/skin/LDMAmenu2.jpg);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 3;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 0px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+	background-image: url(/images/skin/LDMAmenu4.jpg);
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/LDMAfooter2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container .indent46 a:link {
+	color: #929292;
+}
+.twoColFixRtHdr #container .indent46 a:visited {
+	color: #929292;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:hover {
+	color: #474A47;
+}
+.twoColFixRtHdr #container #menu1 #MenuBar2 li a {
+	color: #FFE1D0;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFD8C7;
+}
+.twoColFixRtHdr #container #menu1 #MenuBar2 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="/" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="/" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <a href="/scoring/chooseassessment.php">choose assessment</a> | <a href="/scoring/chooseldma.php">choose ldma</a> | <a href="/scoring/bulkcustomerselect.php">sortable</a> | <a href="/scoring_ldma/ldmascoring_update1.php">rescore contested</a> | <a href="/scoring_ldma/ldmascorer2_a.php">second score</a> | <a href="/scoring_ldma/ldma_perspectives1.php">perspective</a> | <a href="/scoring_ldma/ldma_strengths1.php">strength</a> | <a href="/scoring_ldma/ldma_caveats1.php">weakness</a> | <a href="/scoring_ldma/ldma_recommend1.php">recommendation</a></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>CODE ASSESSMENT <?php echo $_GET['ldmakey']; ?>
+  </h1>
+  <p><strong>Do not click update unless you have actually coded this assessment.</strong></p>
+  <p><a href="ldma_personalcom.php?coderkey=<?php echo $_GET['coderkey']; ?>">personal comments</a> | <a href="ldma_perspectives1.php">perspective</a> | <a href="ldma_strengths1.php">strength</a> | <a href="ldma_caveats1.php">weakness</a> | <a href="ldma_recommend1.php">recommendation</a> | <a href="../scoring/chooseassessment.php?coderkey=<?php echo $_GET['coderkey']; ?>">choose assessment</a> | <a href="../scoring/chooseldma.php">choose ldma</a></p>
+  <p>When providing ratings for the skills in this list, consider the skills in terms of phase <?php echo $row_rsLDMAscores['lasname']; ?> argumentation.  </p>
+  <form action="<?php echo $editFormAction; ?>" method="POST" name="form1" id="form1">
+    <table cellpadding="2" cellspacing="0">
+    <tr>
+          <td><label for="lasname">Phase</label></td>
+          <td><span id="sprytextfield1">
+            <input type="text" name="lasname" id="lasname" value="<?php echo $row_rsLDMAscores['lasname']; ?>" size="32" />
+          <span class="textfieldRequiredMsg">A value is required.</span></span></td>
+        </tr>
+        <tr>
+          <td colspan="2"><strong>PERSPECTIVES</strong></td>
+        </tr>
+        <tr>
+          <td><label for="perspectiveorientingkey">Orienting perspective</label></td>
+          <td><span id="spryselect1">
+            <select name="perspectiveorientingkey" class="pulldownwidth" id="perspectiveorientingkey">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['perspectiveorientingkey']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPerspectiveOrienting['perspectivekey']?>"<?php if (!(strcmp($row_rsPerspectiveOrienting['perspectivekey'], $row_rsLDMAscores['perspectiveorientingkey']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPerspectiveOrienting['perspective']?></option>
+              <?php
+} while ($row_rsPerspectiveOrienting = mysql_fetch_assoc($rsPerspectiveOrienting));
+  $rows = mysql_num_rows($rsPerspectiveOrienting);
+  if($rows > 0) {
+      mysql_data_seek($rsPerspectiveOrienting, 0);
+	  $row_rsPerspectiveOrienting = mysql_fetch_assoc($rsPerspectiveOrienting);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td colspan="2">PERSPECTIVES CONSIDERED</td>
+        </tr>
+        <tr>
+          <td><label for="perspectiveyou1">Self</label></td>
+          <td><span id="spryselect2">
+            <select name="perspectiveyou1" class="pulldownwidth" id="perspectiveyou1">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['perspectiveyou1']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPerspectivesSelf1['ldmatakenkey']?>"<?php if (!(strcmp($row_rsPerspectivesSelf1['ldmatakenkey'], $row_rsLDMAscores['perspectiveyou1']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPerspectivesSelf1['ldmataken']?></option>
+              <?php
+} while ($row_rsPerspectivesSelf1 = mysql_fetch_assoc($rsPerspectivesSelf1));
+  $rows = mysql_num_rows($rsPerspectivesSelf1);
+  if($rows > 0) {
+      mysql_data_seek($rsPerspectivesSelf1, 0);
+	  $row_rsPerspectivesSelf1 = mysql_fetch_assoc($rsPerspectivesSelf1);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td><label for="perspectiveemployees2">Direct report(s) (Do not choose if you choose the next category.)</label></td>
+          <td><span id="spryselect3">
+            <select name="perspectiveemployees2" class="pulldownwidth" id="perspectiveemployees2">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['perspectiveemployees2']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPerspectiveEmployees2['ldmatakenkey']?>"<?php if (!(strcmp($row_rsPerspectiveEmployees2['ldmatakenkey'], $row_rsLDMAscores['perspectiveemployees2']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPerspectiveEmployees2['ldmataken']?></option>
+              <?php
+} while ($row_rsPerspectiveEmployees2 = mysql_fetch_assoc($rsPerspectiveEmployees2));
+  $rows = mysql_num_rows($rsPerspectiveEmployees2);
+  if($rows > 0) {
+      mysql_data_seek($rsPerspectiveEmployees2, 0);
+	  $row_rsPerspectiveEmployees2 = mysql_fetch_assoc($rsPerspectiveEmployees2);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td>Those directly affected by the situation</td>
+          <td><span id="spryselect4">
+            <select name="perspectiveteam9" class="pulldownwidth" id="perspectiveteam9">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['perspectiveteam9']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPerspectiveTeam9['ldmatakenkey']?>"<?php if (!(strcmp($row_rsPerspectiveTeam9['ldmatakenkey'], $row_rsLDMAscores['perspectiveteam9']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPerspectiveTeam9['ldmataken']?></option>
+              <?php
+} while ($row_rsPerspectiveTeam9 = mysql_fetch_assoc($rsPerspectiveTeam9));
+  $rows = mysql_num_rows($rsPerspectiveTeam9);
+  if($rows > 0) {
+      mysql_data_seek($rsPerspectiveTeam9, 0);
+	  $row_rsPerspectiveTeam9 = mysql_fetch_assoc($rsPerspectiveTeam9);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td><label for="perspectivemanager3">New manager/direct supervisor</label></td>
+          <td><span id="spryselect5">
+            <select name="perspectivemanager3" class="pulldownwidth" id="perspectivemanager3">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['perspectivemanager3']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPerspectiveManager3['ldmatakenkey']?>"<?php if (!(strcmp($row_rsPerspectiveManager3['ldmatakenkey'], $row_rsLDMAscores['perspectivemanager3']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPerspectiveManager3['ldmataken']?></option>
+              <?php
+} while ($row_rsPerspectiveManager3 = mysql_fetch_assoc($rsPerspectiveManager3));
+  $rows = mysql_num_rows($rsPerspectiveManager3);
+  if($rows > 0) {
+      mysql_data_seek($rsPerspectiveManager3, 0);
+	  $row_rsPerspectiveManager3 = mysql_fetch_assoc($rsPerspectiveManager3);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td><label for="perspectivesenior4">Senior management</label></td>
+          <td><span id="spryselect6">
+            <select name="perspectivesenior4" class="pulldownwidth" id="perspectivesenior4">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['perspectivesenior4']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPerspectiveSenior4['ldmatakenkey']?>"<?php if (!(strcmp($row_rsPerspectiveSenior4['ldmatakenkey'], $row_rsLDMAscores['perspectivesenior4']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPerspectiveSenior4['ldmataken']?></option>
+              <?php
+} while ($row_rsPerspectiveSenior4 = mysql_fetch_assoc($rsPerspectiveSenior4));
+  $rows = mysql_num_rows($rsPerspectiveSenior4);
+  if($rows > 0) {
+      mysql_data_seek($rsPerspectiveSenior4, 0);
+	  $row_rsPerspectiveSenior4 = mysql_fetch_assoc($rsPerspectiveSenior4);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td><label for="perspectivecompany5">Company</label></td>
+          <td><span id="spryselect7">
+            <select name="perspectivecompany5" class="pulldownwidth" id="perspectivecompany5">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['perspectivecompany5']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPerspectivesCompany5['ldmatakenkey']?>"<?php if (!(strcmp($row_rsPerspectivesCompany5['ldmatakenkey'], $row_rsLDMAscores['perspectivecompany5']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPerspectivesCompany5['ldmataken']?></option>
+              <?php
+} while ($row_rsPerspectivesCompany5 = mysql_fetch_assoc($rsPerspectivesCompany5));
+  $rows = mysql_num_rows($rsPerspectivesCompany5);
+  if($rows > 0) {
+      mysql_data_seek($rsPerspectivesCompany5, 0);
+	  $row_rsPerspectivesCompany5 = mysql_fetch_assoc($rsPerspectivesCompany5);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td><label for="perspectivecolleagues10">Colleagues</label></td>
+          <td><span id="spryselect8">
+            <select name="perspectivecolleagues10" class="pulldownwidth" id="perspectivecolleagues10">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['perspectivecolleagues10']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPerspectiveColleagues10['ldmatakenkey']?>"<?php if (!(strcmp($row_rsPerspectiveColleagues10['ldmatakenkey'], $row_rsLDMAscores['perspectivecolleagues10']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPerspectiveColleagues10['ldmataken']?></option>
+              <?php
+} while ($row_rsPerspectiveColleagues10 = mysql_fetch_assoc($rsPerspectiveColleagues10));
+  $rows = mysql_num_rows($rsPerspectiveColleagues10);
+  if($rows > 0) {
+      mysql_data_seek($rsPerspectiveColleagues10, 0);
+	  $row_rsPerspectiveColleagues10 = mysql_fetch_assoc($rsPerspectiveColleagues10);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td><label for="perspectiveexpert11">Experts</label></td>
+          <td><span id="spryselect9">
+            <select name="perspectiveexpert11" class="pulldownwidth" id="perspectiveexpert11">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['perspectiveexpert11']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPerspectiveExpert11['ldmatakenkey']?>"<?php if (!(strcmp($row_rsPerspectiveExpert11['ldmatakenkey'], $row_rsLDMAscores['perspectiveexpert11']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPerspectiveExpert11['ldmataken']?></option>
+              <?php
+} while ($row_rsPerspectiveExpert11 = mysql_fetch_assoc($rsPerspectiveExpert11));
+  $rows = mysql_num_rows($rsPerspectiveExpert11);
+  if($rows > 0) {
+      mysql_data_seek($rsPerspectiveExpert11, 0);
+	  $row_rsPerspectiveExpert11 = mysql_fetch_assoc($rsPerspectiveExpert11);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td><label for="perspectivecustomers6">Those served by the institution</label></td>
+          <td><span id="spryselect10">
+            <select name="perspectivecustomers6" class="pulldownwidth" id="perspectivecustomers6">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['perspectivecustomers6']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPerspectiveCustomer6['ldmatakenkey']?>"<?php if (!(strcmp($row_rsPerspectiveCustomer6['ldmatakenkey'], $row_rsLDMAscores['perspectivecustomers6']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPerspectiveCustomer6['ldmataken']?></option>
+              <?php
+} while ($row_rsPerspectiveCustomer6 = mysql_fetch_assoc($rsPerspectiveCustomer6));
+  $rows = mysql_num_rows($rsPerspectiveCustomer6);
+  if($rows > 0) {
+      mysql_data_seek($rsPerspectiveCustomer6, 0);
+	  $row_rsPerspectiveCustomer6 = mysql_fetch_assoc($rsPerspectiveCustomer6);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td><label for="perspectiveshareholders7">Shareholders</label></td>
+          <td><span id="spryselect11">
+            <select name="perspectiveshareholders7" class="pulldownwidth" id="perspectiveshareholders7">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['perspectiveshareholders7']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPerspectiveShareholder7['ldmatakenkey']?>"<?php if (!(strcmp($row_rsPerspectiveShareholder7['ldmatakenkey'], $row_rsLDMAscores['perspectiveshareholders7']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPerspectiveShareholder7['ldmataken']?></option>
+              <?php
+} while ($row_rsPerspectiveShareholder7 = mysql_fetch_assoc($rsPerspectiveShareholder7));
+  $rows = mysql_num_rows($rsPerspectiveShareholder7);
+  if($rows > 0) {
+      mysql_data_seek($rsPerspectiveShareholder7, 0);
+	  $row_rsPerspectiveShareholder7 = mysql_fetch_assoc($rsPerspectiveShareholder7);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td><label for="perspectivesociety8">Society</label></td>
+          <td><span id="spryselect12">
+            <select name="perspectivesociety8" class="pulldownwidth" id="perspectivesociety8">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['perspectivesociety8']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPerspectiveSociety8['ldmatakenkey']?>"<?php if (!(strcmp($row_rsPerspectiveSociety8['ldmatakenkey'], $row_rsLDMAscores['perspectivesociety8']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPerspectiveSociety8['ldmataken']?></option>
+              <?php
+} while ($row_rsPerspectiveSociety8 = mysql_fetch_assoc($rsPerspectiveSociety8));
+  $rows = mysql_num_rows($rsPerspectiveSociety8);
+  if($rows > 0) {
+      mysql_data_seek($rsPerspectiveSociety8, 0);
+	  $row_rsPerspectiveSociety8 = mysql_fetch_assoc($rsPerspectiveSociety8);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td colspan="2">&nbsp;</td>
+        </tr>
+        <tr>
+          <td><label for="perspectivesoughtkey">Perspectives sought</label></td>
+          <td><span id="spryselect13">
+            <select name="perspectivesoughtkey" class="pulldownwidth" id="perspectivesoughtkey">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['perspectivesoughtkey']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPerspectivesSought['ldmasoughtkey']?>"<?php if (!(strcmp($row_rsPerspectivesSought['ldmasoughtkey'], $row_rsLDMAscores['perspectivesoughtkey']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPerspectivesSought['ldmasought']?></option>
+              <?php
+} while ($row_rsPerspectivesSought = mysql_fetch_assoc($rsPerspectivesSought));
+  $rows = mysql_num_rows($rsPerspectivesSought);
+  if($rows > 0) {
+      mysql_data_seek($rsPerspectivesSought, 0);
+	  $row_rsPerspectivesSought = mysql_fetch_assoc($rsPerspectivesSought);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td colspan="2"><strong>GENERAL ORIENTATION TO THE PROBLEM</strong></td>
+        </tr>
+        <tr>
+          <td><label for="dmemphasizekey">Emphasis</label></td>
+          <td><span id="spryselect14">
+            <select name="dmemphasizekey" class="pulldownwidth" id="dmemphasizekey">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['dmemphasizekey']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsDMemphasis['ldma_emphasizekey']?>"<?php if (!(strcmp($row_rsDMemphasis['ldma_emphasizekey'], $row_rsLDMAscores['dmemphasizekey']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsDMemphasis['ldmaemphasis']?></option>
+              <?php
+} while ($row_rsDMemphasis = mysql_fetch_assoc($rsDMemphasis));
+  $rows = mysql_num_rows($rsDMemphasis);
+  if($rows > 0) {
+      mysql_data_seek($rsDMemphasis, 0);
+	  $row_rsDMemphasis = mysql_fetch_assoc($rsDMemphasis);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td><label for="dmbykey">By</label></td>
+          <td><span id="spryselect15">
+            <select name="dmbykey" class="pulldownwidth" id="dmbykey">
+              <option value="" <?php if (!(strcmp("", $row_rsLDMAscores['dmbykey']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsDMby['ldmabykey']?>"<?php if (!(strcmp($row_rsDMby['ldmabykey'], $row_rsLDMAscores['dmbykey']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsDMby['ldmaby']?></option>
+              <?php
+} while ($row_rsDMby = mysql_fetch_assoc($rsDMby));
+  $rows = mysql_num_rows($rsDMby);
+  if($rows > 0) {
+      mysql_data_seek($rsDMby, 0);
+	  $row_rsDMby = mysql_fetch_assoc($rsDMby);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr>
+          <td colspan="2">&nbsp;</td>
+        </tr>
+        <tr>
+          <td><label for="menurecommend1">Recommend menu changes</label></td>
+          <td><span id="sprytextarea1">
+            <textarea name="menurecommend1" cols="70" rows="5" id="menurecommend1"><?php echo $row_rsLDMAscores['menurecommend1']; ?></textarea>
+</span></td>
+        </tr>
+        <tr>
+          <td colspan="2"><div align="right">
+<input type="submit" name="button" id="button" value="SUBMIT" />
+          </div></td>
+        </tr>
+      </table>
+      <input name="ldmascoringkey" type="hidden" id="ldmascoringkey" value="<?php echo((isset($_POST["ldmascoringkey"]))?$_POST["ldmascoringkey"]:"") ?>" />
+      <input name="ldmakey" type="hidden" id="ldmakey" value="<?php echo $_GET['ldmakey']; ?>" />
+      <input name="contentcoder" type="hidden" id="contentcoder" value="<?php echo $_SESSION['log_userkey']; ?>" />
+      <input type="hidden" name="MM_update" value="form1" />
+  </form>
+  <h2>Essays</h2>
+  <table width="96%" border="0" cellspacing="0" cellpadding="4">
+    <tr>
+      <td valign="top"><p>Considerations</p></td>
+      <td valign="top"><p><?php echo $row_rsLDMAessays['perspectives1']; ?></p></td>
+    </tr>
+    <tr>
+      <td valign="top"><p>Prioritize</p></td>
+      <td valign="top"><p><?php echo $row_rsLDMAessays['perspectives2']; ?></p></td>
+    </tr>
+    <tr>
+      <td valign="top"><p>Solution 1</p></td>
+      <td valign="top"><p><?php echo $row_rsLDMAessays['response1']; ?></p></td>
+    </tr>
+    <tr>
+      <td valign="top"><p>Solution 2</p></td>
+      <td valign="top"><p><?php echo $row_rsLDMAessays['response2']; ?></p></td>
+    </tr>
+    <tr>
+      <td valign="top"><p>Decision process</p></td>
+      <td valign="top"><p><?php echo $row_rsLDMAessays['process']; ?></p></td>
+    </tr>
+  </table>
+  <script type="text/javascript">
+<!--
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "none", {validateOn:["blur", "change"]});
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"], isRequired:false});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"], isRequired:false});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"], isRequired:false});
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {validateOn:["blur", "change"], isRequired:false});
+var spryselect6 = new Spry.Widget.ValidationSelect("spryselect6", {validateOn:["blur", "change"], isRequired:false});
+var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {validateOn:["blur", "change"], isRequired:false});
+var spryselect8 = new Spry.Widget.ValidationSelect("spryselect8", {validateOn:["blur", "change"], isRequired:false});
+var spryselect9 = new Spry.Widget.ValidationSelect("spryselect9", {validateOn:["blur", "change"], isRequired:false});
+var spryselect10 = new Spry.Widget.ValidationSelect("spryselect10", {validateOn:["blur", "change"], isRequired:false});
+var spryselect11 = new Spry.Widget.ValidationSelect("spryselect11", {validateOn:["blur", "change"], isRequired:false});
+var spryselect12 = new Spry.Widget.ValidationSelect("spryselect12", {validateOn:["blur", "change"], isRequired:false});
+var spryselect13 = new Spry.Widget.ValidationSelect("spryselect13", {validateOn:["blur", "change"]});
+var spryselect14 = new Spry.Widget.ValidationSelect("spryselect14", {validateOn:["blur", "change"]});
+var spryselect15 = new Spry.Widget.ValidationSelect("spryselect15", {validateOn:["blur", "change"]});
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {isRequired:false});
+//-->
+  </script>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLDMAessays);
+
+mysql_free_result($rsDMemphasis);
+
+mysql_free_result($rsDMby);
+
+mysql_free_result($rsPerspectiveOrienting);
+
+mysql_free_result($rsPerspectivesSelf1);
+
+mysql_free_result($rsPerspectivesSought);
+
+mysql_free_result($rsPerspectiveManager3);
+
+mysql_free_result($rsPerspectiveEmployees2);
+
+mysql_free_result($rsPerspectiveTeam9);
+
+mysql_free_result($rsPerspectiveColleagues10);
+
+mysql_free_result($rsPerspectiveExpert11);
+
+mysql_free_result($rsPerspectiveSenior4);
+
+mysql_free_result($rsPerspectivesCompany5);
+
+mysql_free_result($rsPerspectiveCustomer6);
+
+mysql_free_result($rsPerspectiveShareholder7);
+
+mysql_free_result($rsPerspectiveSociety8);
+
+mysql_free_result($rsLDMAscores);
+?>

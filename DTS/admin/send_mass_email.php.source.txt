@@ -1,0 +1,50 @@
+<? 
+include_once ("../includes/dts_functions.php");
+
+die("DO NOT USE!");
+
+// fetch list of recipients
+$sql = "SELECT d.instrument_id, d.date_completed, d.finalized, d.resellerkey,
+		r.userkey, r.firstname, r.lastname, r.email
+	FROM la_data d
+		LEFT JOIN registrants r ON d.userkey = r.userkey
+	WHERE d.instrument_id LIKE 'LDMA%' 
+		AND d.date_released BETWEEN '2013-01-01' AND '2013-06-07'
+		AND d.resellerkey <> 1000000113 AND d.resellerkey <> 1000001137
+		**** DO NOT USE THIS PAGE without modifying the query first. ****
+	GROUP BY d.userkey";
+$rsRecipients = mysql_query($sql) or die("ERROR fetching list of recipients! ");
+
+**** DO NOT USE THIS PAGE without modifying the query first. ****
+
+// prep email
+$from = 'service@lectica.org';
+$email_subject = "Corrections to some of our LDMA reports";
+$email_body = "Hello [NAME], 
+
+We're writing to you because you have taken our LDMA (leadership decision making) assessment in the past 6 months. A couple weeks ago, we found an error with the calculations that we use to generate the reports on the LDMA. Unfortunately, this error caused some reports to display incorrect results, as well as feedback that wasn't as accurate as it could be. 
+
+Because of this correction, the next time you view your report, the charts and text on four of the LDMA report sections (perspective coordination, collaborative capacity, contextual thinking, and decision-making process)  may look slightly different from the last time you saw it. We're very sorry for any confusion that this may cause.
+
+Just to be clear, the LAS scores shown on your reports have not been changed. Also, we are not retracting any reports we've produced, nor removing sections from the reports. The charts displaying each of the five LDMA scales may show adjusted numbers, and the text accompanying them may show slightly different feedback and recommendations.
+
+As always, please contact us with any questions about our assessments or reports.
+
+Happy lifelong learning,
+The Lectica team";
+
+
+
+while ($row = mysql_fetch_assoc($rsRecipients)) {
+
+	$this_body = str_replace("[NAME]", $row['firstname'], $email_body);
+	$to = $row['email'];
+
+	sendEmail($to, $from, $from, $email_subject, $this_body);
+	$sql = sprintf("UPDATE registrants SET date_today = NOW() WHERE userkey = %s", $row['userkey']);
+	$result = mysql_query($sql) or die("ERROR updating date_today.");
+	echo "Email sent to {$row['email']}.<br />";
+
+}
+
+?>

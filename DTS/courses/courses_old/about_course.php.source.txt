@@ -1,0 +1,179 @@
+<?php 
+require_once('../Connections/Assessment.php'); 
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+
+$userkey = -1;
+if (isset($_SESSION['log_userkey'])) { $userkey = $_SESSION['log_userkey']; }
+$instrument_id = "FOLA";
+$_SESSION['instrument_id'] = "FOLA";
+$coursekey = -1;
+if (isset($_GET['coursekey'])) { $coursekey = $_GET['coursekey']; }
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCourse = sprintf("SELECT c.coursekey, c.course_name_caps, c.course_name_plain, c.course_description_long, cd.coursedatekey, cd.course_start_date, cd.course_end_date, cd.coursekey, cd.instructors, cr.userkey, cr.coursedatekey AS registered_for
+  FROM courses_old c 
+    JOIN course_dates_old cd ON c.coursekey = cd.coursekey
+    LEFT JOIN course_registration_old cr ON (cd.coursedatekey = cr.coursedatekey AND cr.userkey = %s) 
+  WHERE cd.course_start_date > 2011-10-01 AND c.coursekey = %s", 
+		GetSQLValueString($userkey, "int"),
+		GetSQLValueString($coursekey, "int"));
+$rsCourse = mysql_query($query_rsCourse, $Assessment) or die(mysql_error());
+$row_rsCourse = mysql_fetch_assoc($rsCourse);
+$totalRows_rsCourse = mysql_num_rows($rsCourse);
+
+
+
+
+?>
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Course description</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+.twoColFixRtHdr #container #mainContent ol {
+	padding-left: 35px;
+}
+</style>
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+  <a href="syllabus.php?coursekey=<?php echo $row_rsCourse['coursekey']; ?>"> syllabus</a> |
+<?php if ($row_rsCourse['registered_for'] == "") { ?>
+    <a href="course_registration.php?coursedatekey=<?php 
+		echo $row_rsCourse['coursedatekey']; ?>">register for the course</a>
+  <?php } else { // if there is a registration under your name (see Course[registered_for]) ?>
+    <a href="registration_status.php?coursedatekey=<?php 
+    echo $row_rsCourse['registered_for']; ?>">my registration status</a>
+	<?php } ?> 
+  <?php if ($row_rsCourse['userkey'] == $userkey AND 
+						date('Y-m-d') >= $row_rsCourse['course_start_date'] AND 
+						date('Y-m-d') <= $row_rsCourse['course_end_date']) {
+					?> | <a href="../set_session_var_instrument.php?link_id=la_assess/assess_intro.php&amp;sessionVarName=instrument_id&amp;sessionVarValue=FOLA">reaction paper</a><?php 			
+				} ?>
+  <!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1><?php echo $row_rsCourse['course_name_caps']; ?></h1>
+    
+	<p>Taught by <?php echo $row_rsCourse['instructors']; ?></p>
+  
+	<?php echo $row_rsCourse['course_description_long']; ?>
+<p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsCourse);
+?>

@@ -1,0 +1,6 @@
+<?php 
+header("Location: ../_sorttask/sorttasklead.php");
+
+if (0) { ?>
+This is an invisible redirect page. It redirects to _sorttask/sorttasklead.php and does nothing else.
+<?php } ?>

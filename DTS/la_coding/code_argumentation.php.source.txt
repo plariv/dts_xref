@@ -1,0 +1,1117 @@
+<?php 
+require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" );
+include_once ("../includes/dts_functions.php");
+
+mysql_select_db($database_Assessment, $Assessment);
+
+// restrict access if not logged in
+if (!WA_Auth_RulePasses("Logged in as teacher assistant")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_name = str_replace("_", " ", $_SESSION['instrument_id']);
+$instrument_id_base = str_replace("_JOURNAL", "", $_SESSION['instrument_id']);
+
+$lakey = -1;
+if (isset($_GET['lakey'])) { $lakey = $_GET['lakey']; }
+
+// Figure out which coder you are, and which coding table you should be writing to
+$coder = 0;
+if (isset($_GET['coder'])) { $coder = SQLstr($_GET['coder'], "int"); }
+if (isset($_GET['scorer_no'])) { $coder = 1; }
+
+$table = "la_codes_".$coder;
+$table = str_replace("_1", "", $table);
+
+$sql_lacodeskey = "";
+if (isset($_GET['lacodeskey'])) { 
+	$sql_lacodeskey = sprintf(" AND lacodeskey = %s ", SQLstr($_GET['lacodeskey'])); 
+}  
+
+
+
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+	
+	// Calculate the average of all argumentation codes for the overall score.
+	$argumentation_overall = ($_POST['argumentation_persuasiveness'] + 
+														$_POST['argumentation_probe'] + 
+														$_POST['argumentation_clarity'] + 
+														$_POST['argumentation_fragment'] + 
+														$_POST['argumentation_framing']) / 5.0;
+	
+	$argumentation_scale_mechanics = null;
+	if (isset($_POST['argumentation_spelling'])) { 
+		$argumentation_scale_mechanics = ($_POST['argumentation_spelling'] + 
+																			$_POST['argumentation_capitalization'] + 
+																			$_POST['argumentation_punctuation'] + 
+																			$_POST['argumentation_other_grammar']) / 4.0;
+	}
+	
+	
+	
+  $updateSQL = sprintf("UPDATE {$table} c JOIN la_data d ON c.lakey = d.lakey 
+		SET d.coded_arg_{$coder}=1, 
+			argumentation_persuasiveness=%s, argumentation_relevance_scenario=%s, argumentation_probe=%s, 
+			argumentation_clarity=%s, argumentation_conciseness=%s, argumentation_concise_overly=%s, 
+			argumentation_fragment=%s, argumentation_framing=%s, argumentation_jargon=%s, 
+			argumentation_on_point=%s, argumentation_english=%s, argumentation_repetitive=%s, 
+			argumentation_spelling = %s, argumentation_capitalization = %s, 
+			argumentation_punctuation = %s, argumentation_other_grammar = %s, 
+			codercomment = %s, code_recommend = %s, 
+			argumentation_vocabulary = %s, 
+			argumentation_overall = %s, argumentation_scale_mechanics = %s,
+			course_content_amount = %s, course_content_understand = %s, course_content_integrated = %s, 
+			creativity = %s, originality = %s
+		WHERE c.lakey = %s {$sql_lacodeskey}",
+			 SQLstr((isset($_POST['argumentation_persuasiveness']) ? 
+											$_POST['argumentation_persuasiveness'] : ""), 'int'),
+			 SQLstr((isset($_POST['argumentation_relevance_scenario']) ? 
+											$_POST['argumentation_relevance_scenario'] : ""), 'int'),
+			 SQLstr($_POST['argumentation_probe'], 'int'),
+			 SQLstr($_POST['argumentation_clarity'], 'int'),
+			 SQLstr((isset($_POST['argumentation_conciseness']) ? 
+											$_POST['argumentation_conciseness'] : ""), 'int'),
+			 SQLstr((isset($_POST['argumentation_concise_overly']) ? 
+											$_POST['argumentation_concise_overly'] : ""), 'int'),
+			 SQLstr($_POST['argumentation_fragment'], 'int'),
+			 SQLstr($_POST['argumentation_framing'], 'int'),
+			 
+			 SQLstr((isset($_POST['argumentation_jargon']) ? $_POST['argumentation_jargon'] : ""), 'int'),
+			 SQLstr((isset($_POST['argumentation_on_point']) ? $_POST['argumentation_on_point'] : ""), 'int'),
+			 SQLstr((isset($_POST['argumentation_english']) ? $_POST['argumentation_english'] : ""), 'int'),
+			 SQLstr((isset($_POST['argumentation_repetitive']) ? $_POST['argumentation_repetitive'] : ""), 'int'),
+			 SQLstr((isset($_POST['argumentation_spelling']) ? 
+											$_POST['argumentation_spelling'] : ""), 'int'),
+			 SQLstr((isset($_POST['argumentation_capitalization']) ? 
+											$_POST['argumentation_capitalization'] : ""), 'int'),
+			 SQLstr((isset($_POST['argumentation_punctuation']) ? 
+											$_POST['argumentation_punctuation'] : ""), 'int'),
+			 SQLstr((isset($_POST['argumentation_other_grammar']) ? 
+											$_POST['argumentation_other_grammar'] : ""), 'int'),
+			 SQLstr($_POST['codercomment'], 'text'),
+			 SQLstr($_POST['code_recommend'], 'text'),
+			 
+			 SQLstr((isset($_POST['argumentation_vocabulary']) ? $_POST['argumentation_vocabulary'] : ""), 'int'),
+			 SQLstr($argumentation_overall, 'double'),
+			 SQLstr($argumentation_scale_mechanics, 'double'),
+			 SQLstr( (isset($_POST['course_content_amount']) ? 
+								$_POST['course_content_amount'] : ""), 'int'),
+			 SQLstr( (isset($_POST['course_content_understand']) ? 
+								$_POST['course_content_understand'] : ""), 'int'),
+			 SQLstr( (isset($_POST['course_content_integrated']) ? 
+								$_POST['course_content_integrated'] : ""), 'int'),
+			 SQLstr( (isset($_POST['creativity']) ? $_POST['creativity'] : ""), 'int'),
+			 SQLstr( (isset($_POST['originality']) ? $_POST['originality'] : ""), 'int'),
+			 SQLstr($_GET['lakey'], 'int'));
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  /* The pages flow differently depending on the instrument_id.
+	 - LDMA - go on to the perspective pages
+	 - LMBE - just argumentation, then send scorers back to the selection page */
+	if 			($instrument_id_base == "LDMA") { $insertGoTo = "coding_confidence.php";  } 
+	else if ($instrument_id_base == "LLRA") { $insertGoTo = "coding_confidence.php";  } 
+	else if ($instrument_id_base == "LRJA") { $insertGoTo = "coding_confidence.php";  } 
+	else if ($instrument_id_base == "LERA") { $insertGoTo = "code_survey.php";  }  
+	else if ($instrument_id_base == "LIMA") { $insertGoTo = "coding_confidence.php";  } 
+	else if ($instrument_id_base == "LDPA") { $insertGoTo = "coding_confidence.php";  } 
+	else if ($instrument_id_base == "SMA")  { $insertGoTo = "coding_confidence.php";  } 
+	else if ($instrument_id_base == "SMJ")  { $insertGoTo = "coding_confidence.php";  }
+	else if ($instrument_id_base == "LMBE" AND isset($_GET['scorer_no'])) 
+			 {	$insertGoTo = "../la_scoring/scoring_processing.php"; } 
+	else if ($instrument_id_base = "FOLA") { $insertGoTo = "code_strengths_write.php"; }
+	else {  die("ERROR - you used the argumentation coding page in an unusual situation 
+	  and the page doesn't know where to send you next. 
+		Please contact your web admin team with this error message.");	}
+	
+  // passes on URL variables from previous page 
+	if (isset($_SERVER['QUERY_STRING'])) {	
+    $insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+    $insertGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $insertGoTo));
+}
+
+
+
+
+
+//              //////////////////////////////////////////////////////////////
+//	RECORDSETS
+//	            //////////////////////////////////////////////////////////////
+
+
+//	Recordset: All the essay, dilemma, probe, and menu-choice data.
+$query_rsEssays = sprintf("SELECT r.userkey, r.firstname, r.lastname, 
+	di.dilemmakey, di.dilemma_name, di.dilemma, d.module_number, eng.english_quality, lang.language, 
+	d.probe01, d.probe02, d.probe03, d.probe04, d.probe05, d.probe06, d.probe07, d.test_time, 
+	p1.probe_name AS probe_name01, p2.probe_name AS probe_name02, p3.probe_name AS probe_name03, p4.probe_name AS probe_name04, p5.probe_name AS probe_name05, p6.probe_name AS probe_name06, p7.probe_name AS probe_name07, 
+	m1.menu_item AS menu01, m2.menu_item AS menu02, m3.menu_item AS menu03, m4.menu_item AS menu04, m5.menu_item AS menu05, m6.menu_item AS menu06, m7.menu_item AS menu07,
+	p.show_course_content
+FROM la_data d 
+JOIN registrants r ON d.userkey = r.userkey
+LEFT JOIN la_dilemmas di ON di.dilemmakey = d.dilemmakey
+LEFT JOIN demogs_languages lang ON r.languagekey = lang.languagekey
+LEFT JOIN demogs_english_quality eng ON r.englishqualitykey = eng.englishqualitykey
+LEFT JOIN students_projects sp ON d.userkey = sp.userkey 
+LEFT JOIN projectproject p ON sp.projectkey = p.projectkey
+LEFT JOIN la_probes p1 ON p1.instrument_id = %s AND p1.probe_number = '01' 
+LEFT JOIN la_probes p2 ON p2.instrument_id = %s AND p2.probe_number = '02' 
+LEFT JOIN la_probes p3 ON p3.instrument_id = %s AND p3.probe_number = '03' 
+LEFT JOIN la_probes p4 ON p4.instrument_id = %s AND p4.probe_number = '04' 
+LEFT JOIN la_probes p5 ON p5.instrument_id = %s AND p5.probe_number = '05' 
+LEFT JOIN la_probes p6 ON p6.instrument_id = %s AND p6.probe_number = '06' 
+LEFT JOIN la_probes p7 ON p7.instrument_id = %s AND p7.probe_number = '07' 
+LEFT JOIN la_menus m1 ON d.choicekey01 = m1.menukey 
+LEFT JOIN la_menus m2 ON d.choicekey02 = m2.menukey 
+LEFT JOIN la_menus m3 ON d.choicekey03 = m3.menukey 
+LEFT JOIN la_menus m4 ON d.choicekey04 = m4.menukey 
+LEFT JOIN la_menus m5 ON d.choicekey05 = m5.menukey 
+LEFT JOIN la_menus m6 ON d.choicekey06 = m6.menukey 
+LEFT JOIN la_menus m7 ON d.choicekey07 = m7.menukey 
+WHERE d.lakey = %s", 
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($lakey, "int"));
+$rsEssays = mysql_query($query_rsEssays, $Assessment) or die("rsEssays: ".mysql_error());
+$row_rsEssays = mysql_fetch_assoc($rsEssays);
+$totalRows_rsEssays = mysql_num_rows($rsEssays);
+// topher($query_rsEssays);
+
+
+// Recordset: la_codes or la_codes_2 depending on who's using the page
+$query_rsLaCodes = sprintf("SELECT c.*, d.coded_1, d.coded_2, d.coded_3, d.coded_4
+	FROM {$table} c JOIN la_data d ON c.lakey = d.lakey
+	WHERE c.lakey = %s {$sql_lacodeskey}", SQLstr($lakey, "int"));
+$rsLaCodes = mysql_query($query_rsLaCodes, $Assessment) or die("rsLaCodes: ".mysql_error());
+$row_rsLaCodes = mysql_fetch_assoc($rsLaCodes);
+$totalRows_rsLaCodes = mysql_num_rows($rsLaCodes);
+
+
+
+
+
+
+/* la_argumentation menus: this query is slightly complicated by the fact that the argumentation column descriptors are included as an extra row in the same column as the menu text. The descriptor stems are on row 0, hence that exclusion here. */
+
+$query_rsLaArgumentation = "SELECT * 
+	FROM la_argumentation a
+	WHERE argumentationkey BETWEEN 1 AND 5";
+$rsLaArgumentation = mysql_query($query_rsLaArgumentation, $Assessment) or die("rsLaArgumentation: ".mysql_error());
+$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+$totalRows_rsLaArgumentation = mysql_num_rows($rsLaArgumentation);
+
+
+// la_argumentation_vocabulary: list of vocabulary code options
+$query_rsLaArgumentationVocabulary = "SELECT * FROM la_argumentation_vocabulary";
+$rsLaArgumentationVocabulary = mysql_query($query_rsLaArgumentationVocabulary, $Assessment) or die("rsLaArgVocabulary: ".mysql_error());
+$row_rsLaArgumentationVocabulary = mysql_fetch_assoc($rsLaArgumentationVocabulary);
+$totalRows_rsLaArgumentationVocabulary = mysql_num_rows($rsLaArgumentationVocabulary);
+
+
+// Titles for each argumentation column. Note that row 9 also contains titles, intended for the bulk customer report.
+$query_rsLaArgumentationTitles = "SELECT * FROM la_argumentation WHERE argumentationkey = 93";
+$rsLaArgumentationTitles = mysql_query($query_rsLaArgumentationTitles, $Assessment) or die("rsLaArgTitles: ".mysql_error());
+$row_rsLaArgumentationTitles = mysql_fetch_assoc($rsLaArgumentationTitles);
+$totalRows_rsLaArgumentationTitles = mysql_num_rows($rsLaArgumentationTitles);
+
+$sql_rsArgOmit = "SELECT * FROM la_argumentation a
+	WHERE label = 'instrument OMIT'";
+$rsArgOmit = mysql_query($sql_rsArgOmit) or die("rsArgOmit: ".mysql_error());
+$row_rsArgOmit = mysql_fetch_assoc($rsArgOmit);
+// For each argumentation column: 
+// if that arg aspect is marked to OMIT from this instrument, put it on a blacklist.
+$omit = "";
+while (next($row_rsArgOmit) !== false) {
+	$aspect = key($row_rsArgOmit);
+	$instruments = current($row_rsArgOmit);
+	if (strpos(" ".$instruments, $instrument_id_base)
+			OR strpos(" ".$instruments, "ALL")) {
+		$omit .= " ".$aspect;
+	}
+}
+// echo $omit; 
+// some instruments don't require argumentation.
+$isRequired = "";
+if ($instrument_id_base == "SMJ" AND false) { $isRequired = ", isRequired: false"; }
+
+// topher($omit); topher();
+
+
+
+// Fetch information on the FOLA course, if relevant
+if ($instrument_id_base == "FOLA") { 
+	$query_rsFolaAssn = sprintf("SELECT c.*, cd.*, cr.taken_at_level
+	FROM courses_old c
+	JOIN course_dates_old cd ON c.coursekey = cd.coursekey 
+											 AND NOW() BETWEEN cd.course_start_date AND cd.course_end_date
+	JOIN course_registration_old cr ON cd.coursedatekey = cr.coursedatekey 
+	WHERE c.coursekey = 101 AND cr.userkey = %s ",
+			SQLstr($row_rsEssays['userkey'], "int"));
+	$rsFolaAssn = mysql_query($query_rsFolaAssn, $Assessment) or die(mysql_error());
+	$row_rsFolaAssn = mysql_fetch_assoc($rsFolaAssn);
+	$totalRows_rsFolaAssn = mysql_num_rows($rsFolaAssn);
+}
+
+
+// Preparing FOLA course assignment information, if relevant
+
+$courseAssnTitle = "";
+$courseAssn = "";
+
+if (isset($totalRows_rsFolaAssn) AND $totalRows_rsFolaAssn > 0) {
+	// Figure out which assignment this is, based on deadlines
+	$module = zeropad($row_rsEssays['module_number'], 2);
+	$courseAssnNumber = $module;
+	$courseAssnLevel = $row_rsFolaAssn['taken_at_level'];
+	$courseAssn = $row_rsFolaAssn['class'.$module.'_assignment_level'.$courseAssnLevel];
+	$courseAssnDueDate = $row_rsFolaAssn['assignment'.$module.'_date'];
+	$courseAssn = str_replace("[DATE]", $courseAssnDueDate, $courseAssn);
+	$courseAssnTitle = $row_rsFolaAssn['class'.$module.'_tab_label'];
+	
+	// count # of probes to this question
+	$col = 'class'.$module.'_assignment_level'.$courseAssnLevel.'_probe';
+	for ($i = 1; isset($row_rsFolaAssn[$col.($i)]) AND $row_rsFolaAssn[$col.($i)] <> ""; $i ++) {
+		$courseAssnProbe[$i] = $row_rsFolaAssn[$col.($i)]; 
+	}
+}
+
+// Boilerplate table allows us to pull template text into various parts of the report.
+// It's more efficient, now, to download the whole table and put each boilerplate item into a slot in an array, which I call using the boilerplate column "name".
+$rsLaBoilerplate = mysql_query("SELECT b.* FROM la_boilerplate b WHERE type='coding' ") 
+	or die("rsLaBoilerplate: ".mysql_error());
+$boilerplate = array();
+while ($row_rsLaBoilerplate = mysql_fetch_assoc($rsLaBoilerplate)) {
+	$boilerplate[$row_rsLaBoilerplate['name']] = $row_rsLaBoilerplate['la_boilerplate_text'];
+}
+ 
+
+
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Coding Argumentation</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryTooltip.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryTooltip.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+</style>
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+		<?php include 'code_quickmenu.php'; ?>
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>CODE ARGUMENTATION FOR <?php echo $_SESSION['instrument_id']; ?> #<?php echo $lakey; 
+		if ($instrument_id_base == "FOLA") { 
+			if ($row_rsFolaAssn['taken_at_level'] == 2) { echo " (L2)"; } 
+			else { echo " (L1)"; } 
+		} ?> </h1>
+    
+    <?php if ($instrument_id_base == "FOLA") {
+				echo "<p>".$row_rsEssays['firstname']." ".$row_rsEssays['lastname']." — test time ".$row_rsEssays['test_time']."</p>";
+			} ?>
+    
+    
+    <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      <?php if ($row_rsEssays['dilemmakey'] <> "") { ?>
+        <div class="CollapsiblePanelTab">
+          DILEMMA TEXT (<?php echo strtoupper($row_rsEssays['dilemma_name']); ?>)
+        </div>
+        <div class="CollapsiblePanelContent">
+          <p><?php echo $row_rsEssays['dilemma']; ?></p>
+        </div> <?php 
+			} ?>
+    </div>
+  
+		<div id="CollapsiblePanel1" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">TEST-TAKER RESPONSES</div>
+      <div class="CollapsiblePanelContent">
+      	
+        <?php if ($instrument_id == "LDPA") { ?>
+        	<p>You are working with 
+          	<strong><?php echo strtolower($row_rsEssays['menu01']); ?></strong> students.</p>
+        	<p>You are teaching 
+          	<strong><?php echo strtolower($row_rsEssays['menu02']); ?></strong>.</p>
+        <?php } // ?>
+        
+				<?php 
+				$i = 1;
+				while ($row_rsEssays['probe0'.$i] <> "" OR isset($courseAssnProbe[$i])) { 
+					// If this was a course assignment (like FOLA), display assigned question. 
+					// Otherwise, la_probes probe.
+					if (isset($courseAssnProbe[$i]) AND $courseAssnProbe[$i] <> "") { 
+						?><h4>Question <?php echo $i; ?> </h4><?php 
+						echo "<em>".$courseAssnProbe[$i]."</em>"; 
+					} 
+					else { ?>
+            <p><strong><?php 
+              $row_rsEssays['probe_name0'.$i] = 
+                str_replace("random_lamenus", "", $row_rsEssays['probe_name0'.$i]);
+              echo $row_rsEssays['probe_name0'.$i]; 
+              if ($row_rsEssays['menu0'.$i] <> "" AND $instrument_id <> "LDPA") { 
+                if ($row_rsEssays['probe_name0'.$i] <> "") { echo ": "; }
+                echo ucfirst($row_rsEssays['menu0'.$i]); 
+              } ?></strong>
+            </p> <?php 
+					} ?>
+        	<p><?php echo $row_rsEssays['probe0'.$i]; ?></p>
+        	<?php $i ++;
+				} // WHILE loop cycles again for each essay ?>
+        
+      </div>
+    </div>
+    
+    <?php if ($instrument_id == "SMJ") { ?>
+    	<?php echo $boilerplate['coding_smj_arg_instructions']; ?>
+    <?php } ?>
+    
+    <form action="<?php echo $editFormAction; ?>" id="form1" name="form1" method="POST">
+		
+    <?php if ($row_rsEssays['english_quality'] <> "") { ?>
+    <p><span class="box">Reported English quality: <strong><?php echo $row_rsEssays['english_quality']; ?></strong>. Reported first language: <strong><?php echo $row_rsEssays['language']; ?></strong>.</span></p>
+    <?php } ?>
+    
+      <!-- **** The following table lists MOST of the argumentation codes. Not all of them, because not all of them are relevant to the LDMA. As we build out the coding sequence for use with more assessments, we'll need to add new rows to this table which only appear conditional on the instrument_id. (That's easy.)
+    -->
+    
+    <table border="0">
+      <tr>
+        <td>&nbsp;</td>
+        <td align="right"><input name="SUBMIT2" type="submit" value="SUBMIT" /></td>
+      </tr>
+      <tr>
+        <td colspan="2" scope="col" class="tablehead_knockout">Argumentation</td>
+      </tr>
+      <?php if (!strpos($omit, "probe")) { ?>
+      <tr>
+        <td><?php echo $row_rsLaArgumentationTitles['probe']; ?><span class="red">*</span></td>
+        <td><span id="spryselect1">
+          <select name="argumentation_probe" class="pulldown_width_450" id="argumentation_probe">
+            <option value="" <?php if (!(strcmp("", $row_rsLaCodes['argumentation_probe']))) 
+						{echo "selected=\"selected\"";} ?>>- select one -</option>
+            <?php
+			do {  
+				if ($row_rsLaArgumentation['probe'] <> "") { 
+				?>
+									<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['argumentation_probe']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['probe']?></option>
+									<?php
+			}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+				$rows = mysql_num_rows($rsLaArgumentation);
+				if($rows > 0) {
+						mysql_data_seek($rsLaArgumentation, 0);
+					$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+				}
+			?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      	<script type="text/javascript"> var spryselect1 = 
+					new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+      <?php } ?>
+      <?php if (!strpos($omit, "relevance_scenario")) { ?>
+      <tr>
+        <td><?php echo $row_rsLaArgumentationTitles['relevance_scenario']; ?><span class="red">*</span></td>
+        <td><span id="spryselect2">
+          <select name="argumentation_relevance_scenario" class="pulldown_width_450" id="argumentation_relevance_scenario">
+            <option value="" <?php if (!(strcmp("", $row_rsLaCodes['argumentation_relevance_scenario']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+            <?php
+			do { 
+				if ($row_rsLaArgumentation['relevance_scenario'] <> "") { 
+					?>
+									<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['argumentation_relevance_scenario']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['relevance_scenario']?></option>
+									<?php
+			}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+				$rows = mysql_num_rows($rsLaArgumentation);
+				if($rows > 0) {
+						mysql_data_seek($rsLaArgumentation, 0);
+					$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+				}
+			?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      	<script type="text/javascript"> var spryselect2 = 
+					new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+      <?php } ?>
+      <?php if (!strpos($omit, "framing")) { ?>
+      <tr>
+        <td><?php echo $row_rsLaArgumentationTitles['framing']; ?><span class="red">*</span></td>
+        <td><span id="spryselect6">
+          <select name="argumentation_framing" class="pulldown_width_450" id="argumentation_framing">
+            <option value="" <?php if (!(strcmp("", $row_rsLaCodes['argumentation_framing']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+            <?php
+		do {  
+			if ($row_rsLaArgumentation['framing'] <> "") {  
+			?>
+								<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['argumentation_framing']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['framing']?></option>
+								<?php
+		}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+			$rows = mysql_num_rows($rsLaArgumentation);
+			if($rows > 0) {
+					mysql_data_seek($rsLaArgumentation, 0);
+				$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+			}
+		?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+      	<script type="text/javascript"> var spryselect6 = 
+					new Spry.Widget.ValidationSelect("spryselect6", {validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+		<?php } ?>
+    <?php if (!strpos($omit, "jargon")) { ?>
+    <tr>
+        <td><?php echo $row_rsLaArgumentationTitles['jargon']; ?><span class="red">*</span></td>
+        <td><span id="spryselect7">
+          <select name="argumentation_jargon" class="pulldown_width_450" id="argumentation_jargon">
+            <option value="" <?php if (!(strcmp("", $row_rsLaCodes['argumentation_jargon']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+            <?php
+		do {  
+			if ($row_rsLaArgumentation['jargon'] <> "") {  
+			?>
+								<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['argumentation_jargon']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['jargon']?></option>
+								<?php
+		}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+			$rows = mysql_num_rows($rsLaArgumentation);
+			if($rows > 0) {
+					mysql_data_seek($rsLaArgumentation, 0);
+				$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+			}
+		?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+      	<script type="text/javascript"> var spryselect7 = 
+					new Spry.Widget.ValidationSelect("spryselect7", {validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+		<?php } ?>
+    <?php if (!strpos($omit, "on_point")) { ?>
+    <tr>
+        <td><?php echo $row_rsLaArgumentationTitles['on_point']; ?><span class="red">*</span></td>
+        <td><span id="spryselect8">
+          <select name="argumentation_on_point" class="pulldown_width_450" id="argumentation_on_point">
+            <option value="" <?php if (!(strcmp("", $row_rsLaCodes['argumentation_on_point']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+            <?php
+		do {  
+			if ($row_rsLaArgumentation['on_point'] <> "") {  
+			?>
+								<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['argumentation_on_point']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['on_point']?></option>
+								<?php
+		}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+			$rows = mysql_num_rows($rsLaArgumentation);
+			if($rows > 0) {
+					mysql_data_seek($rsLaArgumentation, 0);
+				$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+			}
+		?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+      	<script type="text/javascript"> var spryselect8 = 
+					new Spry.Widget.ValidationSelect("spryselect8", {validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+		<?php } ?>
+    <?php if (!strpos($omit, "conciseness")) { ?>
+    <tr>
+        <td><?php echo $row_rsLaArgumentationTitles['conciseness']; ?>, provides the appropriate amount of information (Do not make a choice here, if you make a choice for the next item.)</td>
+        <td><span id="spryselect4">
+          <select name="argumentation_conciseness" class="pulldown_width_450" id="argumentation_conciseness">
+            <option value="" <?php if (!(strcmp("", $row_rsLaCodes['argumentation_conciseness']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+            <?php
+		do {  
+			if ($row_rsLaArgumentation['conciseness'] <> "") {  
+			?>
+								<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['argumentation_conciseness']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['conciseness']?></option>
+								<?php
+		}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+			$rows = mysql_num_rows($rsLaArgumentation);
+			if($rows > 0) {
+					mysql_data_seek($rsLaArgumentation, 0);
+				$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+			}
+		?>
+          </select>
+</span></td>
+    </tr>
+      	<script type="text/javascript"> var spryselect4 = 
+					new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"], isRequired: false});</script>
+		<?php } ?>
+    <?php if (!strpos($omit, "concise_overly")) { ?>
+    <tr>
+      <td><?php echo $row_rsLaArgumentationTitles['concise_overly']; ?>, provides too little information (Do not make a choice here, if you made a choice for the previous item.)</td>
+      <td><span id="spryselect12">
+        <select name="argumentation_concise_overly" class="pulldown_width_450" 
+      			id="argumentation_concise_overly">
+          <option value="" <?php if (!(strcmp("", $row_rsLaCodes['argumentation_concise_overly']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+          <?php
+		do {  
+			if ($row_rsLaArgumentation['conciseness'] <> "") {  
+			?>
+          <option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['argumentation_concise_overly']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['concise_overly']?></option>
+          <?php
+		}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+			$rows = mysql_num_rows($rsLaArgumentation);
+			if($rows > 0) {
+					mysql_data_seek($rsLaArgumentation, 0);
+				$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+			}
+		?>
+        </select>
+</span></td>
+    </tr>
+			<script type="text/javascript"> var spryselect12 = 
+        new Spry.Widget.ValidationSelect("spryselect12", {validateOn:["blur", "change"], isRequired: false});</script>
+		<?php } ?>
+    <?php if (!strpos($omit, "fragment")) { ?>
+    <tr>
+    	<td><?php echo $row_rsLaArgumentationTitles['fragment']; ?><span class="red">*</span></td>
+      <td><span id="spryselect15">
+        <select name="argumentation_fragment" class="pulldown_width_450" id="argumentation_fragment">
+          <option value="" <?php if (!(strcmp("", $row_rsLaCodes['argumentation_fragment']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+          <?php
+		do {  
+			if ($row_rsLaArgumentation['fragment'] <> "") {
+			?>
+							<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['argumentation_fragment']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['fragment']?></option>
+							<?php
+		}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+			$rows = mysql_num_rows($rsLaArgumentation);
+			if($rows > 0) {
+					mysql_data_seek($rsLaArgumentation, 0);
+				$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+			}
+		?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+     </tr>
+			<script type="text/javascript"> var spryselect15 = 
+        new Spry.Widget.ValidationSelect("spryselect15", {validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+		<?php } ?>
+    <?php if (!strpos($omit, "repetitive")) { ?>
+    <tr>
+        <td><?php echo $row_rsLaArgumentationTitles['repetitive']; ?><span class="red">*</span></td>
+        <td><span id="spryselect9">
+          <select name="argumentation_repetitive" class="pulldown_width_450" id="argumentation_repetitive">
+            <option value="" <?php if (!(strcmp("", $row_rsLaCodes['argumentation_repetitive']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+            <?php
+		do {  
+			if ($row_rsLaArgumentation['repetitive'] <> "") {  
+			?>
+								<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['argumentation_repetitive']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['repetitive']?></option>
+								<?php
+		}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+			$rows = mysql_num_rows($rsLaArgumentation);
+			if($rows > 0) {
+					mysql_data_seek($rsLaArgumentation, 0);
+				$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+			}
+		?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+			<script type="text/javascript"> var spryselect9 = 
+        new Spry.Widget.ValidationSelect("spryselect9", {validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+		<?php } ?>
+    <?php if (!strpos($omit, "clarity")) { ?>
+      <tr>
+        <td><?php echo $row_rsLaArgumentationTitles['clarity']; ?><span class="red">*</span></td>
+        <td><span id="spryselect3">
+          <select name="argumentation_clarity" class="pulldown_width_450" id="argumentation_clarity">
+            <option value="" <?php if (!(strcmp("", $row_rsLaCodes['argumentation_clarity']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+            <?php
+		do { 
+			if ($row_rsLaArgumentation['clarity'] <> "") {  
+			?>
+								<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['argumentation_clarity']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['clarity']?></option>
+								<?php
+		}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+			$rows = mysql_num_rows($rsLaArgumentation);
+			if($rows > 0) {
+					mysql_data_seek($rsLaArgumentation, 0);
+				$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+			}
+		?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+			<script type="text/javascript"> var spryselect3 = 
+        new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+		<?php } ?>
+    <?php if (!strpos($omit, "persuasiveness")) { ?>
+    <tr>
+        <td><?php echo $row_rsLaArgumentationTitles['persuasiveness']; ?><span class="red">*</span></td>
+        <td><span id="spryselect5">
+          <select name="argumentation_persuasiveness" class="pulldown_width_450" id="argumentation_persuasiveness">
+            <option value="" <?php if (!(strcmp("", $row_rsLaCodes['argumentation_persuasiveness']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+            <?php
+		do {  
+			if ($row_rsLaArgumentation['persuasiveness'] <> "") {  
+			?>
+								<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['argumentation_persuasiveness']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['persuasiveness']?></option>
+								<?php
+		}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+			$rows = mysql_num_rows($rsLaArgumentation);
+			if($rows > 0) {
+					mysql_data_seek($rsLaArgumentation, 0);
+				$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+			}
+		?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+			<script type="text/javascript"> var spryselect5 = 
+        new Spry.Widget.ValidationSelect("spryselect5", {validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+		<?php } ?>
+    <?php if (!strpos($omit, "vocabulary")) { ?>
+    <tr>
+      <td>use of vocabulary<span class="red">*</span></td>
+      <td><span id="spryselect11">
+        <select name="argumentation_vocabulary" class="pulldown_width_450" id="argumentation_vocabulary">
+          <option value="" <?php if (!(strcmp("", $row_rsLaCodes['argumentation_vocabulary']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsLaArgumentationVocabulary['vocabularykey']?>"<?php if (!(strcmp($row_rsLaArgumentationVocabulary['vocabularykey'], $row_rsLaCodes['argumentation_vocabulary']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentationVocabulary['vocabularyname']?></option>
+          <?php
+} while ($row_rsLaArgumentationVocabulary = mysql_fetch_assoc($rsLaArgumentationVocabulary));
+  $rows = mysql_num_rows($rsLaArgumentationVocabulary);
+  if($rows > 0) {
+      mysql_data_seek($rsLaArgumentationVocabulary, 0);
+	  $row_rsLaArgumentationVocabulary = mysql_fetch_assoc($rsLaArgumentationVocabulary);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+			<script type="text/javascript"> var spryselect11 = 
+        new Spry.Widget.ValidationSelect("spryselect11", {validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+		<?php } ?>
+    <?php if (!strpos($omit, "english")) { ?>
+    
+    <tr>
+      <td><?php echo $row_rsLaArgumentationTitles['english']; ?></td>
+      <td><span id="spryselect10">
+        <select name="argumentation_english" class="pulldown_width_450" id="argumentation_english">
+          <option value="" <?php if (!(strcmp("", $row_rsLaCodes['argumentation_english']))) {echo "selected=\"selected\"";} ?>>- select one if relevant -</option>
+          <?php
+		do {  
+			if ($row_rsLaArgumentation['english'] <> "") {  
+			?>
+          <option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['argumentation_english']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['english']?></option>
+          <?php
+		}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+			$rows = mysql_num_rows($rsLaArgumentation);
+			if($rows > 0) {
+					mysql_data_seek($rsLaArgumentation, 0);
+				$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+			}
+		?>
+          </select>
+  </span></td>
+    </tr>
+			<script type="text/javascript"> var spryselect10 = 
+        new Spry.Widget.ValidationSelect("spryselect10", {validateOn:["blur", "change"], isRequired: false});</script>
+		<?php } ?>
+    
+    <?php if ($instrument_id == "SMA" OR $instrument_id == "SMJ") { ?>
+    
+    <tr>
+      <td><?php echo $row_rsLaArgumentationTitles['spelling']; ?><span class="red">*</span></td>
+      <td><span id="spryselect31">
+        <select name="argumentation_spelling" class="pulldown_width_450" id="argumentation_spelling">
+          <option value="" <?php if ($row_rsLaCodes['argumentation_spelling'] == "") 
+					{ echo "selected='selected'"; } ?>>- select one -</option>
+          <?php
+					do { ?>
+          	<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>" 
+						<?php if ($row_rsLaArgumentation['argumentationkey'] == 
+											$row_rsLaCodes['argumentation_spelling']) 
+						{ echo "selected='selected'"; } ?>><?php 
+						echo $row_rsLaArgumentation['spelling']; ?></option>
+          	<?php
+					} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+					if (mysql_num_rows($rsLaArgumentation) > 0) {
+							mysql_data_seek($rsLaArgumentation, 0);
+						$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+					} ?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span>
+      </td>
+    </tr>
+			<script type="text/javascript"> var spryselect31 = 
+        new Spry.Widget.ValidationSelect("spryselect31", 
+					{validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+    
+    <tr>
+      <td><?php echo $row_rsLaArgumentationTitles['capitalization']; ?><span class="red">*</span></td>
+      <td><span id="spryselect32">
+        <select name="argumentation_capitalization" class="pulldown_width_450" 
+        	id="argumentation_capitalization">
+          <option value="" <?php if ($row_rsLaCodes['argumentation_capitalization'] == "") 
+					{ echo "selected='selected'"; } ?>>- select one -</option>
+          <?php
+					do { ?>
+          	<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>" 
+						<?php if ($row_rsLaArgumentation['argumentationkey'] == 
+											$row_rsLaCodes['argumentation_capitalization']) 
+						{ echo "selected='selected'"; } ?>><?php 
+						echo $row_rsLaArgumentation['capitalization']; ?></option>
+          	<?php
+					} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+					if (mysql_num_rows($rsLaArgumentation) > 0) {
+							mysql_data_seek($rsLaArgumentation, 0);
+						$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+					} ?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span>
+      </td>
+    </tr>
+			<script type="text/javascript"> var spryselect32 = 
+        new Spry.Widget.ValidationSelect("spryselect32", 
+					{validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+    
+    <tr>
+      <td><?php echo $row_rsLaArgumentationTitles['punctuation']; ?><span class="red">*</span></td>
+      <td><span id="spryselect33">
+        <select name="argumentation_punctuation" class="pulldown_width_450" 
+        	id="argumentation_punctuation">
+          <option value="" <?php if ($row_rsLaCodes['argumentation_punctuation'] == "") 
+					{ echo "selected='selected'"; } ?>>- select one -</option>
+          <?php
+					do { ?>
+          	<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>" 
+						<?php if ($row_rsLaArgumentation['argumentationkey'] == 
+											$row_rsLaCodes['argumentation_punctuation']) 
+						{ echo "selected='selected'"; } ?>><?php 
+						echo $row_rsLaArgumentation['punctuation']; ?></option>
+          	<?php
+					} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+					if (mysql_num_rows($rsLaArgumentation) > 0) {
+							mysql_data_seek($rsLaArgumentation, 0);
+						$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+					} ?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span>
+      </td>
+    </tr>
+			<script type="text/javascript"> var spryselect33 = 
+        new Spry.Widget.ValidationSelect("spryselect33", 
+					{validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+    
+    <tr>
+      <td><?php echo $row_rsLaArgumentationTitles['other_grammar']; ?><span class="red">*</span></td>
+      <td><span id="spryselect34">
+        <select name="argumentation_other_grammar" class="pulldown_width_450" 
+        	id="argumentation_other_grammar">
+          <option value="" <?php if ($row_rsLaCodes['argumentation_other_grammar'] == "") 
+					{ echo "selected='selected'"; } ?>>- select one -</option>
+          <?php
+					do { ?>
+          	<option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>" 
+						<?php if ($row_rsLaArgumentation['argumentationkey'] == 
+											$row_rsLaCodes['argumentation_other_grammar']) 
+						{ echo "selected='selected'"; } ?>><?php 
+						echo $row_rsLaArgumentation['other_grammar']; ?></option>
+          	<?php
+					} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+					if (mysql_num_rows($rsLaArgumentation) > 0) {
+							mysql_data_seek($rsLaArgumentation, 0);
+						$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+					} ?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span>
+      </td>
+    </tr>
+			<script type="text/javascript"> var spryselect34 = 
+        new Spry.Widget.ValidationSelect("spryselect34", 
+					{validateOn:["blur", "change"]<?php echo $isRequired; ?>});</script>
+    
+		<?php } ?>
+    
+    
+    <?php if ($row_rsEssays['show_course_content'] == 1) { ?>
+    
+    <tr>
+      <td colspan="2" class="tablehead_knockout">Course content</td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsLaArgumentationTitles['course_content_amount']; ?></td>
+      <td><span id="spryselect24">
+        <select name="course_content_amount" class="pulldown_width_450" id="course_content_amount">
+        <option value="" <?php if (!(strcmp("", $row_rsLaCodes['creativity']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+        <?php
+        do {  
+          if ($row_rsLaArgumentation['course_content_amount'] <> "") { ?>
+            <option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['course_content_amount']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['course_content_amount']?></option>
+            <?php
+        }} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+        if(mysql_num_rows($rsLaArgumentation) > 0) {
+          mysql_data_seek($rsLaArgumentation, 0);
+          $row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+        } ?>
+      </select>
+      <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    
+    <tr>
+      <td><?php echo $row_rsLaArgumentationTitles['course_content_understand']; ?></td>
+      <td><span id="spryselect25">
+        <select name="course_content_understand" class="pulldown_width_450" 
+        	id="course_content_understand">
+        <option value="" <?php if (!(strcmp("", $row_rsLaCodes['creativity']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+        <?php
+        do {  
+          if ($row_rsLaArgumentation['course_content_understand'] <> "") { ?>
+            <option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php 
+						if (!(strcmp($row_rsLaArgumentation['argumentationkey'], 
+												 $row_rsLaCodes['course_content_understand']))) 
+						{ echo "selected=\"selected\""; } ?>>
+						<?php echo $row_rsLaArgumentation['course_content_understand']?></option><?php
+					}
+        } while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+        if(mysql_num_rows($rsLaArgumentation) > 0) {
+          mysql_data_seek($rsLaArgumentation, 0);
+          $row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+        } ?>
+      </select>
+      <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    
+    <tr>
+      <td><?php echo $row_rsLaArgumentationTitles['course_content_integrated']; ?></td>
+      <td><span id="spryselect26">
+        <select name="course_content_integrated" class="pulldown_width_450" 
+        	id="course_content_integrated">
+        <option value="" <?php if (!(strcmp("", $row_rsLaCodes['creativity']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+        <?php
+        do { 
+          if ($row_rsLaArgumentation['course_content_integrated'] <> "") { ?>
+            <option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php 
+						if (!(strcmp($row_rsLaArgumentation['argumentationkey'], 
+												 $row_rsLaCodes['course_content_integrated']))) 
+						{ echo "selected=\"selected\""; } ?>>
+						<?php echo $row_rsLaArgumentation['course_content_integrated']?></option><?php
+					}
+        } while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+        if(mysql_num_rows($rsLaArgumentation) > 0) {
+          mysql_data_seek($rsLaArgumentation, 0);
+          $row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+        } ?>
+      </select>
+      <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    
+    <script type="text/javascript">
+			var spryselect24 = new Spry.Widget.ValidationSelect("spryselect24", {validateOn:["blur", "change"], isRequired:false});
+			var spryselect25 = new Spry.Widget.ValidationSelect("spryselect25", {validateOn:["blur", "change"], isRequired:false});
+			var spryselect26 = new Spry.Widget.ValidationSelect("spryselect26", {validateOn:["blur", "change"], isRequired:false});
+		</script>
+    
+    <?php } ?>
+    
+    <?php if ($instrument_id_base == 'LDMA') { ?>  
+    <tr>
+      <td colspan="2" scope="col" class="tablehead_knockout">Creativity and originality</td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsLaArgumentationTitles['creativity']; ?> <span class="red">*</span></td>
+      <td><span id="spryselect18"><span class="selectRequiredMsg">Please select an item.</span><span id="spryselect19">
+        	<select name="creativity" class="pulldown_width_450" id="creativity">
+          <option value="" <?php if (!(strcmp("", $row_rsLaCodes['creativity']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+          <?php
+					do {  
+						if ($row_rsLaArgumentation['creativity'] <> "") {  
+						?>
+          <option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['creativity']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['creativity']?></option>
+          <?php
+					}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+						$rows = mysql_num_rows($rsLaArgumentation);
+						if($rows > 0) {
+								mysql_data_seek($rsLaArgumentation, 0);
+							$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+						}
+					?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></span></td>
+    </tr>
+    
+    <tr>
+      <td><?php echo $row_rsLaArgumentationTitles['originality']; ?> <span class="red">*</span></td>
+      <td><span id="spryselect16"><span class="selectRequiredMsg">Please select an item.</span><span id="spryselect17">
+        <select name="originality" class="pulldown_width_450" id="originality">
+          <option value="" <?php if (!(strcmp("", $row_rsLaCodes['originality']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+          <?php
+		do {  
+			if ($row_rsLaArgumentation['originality'] <> "") {  
+			?>
+          <option value="<?php echo $row_rsLaArgumentation['argumentationkey']?>"<?php if (!(strcmp($row_rsLaArgumentation['argumentationkey'], $row_rsLaCodes['originality']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaArgumentation['originality']?></option>
+          <?php
+		}} while ($row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation));
+			$rows = mysql_num_rows($rsLaArgumentation);
+			if($rows > 0) {
+					mysql_data_seek($rsLaArgumentation, 0);
+				$row_rsLaArgumentation = mysql_fetch_assoc($rsLaArgumentation);
+			}
+		?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></span></td>
+    </tr>
+    <script type="text/javascript">
+			var spryselect17 = new Spry.Widget.ValidationSelect("spryselect16", {validateOn:["blur", "change"]<?php echo $isRequired; ?>});
+			var spryselect19 = new Spry.Widget.ValidationSelect("spryselect18", {validateOn:["blur", "change"]<?php echo $isRequired; ?>});
+		</script>
+    
+    <?php } ?>
+    
+    <tr>
+    	<td>&nbsp;</td>
+    	<td>&nbsp;</td>
+    </tr>
+    
+    <tr>
+      <td width="200"><?php 
+        $text = "Coder comments about the performance:";
+        if ($instrument_id_base == "SMJ") { $text = $boilerplate['coding_smj_rubrics_teacher_comments']; }
+        echo $text; ?>
+      </td>
+      <td><textarea name="codercomment" cols="45" rows="5" class="textarea080_450" 
+      	id="codercomment"><?php echo $row_rsLaCodes['codercomment']; ?></textarea>
+      </td>
+    </tr>
+    <tr>
+      <td width="200"><?php 
+				$text = "Suggestions for new / changed codes: (Press ENTER to separate different suggestions.)";
+				if ($instrument_id_base == "SMJ") { 
+					$text = $boilerplate['coding_smj_rubrics_teacher_suggestions']; 
+				}
+				echo $text; ?>
+			</td>
+      <td><textarea name="code_recommend" cols="45" rows="5" class="textarea080_450" 
+        id="code_recommend"><?php echo $row_rsLaCodes['code_recommend']; ?></textarea></td>
+  	</tr>
+    
+    <tr>
+      <td><input type="hidden" name="MM_update" value="form1" /></td>
+      <td><div align="right">
+        <input name="SUBMIT" type="submit" value="SUBMIT" />
+      </div></td>
+    </tr>
+    </table>
+    </form>
+    <div class="tooltipContent" id="sprytooltip1"><strong>Framing:</strong> </strong>All decisions are made within <em id="sprytrigger1">frames of reference</em> (from particular perspectives). When you responded to the questions in the LDMA, you either did this implicitly—without showing that you were aware of taking a particular point of view—or explicitly—by telling us that you planned to take a particular approach or perspective.</div>
+    <p>&nbsp;</p>
+
+
+  <script type="text/javascript">
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+
+var sprytooltip1 = new Spry.Widget.Tooltip("sprytooltip1", "#sprytrigger1");
+  </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+
+
+<?php
+
+?>

@@ -1,0 +1,265 @@
+<?php 
+function tfm_cleanOrderBy($theValue, $defaultSort) {
+	if (preg_match("/^[\w,]{1,50}\s+(asc|desc)\s*$/i",$theValue, $matches)) {
+		return $matches[0];
+	}
+	return $defaultSort;
+}
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as senior")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+?>
+<?php
+
+$tfm_orderby =(!isset($_GET["tfm_orderby"]))?"LastName":$_GET["tfm_orderby"];
+$tfm_order =(!isset($_GET["tfm_order"]))?"ASC":$_GET["tfm_order"];
+$sql_orderby = $tfm_orderby." ".$tfm_order;
+$sql_orderby = tfm_cleanOrderBy($sql_orderby, "LastName");
+?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+$colname_rsAccess = "-1";
+if (isset($_SESSION['userkey'])) {
+  $colname_rsAccess = (get_magic_quotes_gpc()) ? $_SESSION['userkey'] : addslashes($_SESSION['userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsAccess = sprintf("SELECT userkey, user_level FROM registrants WHERE userkey = %s AND user_level = 10", GetSQLValueString($colname_rsAccess, "int"));
+$rsAccess = mysql_query($query_rsAccess, $Assessment) or die(mysql_error());
+$row_rsAccess = mysql_fetch_assoc($rsAccess);
+$totalRows_rsAccess = mysql_num_rows($rsAccess);
+
+//TOMLR Special List Recordset
+$maxRows_rsMaillist = 30;
+$pageNum_rsMaillist = 0;
+if (isset($_GET['pageNum_rsMaillist'])) {
+  $pageNum_rsMaillist = $_GET['pageNum_rsMaillist'];
+}
+$startRow_rsMaillist = $pageNum_rsMaillist * $maxRows_rsMaillist;
+
+// Defining List Recordset variable
+$sqlorderby_rsMaillist = "LastName";
+if (isset($sql_orderby)) {
+  $sqlorderby_rsMaillist = $sql_orderby;
+}
+mysql_select_db($database_Assessment, $Assessment);
+
+$query_rsMaillist = "SELECT * FROM MailList ORDER BY {$sqlorderby_rsMaillist}";
+$query_limit_rsMaillist = sprintf("%s LIMIT %d, %d", $query_rsMaillist, $startRow_rsMaillist, $maxRows_rsMaillist);
+$rsMaillist = mysql_query($query_limit_rsMaillist, $Assessment) or die(mysql_error());
+$row_rsMaillist = mysql_fetch_assoc($rsMaillist);
+
+if (isset($_GET['totalRows_rsMaillist'])) {
+  $totalRows_rsMaillist = $_GET['totalRows_rsMaillist'];
+} else {
+  $all_rsMaillist = mysql_query($query_rsMaillist);
+  $totalRows_rsMaillist = mysql_num_rows($all_rsMaillist);
+}
+$totalPages_rsMaillist = ceil($totalRows_rsMaillist/$maxRows_rsMaillist)-1;
+//End TOMLR Special List Recordset
+
+$queryString_rsMaillist = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsMaillist") == false && 
+        stristr($param, "totalRows_rsMaillist") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsMaillist = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsMaillist = sprintf("&totalRows_rsMaillist=%d%s", $totalRows_rsMaillist, $queryString_rsMaillist);
+?>
+<?php
+//sort column headers for rsMaillist
+$tfm_saveParams = explode(",","");
+$tfm_keepParams = "";
+if($tfm_order == "ASC") {
+	$tfm_order = "DESC";
+}else{
+	$tfm_order = "ASC";
+};
+while (list($key,$val) = each($tfm_saveParams)) {
+	if(isset($_GET[$val]))$tfm_keepParams .= ($val)."=".urlencode($_GET[$val])."&";	
+	if(isset($_POST[$val]))$tfm_keepParams .= ($val)."=".urlencode($_POST[$val])."&";
+}
+$tfm_orderbyURL = $_SERVER["PHP_SELF"]."?".$tfm_keepParams."tfm_order=".$tfm_order."&tfm_orderby=";
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: </title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" --><!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1> DELETE MAIL LIST RECIPIENT </h1>
+  <p>&nbsp;<span class="copyright">Record 
+    <?php echo ($startRow_rsMaillist + 1) ?> of 
+    <?php echo $totalRows_rsMaillist ?>&nbsp;&nbsp;
+    <?php //$TFM_navLinks
+if ($pageNum_rsMaillist > 0) {
+  printf('<a href="'."%s?pageNum_rsMaillist=%d%s", $currentPage, 0, $queryString_rsMaillist.'">First</a>');
+}else{
+  echo "First";
+}
+echo " | ";
+if ($pageNum_rsMaillist > 0) {
+  printf('<a href="'."%s?pageNum_rsMaillist=%d%s", $currentPage, max(0, $pageNum_rsMaillist - 1), $queryString_rsMaillist.'">Previous</a>');
+}else{
+  echo "Previous";
+}
+echo " | ";
+if ($pageNum_rsMaillist < $totalPages_rsMaillist) { 
+  printf('<a href="'."%s?pageNum_rsMaillist=%d%s", $currentPage, $pageNum_rsMaillist + 1, $queryString_rsMaillist.'">Next</a>');
+}else{
+  echo "Next";
+}
+echo " | ";
+if ($pageNum_rsMaillist < $totalPages_rsMaillist) { 
+  printf('<a href="'."%s?pageNum_rsMaillist=%d%s", $currentPage, $totalPages_rsMaillist, $queryString_rsMaillist.'">Last</a>');
+}else{
+  echo "Last";
+}
+?>
+  </span></p>
+  <table border="0">
+    <tr class="tablehead">
+      <td><a href="<?Php echo ($tfm_orderbyURL); ?>FirstName">First name</a></td>
+      <td><a href="<?Php echo ($tfm_orderbyURL); ?>LastName">Last name</a></td>
+      <td><a href="<?Php echo ($tfm_orderbyURL); ?>email">email</a></td>
+      <td>Delete</td>
+      </tr>
+    <?php do { ?>
+      <tr>
+        <td><?php echo $row_rsMaillist['FirstName']; ?></td>
+        <td><?php echo $row_rsMaillist['LastName']; ?></td>
+        <td><?php echo $row_rsMaillist['email']; ?></td>
+        <td><a href="emailrecipientdelete2.php?emaillistkey=<?php echo $row_rsMaillist['emaillistkey']; ?>">delete</a></td>
+        </tr>
+      <?php } while ($row_rsMaillist = mysql_fetch_assoc($rsMaillist)); ?>
+  </table>
+  <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsMaillist);
+?>

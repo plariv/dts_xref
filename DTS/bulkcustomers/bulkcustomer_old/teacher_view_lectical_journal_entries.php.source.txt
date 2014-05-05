@@ -1,0 +1,513 @@
+<?php 
+function tfm_cleanOrderBy($theValue, $defaultSort) {
+	if (preg_match("/^[\w,]{1,50}\s+(asc|desc)\s*$/i",$theValue, $matches)) {
+		return $matches[0];
+	}
+	return $defaultSort;
+}
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+$maxRows_rsCommenter = 1;
+$pageNum_rsCommenter = 0;
+if (isset($_GET['pageNum_rsCommenter'])) {
+  $pageNum_rsCommenter = $_GET['pageNum_rsCommenter'];
+}
+$startRow_rsCommenter = $pageNum_rsCommenter * $maxRows_rsCommenter;
+
+$colname_rsCommenter = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsCommenter = (get_magic_quotes_gpc()) ? $_SESSION['log_userkey'] : addslashes($_SESSION['log_userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCommenter = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsCommenter, "int"));
+$query_limit_rsCommenter = sprintf("%s LIMIT %d, %d", $query_rsCommenter, $startRow_rsCommenter, $maxRows_rsCommenter);
+$rsCommenter = mysql_query($query_limit_rsCommenter, $Assessment) or die(mysql_error());
+$row_rsCommenter = mysql_fetch_assoc($rsCommenter);
+
+if (isset($_GET['totalRows_rsCommenter'])) {
+  $totalRows_rsCommenter = $_GET['totalRows_rsCommenter'];
+} else {
+  $all_rsCommenter = mysql_query($query_rsCommenter);
+  $totalRows_rsCommenter = mysql_num_rows($all_rsCommenter);
+}
+$totalPages_rsCommenter = ceil($totalRows_rsCommenter/$maxRows_rsCommenter)-1;
+
+//TOMLR Special List Recordset
+$maxRows_rsJournalCommented = 10;
+$pageNum_rsJournalCommented = 0;
+if (isset($_GET['pageNum_rsJournalCommented'])) {
+  $pageNum_rsJournalCommented = $_GET['pageNum_rsJournalCommented'];
+}
+$startRow_rsJournalCommented = $pageNum_rsJournalCommented * $maxRows_rsJournalCommented;
+
+$colname_rsJournalCommented = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsJournalCommented = $_SESSION['log_userkey'];
+}
+// Defining List Recordset variable
+$sqlorderby_rsJournalCommented = "journalkey";
+if (isset($sql_orderby)) {
+  $sqlorderby_rsJournalCommented = $sql_orderby;
+}
+mysql_select_db($database_Assessment, $Assessment);
+
+$query_rsJournalCommented = sprintf("SELECT journal_lectical.journalkey, journal_lectical.userkey, journal_lectical.teacherkey, journal_lectical.commented, Registrants.userkey, Registrants.firstname, Registrants.lastname, journal_lectical.`date` FROM journal_lectical, Registrants WHERE journal_lectical.userkey = Registrants.userkey AND journal_lectical.teacherkey = %s AND journal_lectical.commented > 0 ORDER BY {$sqlorderby_rsJournalCommented}", GetSQLValueString($colname_rsJournalCommented, "int"));
+$query_limit_rsJournalCommented = sprintf("%s LIMIT %d, %d", $query_rsJournalCommented, $startRow_rsJournalCommented, $maxRows_rsJournalCommented);
+$rsJournalCommented = mysql_query($query_limit_rsJournalCommented, $Assessment) or die(mysql_error());
+$row_rsJournalCommented = mysql_fetch_assoc($rsJournalCommented);
+
+if (isset($_GET['totalRows_rsJournalCommented'])) {
+  $totalRows_rsJournalCommented = $_GET['totalRows_rsJournalCommented'];
+} else {
+  $all_rsJournalCommented = mysql_query($query_rsJournalCommented);
+  $totalRows_rsJournalCommented = mysql_num_rows($all_rsJournalCommented);
+}
+$totalPages_rsJournalCommented = ceil($totalRows_rsJournalCommented/$maxRows_rsJournalCommented)-1;
+//End TOMLR Special List Recordset
+
+$maxRows_rsJournal = 6;
+$pageNum_rsJournal = 0;
+if (isset($_GET['pageNum_rsJournal'])) {
+  $pageNum_rsJournal = $_GET['pageNum_rsJournal'];
+}
+$startRow_rsJournal = $pageNum_rsJournal * $maxRows_rsJournal;
+
+$colname_rsJournal = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsJournal = (get_magic_quotes_gpc()) ? $_SESSION['log_userkey'] : addslashes($_SESSION['log_userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsJournal = sprintf("SELECT journal_lectical.journalkey, journal_lectical.userkey, journal_lectical.teacherkey, journal_lectical.commented, Registrants.userkey, Registrants.firstname, Registrants.lastname, journal_lectical.`date` FROM journal_lectical, Registrants WHERE journal_lectical.teacherkey = %s AND journal_lectical.userkey = Registrants.userkey AND journal_lectical.commented = 0 ORDER BY journal_lectical.`date` ASC", GetSQLValueString($colname_rsJournal, "int"));
+$query_limit_rsJournal = sprintf("%s LIMIT %d, %d", $query_rsJournal, $startRow_rsJournal, $maxRows_rsJournal);
+$rsJournal = mysql_query($query_limit_rsJournal, $Assessment) or die(mysql_error());
+$row_rsJournal = mysql_fetch_assoc($rsJournal);
+
+if (isset($_GET['totalRows_rsJournal'])) {
+  $totalRows_rsJournal = $_GET['totalRows_rsJournal'];
+} else {
+  $all_rsJournal = mysql_query($query_rsJournal);
+  $totalRows_rsJournal = mysql_num_rows($all_rsJournal);
+}
+$totalPages_rsJournal = ceil($totalRows_rsJournal/$maxRows_rsJournal)-1;
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+$queryString_rsCommenter = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsCommenter") == false && 
+        stristr($param, "totalRows_rsCommenter") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsCommenter = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsCommenter = sprintf("&totalRows_rsCommenter=%d%s", $totalRows_rsCommenter, $queryString_rsCommenter);
+
+$queryString_rsJournal = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsJournal") == false && 
+        stristr($param, "totalRows_rsJournal") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsJournal = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsJournal = sprintf("&totalRows_rsJournal=%d%s", $totalRows_rsJournal, $queryString_rsJournal);
+
+$queryString_rsJournalCommented = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsJournalCommented") == false && 
+        stristr($param, "totalRows_rsJournalCommented") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsJournalCommented = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsJournalCommented = sprintf("&totalRows_rsJournalCommented=%d%s", $totalRows_rsJournalCommented, $queryString_rsJournalCommented);
+?>
+<?php
+$tfm_orderby =(!isset($_GET["tfm_orderby"]))?"journalkey":$_GET["tfm_orderby"];
+$tfm_order =(!isset($_GET["tfm_order"]))?"ASC":$_GET["tfm_order"];
+$sql_orderby = $tfm_orderby." ".$tfm_order;
+$sql_orderby = tfm_cleanOrderBy($sql_orderby, "journalkey");
+?>
+<?php
+//sort column headers for rsJournalCommented
+$tfm_saveParams = explode(",","");
+$tfm_keepParams = "";
+if($tfm_order == "ASC") {
+	$tfm_order = "DESC";
+}else{
+	$tfm_order = "ASC";
+};
+while (list($key,$val) = each($tfm_saveParams)) {
+	if(isset($_GET[$val]))$tfm_keepParams .= ($val)."=".urlencode($_GET[$val])."&";	
+	if(isset($_POST[$val]))$tfm_keepParams .= ($val)."=".urlencode($_POST[$val])."&";
+}
+$tfm_orderbyURL = $_SERVER["PHP_SELF"]."?".$tfm_keepParams."tfm_order=".$tfm_order."&tfm_orderby=";
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template2php.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Journal entries Select a journal entry</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+.twoColFixRtHdr #container #mainContent table {
+	margin-bottom: 30px;
+}
+.twoColFixRtHdr #container #mainContent p a {
+	color: #929292;
+}
+.twoColFixRtHdr #container #mainContent tr td form {
+	padding-top: 0px;
+	margin-top: 0px;
+}
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #9D9F9C;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #F6F6F6;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/DTSheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 26px;
+	background-image: url(/images/skin/menu.png);
+	color: #E2E2E2;
+	margin-top: 0px;
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	height: 19px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a {
+	color: #EAEAEA;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu1 a:active {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 a:visited {
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div id="menu1">
+  <p><a href="/landing.php">home</a>&nbsp;&nbsp;&nbsp;<a href="/security/registration.php">register</a>&nbsp;&nbsp;&nbsp;<a href="/security/logIn.php">log in</a>&nbsp;&nbsp;&nbsp;<a href="/contactus.php">contact us</a>&nbsp;&nbsp;&nbsp;<a href="/security/logout.php">log out</a>&nbsp;&nbsp;
+  <!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->
+  <span class="logintext">
+  <?php if (isset($_SESSION['log_firstname'])) {  ?>
+  You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></span></p>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><?php include '../includes/menu/menu_bulk_assess_links.php'; ?>
+  <!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>COMMENT OR VIEW LECTICAL JOURNAL ENTRIES</h1>
+<p align="left" class="copyright"><a href="../downloads/downloadlecticaljournal1.php">Download all journal data</a> (The download file is delimited by asterisks (*). The columns are: entry number, date, first name, last name, entry, comments.)  </p>
+<h3>Comment Lectical Journal entries</h3>
+<p>Record <?php echo ($startRow_rsJournal + 1) ?> &nbsp;to <?php echo min($startRow_rsJournal + $maxRows_rsJournal, $totalRows_rsJournal) ?> &nbsp;of <?php echo $totalRows_rsJournal ?>&nbsp;&nbsp;&nbsp;<a href="<?php printf("%s?pageNum_rsJournal=%d%s", $currentPage, 0, $queryString_rsJournal); ?>">First</a> | <a href="<?php printf("%s?pageNum_rsJournal=%d%s", $currentPage, max(0, $pageNum_rsJournal - 1), $queryString_rsJournal); ?>">Previous</a> | <a href="<?php printf("%s?pageNum_rsJournal=%d%s", $currentPage, min($totalPages_rsJournal, $pageNum_rsJournal + 1), $queryString_rsJournal); ?>">Next</a> | <a href="<?php printf("%s?pageNum_rsJournal=%d%s", $currentPage, $totalPages_rsJournal, $queryString_rsJournal); ?>">Last</a></p>
+  <table width="98%" border="0">
+    <tr class="tablehead">
+      <td>Entry number</td>
+      <td>Date</td>
+      <td><div align="left">First name</div></td>
+      <td><div align="left">Last name</div></td>
+      <td>Comment</td>
+    </tr>
+    <?php do { ?>
+      <tr>
+        <td><div align="center"><?php echo $row_rsJournal['journalkey']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsJournal['date']; ?></div></td>
+        <td><?php echo $row_rsJournal['firstname']; ?></td>
+        <td><?php echo $row_rsJournal['lastname']; ?></td>
+        <td><div align="center"><a href="../OLD/lectical_journal_comments.php?journalkey=<?php echo $row_rsJournal['journalkey']; ?>">select</a></div></td>
+      </tr>
+      <?php } while ($row_rsJournal = mysql_fetch_assoc($rsJournal)); ?>
+  </table>
+  <h3>View or edit comments</h3>
+  <p>Record <?php echo ($startRow_rsJournalCommented + 1) ?>&nbsp;to <?php echo min($startRow_rsJournalCommented + $maxRows_rsJournalCommented, $totalRows_rsJournalCommented) ?>&nbsp;of <?php echo $totalRows_rsJournalCommented ?>&nbsp;&nbsp;&nbsp;<a href="<?php printf("%s?pageNum_rsJournalCommented=%d%s", $currentPage, 0, $queryString_rsJournalCommented); ?>">First</a> | <a href="<?php printf("%s?pageNum_rsJournalCommented=%d%s", $currentPage, max(0, $pageNum_rsJournalCommented - 1), $queryString_rsJournalCommented); ?>">Previous</a> | <a href="<?php printf("%s?pageNum_rsJournalCommented=%d%s", $currentPage, min($totalPages_rsJournalCommented, $pageNum_rsJournalCommented + 1), $queryString_rsJournalCommented); ?>">Next</a> | <a href="<?php printf("%s?pageNum_rsJournalCommented=%d%s", $currentPage, $totalPages_rsJournalCommented, $queryString_rsJournalCommented); ?>">Last</a></p>
+  <table width="98%" border="0">
+    <tr class="tablehead">
+      <td>Entry number</td>
+      <td>Date</td>
+      <td><div align="left">First name</div></td>
+      <td><div align="left">Last name</div></td>
+      <td>View/edit</td>
+    </tr>
+    <?php do { ?>
+      <tr>
+        <td><div align="center"><?php echo $row_rsJournalCommented['journalkey']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsJournalCommented['date']; ?></div></td>
+        <td><?php echo $row_rsJournalCommented['firstname']; ?>&nbsp;</td>
+        <td><?php echo $row_rsJournalCommented['lastname']; ?></td>
+        <td><div align="center"><a href="../OLD/lectical_journal_comments.php?journalkey=<?php echo $row_rsJournalCommented['journalkey']; ?>">select</a></div></td>
+      </tr>
+      <?php } while ($row_rsJournalCommented = mysql_fetch_assoc($rsJournalCommented)); ?>
+  </table>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsCommenter);
+
+mysql_free_result($rsJournalCommented);
+
+mysql_free_result($rsJournal);
+
+mysql_free_result($rsRegistrants);
+?>

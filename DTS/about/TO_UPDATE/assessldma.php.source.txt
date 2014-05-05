@@ -1,0 +1,421 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLaDilemmas = "SELECT * FROM la_dilemmas WHERE instrument_id = 'LDMA' AND dilemma_sector = 'business'";
+$rsLaDilemmas = mysql_query($query_rsLaDilemmas, $Assessment) or die(mysql_error());
+$row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas);
+$totalRows_rsLaDilemmas = mysql_num_rows($rsLaDilemmas);
+
+
+
+
+
+
+
+
+?>
+
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateldma1.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LDMA</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../DTSassets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../DTSassets/SpryMasterDetail.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript">
+<!--
+//-->
+</script>
+<link href="../SpryAssets/SpryTabbedPanelsVertical.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible table {
+	margin-top: 0px;
+}
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible table tr td h2 {
+	margin-top: 0px;
+}
+
+.VTabbedPanels .TabbedPanelsTab {
+	float: none;
+	border-bottom-width: 1px;
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: solid;
+	border-left-style: none;
+	border-bottom-color: #FFF;
+	width: 140px;
+	background-color: #ACACAC;
+	padding-left: 0px;
+	margin-left: 0px;
+	text-indent: 4px;
+}
+
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	background-image: url(/images/skin/LDMAcontainer1.jpg);
+	border: 1px solid #767A76;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(../images/skin/LDMAheader1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 596px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 2;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 0px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+	background-image: url(../images/skin/LDMAmenu4.jpg);
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #sidebar1 {
+	float: right; /* since this element is floated, a width must be given */
+	width: 157px;
+	margin: 0px;
+	padding: 0px;
+}
+
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 158px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/LDMAfooter1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #menu1 #MenuBar2 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="sidebar1">
+    <!-- InstanceBeginEditable name="graphic" --><img src="../images/corner/orange2.jpg" width="157" height="117" alt="jewel weed" /><!-- InstanceEndEditable --><!-- InstanceBeginEditable name="sidebar2" -->
+  <div align="center">
+    <table>
+      <tr>
+        <td><a href="assessldma.php"><img src="../images/logos/LDMA.gif" width="82" height="32" alt="ldma" /></a></td>
+      </tr>
+      <tr>
+        <td><a href="assesslima.php"><img src="../images/logos/LIMA.gif" width="82" height="32" alt="lsua" /></a></td>
+      </tr>
+      <tr>
+        <td><a href="assessllra.php"><img src="../images/logos/LLRA.gif" width="82" height="32" alt="lera" /></a></td>
+      </tr>
+      <tr>
+        <td><a href="assesslsua.php"><img src="../images/logos/LSUA.gif" width="82" height="32" alt="lrja" /></a></td>
+      </tr>
+      <tr>
+        <td><a href="assesslrja.php"><img src="../images/logos/LRJA.gif" width="82" height="32" alt="llra" /></a></td>
+      </tr>
+      <tr>
+        <td><a href="assesslera.php"><img src="../images/logos/LERA.gif" width="82" height="32" alt="lima" /></a></td>
+      </tr>
+    </table>
+  </div>
+  <!-- InstanceEndEditable --><br />
+  <!-- InstanceBeginEditable name="sidebar3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>ABOUT THE LDMA  </h1>
+  <p class="quote"><em>&quot;I've worked with the LDMA for almost as long as it's been around, testing hundreds of leaders in more than 6 different cultures, and if you said, &quot;Mike, go to the moon, you can only take one thing&quot;—I'd take the LDMA. Clearly, the LDMA helps us hold candid, transparent, DIFFICULT, yet generative conversations with leaders about where they are, and where they are going.&quot; </em></p>
+  <p align="right" class="quote">—Mike Jay <br />
+  </p>
+  <p>The LDMA (Lectical™ Decision-Making Assessment),  and its reflective journaling companion, (the LDMA Journal), is a written test of leaders' decision making skills. It  focuses on three aspects of decision making:</p>
+  <ol>
+    <li><em>collaborative capacity:</em> the ability to bring together diverse      perspectives to develop inclusive, innovative, and effective solutions,</li>
+    <li><em>contextual thinking:</em> the ability to consider problems in terms      of the broader systems and contexts in which they are embedded, and</li>
+    <li><em>cognitive complexity</em><em>: </em>the ability to think well about complex issues.</li>
+  </ol>
+<p> It includes 8 scales that target aspects of<em> collaborative capacity</em>,  <em>contextual thinking, and cognitive complexity. </em>These are:</p>
+<ol>
+  <li> Developmental level (Lectical level)—the complexity level      of a performance</li>
+  <li>Perspective taking skill—the skill with which a test taker identifies and considers perspectives;</li>
+  <li>Perspective seeking skill—the skill with which a test taker identifies and seeks to clarify perspectives;</li>
+  <li>Perspective coordination—the skill with which a test taker coordinates perspectives in making a decision;</li>
+  <li>Collaborative capacity—the degree to which a test taker demonstrates skills for collaborative decision making;</li>
+  <li>Contextual thinking—the the ability to consider problems in terms of the broader systems and contexts in which they are embedded;</li>
+  <li>Cognitive coherence—the skill with which the test taker constructs arguments that support his or her assertions; and</li>
+  <li>Decision making process—the overall quality of the test-takers' deliberative processes</li>
+</ol>
+<p>The following figure shows performances on the last 7 scales by Lectical level (scale 1) in a &quot;live&quot; sample of LDMA and LDMA Journal performances.</p>
+<p>[CHART]</p>
+<h3>General information</h3>
+<p>The LDMA is for anyone who leads or manages people (or is learning to lead or manage poeple)<em>. </em>It is composed of   a common workplace dilemma that involves conflicting interests, then asks the test-taker—through a series of standard probes—to discuss the nature of the problem, describe  solutions, compare these solutions, and describe an ideal decision making process for similar situations. </p>
+<p>There are several existing (and tested) LDMA dilemmas, which  makes it possible to provide a new dilemma each time an individual takes the assessment. This feature is especially useful if you wish to test the effectiveness of a course or training intervention. Moreover, we can customize dilemmas for particular groups. For example, we have developed special versions of the LDMA  for use in legal, medical, and educational contexts. </p>
+<h3>Dilemmas</h3>
+<p><span>The essay questions in the LDMA  require test-takers to respond to a dilemma. Click on   the tabs in the list below  to explore sample dilemmas. (Note: Test-takers will not be allowed to select a dilemma that they have responded to in the past.) </span></p>
+<p>We strongly recommend—in most cases—that you select the dilemma(s)  you would like test-takers to use. We provide an interface in which you will be able to select and assign dilemmas. There are a number of considerations that could inform your choices. We suggest that you discuss these with us before making your initial selections.</p>
+<div id="TabbedPanels1" class="VTabbedPanels">
+  <ul class="TabbedPanelsTabGroup">
+    <?php do { ?>
+    <li class="TabbedPanelsTab"><?php echo $row_rsLaDilemmas['dilemma_name']; ?></li>
+    <?php } while ($row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas)); 
+            // reset RS pointer
+            $rows = mysql_num_rows($rsLaDilemmas);
+            if($rows > 0) {
+                mysql_data_seek($rsLaDilemmas, 0);
+              $row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas);
+            } ?>
+  </ul>
+  <div class="TabbedPanelsContentGroup">
+    <?php do { ?>
+    <div class="TabbedPanelsContent">
+      <table width="350">
+        <tr>
+          <td><p><?php echo $row_rsLaDilemmas['dilemma']; ?></p></td>
+        </tr>
+      </table>
+    </div>
+    <?php } while ($row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas)); 
+            // reset RS pointer
+            $rows = mysql_num_rows($rsLaDilemmas);
+            if($rows > 0) {
+                mysql_data_seek($rsLaDilemmas, 0);
+              $row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas);
+            } ?>
+  </div>
+</div>
+
+            <br style="clear:both" />
+    <h3>Reliability and validity</h3>
+<p>The first LDMA subscale, the Lectical score, is determined with the Lectical Assessment System (the LAS). The reliability (internal consistency) of  Lectical scores   ranges from .95–.98, and inter-rater reliability is maintained at 85% agreement within 1/4 of a Lectical level.In plain English, this means that the scale reliably distinguishes 8–10 adult developmental phases, where each phase represents 1/4 of a developmental level. </p>
+<p>Reasearch on Lectical scores has addressed two broad forms of validity: <em>construct</em> validity and <em>ecological</em> validity. First, the LAS is (1) based on a strong theory of development called <a href="http://www.gse.harvard.edu/~ddl/publication.htm">Dynamic Skill Theory</a>, and (2) has been submitted to a number of rigorous tests of its ability to capture the developmental construct described in that theory. These tests have shown that the LAS does a very good job capturing this dimension. To view the evidence, see the refereed papers under the articles tab on the <a href="../_about/articles.php">literature</a> page and articles by our colleagues on the decision making <a href="referencesdm.html">references</a> page. The reliabilities of LDMA subscales 2–8  range from .79 to .88 in a sample spanning 6 developmental phases.</p>
+<p>Second, the ecological validity of the LDMA is apparent in the relevance of (1)  its content—its dilemmas are like those encountered in the real world; (2) the skills required to complete it; and (3) the scores and feedback provided in its reports. Subscales address dimensions of decision making that are widely recognized as important to decision making in leadership contexts. </p>
+<p>To learn more about <a href="http://theodawson.net/?tag=statistical-reliability">reliability</a> and <a href="http://theodawson.net/?tag=validity">validity</a>, see Dr. Dawson's <a href="http://theodawson.net/">blog</a>.</p>
+<h3>Reports</h3>
+<p>Lectical assessments are distinguished by the quality and educational value of their feedback. To create a Lectical Assessment, we work with domain experts to identify core skills and concepts, use what we learn to develop initial research instruments, then study how the skills and concepts targeted by the assessment develop over time, using a research methodology called <a href="../_about/devmaieutics.php">developmental maieutics</a>. The approach allows us to describe what  targeted skills and concepts &quot;look like&quot; in each developmental phase, and to craft feedback and learning suggestions that are specific to each phase of performance. </p>
+<p>In addition to general feedback related to the phase of a given performance, each LDMA report includes personal feedback, including comments on strengths and areas for growth, interpretations of scale scores, and targeted learning recommendations.</p>
+<p>Reports are generally delivered within 10 business days. We send an email notification each time an assessment is finalized. </p><p>In addition to general feedback related to the phase of a given performance, each LDMA report includes personal feedback, including comments on strengths and areas for growth,  quality of argumentation, the decision-making process,  perspective-taking, and recommendations for learning and development.</p>
+<p>Reports are generally delivered within 5–7 business days. We send an email notification each time an assessment is finalized. </p>
+<h3>Check it out</h3>
+<p>You can examine the LDMA by logging on to the DTS site, clicking on the LDMA icon, and choosing &quot;take the LDMA&quot;. You will need to enter information into the starred fields before you will be allowed to move from one page of the assessment to the next. Feel free to cut and paste blocks of random text into the essay fields.</p>
+<p>Below are two log-ins that will allow you to view a sample of LDMA reports. The first login is for Jane Smith, a fictional test taker who has taken 3 assessments. If you log in as  Jane, you will be able to see her LDMA reports. The second is a fictional client named Ann Brown, Jane's instructor/coach. If you log in as Ann, you will be able to view a Summary Report (of Jane's results). </p>
+<p>Jane Smith: username=janesmith, password=janesmith<br />
+  Ann Brown: username=annbrown, password=annbrown</p>
+<h3>Clients</h3>
+<p>If you are interested in using the LDMA in your business or practice, please <a href="../contactus.php">contact us</a> for more information.</p>
+<p>&nbsp;</p>
+  <script type="text/javascript">
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+  </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLaDilemmas);
+?>

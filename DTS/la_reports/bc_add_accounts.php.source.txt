@@ -1,0 +1,486 @@
+<?php 
+require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" ); 
+include_once '../includes/dts_functions.php';
+
+mysql_select_db($database_Assessment, $Assessment);
+
+
+if (!WA_Auth_RulePasses("Logged in as teacher")) {
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+$userkey = $_SESSION['log_userkey']; 
+
+// Set up the filter for the bulk customer, so they only see their OWN test takers
+$filter_user = " r.bulkuserkey = ".SQLstr($userkey, "int")." ";
+if (WA_Auth_RulePasses("Logged in as analyst")) { 
+	$see_all = TRUE; 
+	$filter_user = " 1=1 ";	
+}
+
+
+
+$currentPage = $_SERVER["PHP_SELF"];
+$numRowsToShow = 5;
+
+
+
+
+// The INSERT section is checked using a WHILE condition, so it can repeat.
+$r = 1;	// current row being checked for insert
+$namesAdded = "";
+
+while (isset($_POST['lastname_'.$r]) AND $_POST['lastname_'.$r] <> "") {
+	
+	// Check that the necessary categories are filled out.
+	if ($_POST['firstname_'.$r] == "" OR $_POST['lastname_'.$r] == "" OR 
+			$_POST['email_'.$r] == "" ) {
+		header("Location: ".$currentPage."?message=missingInfo");
+		exit();				
+	}
+	
+	
+	// Run basic checks to prevent duplicate registrations.
+	$query_rsRegistrants = sprintf("SELECT * FROM registrants 
+	WHERE (firstname = %s AND lastname = %s) OR (email <> '' AND email = %s)", 
+			SQLstr($_POST['firstname_'.$r], "text"),
+			SQLstr($_POST['lastname_'.$r], "text"),
+			SQLstr($_POST['email_'.$r], "text"));
+	$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+	$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+	$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+	
+	// topher($totalRows_rsRegistrants); 
+	
+	if ($totalRows_rsRegistrants > 0) { 
+		echo "It looks like might be a duplicate registrant.<br /> ".
+			$totalRows_rsRegistrants." records were found in the registrant table where 
+				matches were found in the fields 
+				firstname (".$_POST['firstname_'.$r]."), 
+				lastname (".$_POST['lastname_'.$r]."), or 
+				email (".$_POST['email_'.$r].").  ";
+				
+		header("Location: ".$currentPage."?message=duplicate&firstname=".$_POST['firstname_'.$r]);
+		exit();	
+	}
+	
+	
+	//					WRITE THE INSERT STATEMENTS 
+	
+	$fn = $_POST['firstname_'.$r];
+	$ln = $_POST['lastname_'.$r];
+		
+	$insertSQL = sprintf(" INSERT INTO registrants 
+		(userkey, admin_notes, user_name, password, user_level, reset, firstname, lastname, email, 
+		`group`, manlevelkey, branch, register_date, bulkuserkey) 
+		VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+			 SQLstr("", "int"), // username is calculated automatically
+			 SQLstr("user created on bc_add_accounts.php by {$userkey}", 'text'),
+			 SQLstr(strtolower(substr($fn, 0, 3).substr($ln, 0, 5)), "text"), 
+			 SQLstr(randomPassword(8), "text"), // password is generated randomly
+			 SQLstr(1, "int"), 
+			 SQLstr(1, "int"), 
+			 SQLstr($_POST['firstname_'.$r], "text"), 
+			 SQLstr($_POST['lastname_'.$r], "text"),
+			 SQLstr($_POST['email_'.$r], "text"),
+			 // use the pulldown menu for group if available, otherwise, use the new group field.
+			 SQLstr(($_POST['group_'.$r] <> "" ? $_POST['group_'.$r] : $_POST['set_group_'.$r]), "text"),
+			 SQLstr($_POST['manlevelkey_'.$r], "int"),
+			 SQLstr($_POST['branch_'.$r], "text"),
+			 // SQLstr($_POST['supervisor_'.$r], "text"),
+			 SQLstr(date('Y-m-d'), "date"),
+			 SQLstr($_POST['bulkuserkey_'.$r], "int"));
+  // echo str_replace(",", ",<br />", $insertSQL);
+	
+	$Result1 = mysql_query($insertSQL, $Assessment) or die("registrants: ".mysql_error());
+	$this_userkey = mysql_insert_id();
+	
+	
+	// If this person was added to a new group, create a table entry for that group.
+	
+	if (isset($_POST['set_group_'.$r])) {
+		// find out if this group exists
+		$rsGroup = mysql_query("SELECT * FROM groups WHERE `group` = ".
+													 	SQLstr($_POST['set_group_'.$r], "text"));
+		$totalRows_rsGroup = mysql_num_rows($rsGroup);
+		if ($totalRows_rsGroup == 0) { 
+			$result = mysql_query("INSERT INTO groups (clientkey, `group`) 
+				VALUES (".SQLstr($userkey, "int").", ".SQLstr($_POST['set_group_'.$r], "text").")");
+		}
+	}
+	
+	
+	// Add this name to the roster of successful names added.
+	$namesAdded .= $_POST['firstname_'.$r]." ".$_POST['lastname_'.$r].", ";
+	$r ++; 
+	
+}
+
+
+
+// If people have been added, please refresh the page.
+if ($namesAdded <> "") { 
+	// trim the final comma off of $namesAdded
+	$namesAdded = substr($namesAdded, 0, strlen($namesAdded)-2);
+	// exit();
+	$updateURL = $currentPage."?message=success&names=".$namesAdded;
+	$queryString = "";
+	if (isset($_SERVER['QUERY_STRING'])) { $queryString = "&".$_SERVER['QUERY_STRING']; }
+	header("Location: ".$updateURL.$queryString);
+	exit();	
+}
+
+
+
+
+
+// The list of sectors relevant to this bulk user, is used to build a list of management levels relevant to this sector. 
+$query_rsAllSectors = sprintf("SELECT ds.sector, ds.sector_colname  
+FROM registrants r
+JOIN demogs_sector ds ON r.sectorkey = ds.sectorkey
+LEFT JOIN la_data d ON r.userkey = d.userkey
+WHERE ".$filter_user." 
+GROUP BY ds.sector");
+$rsAllSectors = mysql_query($query_rsAllSectors, $Assessment) or die("rsAllSectors: ".mysql_error());
+$totalRows_rsAllSectors = mysql_num_rows($rsAllSectors);
+$sectorsFilter = "";
+while ($row_rsAllSectors = mysql_fetch_assoc($rsAllSectors)) {
+	$sectorsFilter .= " OR ".$row_rsAllSectors['sector_colname']."=1 ";
+}
+
+
+$query_rsAllManLevels = sprintf("SELECT dem.man_level, dem.manlevelkey  
+FROM demogs_man_level dem 
+WHERE 1=1 # 1=0 ".$sectorsFilter." 
+ORDER BY dem.man_level_number, dem.man_level");
+$rsAllManLevels = mysql_query($query_rsAllManLevels, $Assessment) or die("rsAllManLevels: ".mysql_error());
+$row_rsAllManLevels = mysql_fetch_assoc($rsAllManLevels);
+$totalRows_rsAllManLevels = mysql_num_rows($rsAllManLevels);
+
+
+$query_rsFilterGroup = sprintf("SELECT g.group, COUNT(r.userkey) AS numpeople 
+	FROM groups g
+		LEFT JOIN registrants r ON r.group = g.group
+	WHERE {$filter_user} AND (NOW() < g.date_end OR g.date_end IS NULL)
+	GROUP BY g.group ");
+$rsFilterGroup = mysql_query($query_rsFilterGroup, $Assessment) or die("rsFilterGroup: ".mysql_error());
+$row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup);
+$totalRows_rsFilterGroup = mysql_num_rows($rsFilterGroup);
+
+
+$query_rsFilterBranch = sprintf("SELECT r.branch, COUNT(DISTINCT r.userkey) AS numpeople 
+FROM registrants r 
+LEFT JOIN la_data d ON r.userkey = d.userkey
+WHERE ".$filter_user." AND r.branch <> '' GROUP BY r.branch");
+$rsFilterBranch = mysql_query($query_rsFilterBranch, $Assessment) or die("rsFilterBranch: ".mysql_error());
+$row_rsFilterBranch = mysql_fetch_assoc($rsFilterBranch);
+$totalRows_rsFilterBranch = mysql_num_rows($rsFilterBranch);
+
+
+
+
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Add test-taker accounts</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+  <?php include 'bc_links.php'; ?>
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>ADD TEST-TAKER ACCOUNTS</h1>
+    
+    <?php $message = "";
+		if (isset($_GET['message'])) { $message = $_GET['message']; }
+		
+		if ($message == "success") { ?>
+    	<table width="800"><tr><td>
+    	<p class="box"> <?php 
+				if (strpos($_GET['names'], ",")) { ?>
+        	Accounts for <?php echo $_GET['names']; ?> were added successfully. <?php
+				} else { ?>An account for <?php echo $_GET['names']; ?> was added successfully. <?php
+				} ?>
+      </p>
+      </td></tr></table>
+      <?php
+		} 
+		if ($message == "missingInfo") { ?>
+    	<table width="800"><tr><td>
+      <p class="box"><span class="red">FAILED to add accounts for <?php echo $_GET['names']; ?> because some necessary information was missing (first name, last name, user name, password, or email address. Please try again or contact us for help.</span></p>
+      </td></tr></table>
+      <?php
+		}
+		if ($message == "duplicate") { ?>
+    	<table width="800"><tr><td>
+      <p class="box"><span class="red">FAILED to add account for <?php echo $_GET['firstname']; ?>: a user with this name or email address is already registered on our site.</span></p>
+      </td></tr></table>
+      <?php
+		} ?>
+    
+    <form name="form1" action="<?php echo $currentPage; ?>" method="post">
+    
+    <table border="0">
+      <tr class="tablehead">
+        <td align="center">First name</td>
+        <td align="center">Last name</td>
+        <td align="center">Email</td>
+        <td align="center">Group</td>
+        <td align="center">Management level</td>
+        <td align="center">Branch</td>
+        <!--<td align="center">Supervisor</td>-->
+      </tr>
+      
+      <?php 
+			$curRow = 1;
+			$spry_text = 0;
+			$spry_sel = 0;
+			
+			while ($curRow <= $numRowsToShow) {
+			
+				?>
+				<tr>
+					<td>
+          	<?php $spry_text ++; ?>
+          	<span id="sprytextfield<?php echo $spry_text; ?>">
+					  <input name="firstname_<?php echo $curRow; ?>" type="text" value="<?php 
+						if (isset($_POST['firstname_'.$curRow])) { echo $_POST['firstname_'.$curRow]; } ?>" 
+            size="15" />
+				  	<span class="textfieldRequiredMsg">A value is required.</span></span>
+          </td>
+					<td>
+          	<?php $spry_text ++; ?>
+          	<span id="sprytextfield<?php echo $spry_text; ?>">
+          	<input name="lastname_<?php echo $curRow; ?>" type="text" value="<?php 
+						if (isset($_POST['lastname_'.$curRow])) { echo $_POST['lastname_'.$curRow]; } ?>" 
+            size="15" />
+            <span class="textfieldRequiredMsg">A value is required.</span></span>
+          </td>
+					<td>
+          	<?php $spry_text ++; ?>
+          	<span id="sprytextfield<?php echo $spry_text; ?>">
+          	<input name="email_<?php echo $curRow; ?>" type="text" value="<?php 
+						if (isset($_POST['email_'.$curRow])) { echo $_POST['email_'.$curRow]; } ?>" 
+            size="15" />
+            <span class="textfieldRequiredMsg">A value is required.</span></span>
+          </td>
+					<td>
+          	<?php $spry_sel ++; ?>
+          	<span id="spryselect<?php echo $spry_sel; ?>">
+					  <select name="group_<?php echo $curRow; ?>" class="pulldown_width_100" 
+            		id="group_<?php echo $curRow; ?>">
+					    <option value="" selected="selected"> select one </option>
+					    <option value=""> (I'll choose later) </option>
+					    <?php do { ?>
+					    <option value="<?php echo $row_rsFilterGroup['group']?>">
+					      <?php 
+                echo $row_rsFilterGroup['group']; ?>
+				      </option>
+					    <?php } while ($row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup));
+              $rows = mysql_num_rows($rsFilterGroup);
+              if($rows > 0) {
+                  mysql_data_seek($rsFilterGroup, 0);
+                $row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup);
+              } ?>
+            </select>
+						</span>
+            or new group: 
+            <?php $spry_text ++; ?>
+          	<span id="sprytextfield<?php echo $spry_text; ?>">
+            <input name="set_group_<?php echo $curRow; ?>" type="text" value="" size="5" />
+          	</span>
+          </td>
+					<td>
+          	<?php $spry_sel ++; ?>
+          	<span id="spryselect<?php echo $spry_sel; ?>">
+            <select name="manlevelkey_<?php echo $curRow; ?>" class="pulldown_width_100" id="manlevelkey_<?php echo $curRow; ?>">
+              <option value="" selected="selected"> select one </option>
+              <option value=""> (I'll choose later) </option>
+              <?php do { ?>
+              <option value="<?php echo $row_rsAllManLevels['manlevelkey']?>">
+                <?php 
+              echo $row_rsAllManLevels['man_level']; ?>
+              </option>
+              <?php } while ($row_rsAllManLevels = mysql_fetch_assoc($rsAllManLevels));
+                $rows = mysql_num_rows($rsAllManLevels);
+                if($rows > 0) {
+                    mysql_data_seek($rsAllManLevels, 0);
+                  $row_rsAllManLevels = mysql_fetch_assoc($rsAllManLevels);
+                }
+                ?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span>
+          </td>
+					<td>
+          	<?php $spry_sel ++; ?>
+          	<span id="spryselect<?php echo $spry_sel; ?>">
+            <select name="branch_<?php echo $curRow; ?>" class="pulldownwidth150" id="branch_<?php echo $curRow; ?>">
+              <option value="" selected="selected"> select one </option>
+              <option value=""> (I'll choose later) </option>
+              <?php do { ?>
+              <option value="<?php echo $row_rsFilterBranch['branch']?>"> <?php 
+                echo $row_rsFilterBranch['branch']." (".$row_rsFilterBranch['numpeople'].")"; ?></option>
+              <?php } while ($row_rsFilterBranch = mysql_fetch_assoc($rsFilterBranch));
+              $rows = mysql_num_rows($rsFilterBranch);
+              if($rows > 0) {
+                  mysql_data_seek($rsFilterBranch, 0);
+                $row_rsFilterBranch = mysql_fetch_assoc($rsFilterBranch);
+              } ?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span>
+          </td><!--
+					<td>
+          	<?php //$spry_text ++; ?>
+          	<span id="sprytextfield<?php //echo $spry_text; ?>">
+          	<input name="supervisor_<?php //echo $curRow; ?>" type="text" value="" size="15" />
+            <span class="textfieldRequiredMsg">A value is required.</span></span>
+          </td>-->
+					<td><input type="hidden" name="bulkuserkey_<?php echo $curRow; ?>" 
+          			value="<?php echo $userkey; ?>" />
+          </td>
+				</tr>
+        <?php
+				$curRow ++;
+			} ?>
+      
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td></td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td><div align="right">
+          <input type="submit" name="submit" value="SUBMIT" />
+        </div></td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+    </table>
+    
+    </form>
+    
+    <p>&nbsp;</p>
+<p>&nbsp;</p>
+
+<script type="text/javascript">
+<?php 
+
+while ($spry_text > 0) { ?>
+	var sprytextfield<?php echo $spry_text; ?> = new Spry.Widget.ValidationTextField("sprytextfield<?php echo $spry_text; ?>", "none", {isRequired:false, validateOn:["blur", "change"]});
+	<?php 
+	$spry_text --;
+} 
+
+while ($spry_sel > 0) { ?>
+	var spryselect<?php echo $spry_sel; ?> = new Spry.Widget.ValidationSelect("spryselect<?php echo $spry_sel; ?>", {isRequired:false, validateOn:["blur", "change"]});
+	<?php 
+	$spry_sel --;
+} 
+
+?>
+</script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+?>

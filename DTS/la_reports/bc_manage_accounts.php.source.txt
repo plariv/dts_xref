@@ -1,0 +1,1718 @@
+<?php
+include_once '../includes/dts_functions.php';
+include('report_custom_functions.php');
+
+$boil = prepBoilerplate('admin');
+
+/* Buffered identification of URL and SESSION variables. Sometimes they're not present. Introducing them in this sort of way, helps us to avoid breaking pages when expected variables aren't present. */
+
+$sql_string = "";
+if (isset($_SERVER['QUERY_STRING'])) {
+	$sql_string = $_SERVER['QUERY_STRING'];
+} 
+
+$curPage = $_SERVER["PHP_SELF"];
+$limit = 50; 
+if (isset($_GET['limit'])) { $limit = SQLstr($_GET['limit'], "int"); } 
+if (isset($_POST['limit'])) { $limit = SQLstr($_POST['limit'], "int"); } 
+$max_assignments = 15;	// the max # of assignments that will show at one time
+
+
+$userkey = -1;
+$admin_status = false;
+// You can only view bulk reports for another person (userkey specified) if you're a DTS analyst.
+if (isset($_GET['userkey']) AND $_GET['userkey'] <> "") {
+	if (WA_Auth_RulePasses("Logged in as analyst")) {
+		$userkey = $_GET['userkey'];
+	} else {
+		WA_Auth_RestrictAccess("../security/logIn.php");
+	}
+} else if (isset($_SESSION['log_userkey'])) {
+	$userkey = $_SESSION['log_userkey'];
+} else {
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (WA_Auth_RulePasses("Logged in as admin")) {
+	$admin_status = true;
+}
+
+
+
+
+$show = " name last_login group ";
+if (isset($_GET['show'])) {
+	$show = $_GET['show']." ";
+}
+if (isset($_POST['show'])) {	// POSTed settings override the URL settings, if present.
+	$show = $_POST['show']." ";	// Important to ensure extra cushion spaces are present.
+}
+
+
+
+
+// If POST was set for the search box, REFRESH the page again so that the search state variables are pulled from GET instead of POST.
+// At the same time, this will prepare the sort/search functionality for each query. This function looks at $_POST and $_GET and sets $_SESSION['sort'] and $_SESSION['search'] if appropriate input is found.
+// **** initializeSortSearch cannot be run until AFTER the post and get variables are sorted out for this page, because it changes the key labels and mess up those other functions.
+
+if (isset($_POST['search'])) { 
+	initializeSortSearch("show=".$show);
+	header("Location: ".$curPage."?show=".$show);
+	exit();
+}
+
+
+
+
+// Fetch information on the logged-in bulkcustomer
+
+$sql_rsBulkCustomerInfo = sprintf("SELECT bc.bulkcustomerkey, bc.username4students, r.firstname, r.lastname, r.user_level, r.email 
+FROM registrants r
+LEFT JOIN bulkcustomerinfo bc ON r.userkey = bc.bulkcustomerkey 
+WHERE r.userkey = %s ",
+		SQLstr($userkey, "int"));
+$rsBulkCustomerInfo = mysql_query($sql_rsBulkCustomerInfo, $Assessment) or die(mysql_error());
+$row_rsBulkCustomerInfo = mysql_fetch_assoc($rsBulkCustomerInfo);
+$totalRows_rsBulkCustomerInfo = mysql_num_rows($rsBulkCustomerInfo);
+// die($sql_rsBulkCustomerInfo);
+$user_level = $row_rsBulkCustomerInfo['user_level'];
+
+
+
+// Set up the filter for the bulk customer, so they only see their OWN test takers
+$filter_user = " r.bulkuserkey = ".SQLstr($userkey, "int")." ";
+$see_all = FALSE;
+if (WA_Auth_RulePasses("Logged in as analyst")) { 
+	$see_all = TRUE; 
+	// **** Leaving out the demo accounts filter: d.userkey <> 888 AND d.userkey <> 999
+	$filter_user = " 1=1 ";	
+}
+
+
+
+
+
+
+//							SUBMITTING CHANGES TO THE SELECTED TEST TAKERS
+
+// **** I have some security concerns about this area. How can we know that a hacker couldn't alter accounts which don't belong under their userkey?
+
+// This section of code should only be called if the "SUBMIT CHANGES" button has been pressed.
+
+if (isset($_POST['submit_changes'])) { 
+	
+	
+	// 								SET UP THE POSSIBLE QUERIES 
+	
+	// prepare whatever SQL insert / update actions need to be prepared.
+	// The SQL actions needed will include:
+	//	- update Registrants and other directly-linked tables
+	$sql_updateRegistrants = "";
+	// $pieces lets us pre-gather all the updates we'd like to make, before writing the query.
+	$pieces = "";	
+	//	- insert rows into students_assignments
+	$sql_insertAssignments = "";
+	//  - remove rows from students_assignments
+	$sql_deleteAssignments = "";
+	
+	// Put together the pieces of the updateRegistrants query.
+	// Notice there are some redundant entries from different POST values. If the person both types in a group, and selects one from the pulldown menu, the pulldown menu value should take precedence (ie, be written later in the sequence).
+	if ($_POST['set_firstname'] <> "") 
+	{ $pieces .= " r.firstname = ".SQLstr($_POST['set_firstname'], "text").", "; }
+	if ($_POST['set_lastname'] <> "") 
+	{ $pieces .= " r.lastname = ".SQLstr($_POST['set_lastname'], "text").", "; }
+	if (isset($_POST['set_email']) AND $_POST['set_email'] <> "") 
+	{ $pieces .= " r.email = ".SQLstr($_POST['set_email'], "text").", "; }
+	if ($_POST['set_group'] <> "") 
+	{ $pieces .= " r.group = ".SQLstr($_POST['set_group'], "text").", "; }
+	if ($_POST['select_group'] <> "") // selected from pulldown menu 
+	{ $pieces .= " r.group = ".SQLstr($_POST['select_group'], "text").", "; }
+	if ($_POST['set_branch'] <> "") 
+	{ $pieces .= " r.branch = ".SQLstr($_POST['set_branch'], "text").", "; }
+	if ($_POST['select_branch'] <> "") 
+	{ $pieces .= " r.branch = ".SQLstr($_POST['select_branch'], "text").", "; }
+	if ($_POST['set_department'] <> "") 
+	{ $pieces .= " r.department = ".SQLstr($_POST['set_department'], "text").", "; }
+	if ($_POST['select_department'] <> "") 
+	{ $pieces .= " r.department = ".SQLstr($_POST['select_department'], "text").", "; }
+	if ($_POST['select_supervisor'] <> "") 
+	{ $pieces .= " r.supervisor_userkey = ".SQLstr($_POST['select_supervisor'], "int").", "; } 
+	if ($_POST['select_manlevel'] <> "") // selected from pulldown menu
+	{ $pieces .= " r.manlevelkey = ".SQLstr($_POST['select_manlevel'], "int").", "; }
+	
+	// if there's something to update in Registrants, then write the main query for it.
+	if ($pieces <> "") { 
+		// trim of the ending comma from $pieces
+		$pieces = substr($pieces, 0, strlen($pieces)-2);
+		// set impossible condition to start the "OR" clause
+		$sql_updateRegistrants = "UPDATE registrants r SET ".$pieces." WHERE r.userkey = 0 ";
+	}
+	
+	// Attach users to assignment - prepare the beginning of the query
+	if ($_POST['set_assignmentkey'] <> "") { 
+		// insert rows based on the result of a SELECT query which returns userkey, assn'key, and group ID.
+		$sql_insertAssignments = sprintf("INSERT INTO students_assignments 
+			(userkey, assignmentkey, current_group) 
+		SELECT r.userkey AS userkey, %s AS assignmentkey, r.group AS current_group 
+		FROM registrants r WHERE 
+		NOT EXISTS ( SELECT * FROM students_assignments sa 
+								 WHERE sa.userkey = r.userkey AND sa.assignmentkey = %s )
+		AND ( r.userkey = 0 ",
+				SQLstr($_POST['set_assignmentkey'], "int"),
+				SQLstr($_POST['set_assignmentkey'], "int")); 
+	}
+	
+	// Remove users from assignment - prepare the beginning of the query
+	if ($_POST['delete_assignmentkey'] <> "") { 
+		// conditions for deletion: the userkey and assignmentkey match those specified here; 
+		// there is no la_data entry associated with the assignment.
+		$sql_deleteAssignments = "DELETE FROM students_assignments 
+		 WHERE NOT EXISTS ( SELECT * FROM la_data d WHERE d.userkey = students_assignments.userkey AND 
+		 		assignmentkey = students_assignments.assignmentkey )
+		 	AND assignmentkey = ".SQLstr($_POST['delete_assignmentkey'], "int")." 
+		 	AND ( userkey = 0 ";
+	}
+	
+	// If the "delete all assignments" checkbox was checked, replace the normal deleteAssignments query
+	// with this query that simply doesn't require any particular assignmentkey. 
+	// The query will still ignore any assignments that a la_data record exists for.
+	if (isset($_POST['delete_all']) AND $_POST['delete_all'] == 1) {
+		$sql_deleteAssignments = "DELETE FROM students_assignments 
+		 WHERE NOT EXISTS ( SELECT * FROM la_data d WHERE d.userkey = students_assignments.userkey AND 
+		 		assignmentkey = students_assignments.assignmentkey )
+		 	AND ( userkey = 0 ";
+	}
+	
+	
+	
+	//									FIND AND PREPARE THE LIST OF USERS TO MAKE CHANGES TO
+	
+	// get the userkeys to operate on based on which rows were checked
+	$userkeys = $_POST['check'];	// auto-imports as an array. That's it!!
+	if (count($userkeys) == 0) { 
+		// if no keys were selected, then CANCEL script and send the user to an error message.
+		die("You tried to make a change, but didn't select any people first. <br>
+				Press the BACK button on your browser and use the checkboxes next to test takers' names.");
+		exit();
+	}
+	
+	// Certain requirements are checked to REFUSE to make changes...
+	// names and emails cannot be set for more than one user at a time.
+	if (count($userkeys) > 1 AND 
+			($_POST['set_firstname'] <> "" OR $_POST['set_lastname'] <> "" 
+			 OR (isset($_POST['set_email']) AND $_POST['set_email'] <> ""))) {
+		header("Location: <?php echo $curPage; ?>?message=error_onlyone&show=".$show);
+		exit();
+	}
+	// only DTS employees are allowed to change an email address.
+	if (!WA_Auth_RulePasses("Logged in as analyst") 
+			AND isset($_POST['set_email']) AND $_POST['set_email'] <> "") {
+		header("Location: <?php echo $curPage; ?>?message=error_accessdenied&show=".$show);
+		exit();
+	}
+	
+	
+	// Add this list of userkeys to any queries we're writing.
+	// The way that the list of userkeys is fed into the query is currently isomorphic for all types of change queries: the WHERE clause contains a long string of "OR userkey = X" options. 
+	
+	reset($userkeys);
+	$list_userkeys = ""; // also create a comma-separated list of userkeys that changes will be applied to.
+	
+	do {
+		$list_userkeys .= current($userkeys).",";
+		
+		if ($sql_updateRegistrants <> "") { 
+			$sql_updateRegistrants .= " OR userkey = ".
+				SQLstr(current($userkeys), "int");
+		}
+		if ($sql_insertAssignments <> "") { 
+			// topher($sql_insertAssignments);
+			// note the necessary comma at the end of the declaration for this row. ( val, val, val), (...), (...) 
+			$sql_insertAssignments .= " OR r.userkey = ".
+				SQLstr(current($userkeys), "int");
+		}
+		if ($sql_deleteAssignments <> "") { 
+			// WHERE ... AND ( userkey = -1 OR userkey = XX OR userkey = XX OR userkey = XX )
+			$sql_deleteAssignments .= " OR userkey = ".
+				SQLstr(current($userkeys), "int");
+		}
+	} while (next($userkeys));
+	
+	reset($userkeys);	// have to remember to RESET after traversing!
+	
+	
+	
+	// 									 RUN THE QUERIES
+	
+	$Result1 = "no query run"; // this is used to verify that some change was made.
+	
+	if ($sql_updateRegistrants <> "") { 
+		$Result1 = mysql_query($sql_updateRegistrants, $Assessment) or 
+			die("updateRegistrants query: ".mysql_error());
+		// Save a record of this action in activity_bc
+		$sql_activitylog = "INSERT INTO activity_bc (userkey, action, query) 
+		VALUES ( {$userkey}, 'update registrant info', \"{$sql_updateRegistrants}\" )";
+		$Result2 = mysql_query($sql_activitylog, $Assessment) or 
+			die("activity_bc query: ".mysql_error());
+	}
+	
+	if ($sql_insertAssignments <> "") { 
+		// Close the final parenthesis
+		$sql_insertAssignments .= " )";
+		// echo str_replace("\n", "<br>", $sql_insertAssignments); die();
+		$Result1 = mysql_query($sql_insertAssignments, $Assessment) or 
+			die("insertAssignments query: ".mysql_error());
+		// Save a record of this action in activity_bc
+		$sql_activitylog = "INSERT INTO activity_bc (userkey, action, query) 
+		VALUES ( {$userkey}, 'add to assignment', \"{$sql_insertAssignments}\" )";
+		$Result2 = mysql_query($sql_activitylog, $Assessment) or 
+			die("activity_bc query: ".mysql_error());
+	}
+	
+	if ($sql_deleteAssignments <> "") { 
+		// Close the final parenthesis
+		$sql_deleteAssignments .= " )";
+		$Result1 = mysql_query($sql_deleteAssignments, $Assessment) or 
+			die("deleteAssignments query: ".mysql_error()." The query: ".$sql_deleteAssignments);
+		// Save a record of this action in activity_bc
+		$sql_activitylog = "INSERT INTO activity_bc (userkey, action, query) 
+		VALUES ( {$userkey}, 'remove from assignment', \"{$sql_deleteAssignments}\" )";
+		$Result2 = mysql_query($sql_activitylog, $Assessment) or 
+			die("activity_bc query: ".mysql_error());
+	}
+	
+	// If a new group was created, register it in the groups table.
+	
+	if (isset($_POST['set_group'])) {
+		// find out if this group exists
+		$rsGroup = mysql_query("SELECT * FROM groups WHERE `group` = ".SQLstr($_POST['set_group'], "text"));
+		$totalRows_rsGroup = mysql_num_rows($rsGroup);
+		if ($totalRows_rsGroup == 0) { 
+			$result = mysql_query("INSERT INTO groups (clientkey, `group`) 
+				VALUES (".SQLstr($userkey, "int").", ".SQLstr($_POST['set_group'], "text").")");
+		}
+	}
+	
+	
+	if (isset($_POST['reset_password'])) { 
+		
+		do { 
+			
+			// 									Generate a random password
+			$password = randomPassword();
+			// if the pwd generator failed / found a duplicate, function returns FALSE.
+			if (!$password) { 
+				die("Error: the system is unable to create a random password at this time. Please contact the 
+				web support team, and sorry for the inconvenience. ");
+				exit();
+			}
+			
+			// 									Get this user's email address
+			$row_rsThisEmail = mysql_fetch_assoc( mysql_query( "SELECT user_name, email 
+				FROM registrants WHERE userkey = ".SQLstr(current($userkeys), "int") ) );
+			// check that an email address exists
+			if (!strpos($row_rsThisEmail['email'], "@")) { 
+				die("Error: User '".current($userkeys)."' doesn't seem to have an email address. 
+				Please contact the web support team, and sorry for the inconvenience. ");
+			}
+			
+			// 									Set the user's password to this new one
+			// and set the "reset" column to '1', to force the user to change their password on next login.
+			$updateSQL = sprintf("UPDATE registrants SET password=%s, reset=1 WHERE userkey=%s",
+						 SQLstr($password, "text"),
+						 SQLstr(current($userkeys), "int"));
+			$Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+			
+			// 									Email the user their new login info
+			$email_to = $row_rsThisEmail['email'];
+			$email_from = "service@lectica.org";
+			$email_cc = "service@lectica.org";
+			
+			$subject = ""; // Edmonton test takers need a special subject line tag.
+			if (strpos($email_to, "@edmonton.ca")) { $subject .= "City of Edmonton LEI: "; }
+			$subject .= "Your login information for www.lectica.org";
+			
+			$body = $boil['email_resetpassword'];
+			$body = str_replace('[USERNAME]', $row_rsThisEmail['user_name'], $body);
+			$body = str_replace('[PASSWORD]', $password, $body);
+
+			sendEmail($email_to, $email_from, $email_cc, $subject, $body);
+		} while (next($userkeys));
+		
+		// Save a record of this action in activity_bc
+		$sql_activitylog = sprintf("INSERT INTO activity_bc (userkey, action, query) 
+		VALUES ( {$userkey}, 'reset password', %s )",
+				SQLstr("for userkeys ".$list_userkeys, "text"));
+		$Result2 = mysql_query($sql_activitylog, $Assessment) or 
+			die("activity_bc query: ".mysql_error());
+		
+		// die("Passwords have been reset successfully.");
+		
+	} // END IF: if BC chose to reset these users' passwords
+	
+	
+	// Send the BC on to the "send emails" page, if they requested to send an email
+	if (isset($_POST['send_email']) AND $_POST['send_email'] <> "") { 
+		$type = $_POST['send_email'];
+		
+		// When you specify a list of userkeys, the emails page should operate with that instead of with a prespecified group or assignment as input.
+		header("Location: email_test_takers.php?mode=".$type."&userkeys=".$list_userkeys);
+		exit();
+	}
+	
+	
+	header("Location: ".$curPage."?message=success&show=".$show);
+	exit();
+}
+
+
+
+
+
+
+
+
+
+
+// bench();
+
+
+
+//												QUERIES FOR THE SEARCH FILTERS		
+
+$sql_rsFilterBc = sprintf("SELECT r.bulkuserkey, COUNT(DISTINCT r.userkey) AS numpeople, 
+IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer
+FROM registrants r
+LEFT JOIN la_data d ON r.userkey = d.userkey 
+JOIN registrants rb ON r.bulkuserkey = rb.userkey
+WHERE ".$filter_user." AND rb.userkey IS NOT NULL 
+GROUP BY rb.userkey
+ORDER BY bulkcustomer");
+$rsFilterBc = mysql_query($sql_rsFilterBc, $Assessment) or die("rsFilterBc: ".mysql_error());
+$row_rsFilterBc = mysql_fetch_assoc($rsFilterBc);
+$totalRows_rsFilterBc = mysql_num_rows($rsFilterBc);
+
+
+$sql_rsFilterManLevels = sprintf("SELECT dem.man_level, dem.manlevelkey, COUNT(DISTINCT r.userkey) AS numpeople 
+FROM registrants r
+JOIN demogs_man_level dem ON r.manlevelkey = dem.manlevelkey
+LEFT JOIN la_data d ON r.userkey = d.userkey
+WHERE ".$filter_user." 
+GROUP BY dem.manlevelkey ORDER BY dem.man_level_number");
+$rsFilterManLevels = mysql_query($sql_rsFilterManLevels, $Assessment) or die("rsFilterManLevels: ".mysql_error());
+$row_rsFilterManLevels = mysql_fetch_assoc($rsFilterManLevels);
+$totalRows_rsFilterManLevels = mysql_num_rows($rsFilterManLevels);
+
+
+// The list of sectors relevant to this bulk user, is used to build a list of management levels relevant to this sector. 
+$sql_rsAllSectors = sprintf("SELECT ds.sector, ds.sector_colname  
+FROM registrants r
+JOIN demogs_sector ds ON r.sectorkey = ds.sectorkey
+LEFT JOIN la_data d ON r.userkey = d.userkey
+WHERE ".$filter_user." 
+GROUP BY ds.sector");
+$rsAllSectors = mysql_query($sql_rsAllSectors, $Assessment) or die("rsAllSectors: ".mysql_error());
+$totalRows_rsAllSectors = mysql_num_rows($rsAllSectors);
+$sectorsFilter = "";
+while ($row_rsAllSectors = mysql_fetch_assoc($rsAllSectors)) {
+	$sectorsFilter .= " OR ".$row_rsAllSectors['sector_colname']."=1 ";
+}
+
+
+$sql_rsAllManLevels = sprintf("SELECT dem.man_level, dem.manlevelkey  
+FROM demogs_man_level dem 
+WHERE 1=0 ".$sectorsFilter." 
+ORDER BY dem.man_level_number");
+$rsAllManLevels = mysql_query($sql_rsAllManLevels, $Assessment) or die("rsAllManLevels: ".mysql_error());
+$row_rsAllManLevels = mysql_fetch_assoc($rsAllManLevels);
+$totalRows_rsAllManLevels = mysql_num_rows($rsAllManLevels);
+// die($sql_rsAllManLevels);
+
+$sql_rsFilterTime = sprintf("SELECT test_time, COUNT(DISTINCT r.userkey) AS numpeople 
+FROM registrants r
+JOIN la_data d ON r.userkey = d.userkey 
+WHERE ".$filter_user." GROUP BY test_time");
+$rsFilterTime = mysql_query($sql_rsFilterTime, $Assessment) or die("rsFilterTime: ".mysql_error());
+$row_rsFilterTime = mysql_fetch_assoc($rsFilterTime);
+$totalRows_rsFilterTime = mysql_num_rows($rsFilterTime);
+
+$sql_rsFilterGroup = sprintf("SELECT g.groupkey, g.group, COUNT(r.userkey) AS numpeople,
+		LEFT(IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)),20) AS bc 
+	FROM groups g
+		LEFT JOIN registrants r ON r.group = g.group 
+		LEFT JOIN registrants rb ON g.clientkey = rb.userkey
+	WHERE %s AND (NOW() < g.date_end OR g.date_end IS NULL)
+	GROUP BY g.groupkey ORDER BY bc, `group`", 
+		($see_all == true ? "1=1" : "g.clientkey = ".SQLstr($userkey, "int")) );
+$rsFilterGroup = mysql_query($sql_rsFilterGroup, $Assessment) or die("rsFilterGroup: ".mysql_error());
+$row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup);
+$totalRows_rsFilterGroup = mysql_num_rows($rsFilterGroup);
+// die($sql_rsFilterGroup);
+
+$sql_rsFilterSup = sprintf("SELECT r.userkey, r.firstname, r.lastname,
+		LEFT(IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)),13) AS bc 
+	FROM registrants r
+		LEFT JOIN registrants rb ON r.bulkuserkey = rb.userkey
+	WHERE %s 
+	ORDER BY r.lastname, r.firstname ", 
+		($see_all == true ? "1=1" : "r.bulkuserkey = ".SQLstr($userkey, "int")) );
+$rsFilterSup = mysql_query($sql_rsFilterSup) or die("rsFilterSup: ".mysql_error());
+$row_rsFilterSup = mysql_fetch_assoc($rsFilterSup);
+$totalRows_rsFilterSup = mysql_num_rows($rsFilterSup);
+
+$sql_rsFilterBranch = sprintf("SELECT r.branch, COUNT(DISTINCT r.userkey) AS numpeople 
+FROM registrants r 
+LEFT JOIN la_data d ON r.userkey = d.userkey
+WHERE ".$filter_user." AND r.branch <> '' GROUP BY r.branch");
+$rsFilterBranch = mysql_query($sql_rsFilterBranch, $Assessment) or die("rsFilterBranch: ".mysql_error());
+$row_rsFilterBranch = mysql_fetch_assoc($rsFilterBranch);
+$totalRows_rsFilterBranch = mysql_num_rows($rsFilterBranch);
+
+$sql_rsFilterDept = sprintf("SELECT r.department, COUNT(DISTINCT r.userkey) AS numpeople 
+FROM registrants r 
+LEFT JOIN la_data d ON r.userkey = d.userkey
+WHERE ".$filter_user." AND r.department <> '' GROUP BY r.department");
+$rsFilterDept = mysql_query($sql_rsFilterDept, $Assessment) or die("rsFilterDept: ".mysql_error());
+$row_rsFilterDept = mysql_fetch_assoc($rsFilterDept);
+$totalRows_rsFilterDept = mysql_num_rows($rsFilterDept);
+
+$sql_rsFilterInstrument = sprintf("SELECT d.instrument_id, REPLACE(d.instrument_id, '_JOURNAL', ' Journal') AS instrument_id_name, COUNT(DISTINCT r.userkey) AS numpeople 
+FROM registrants r 
+LEFT JOIN la_data d ON r.userkey = d.userkey
+WHERE ".$filter_user." AND d.instrument_id IS NOT NULL GROUP BY d.instrument_id");
+$rsFilterInstrument = mysql_query($sql_rsFilterInstrument, $Assessment) or die("rsFilterInstrument: ".mysql_error());
+$row_rsFilterInstrument = mysql_fetch_assoc($rsFilterInstrument);
+$totalRows_rsFilterInstrument = mysql_num_rows($rsFilterInstrument);
+
+$sql_rsFilterAssign = sprintf("SELECT a.*, dil.dilemma_name, dil.dilemmakey, 
+		COUNT(DISTINCT r.userkey) AS numpeople,
+		LEFT(IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)),13) AS bc 
+	FROM la_assignments a 
+		LEFT JOIN students_assignments sa ON sa.assignmentkey = a.assignmentkey 
+		LEFT JOIN registrants r ON r.userkey = sa.userkey 
+		LEFT JOIN registrants rb ON a.bulkcustomerkey = rb.userkey
+		LEFT JOIN la_dilemmas dil ON a.assign_dilemmakey = dil.dilemmakey
+		LEFT JOIN la_data d ON r.userkey = d.userkey
+	WHERE ({$filter_user} OR a.bulkcustomerkey = {$userkey}) AND a.hidden_client <> 1
+	GROUP BY a.assignmentkey
+	ORDER BY bc, a.assign_group, a.date_start, a.instrument_id");
+// echo str_replace("\n", "<br>", $sql_rsFilterAssign)."<br>";
+$rsFilterAssign = mysql_query($sql_rsFilterAssign) or die("rsFilterAssign: ".mysql_error());
+
+
+
+// bench("filter queries");
+
+
+
+
+// --------------------- QUERY FOR THE RECORDS BOX ------------------------ //
+
+
+$havingClause = "";
+if (isset($_POST['(h)status']) AND $_POST['(h)status'] <> "") { 
+	$havingClause .= " HAVING assignment_info LIKE ".SQLstr('%#'.$search['(h)status'].'%', "text");
+}
+/*  */
+
+$sql_rsTestTakers = "SELECT r.userkey, r.firstname, r.lastname, 
+		r.user_name, r.password, r.last_login, r.email, 
+		CONCAT(r.firstname, ' ', r.lastname) AS name, 
+		r.group, r.branch, r.department, a.assignmentkey, r.bulkuserkey, sp.projectkey, 
+		IF(rb.company <> '', LEFT(rb.company, 15), CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer,
+		r.supervisor_userkey, CONCAT(rs.firstname, ' ', rs.lastname) AS supervisor, 
+		dem.manlevelkey, dem.man_level, dem.man_level_number, 
+		GROUP_CONCAT(DISTINCT 
+			CONVERT( 
+				CONCAT_WS( '#', 
+					a.assignmentkey, 
+					a.instrument_id, 
+					a.date_release, 
+					CASE 
+						WHEN a.assignmentkey IS NULL THEN ' '
+						WHEN da.lakey IS NULL THEN 'NS' 
+						WHEN da.completed = 0 THEN 'S' 
+						WHEN da.completed = 1 AND da.finalized = 0 THEN 'C' 
+						WHEN da.finalized = 2 THEN 'F'
+						WHEN da.finalized = 1 THEN 'R'
+						ELSE '?'
+					END,
+					da.lakey
+				), CHAR(99)
+		) separator '|') AS assignment_info,
+		CASE
+			WHEN da.lakey IS NULL THEN 'not started'
+			WHEN da.completed = 0 THEN 'started'
+			WHEN da.completed = 1 AND da.finalized = 0 THEN 'completed'
+			WHEN da.finalized = 2 THEN 'finalized'
+			WHEN da.finalized = 1 THEN 'released'
+		END AS status
+	FROM registrants r 
+		LEFT JOIN students_projects sp ON r.userkey = sp.userkey
+		LEFT JOIN demogs_man_level dem ON r.manlevelkey = dem.manlevelkey
+		LEFT JOIN registrants rb ON r.bulkuserkey = rb.userkey 
+		LEFT JOIN registrants rs ON r.supervisor_userkey = rs.userkey 
+		LEFT JOIN students_assignments sa ON r.userkey = sa.userkey
+		LEFT JOIN la_assignments a ON sa.assignmentkey = a.assignmentkey AND a.hidden_client <> 1
+		LEFT JOIN la_data da ON r.userkey = da.userkey AND a.assignmentkey = da.assignmentkey 
+			AND da.completed <> 2 AND da.finalized <> 3
+	WHERE ".$filter_user." ";
+// note the inclusion of $havingClause, which is empty unless we want to search by assignment status. Status is necessarily a complex alias, a result of completed and finalized states, and can't be checked for in the Where clause.
+// echo str_replace("\n", "<br>", $sql_rsTestTakers); // Troubleshooting
+$sql_rsTestTakers .= querySortSearch($sql_rsTestTakers, 
+		"r.userkey".$havingClause, "r.last_login DESC");
+// The query is limited to the first (N = $limit) results UNLESS "show all results" is checked.
+$sql_lim_rsTestTakers = $sql_rsTestTakers;
+if (!strpos(" ".$show, " all_results ")) { $sql_lim_rsTestTakers .= sprintf(" LIMIT 0, ".$limit); }
+
+$rsTestTakers = mysql_query($sql_lim_rsTestTakers, $Assessment) or die("rsTestTakers: ".mysql_error());
+// the first row is not being declared yet; it happens in the moment of application.
+$totalRows_rsTestTakers = mysql_num_rows($rsTestTakers);
+
+/* - Troubleshooting only!
+while ($row = mysql_fetch_assoc($rsTestTakers)) { 
+	 echo $row['assignment_info']."<br>"; 
+} // */
+
+// bench("test takers");
+
+$rsAllTestTakers = mysql_query($sql_rsTestTakers, $Assessment) 
+	or die(" rsTestTakers: ".mysql_error());
+$totalRows_rsAllTestTakers = mysql_num_rows($rsAllTestTakers);
+
+// bench("test takers query");
+
+
+// Prepare status and label for shown assignments (if any) 
+
+if (1) {
+	
+	// A second recordset to organize all of the assignments, so that we know how to show the page columns.
+	$sql_rsAssignments = "SELECT r.userkey, r.last_login, r.firstname, r.lastname, 
+			r.email, r.group, r.branch, r.supervisor_userkey, r.bulkuserkey, dem.man_level, 
+			a.assignmentkey, a.instrument_id, a.date_start, a.date_release
+		FROM students_assignments sa
+			JOIN registrants r ON r.userkey = sa.userkey 
+			LEFT JOIN demogs_man_level dem ON r.manlevelkey = dem.manlevelkey
+			JOIN la_assignments a ON sa.assignmentkey = a.assignmentkey AND a.hidden_client <> 1
+			LEFT JOIN la_data da ON da.userkey = r.userkey AND a.assignmentkey = da.assignmentkey
+		WHERE ".$filter_user;
+	$sql_rsAssignments .= querySortSearch($sql_rsAssignments, "a.assignmentkey", "a.date_start ASC, a.instrument_id ASC", false);
+	$sql_rsAssignments .= sprintf(" LIMIT 0, ".$limit);
+	$rsAssignments = mysql_query($sql_rsAssignments, $Assessment) or die("rsAssignments: ".mysql_error());
+	// the first row is not being declared yet; it happens in the moment of application.
+	$totalRows_rsAssignments = mysql_num_rows($rsAssignments);
+	// topher($sql_rsAssignments);
+	
+	$assignment_key = array();
+	$assignment_instrument_id = array();
+	$assignment_date_start = array();
+	// go through all assignment records and prepare the column info for them.
+	while ($row_rsAssignments = mysql_fetch_assoc($rsAssignments)) { 
+		$assignment_key[] = $row_rsAssignments['assignmentkey'];
+		$assignment_instrument_id[] = str_replace("_JOURNAL", " Jo", $row_rsAssignments['instrument_id']);
+		$assignment_date_start[] = date('M j', strtotime($row_rsAssignments['date_start']));
+	}
+	
+	// by this point, all assignments have been catalogued in these three arrays.
+	
+}
+
+
+bench("assignments");
+//topher();
+
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Manage test taker accounts</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<link href="../includes/js_res/jquery.ui.smoothness.css" rel="stylesheet" type="text/css" />
+
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+
+<style type="text/css">
+
+.hlt td {
+	background-color: rgb(206, 206, 206);
+}
+
+td.click {
+	cursor: pointer;
+	cursor: hand;
+}
+
+td.hlt {
+	background-color: rgb(206, 206, 206);
+	cursor: pointer;
+	cursor: hand;
+}
+
+/* I can't edit CSS rules from within Javascript. But I can apply a CSS rule to elements more quickly than I can set their inline styles. This will mean an efficiency boost to the page. */
+
+td.hidden {
+	display: none;
+}
+
+.faded {
+	color: #aaa;
+}
+
+.box { width: 800px; }
+
+
+.twoColFixRtHdr #container #mainContent form table td {
+	padding-right: 8px;
+	padding-left: 8px;
+}
+.twoColFixRtHdr #container #mainContent form h3 {
+	padding-top: 16px;
+}
+.twoColFixRtHdr #container #mainContent form .box tr td h3 {
+	padding-top: 6px;
+}
+</style>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	
+	$('input.toggle').click(function(){
+		var id = $(this).attr('id');
+		var status = $(this).is(':checked'); 
+		// If currently hidden, show that column. Otherwise hide it.
+		// Also, add / remove this text from the "show" list.
+		var colname = id;
+				colname = colname.replace('td_', '');
+		var curShowText = $('#show').val();
+		
+		if (status == true) {
+			// alert('checked: '+colname);
+			$('.'+id).removeClass('hidden');
+			curShowText = ''+curShowText+' '+colname+' ';
+		} else {
+			// alert('unchecked: '+colname);
+			$('.'+id).addClass('hidden');
+			curShowText = ''+curShowText.replace(''+colname, '');
+		}
+		$('#show').val(''+curShowText);
+		
+		// alert(''+curShowText);
+		
+	});
+	
+	$('#show_results_1').click(function(){
+		var curShowText = $('#show').val();
+		$('#show').val(''+curShowText+' all_results ');
+	});
+	
+	$('.date').datepicker({ 
+		dateFormat: 'yy-mm-dd', 
+		numberOfMonths: 1,
+		showOtherMonths: true,
+		selectOtherMonths: true
+	});
+	
+});
+
+	var trIsDisabled = false;
+	
+	function noTr() { trIsDisabled = true; }
+	function yesTr() { trIsDisabled = false; }
+
+	function mouseOver(obj) { obj.style.backgroundColor = "rgb(226, 226, 226)"; }
+	function mouseOff(obj) { obj.style.backgroundColor = ""; }
+		
+	function toggleRow(check) {
+		// obj is this checkbox, whose state we need to look up.
+		// row is the <tr> whose class we want to alter.
+		var row = document.getElementById('row_'+check.value);	
+		if (check.checked == true) { 
+			row.className = "hlt";
+		} else {
+			row.className = "";
+		}
+	}
+	
+	function checkRow(row) {
+		if (trIsDisabled) { return; }
+		// alert("the <tr> was clicked!");
+		// row is the <tr> which was clicked on. 
+		var checkName = ''+row.id;
+		checkName = checkName.replace("row_", "check_");
+		var check = document.getElementById(checkName);
+		if (check.checked == true) { 
+			check.checked = false;
+			row.className = "";
+		} else {
+			check.checked = true;
+			row.className = "hlt";
+		}
+	}
+	
+	function toggleAll(obj) {
+		// 'check' is an array of all of the data-row checkboxes on the page.
+		check = document.getElementsByName('check[]');
+		row = document.getElementsByName('row');
+		// CHECK all
+		if (obj.checked == true) {
+			for (i = 0; i < row.length; i++) {
+				check[i].checked = true;
+				row[i].className = "hlt";
+			}
+		} 
+		// UNCHECK all
+		else {
+			for (i = 0; i < check.length; i++) {
+				check[i].checked = false;
+				row[i].className = "";
+			}
+		}
+	}
+</script>
+
+
+
+<link href="../SpryAssets/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --> 
+  <?php include 'bc_links.php'; ?>
+  <!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>MANAGE TEST-TAKER ACCOUNTS</h1>
+  <?php if ($userkey == 1000000083) { 
+		$sql_resetDaffy = "UPDATE registrants SET reset = 1 WHERE userkey = 1000013071";
+		$result = mysql_query($sql_resetDaffy) or die(mysql_error()); 
+		$sql_eraseDaffy = "DELETE FROM la_data WHERE userkey = 1000013071 AND assignmentkey IS NULL"; 
+		$result2 = mysql_query($sql_eraseDaffy) or die(mysql_error()); ?>
+    <div class="box red">Daffy Duck's account has just been reset, and his
+			<?php echo mysql_affected_rows(); ?> SMA and SMJ assessments have been removed.
+    </div>
+	<?php } ?>
+  
+  <!--<div class="box red">
+  	Lectica has detected that our server was being used to send spam mail. We have fixed the problem; however, industry blacklists detected our spam and have flagged emails from our website accordingly. Because of this, our website's automated emails may be blocked by your test takers' email systems over the next 72 hours. If possible, please wait to use our automated email functions until Saturday, November 10th. Feel free to contact us with any concerns or questions.
+  </div>-->
+    
+    <?php $message = "";
+		if (isset($_GET['message'])) { $message = $_GET['message']; } ?>
+    
+		<?php if ($message == "success") { ?>
+   	<table class="box" width="400"><tr><td>Your changes were saved successfully.</td></tr></table>
+    <?php } ?>
+    <?php if ($message == "error_onlyone") { ?>
+    	<table class="box" width="400"><tr><td><span class="red">Error:</span> you only can change first or last names for one person at a time. Please try again.</td></tr></table>
+    <?php } ?>
+    <?php if ($message == "error_noselect") { ?>
+    	<table class="box" width="400"><tr>
+    	  <td><span class="red">Error:</span> you did not select any people from the list.</td></tr></table>
+    <?php } ?>
+    <?php if ($message == "error_nochange") { ?>
+    	<table class="box" width="400"><tr>
+    	  <td><span class="red">Error:</span> you must choose some change to make from the "Make changes" box.</td></tr></table>
+    <?php } ?>
+    
+    
+    <form name="manageAccounts" action="<?php echo $curPage; ?>?show=<?php echo $show; ?>" method="post">
+    
+    <table border="0" cellpadding="2" cellspacing="0" class="box">
+      <tr>
+        <td colspan="2"><p>
+          <?php
+				if (isset($_SESSION['search']) AND $_SESSION['search'] <> "") { 
+					$searchDesc = $_SESSION['search'];
+					$searchDesc = str_replace(array("(s)", "(h)"), "", $searchDesc);
+					$searchDesc = str_replace("(low):", " >= ", $searchDesc);
+					$searchDesc = str_replace("(high):", " <= ", $searchDesc);
+					$searchDesc = str_replace("(e):", " = ", $searchDesc);
+					$searchDesc = str_replace(":", " CONTAINS ", $searchDesc);
+					$searchDesc = str_replace(",", " AND ", $searchDesc);
+					$searchDesc = substr($searchDesc, 0, strlen($searchDesc)-5);
+					
+					?>
+          <strong>Current filter: </strong> <?php echo $searchDesc; ?> | <a href="<?php echo $curPage; ?>?search=clear">show all test takers</a> 
+          <?php 
+				}
+			  else { ?>
+          </p>
+          <p><strong>Filter test takers</strong></p><?php } ?></td>
+      </tr>
+      <tr>
+      	<td width="187"></td><td width="605"></td>
+        
+      <tr>
+        <td><input type="checkbox" class="toggle" id="td_name" 
+					<?php if (strpos(" ".$show, " name ")) { ?>checked="checked"<?php } ?> />Show name</td>
+        <td>first <span id="sprytextfield5">
+        <input name="(s)firstname" id="(s)firstname" type="text" size="14" 
+        	value="<?php echo (isset($_POST['(s)firstname']) ? $_POST['(s)firstname'] : ""); ?>" />
+        </span> last <span id="sprytextfield6">
+        <input name="(s)lastname" id="(s)lastname" type="text" size="14"
+        	value="<?php echo (isset($_POST['(s)lastname']) ? $_POST['(s)lastname'] : ""); ?>" />
+        </span></td>
+      </tr>
+      
+      <tr>
+       <?php if ($see_all) { ?>
+        <td><input type="checkbox" class="toggle" id="td_userkey"
+        	<?php if (strpos(" ".$show, " userkey ")) { ?>checked="checked"<?php } ?> />Show userkey</td>
+        <td>
+        <input name="(s)r:userkey" type="text" value="<?php 
+					echo (isset($_POST['(s)r:userkey']) ? $_POST['(s)r:userkey'] : ""); ?>" size="14" />
+        </td>
+     </tr>
+     <?php } ?>
+     
+      <tr>
+        <td><input type="checkbox" class="toggle" id="td_last_login" 
+        	<?php if (strpos(" ".$show, " last_login ")) { ?>checked="checked"<?php } ?> />Show last login</td>
+        <td>from <span id="sprytextfield3">
+        <input name="(s)last_login(low)" type="text" class="date" size="10" 
+        	value="<?php 
+						echo (isset($_POST['(s)last_login(low)']) ? $_POST['(s)last_login(low)'] : ""); ?>" />
+        <span class="textfieldInvalidFormatMsg">Invalid format.</span></span>
+		to <span id="sprytextfield4">
+        <input name="(s)last_login(high)" type="text" class="date" size="10" 
+        	value="<?php 
+						echo (isset($_POST['(s)last_login(high)']) ? $_POST['(s)last_login(high)'] : ""); ?>"  />
+        <span class="textfieldInvalidFormatMsg">Invalid format.</span></span></td>
+      </tr>
+      <tr>
+        <td><input type="checkbox" class="toggle" id="td_supervisor"
+        	<?php if (strpos(" ".$show, " supervisor ")) { ?>checked="checked"<?php } ?> />Show supervisor</td>
+        <td><span id="sprytextfield2">
+        <input name="(s)supervisor" type="text" value="<?php 
+					echo (isset($_POST['(s)supervisor']) ? $_POST['(s)supervisor'] : ""); ?>" size="14" />
+        </span></td>
+      </tr>
+      
+      
+      <tr>
+        <td><input type="checkbox" class="toggle" id="td_branch"
+        	<?php if (strpos(" ".$show, " branch ")) { ?>checked="checked"<?php } ?> />Show branch</td>
+        <td><span id="spryselect2">
+        <?php $search_branch = (isset($_POST['(s)branch']) ? $_POST['(s)branch'] : ""); ?>
+        <select name="(s)branch" class="pulldown_width_150" id="(s)branch">
+          <option value="" <?php if(!strcmp($search_branch, "")) { echo "selected=\"selected\""; } ?>> - view all - </option>
+          <?php do { ?>
+          <option value="<?php echo $row_rsFilterBranch['branch']?>" 
+          	<?php if(!strcmp($search_branch, $row_rsFilterBranch['branch'])) 
+						{ echo "selected=\"selected\""; } ?>><?php echo $row_rsFilterBranch['branch'].
+							" (".$row_rsFilterBranch['numpeople'].")"; ?></option>
+          <?php } while ($row_rsFilterBranch = mysql_fetch_assoc($rsFilterBranch));
+                $rows = mysql_num_rows($rsFilterBranch);
+                if($rows > 0) {
+                    mysql_data_seek($rsFilterBranch, 0);
+                  $row_rsFilterBranch = mysql_fetch_assoc($rsFilterBranch);
+                } ?>
+        </select>
+        </span></td>
+			</tr>
+      
+        <?php if ($totalRows_rsFilterDept > 0) { ?>
+     <tr>
+        <td><input type="checkbox" class="toggle" id="td_department"
+        	<?php if (strpos(" ".$show, " department ")) { ?>checked="checked"<?php } ?> />Show department</td>
+        <td><span id="spryselect5">
+        <?php $search_department = (isset($_POST['(s)department']) ? $_POST['(s)department'] : ""); ?>
+        <select name="(s)department" class="pulldown_width_150" id="(s)department">
+          <option value="" <?php if(!strcmp($search_department, "")) 
+						{ echo "selected=\"selected\""; } ?>> - view all - </option>
+          <?php do { ?>
+          <option value="<?php echo $row_rsFilterDept['department']?>" 
+          	<?php if(!strcmp($search_department, $row_rsFilterDept['department'])) 
+						{ echo "selected=\"selected\""; } ?>><?php echo $row_rsFilterDept['department'].
+							" (".$row_rsFilterDept['numpeople'].")"; ?></option>
+          <?php } while ($row_rsFilterDept = mysql_fetch_assoc($rsFilterDept));
+                $rows = mysql_num_rows($rsFilterDept);
+                if($rows > 0) {
+                    mysql_data_seek($rsFilterDept, 0);
+                  $row_rsFilterDept = mysql_fetch_assoc($rsFilterDept);
+                } ?>
+        </select>
+        </span></td>
+        <script type="text/javascript">
+					var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", 
+						{validateOn:["blur", "change"], isRequired:false});
+				</script>
+        
+      </tr>
+        <?php } ?>
+      
+      
+        <?php if ($totalRows_rsFilterBc > 1) { ?>
+      <tr>
+        <td><input type="checkbox" class="toggle" id="td_bulkcustomer"
+        	<?php if (strpos(" ".$show, " bulkcustomer ")) { ?>checked="checked"<?php } ?> />Show client</td>
+        <td>
+        <?php $search_bulkuserkey = (isset($_POST['(s)bulkuserkey']) ? 
+																						$_POST['(s)bulkuserkey'] : ""); ?>
+        <select name="(s)bulkuserkey" class="pulldown_width_150" id="(s)bulkuserkey">
+          <option value="" <?php if(!strcmp($search_bulkuserkey, "")) 
+						{ echo "selected=\"selected\""; } ?>>
+           - view all - </option>
+          <?php do { ?>
+          <option value="<?php echo $row_rsFilterBc['bulkuserkey']?>" 
+          	<?php if(!strcmp($search_bulkuserkey, $row_rsFilterBc['bulkuserkey'])) 
+						{ echo "selected=\"selected\""; } ?>><?php echo $row_rsFilterBc['bulkcustomer'].
+						" &nbsp; (".$row_rsFilterBc['numpeople'].")"; ?></option>
+          <?php } while ($row_rsFilterBc = mysql_fetch_assoc($rsFilterBc));
+                $rows = mysql_num_rows($rsFilterBc);
+                if($rows > 0) {
+                    mysql_data_seek($rsFilterBc, 0);
+                  $row_rsFilterBc = mysql_fetch_assoc($rsFilterBc);
+                } ?>
+        </select> 
+        
+        <?php /* 
+        userkey 
+        <input name="(s)bulkuserkey" type="text" size="10"
+        	value="<?php 
+						echo (isset($_POST['(s)bulkuserkey']) ? $_POST['(s)bulkuserkey'] : ""); ?>" /> */ ?>
+        
+        </td>
+      </tr>
+				<?php } ?>
+      <tr>
+        <td><input type="checkbox" class="toggle" id="td_manlevel"
+        	<?php if (strpos(" ".$show, " manlevel ")) { ?>checked="checked"<?php } ?> />Show man. level</td>
+        <td>
+         <?php $search_manlevelkey = (isset($_POST['(s)manlevelkey(e)']) ? 
+																							$_POST['(s)manlevelkey(e)'] : ""); ?>
+         <select name="(s)manlevelkey(e)" class="pulldown_width_150" id="(s)manlevelkey(e)">
+          <option value="" <?php if(!strcmp($search_manlevelkey, "")) 
+						{ echo "selected=\"selected\""; } ?>>- view all -</option>
+          <?php do { ?>
+          <option value="<?php echo $row_rsFilterManLevels['manlevelkey']?>" 
+            <?php if(!strcmp( $search_manlevelkey, $row_rsFilterManLevels['manlevelkey'] )) 
+						{ echo "selected=\"selected\""; } ?>> <?php echo $row_rsFilterManLevels['man_level'].
+						" (".$row_rsFilterManLevels['numpeople'].")";?></option>
+          <?php } while ($row_rsFilterManLevels = mysql_fetch_assoc($rsFilterManLevels));
+							$rows = mysql_num_rows($rsFilterManLevels);
+							if($rows > 0) {
+									mysql_data_seek($rsFilterManLevels, 0);
+								$row_rsFilterManLevels = mysql_fetch_assoc($rsFilterManLevels);
+							}
+							?>
+        </select></td>
+      </tr>
+      
+      
+      <tr>
+        <td><input type="checkbox" class="toggle" id="td_group" 
+        	<?php if (strpos(" ".$show, " group ")) { ?>checked="checked"<?php } ?> />Show group</td>
+        <td><span id="spryselect">
+        <?php $search_group = (isset($_POST['(s)group(e)']) ? $_POST['(s)group(e)'] : ""); ?>
+        <select name="(s)group(e)" class="pulldown_width_150" id="(s)group(e)">
+          <option value="" <?php if(!strcmp($search_group, "")) 
+					{ echo "selected=\"selected\""; } ?>> - view all - </option>
+          <?php do { ?>
+          <option value="<?php echo $row_rsFilterGroup['group']?>" 
+          	<?php if(!strcmp($search_group, $row_rsFilterGroup['group'])) 
+						{ echo "selected=\"selected\""; } ?> >
+						<?php echo (($see_all == true AND $row_rsFilterGroup['bc'] <> "") ? 
+						$row_rsFilterGroup['bc']." → " : "").
+						$row_rsFilterGroup['group']." (".$row_rsFilterGroup['numpeople'].")"; ?></option>
+          <?php } while ($row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup));
+					$rows = mysql_num_rows($rsFilterGroup);
+					if($rows > 0) {
+							mysql_data_seek($rsFilterGroup, 0);
+						$row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup);
+					} ?>
+        </select>
+        </span>
+        </td>
+      </tr>
+      
+      <tr>
+        <td><input type="checkbox" class="toggle" id="td_assign"
+        	<?php if (strpos(" ".$show, " assign ")) { ?>checked="checked"<?php } ?> />
+          Show assignment
+        </td>
+        <td>
+          <?php $search_assignmentkey = (isset($_POST['(s)assignmentkey']) ? 
+						$_POST['(s)assignmentkey'] : ""); ?>
+        	<select name="(s)assignmentkey" class="pulldown_width_150" id="(s)assignmentkey">
+          	<option value=""> - view all - </option>
+						<?php while ($row = mysql_fetch_assoc($rsFilterAssign)) {   
+      				if ($row['assignmentkey'] <> "") { ?>
+                <option value="<?php echo $row['assignmentkey']?>"
+									<?php if ($search_assignmentkey == $row['assignmentkey']) 
+                  { echo "selected='selected'"; } ?>> 
+									<?php $date_start = strtotime($row['date_start']);
+									$date_end = strtotime($row['date_end']);
+									$date_release = strtotime($row['date_release']);
+									echo "(".zeropad($row['assignmentkey'], 3).") &nbsp; ";
+									if ($see_all) { echo $row['bc']." → "; }
+									echo $row['assign_group'].", ".$row['instrument_id']." - ".
+										" start ".date('M j', $date_start).
+										(date('Y', $date_start) <> date('Y') ? " ".date('Y', $date_start) : "").
+										", due ".date('M j', $date_end).
+										", release ".date('M j', $date_release); ?>
+                </option><?php 
+							} 
+						} 
+						if (mysql_num_rows($rsFilterAssign) > 0) { mysql_data_seek($rsFilterAssign, 0); } ?>
+        	</select>
+        </td>
+      </tr>
+      
+      <tr>
+        <td><input type="checkbox" class="toggle" id="td_email"
+        	<?php if (strpos(" ".$show, " email ")) { ?>checked="checked"<?php } ?> />Show email</td>
+      </tr>
+      
+      <?php if ($admin_status) { ?>
+      <tr>
+        <td><input type="checkbox" class="toggle" id="td_unpw"
+        	<?php if (strpos(" ".$show, " unpw ")) { ?>checked="checked"<?php } ?> />Show UN / PW</td>
+      </tr>
+      <?php } ?>
+      <tr>
+        <td class="click_disabled" id="td_assessments">Assessment</td>
+        <td>
+         <?php $search_instrument = (isset($_POST['(s)d:instrument_id']) ? 
+																						$_POST['(s)d:instrument_id'] : ""); ?>
+         <select name="(s)d:instrument_id" class="pulldown_width_150" id="(s)d:instrument_id">
+          <option value="" <?php if(!strcmp($search_instrument, "")) 
+						{ echo "selected=\"selected\""; } ?>> - view all - </option>
+          <?php do { ?>
+          <option value="<?php echo $row_rsFilterInstrument['instrument_id']?>" 
+          	<?php if(!strcmp($search_instrument, $row_rsFilterInstrument['instrument_id'])) 
+						{ echo "selected=\"selected\""; } ?> >
+						<?php echo $row_rsFilterInstrument['instrument_id_name'].
+							" (".$row_rsFilterInstrument['numpeople'].")"; ?> </option> <?php 
+					} while ($row_rsFilterInstrument = mysql_fetch_assoc($rsFilterInstrument));
+					$rows = mysql_num_rows($rsFilterInstrument);
+					if($rows > 0) {
+							mysql_data_seek($rsFilterInstrument, 0);
+						$row_rsFilterInstrument = mysql_fetch_assoc($rsFilterInstrument);
+					} ?>
+        </select></td>
+      </tr>
+      
+      <tr>
+      	<td>
+      	<table border="0" cellpadding="0" cellspacing="0">
+          <tr>
+            <td> Show </td>
+            <td><input type="radio" name="show_all_results" value="0" id="show_results_0" 
+      <?php if (!strpos(" ".$show, " all_results ")) { ?> checked="checked"<?php } ?> />
+        <span id="sprytextfield9">
+        <input name="limit" type="text" value="<?php echo $limit; ?>" size="4" />
+        <span class="textfieldInvalidFormatMsg">Invalid format.</span></span> results <br />
+        <input type="radio" name="show_all_results" value="1" id="show_results_1" 
+      <?php if (strpos(" ".$show, " all_results ")) { ?> checked="checked"<?php } ?> />All results </td>
+          </tr>
+        </table>
+        </td>
+        
+        <td><div align="right">
+          <input type="hidden" name="show" id="show" value="<?php echo $show; ?>" />
+          <input type="submit" name="search" value="SEARCH" />
+        </div></td>
+      </tr>
+        
+    </table>
+    
+    <table class="box">
+    	<tr>
+    		<td colspan='2'>
+    			Each assignment's header displays its instrument, starting date, and its unique ID number.</td>
+    	</tr>
+    	<tr class="tablehead_knockout">
+      	<td colspan="2">Assignment status</td>
+      </tr>
+    	<tr>	
+      	<td><span class="logged_in">NS</span></td>
+        <td>not started</td>
+      </tr>
+    	<tr>	
+      	<td class="lima">S</td>
+        <td>started, not completed</td>
+      </tr>
+    	<tr>	
+      	<td class="lmla">C</td>
+        <td>completed, not processed</td>
+      </tr>
+    	<tr>	
+      	<td class="lmja">F</td>
+        <td>finalized (client can view)</td>
+      </tr>
+    	<tr>	
+      	<td class="lera">R</td>
+        <td>released (test taker can view)</td>
+      </tr>
+    </table>
+    
+    <h3>Select test takers</h3>
+    
+    <p>Currently showing <?php 
+			if ($totalRows_rsTestTakers < $totalRows_rsAllTestTakers) { 
+				echo $totalRows_rsTestTakers." of ".$totalRows_rsAllTestTakers;
+			} else { 
+				echo "all ".$totalRows_rsTestTakers; 
+			} 
+			?> test taker<?php echo ($totalRows_rsTestTakers == 1 ? "" : "s"); ?>.</p>
+    
+    <div style="width: 2000px; ">
+    <table>
+      <tr class="tablehead">
+      	<td>
+        	<input type="checkbox" name="check_all" id="check_all" 
+        		onChange="toggleAll(this)" />
+        </td>
+        <?php 
+				if ($admin_status) { ?>
+        <td align="center" width="100" class="toggle td_userkey
+				<?php if (!strpos(" ".$show, " userkey ")) { ?> hidden <?php } ?> ">
+        	<a href="<?php echo $curPage; ?>?sort=userkey&show=<?php echo $show; ?>">Userkey</a></td> <?php 
+				} ?>
+        <td class="toggle td_name 
+					<?php if (!strpos(" ".$show, " name ")) { ?> hidden <?php } ?>" align="center">
+        	<a href="<?php echo $curPage; ?>?sort=lastname&show=<?php echo $show; ?>">Name</a></td>
+        
+        <td class="toggle td_email 
+        	<?php if (!strpos(" ".$show, " email ")) { ?> hidden <?php } ?>"><div align="center">
+        	<a href="<?php echo $curPage; ?>?sort=email&show=<?php echo $show; ?>">Email</a></div></td> 
+        <?php 
+				if ($admin_status) { ?>
+        <td class="toggle td_unpw 
+        	<?php if (!strpos(" ".$show, " unpw ")) { ?> hidden <?php } ?>"><div align="center">
+        	<a href="<?php echo $curPage; ?>?sort=user_name&show=<?php echo $show; ?>">Username</a></div></td> <?php 
+				} ?>
+        <?php 
+				if ($admin_status) { ?>
+        <td class="toggle td_unpw 
+        	<?php if (!strpos(" ".$show, " unpw ")) { ?> hidden <?php } ?>"><div align="center">
+        	<a href="<?php echo $curPage; ?>?sort=password&show=<?php echo $show; ?>">Password</a></div></td> <?php 
+				} ?>
+        <td class="toggle td_last_login
+        	<?php if (!strpos(" ".$show, " last_login ")) { ?> hidden <?php } ?>"><div align="center">
+        	<a href="<?php echo $curPage; ?>?sort=last_login&show=<?php echo $show; ?>">Last logged in</a></div></td> 
+        
+        <td class="toggle td_group
+        	<?php if (!strpos(" ".$show, " group ")) { ?> hidden <?php } ?>"><div align="center">
+        	<a href="<?php echo $curPage; ?>?sort=group&show=<?php echo $show; ?>">Group</a></div></td> 
+                
+        <?php 
+				if ($admin_status) { ?>
+        <td class="toggle td_bulkcustomer
+        	<?php if (!strpos(" ".$show, " bulkcustomer ")) { ?> hidden <?php } ?>"><div align="center">
+        	<a href="<?php echo $curPage; ?>?sort=bulkcustomer&show=<?php echo $show; ?>">Bulk customer</a></div></td> <?php 
+				} ?>
+        <?php 
+				if ($admin_status) { ?>
+        <td class="toggle td_bulkcustomer
+        	<?php if (!strpos(" ".$show, " bulkcustomer ")) { ?> hidden <?php } ?>"><div align="center">
+        	<a href="<?php echo $curPage; ?>?sort=projectkey&show=<?php echo $show; ?>">Projectkey</a></div></td> <?php 
+				} ?>
+        
+        <td class="toggle td_manlevel
+        	<?php if (!strpos(" ".$show, " manlevel ")) { ?> hidden <?php } ?>"><div align="center">
+        	<a href="<?php echo $curPage; ?>?sort=man_level_number&show=<?php echo $show; ?>">Management level</a></div></td> 
+        <td class="toggle td_branch
+        	<?php if (!strpos(" ".$show, " branch ")) { ?> hidden <?php } ?>"><div align="center">
+        	<a href="<?php echo $curPage; ?>?sort=branch&show=<?php echo $show; ?>">Branch</a></div></td>
+        <td class="toggle td_department
+        	<?php if (!strpos(" ".$show, " department ")) { ?> hidden <?php } ?>"><div align="center">
+        	<a href="<?php echo $curPage; ?>?sort=department&show=<?php echo $show; ?>">Department</a></div></td> 
+        <td class="toggle td_supervisor
+        	<?php if (!strpos(" ".$show, " supervisor ")) { ?> hidden <?php } ?>"><div align="center">
+        	<a href="<?php echo $curPage; ?>?sort=supervisor&show=<?php echo $show; ?>">Supervisor</a></div></td>
+        
+        <?php 
+				$i = 0;
+				while ($i < count($assignment_key) AND $i < $max_assignments) { ?>
+					<td class="toggle td_assign <?php 
+						if (!strpos(" ".$show, " assign ")) { ?> hidden <?php } ?>"><?php 
+						// SMA Sept 28th (483)
+						echo $assignment_instrument_id[$i]." ".$assignment_date_start[$i]; 
+						if ($admin_status OR 1) { echo " (".$assignment_key[$i].")"; } ?>
+            </td>
+					<?php $i ++;
+				} 
+				// If there are more assignments that won't be shown (based on $max_assignments)
+				if ($i < count($assignment_key)) { ?>
+					<td class="toggle hidden td_assign"><em>more assignments...</em></td>
+          <?php
+				}
+				if (count($assignment_key) == 0) { ?>
+					<td class="toggle hidden td_assign"><em>no assignments found</em></td>
+					<?php 
+				} ?>
+        
+      </tr>
+      
+      <?php 
+			while ($row_rsTestTakers = mysql_fetch_assoc($rsTestTakers)) 
+			{ 
+				$thisUserkey = $row_rsTestTakers['userkey'];
+				?>
+      <tr name="row" id="row_<?php echo $row_rsTestTakers['userkey']; ?>" 
+        onmouseover="mouseOver(this)" onMouseOut="mouseOff(this)" onClick="checkRow(this)">
+        
+        <td>
+          <input type="checkbox" name="check[]" id="check_<?php echo $thisUserkey; ?>" 
+            value="<?php echo $thisUserkey; ?>" 
+            onmouseover="noTr()" onMouseOut="yesTr()" onClick="toggleRow(this)" />
+        </td>
+        <?php if ($admin_status) { ?>
+          <td class="toggle td_userkey
+          	<?php if (!strpos(" ".$show, " userkey ")) { ?> hidden <?php } ?>" align="center"><?php 
+						echo $row_rsTestTakers['userkey']; ?></td>
+        <?php } ?>
+        <td class="toggle td_name <?php if (!strpos(" ".$show, " name ")) { ?> hidden <?php } ?>">
+					<?php echo $row_rsTestTakers['name']; ?></td>
+      	
+        <td class="toggle td_email
+        	<?php if (!strpos(" ".$show, " email ")) { ?> hidden <?php } ?>">
+					<?php echo $row_rsTestTakers['email']; ?></td>
+        <?php if ($admin_status) { ?>
+          <td class="toggle td_unpw
+          	<?php if (!strpos(" ".$show, " unpw ")) { ?> hidden <?php } ?>">
+						<?php echo $row_rsTestTakers['user_name']; ?></td>
+        <?php } ?>
+        <?php if ($admin_status) { ?>
+          <td class="toggle td_unpw
+          	<?php if (!strpos(" ".$show, " unpw ")) { ?> hidden <?php } ?>">
+						<?php echo $row_rsTestTakers['password']; ?></td>
+        <?php } ?>
+        <td class="toggle td_last_login
+        	<?php if (!strpos(" ".$show, " last_login ")) { ?> hidden <?php } ?>">
+        	<div align="center"><?php echo ($row_rsTestTakers['last_login'] <> "" ?
+					$row_rsTestTakers['last_login'] : "never"); ?></div></td>
+        
+        <td class="toggle td_group
+        	<?php if (!strpos(" ".$show, " group ")) { ?> hidden <?php } ?>">
+          <div align="center"><?php echo $row_rsTestTakers['group']; ?></div></td>
+          
+        <?php if ($admin_status) { ?>
+        	<td class="toggle td_bulkcustomer
+          	<?php if (!strpos(" ".$show, " bulkcustomer ")) { ?> hidden <?php } ?>">
+						<?php echo ($row_rsTestTakers['bulkuserkey'] > 0 ? 
+							$row_rsTestTakers['bulkuserkey']." (".$row_rsTestTakers['bulkcustomer'].")"
+							 : " -none-"); ?></td>
+        <?php } ?>
+        <?php if ($admin_status) { ?>
+        	<td class="toggle td_bulkcustomer
+          	<?php if (!strpos(" ".$show, " bulkcustomer ")) { ?> hidden <?php } ?>">
+						<?php echo $row_rsTestTakers['projectkey']; ?></td>
+        <?php } ?>
+        
+        	<td class="toggle td_manlevel
+          	<?php if (!strpos(" ".$show, " manlevel ")) { ?> hidden <?php } ?>">
+						<?php $manlevel = $row_rsTestTakers['man_level'];
+							if (strlen($manlevel) > 30) { echo substr($manlevel, 0, 28)."..."; }
+							else { echo $manlevel; } ?></td>
+        	<td class="toggle td_branch
+          	<?php if (!strpos(" ".$show, " branch ")) { ?> hidden <?php } ?>">
+						<?php echo $row_rsTestTakers['branch']; ?></td>
+        	<td class="toggle td_department
+          	<?php if (!strpos(" ".$show, " department ")) { ?> hidden <?php } ?>">
+						<?php echo $row_rsTestTakers['department']; ?></td>
+        	<td class="toggle td_supervisor
+          	<?php if (!strpos(" ".$show, " supervisor ")) { ?> hidden <?php } ?>">
+						<?php echo $row_rsTestTakers['supervisor']; ?></td>
+        
+        <?php 
+				$thisUserkey = $row_rsTestTakers['userkey'];
+				// echo "INFO: ".$row_rsTestTakers['assignment_info']."<br>";
+				$thisUserAssignments = explode("|", $row_rsTestTakers['assignment_info']);
+				//print_r($thisUserAssignments);
+				$i = 0;
+				// For each assignment key we've catalogued (each assignment column shown)...
+				while ($i < count($assignment_key) AND $i < $max_assignments) { 
+					$thisAssnKey = false;
+					$j = 0;
+					// Search through each assignment listed under this user... 
+					while ($j < count($thisUserAssignments)) { 
+						$thisAssnInfo = explode("#", $thisUserAssignments[$j]);
+						// if this is the right assignment for this column, take note and move on.
+						if ($thisAssnInfo[0] == $assignment_key[$i]) { $thisAssnKey = $j; break; }
+						$j ++;
+					}
+					
+					// does this user have a status for this column? **** note use of STRICT comparison: false !== 0
+					// If this column's key wasn't found among this user's retrieved assignments, skip to next col.
+					if ($thisAssnKey === false) { 
+						?><td class="toggle td_assign <?php if (!strpos(" ".$show, " assign ")) { ?> 
+            	hidden <?php } ?>"><div align="center"></div></td><?php 
+					} else {
+						$thisAssnInfo = explode("#", $thisUserAssignments[$thisAssnKey]);
+						// assn info is made up of 4 bits of text: assnkey lakey date_release status 
+						// I don't actually use the date_release, not here. But I'll leave it in case needed.
+						// ASSERT that the assignment key retrieved, 
+						// is in fact the key appropriate to this column.
+						if ($thisAssnInfo[0] <> $assignment_key[$i]) { 
+							die("<td>XXX ERROR: assign key doesn't match. XXX</td>"); 
+						}
+						// output the user's status on this assignment
+						?><td class="toggle td_assign <?php if (!strpos(" ".$show, " assign ")) { ?> 
+            	hidden <?php } ?>">
+            	<div align="center"><?php 
+								$status = $thisAssnInfo[3];
+								$status_colors = array(
+									"NS" => "logged_in",
+									"S" => "lima",
+									"C" => "lmla",
+									"F" => "lmja",
+									"R" => "lera");
+								if (isset($status_colors[$status])) { 
+									$status = "<span class='".$status_colors[$status]."'>".$status."</span>";
+								}
+								echo $status;
+								if ($admin_status AND isset($thisAssnInfo[4]) AND intval($thisAssnInfo[4]) > 0) { 
+									echo " (".$thisAssnInfo[4].")";
+								}
+								?>
+              </div></td><?php
+						
+					} // END else condition
+					$i ++;
+				} // END WHILE: for each assignment column
+				// if there are more assignments that aren't being shown (based on $max_assignments)
+				// just add a spacer cell.
+				if ($i < count($assignment_key)) {
+					?><td></td><?php
+				}
+				?> 
+        
+      </tr> <?php 
+			} // END WHILE: for each row of results ?>
+    </table>
+    
+    </div>
+    
+    
+    
+    <h3>Make changes to the selected accounts</h3><table  class="box">
+      <tr>
+        <td colspan="4"></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td align="left">Change name</td>
+        <td>First <span id="sprytextfield10">
+          <input type="text" name="set_firstname" value="" />
+          </span> Last <span id="sprytextfield11">
+            <input type="text" name="set_lastname" value="" />
+          </span></td>
+			</tr>
+      
+      <?php if (WA_Auth_RulePasses("Logged in as analyst")) { ?>
+      <tr>
+        <td></td>
+        <td align="left">Change email</td>
+        <td><input type="text" name="set_email" value="" /></td>
+			</tr>
+      <?php } //  ?>
+      
+      <tr>
+        <td><input type="checkbox" name="reset_password" value="1" /></td>
+        <td>Reset password</td>
+        <td><em>This will send all selected users an email with their new account information.</em></td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td align="left">Change group</td>
+        <td><span id="spryselect4">
+          <select name="select_group" class="pulldown_width_100" id="select_group">
+            <option value="">---</option>
+            <?php do { ?>
+            <option value="<?php echo $row_rsFilterGroup['group']?>"><?php 
+							echo (($see_all == true AND $row_rsFilterGroup['bc'] <> "") ? 
+								$row_rsFilterGroup['bc']." → " : "").
+								$row_rsFilterGroup['group']." (".$row_rsFilterGroup['numpeople'].")"; ?></option>
+            <?php } while ($row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup));
+                $rows = mysql_num_rows($rsFilterGroup);
+                if($rows > 0) {
+                    mysql_data_seek($rsFilterGroup, 0);
+                  $row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup);
+                } ?>
+            </select>
+        </span> or put in a new group: <span id="sprytextfield14">
+        <input name="set_group" type="text" value="" size="10" />
+        </span></td>
+			</tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td align="left">Change supervisor</td>
+        <td><span id="spryselect4">
+          <select name="select_supervisor" class="pulldown_width_100" id="select_supervisor">
+            <option value="">---</option>
+            <?php do { ?>
+            <option value="<?php echo $row_rsFilterSup['userkey']?>"><?php 
+							echo (($see_all == true AND $row_rsFilterSup['bc'] <> "") ? 
+								$row_rsFilterSup['bc']." → " : "").
+								$row_rsFilterSup['lastname'].', '.$row_rsFilterSup['firstname']; ?></option>
+            <?php } while ($row_rsFilterSup = mysql_fetch_assoc($rsFilterSup));
+                $rows = mysql_num_rows($rsFilterSup);
+                if($rows > 0) {
+                    mysql_data_seek($rsFilterSup, 0);
+                  $row_rsFilterSup = mysql_fetch_assoc($rsFilterSup);
+                } ?>
+            </select>
+        </td>
+			</tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td align="left">Change branch</td>
+        <td>
+        <span id="spryselect9">
+        <select name="select_branch" class="pulldown_width_100" id="select_branch">
+          <option value=""> - view all - </option>
+          <?php do { ?>
+          <option value="<?php echo $row_rsFilterBranch['branch']?>">
+					<?php echo $row_rsFilterBranch['branch']." (".$row_rsFilterBranch['numpeople'].")"; ?></option>
+          <?php } while ($row_rsFilterBranch = mysql_fetch_assoc($rsFilterBranch));
+						$rows = mysql_num_rows($rsFilterBranch);
+						if($rows > 0) {
+								mysql_data_seek($rsFilterBranch, 0);
+							$row_rsFilterBranch = mysql_fetch_assoc($rsFilterBranch);
+						} ?>
+        </select>
+        </span>
+         or put in a new branch: 
+         <span id="sprytextfield12">
+          <input type="text" name="set_branch" value="" />
+        </span></td>
+			</tr>
+      <tr>
+      	<td></td>
+        <td>Change department</td>
+        <td><span id="spryselect8">
+        <select name="select_department" class="pulldown_width_100" id="select_department">
+          <option value=""> - view all - </option>
+          <?php do { ?>
+          <option value="<?php echo $row_rsFilterDept['department']?>"> <?php echo $row_rsFilterDept['department']." (".$row_rsFilterDept['numpeople'].")"; ?></option>
+          <?php } while ($row_rsFilterDept = mysql_fetch_assoc($rsFilterDept));
+						$rows = mysql_num_rows($rsFilterDept);
+						if($rows > 0) {
+								mysql_data_seek($rsFilterDept, 0);
+							$row_rsFilterDept = mysql_fetch_assoc($rsFilterDept);
+						} ?>
+        </select>
+        </span>or  a new department: <span id="sprytextfield">
+        <input type="text" name="set_department" value="" />
+        </span>
+      </td>
+      <?php if (WA_Auth_RulePasses("Logged in as analyst")) { ?>
+      <tr>
+        <td>&nbsp;</td>
+        <td align="left">Change management level</td>
+        <td><span id="spryselect3">
+          <select name="select_manlevel" class="pulldown_width_100" id="select_manlevel">
+            <option value="">- select one -</option>
+            <?php do { ?>
+            <option value="<?php echo $row_rsAllManLevels['manlevelkey']?>"><?php 
+						echo $row_rsAllManLevels['man_level']; ?>
+            </option>
+            <?php } while ($row_rsAllManLevels = mysql_fetch_assoc($rsAllManLevels));
+							$rows = mysql_num_rows($rsAllManLevels);
+							if($rows > 0) {
+									mysql_data_seek($rsAllManLevels, 0);
+								$row_rsAllManLevels = mysql_fetch_assoc($rsAllManLevels);
+							}
+							?>
+            </select>
+          </span></td>
+			</tr>
+      <?php } // ?>
+      
+      <tr>
+        <td>&nbsp;</td>
+        <td align="left">Attach to assignment</td>
+        <td>
+          <select name="set_assignmentkey" class="pulldown_width_100" id="set_assignmentkey">
+            <option value=""> - select one - </option>
+            <?php while ($row = mysql_fetch_assoc($rsFilterAssign)) {   
+      				if ($row['assignmentkey'] <> "" AND $row['date_release'] >= date('Y-m-d')) { ?>
+                <option value="<?php echo $row['assignmentkey']?>"><?php 
+                	$date_start = strtotime($row['date_start']);
+									$date_end = strtotime($row['date_end']);
+									$date_release = strtotime($row['date_release']);
+									echo "(".zeropad($row['assignmentkey'], 3).") &nbsp; "; 
+									if ($see_all) { echo $row['bc']." → "; }
+									echo $row['assign_group'].", ".$row['instrument_id']." - ".
+										" start ".date('M j', $date_start).
+										(date('Y', $date_start) <> date('Y') ? " ".date('Y', $date_start) : "").
+										", due ".date('M j', $date_end).
+										", release ".date('M j', $date_release); ?>
+                </option><?php 
+							} 
+						} 
+						if (mysql_num_rows($rsFilterAssign) > 0) { mysql_data_seek($rsFilterAssign, 0); } ?>
+          </select>
+        </td>
+			</tr>
+      
+      
+      <tr>
+      	<td></td>
+        <td>Remove from assignment</td>
+        <td><span id="spryselect7">
+          <select name="delete_assignmentkey" class="pulldown_width_100" id="delete_assignmentkey">
+            <option value=""> - select one - </option>
+            <? while ($row = mysql_fetch_assoc($rsFilterAssign)) {   
+      				if ($row['assignmentkey'] <> "" AND $row['date_release'] >= date('Y-m-d')) { ?>
+                <option value="<? echo $row['assignmentkey']?>"><? 
+                	$date_start = strtotime($row['date_start']);
+									$date_end = strtotime($row['date_end']);
+									$date_release = strtotime($row['date_release']);
+									echo "(".zeropad($row['assignmentkey'], 3).") &nbsp; ";
+									if ($see_all) { echo $row['bc']." → "; }
+									echo $row['assign_group'].", ".$row['instrument_id']." - ".
+										" start ".date('M j', $date_start).
+										(date('Y', $date_start) <> date('Y') ? " ".date('Y', $date_start) : "").
+										", due ".date('M j', $date_end).
+										", release ".date('M j', $date_release); ?>
+                </option><? 
+							} 
+						} 
+						if (mysql_num_rows($rsFilterAssign) > 0) { mysql_data_seek($rsFilterAssign, 0); } ?>
+        	</select>
+      	</td>
+      </tr>
+      
+      <tr>
+        <td><input type="checkbox" name="delete_all" id="delete_all" value="1" /></td>
+        <td>Remove all assignments</td>
+        <td><em>This will only remove assignments the test taker has not yet started.</em></td>
+      </tr>
+      
+      
+      <tr>
+      	<td>&nbsp;</td><td></td>
+      </tr>
+      
+      <tr>
+        <td align="center">&nbsp;</td>
+        <td align="left">&nbsp;</td>
+        <td align="right"><input type="submit" name="submit_changes" value="SUBMIT CHANGES" /></td>
+      </tr>
+    </table>
+    
+    
+    <p>&nbsp;</p>
+    </form>
+    <p>&nbsp;</p>
+
+<!-- // var sprytextfield13 = new Spry.Widget.ValidationTextField("sprytextfield13", "none", {isRequired:false, validateOn:["blur", "change"]}); -->
+
+<script type="text/javascript">
+var sprytextfield6 = new Spry.Widget.ValidationTextField("sprytextfield6", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield5 = new Spry.Widget.ValidationTextField("sprytextfield5", "none", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect = new Spry.Widget.ValidationSelect("spryselect", {validateOn:["blur", "change"], isRequired:false});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"], isRequired:false});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"], isRequired:false});
+
+var sprytextfield10 = new Spry.Widget.ValidationTextField("sprytextfield10", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield12 = new Spry.Widget.ValidationTextField("sprytextfield12", "none", {isRequired:false, validateOn:["blur", "change"]});
+
+
+var sprytextfield14 = new Spry.Widget.ValidationTextField("sprytextfield14", "none", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect9 = new Spry.Widget.ValidationSelect("spryselect9", {validateOn:["blur", "change"], isRequired:false});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"], isRequired:false});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield4 = new Spry.Widget.ValidationTextField("sprytextfield4", "date", {isRequired:false, validateOn:["blur", "change"], format:"yyyy-mm-dd"});
+var sprytextfield3 = new Spry.Widget.ValidationTextField("sprytextfield3", "date", {isRequired:false, validateOn:["blur", "change"], format:"yyyy-mm-dd"});
+var sprytextfield9 = new Spry.Widget.ValidationTextField("sprytextfield9", "integer", {isRequired:false, useCharacterMasking:true, validateOn:["blur", "change"]});
+var spryselect8 = new Spry.Widget.ValidationSelect("spryselect8", {validateOn:["blur", "change"], isRequired:false});
+var sprytextfield = new Spry.Widget.ValidationTextField("sprytextfield", "none", {isRequired:false, validateOn:["blur", "change"]});
+</script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+
+
+?>

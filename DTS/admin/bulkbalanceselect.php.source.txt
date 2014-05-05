@@ -1,0 +1,169 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as senior")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsAccess = "-1";
+if (isset($_SESSION['userkey'])) {
+  $colname_rsAccess = (get_magic_quotes_gpc()) ? $_SESSION['userkey'] : addslashes($_SESSION['userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsAccess = sprintf("SELECT userkey, user_level FROM registrants WHERE userkey = %s AND user_level = 10", GetSQLValueString($colname_rsAccess, "int"));
+$rsAccess = mysql_query($query_rsAccess, $Assessment) or die(mysql_error());
+$row_rsAccess = mysql_fetch_assoc($rsAccess);
+$totalRows_rsAccess = mysql_num_rows($rsAccess);
+
+$row_rsProject = mysql_fetch_assoc($rsProject);
+$totalRows_rsProject = mysql_num_rows($rsProject);mysql_select_db($database_Assessment, $Assessment);
+$query_rsProject = "SELECT projectproject.projectkey, projectproject.projectid, projectproject.organization, projectproject.paying, projectproject.bulkcustomerkey, bulkcustomerinfo.bulkcustomerkey, bulkcustomerinfo.username4students, bulkcustomerinfo.firstname, bulkcustomerinfo.lastname FROM projectproject, bulkcustomerinfo WHERE projectproject.paying = 1 AND projectproject.bulkcustomerkey = bulkcustomerinfo.bulkcustomerkey ORDER BY projectproject.organization ASC";
+$rsProject = mysql_query($query_rsProject, $Assessment) or die(mysql_error());
+$row_rsProject = mysql_fetch_assoc($rsProject);
+$totalRows_rsProject = mysql_num_rows($rsProject);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Select customer</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" --><!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+      <h1>
+      SELECT A PROJECT</h1>
+      <td valign="top"><table width="100%" border="0">
+        <tr class="tablehead">
+          <td>Project key</td>
+          <td>Project ID</td>
+          <td>Organization</td>
+          <td>Select</td>
+          <td>Invoice</td>
+        </tr>
+        <?php do { ?>
+          <tr>
+            <td><div align="center"><?php echo $row_rsProject['projectkey']; ?></div></td>
+            <td><div align="left"><?php echo $row_rsProject['projectid']; ?></div></td>
+            <td><?php echo $row_rsProject['organization']; ?></td>
+            <td><div align="center"><a href="bulkbalancedetail.php?bulkcustomerkey=<?php echo $row_rsProject['bulkcustomerkey']; ?>&username4students=<?php echo $row_rsProject['username4students']; ?>&projectkey=<?php echo $row_rsProject['projectkey']; ?>">select</a></div></td>
+            <td><div align="center"><a href="bulkcustinvoice.php?bulkcustomerkey=<?php echo $row_rsProject['bulkcustomerkey']; ?>&amp;username4students=<?php echo $row_rsProject['username4students']; ?>&amp;projectkey=<?php echo $row_rsProject['projectkey']; ?>">select</a></div></td>
+          </tr>
+          <?php } while ($row_rsProject = mysql_fetch_assoc($rsProject)); ?>
+      </table>
+<p>&nbsp;</p>
+    <p>&nbsp;</p></td>
+      <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsProject);
+?>

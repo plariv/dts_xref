@@ -1,0 +1,894 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Load the KT_back class
+require_once('../includes/nxt/KT_back.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+// Start trigger
+$formValidation = new tNG_FormValidation();
+$formValidation->addField("engagekey", true, "numeric", "", "", "", "");
+$formValidation->addField("scorer1key", true, "numeric", "", "", "", "");
+$tNGs->prepareValidation($formValidation);
+// End trigger
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsScores = "SELECT lasnumber, lasname FROM LasNumber WHERE lasnumber < 12.0 AND lasnumber > 7.9 ORDER BY LasNumber.lasnumber ASC";
+$rsScores = mysql_query($query_rsScores, $Assessment) or die(mysql_error());
+$row_rsScores = mysql_fetch_assoc($rsScores);
+$totalRows_rsScores = mysql_num_rows($rsScores);
+
+$colname_rsEngagement = "-1";
+if (isset($_GET['engagekey'])) {
+  $colname_rsEngagement = $_GET['engagekey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEngagement = sprintf("SELECT engagekey, like_school, challenge, engagement, motivation, real_world, explore_interests, senior_project, other_interests, eager_learn, continue_learning, succeed_school, intelligence, learning1, projects, learning2, learning3, teachers, friends, comments FROM Engagement_data WHERE engagekey = %s", GetSQLValueString($colname_rsEngagement, "int"));
+$rsEngagement = mysql_query($query_rsEngagement, $Assessment) or die(mysql_error());
+$row_rsEngagement = mysql_fetch_assoc($rsEngagement);
+$totalRows_rsEngagement = mysql_num_rows($rsEngagement);
+
+// Make an insert transaction instance
+$ins_Engagement_scores = new tNG_multipleInsert($conn_Assessment);
+$tNGs->addTransaction($ins_Engagement_scores);
+// Register triggers
+$ins_Engagement_scores->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Insert1");
+$ins_Engagement_scores->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$ins_Engagement_scores->registerTrigger("END", "Trigger_Default_Redirect", 99, "engage_scoring1b.php?engagescoringkey={engagescoringkey}&engagekey={GET.engagekey}");
+// Add columns
+$ins_Engagement_scores->setTable("Engagement_scores");
+$ins_Engagement_scores->addColumn("engagekey", "NUMERIC_TYPE", "POST", "engagekey", "{GET.engagekey}");
+$ins_Engagement_scores->addColumn("scorer1key", "NUMERIC_TYPE", "POST", "scorer1key", "{SESSION.log_userkey}");
+$ins_Engagement_scores->addColumn("like_school_1", "DOUBLE_TYPE", "POST", "like_school_1");
+$ins_Engagement_scores->addColumn("challenge_1", "DOUBLE_TYPE", "POST", "challenge_1");
+$ins_Engagement_scores->addColumn("engagement_1", "DOUBLE_TYPE", "POST", "engagement_1");
+$ins_Engagement_scores->addColumn("motivation_1", "DOUBLE_TYPE", "POST", "motivation_1");
+$ins_Engagement_scores->addColumn("real_world_1", "DOUBLE_TYPE", "POST", "real_world_1");
+$ins_Engagement_scores->addColumn("explore_interests_1", "DOUBLE_TYPE", "POST", "explore_interests_1");
+$ins_Engagement_scores->addColumn("senior_project_1", "DOUBLE_TYPE", "POST", "senior_project_1");
+$ins_Engagement_scores->addColumn("other_interests_1", "DOUBLE_TYPE", "POST", "other_interests_1");
+$ins_Engagement_scores->addColumn("eager_learn_1", "DOUBLE_TYPE", "POST", "eager_learn_1");
+$ins_Engagement_scores->addColumn("continue_learning_1", "DOUBLE_TYPE", "POST", "continue_learning_1");
+$ins_Engagement_scores->addColumn("succeed_school_1", "DOUBLE_TYPE", "POST", "succeed_school_1");
+$ins_Engagement_scores->addColumn("intelligence_1", "DOUBLE_TYPE", "POST", "intelligence_1");
+$ins_Engagement_scores->addColumn("learning1_1", "DOUBLE_TYPE", "POST", "learning1_1");
+$ins_Engagement_scores->addColumn("projects_1", "DOUBLE_TYPE", "POST", "projects_1");
+$ins_Engagement_scores->addColumn("learning2_1", "DOUBLE_TYPE", "POST", "learning2_1");
+$ins_Engagement_scores->addColumn("learning3_1", "DOUBLE_TYPE", "POST", "learning3_1");
+$ins_Engagement_scores->addColumn("teachers_1", "DOUBLE_TYPE", "POST", "teachers_1");
+$ins_Engagement_scores->addColumn("friends_1", "DOUBLE_TYPE", "POST", "friends_1");
+$ins_Engagement_scores->addColumn("other_1", "DOUBLE_TYPE", "POST", "other_1");
+$ins_Engagement_scores->addColumn("comment_dts_1", "STRING_TYPE", "POST", "comment_dts_1");
+$ins_Engagement_scores->addColumn("comment_researcher_1", "STRING_TYPE", "POST", "comment_researcher_1");
+$ins_Engagement_scores->setPrimaryKey("engagescoringkey", "NUMERIC_TYPE");
+
+// Make an update transaction instance
+$upd_Engagement_scores = new tNG_multipleUpdate($conn_Assessment);
+$tNGs->addTransaction($upd_Engagement_scores);
+// Register triggers
+$upd_Engagement_scores->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Update1");
+$upd_Engagement_scores->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$upd_Engagement_scores->registerTrigger("END", "Trigger_Default_Redirect", 99, "engage_scoring1b.php?engagescoringkey={engagescoringkey}&engagekey={GET.engagekey}");
+// Add columns
+$upd_Engagement_scores->setTable("Engagement_scores");
+$upd_Engagement_scores->addColumn("engagekey", "NUMERIC_TYPE", "POST", "engagekey");
+$upd_Engagement_scores->addColumn("scorer1key", "NUMERIC_TYPE", "POST", "scorer1key");
+$upd_Engagement_scores->addColumn("like_school_1", "DOUBLE_TYPE", "POST", "like_school_1");
+$upd_Engagement_scores->addColumn("challenge_1", "DOUBLE_TYPE", "POST", "challenge_1");
+$upd_Engagement_scores->addColumn("engagement_1", "DOUBLE_TYPE", "POST", "engagement_1");
+$upd_Engagement_scores->addColumn("motivation_1", "DOUBLE_TYPE", "POST", "motivation_1");
+$upd_Engagement_scores->addColumn("real_world_1", "DOUBLE_TYPE", "POST", "real_world_1");
+$upd_Engagement_scores->addColumn("explore_interests_1", "DOUBLE_TYPE", "POST", "explore_interests_1");
+$upd_Engagement_scores->addColumn("senior_project_1", "DOUBLE_TYPE", "POST", "senior_project_1");
+$upd_Engagement_scores->addColumn("other_interests_1", "DOUBLE_TYPE", "POST", "other_interests_1");
+$upd_Engagement_scores->addColumn("eager_learn_1", "DOUBLE_TYPE", "POST", "eager_learn_1");
+$upd_Engagement_scores->addColumn("continue_learning_1", "DOUBLE_TYPE", "POST", "continue_learning_1");
+$upd_Engagement_scores->addColumn("succeed_school_1", "DOUBLE_TYPE", "POST", "succeed_school_1");
+$upd_Engagement_scores->addColumn("intelligence_1", "DOUBLE_TYPE", "POST", "intelligence_1");
+$upd_Engagement_scores->addColumn("learning1_1", "DOUBLE_TYPE", "POST", "learning1_1");
+$upd_Engagement_scores->addColumn("projects_1", "DOUBLE_TYPE", "POST", "projects_1");
+$upd_Engagement_scores->addColumn("learning2_1", "DOUBLE_TYPE", "POST", "learning2_1");
+$upd_Engagement_scores->addColumn("learning3_1", "DOUBLE_TYPE", "POST", "learning3_1");
+$upd_Engagement_scores->addColumn("teachers_1", "DOUBLE_TYPE", "POST", "teachers_1");
+$upd_Engagement_scores->addColumn("friends_1", "DOUBLE_TYPE", "POST", "friends_1");
+$upd_Engagement_scores->addColumn("other_1", "DOUBLE_TYPE", "POST", "other_1");
+$upd_Engagement_scores->addColumn("comment_dts_1", "STRING_TYPE", "POST", "comment_dts_1");
+$upd_Engagement_scores->addColumn("comment_researcher_1", "STRING_TYPE", "POST", "comment_researcher_1");
+$upd_Engagement_scores->setPrimaryKey("engagescoringkey", "NUMERIC_TYPE", "GET", "engagescoringkey");
+
+// Make an instance of the transaction object
+$del_Engagement_scores = new tNG_multipleDelete($conn_Assessment);
+$tNGs->addTransaction($del_Engagement_scores);
+// Register triggers
+$del_Engagement_scores->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Delete1");
+$del_Engagement_scores->registerTrigger("END", "Trigger_Default_Redirect", 99, "../includes/nxt/back.php");
+// Add columns
+$del_Engagement_scores->setTable("Engagement_scores");
+$del_Engagement_scores->setPrimaryKey("engagescoringkey", "NUMERIC_TYPE", "GET", "engagescoringkey");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsEngagement_scores = $tNGs->getRecordset("Engagement_scores");
+$row_rsEngagement_scores = mysql_fetch_assoc($rsEngagement_scores);
+$totalRows_rsEngagement_scores = mysql_num_rows($rsEngagement_scores);
+?>
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatescore2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Engagement scoring, page 1, scorer 1</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+      <script src="../includes/nxt/scripts/form.js" type="text/javascript"></script>
+      <script src="../includes/nxt/scripts/form.js.php" type="text/javascript"></script>
+      <script type="text/javascript">
+$NXT_FORM_SETTINGS = {
+  duplicate_buttons: true,
+  show_as_grid: true,
+  merge_down_value: true
+}
+      </script>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #929292;
+	background-image: url(/images/skin/background.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #EAEAEA;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/header2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 00px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container .indent46 a:link {
+	color: #929292;
+}
+.twoColFixRtHdr #container .indent46 a:visited {
+	color: #929292;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:hover {
+	color: #474A47;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="../" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="../" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+  </ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"><!-- InstanceBeginEditable name="main" --><?php echo $tNGs->displayValidationRules();?>
+    <h1>SCORE ENGAGEMENT (page 1 of 3) </h1>
+      <?php
+	echo $tNGs->getErrorMsg();
+?>
+    <div class="KT_tng">
+      <h3>
+        <?php 
+// Show IF Conditional region1 
+if (@$_GET['engagescoringkey'] == "") {
+?>
+          <?php echo NXT_getResource("Insert_FH"); ?>
+          <?php 
+// else Conditional region1
+} else { ?>
+          <?php echo NXT_getResource("Update_FH"); ?>
+          <?php } 
+// endif Conditional region1
+?>
+        Engagement scores </h3>
+      <div class="KT_tngform">
+        <form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+          <?php $cnt1 = 0; ?>
+          <?php do { ?>
+            <?php $cnt1++; ?>
+            <?php 
+// Show IF Conditional region1 
+if (@$totalRows_rsEngagement_scores > 1) {
+?>
+              <p><?php echo NXT_getResource("Record_FH"); ?> <?php echo $cnt1; ?></p>
+              <?php } 
+// endif Conditional region1
+?>
+            <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+              <tr>
+                <td class="KT_th"><label for="like_school_1_<?php echo $cnt1; ?>">Like school</label></td>
+                <td><select name="like_school_1_<?php echo $cnt1; ?>" id="like_school_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['like_school_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "like_school_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement['like_school']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="challenge_1_<?php echo $cnt1; ?>">Challenge</label></td>
+                <td><select name="challenge_1_<?php echo $cnt1; ?>" id="challenge_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['challenge_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "challenge_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement['challenge']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="engagement_1_<?php echo $cnt1; ?>">Engagement</label></td>
+                <td><select name="engagement_1_<?php echo $cnt1; ?>" id="engagement_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['engagement_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "engagement_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement['engagement']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="motivation_1_<?php echo $cnt1; ?>">Motivation</label></td>
+                <td><select name="motivation_1_<?php echo $cnt1; ?>" id="motivation_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['motivation_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "motivation_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement['motivation']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="real_world_1_<?php echo $cnt1; ?>">Real world</label></td>
+                <td><select name="real_world_1_<?php echo $cnt1; ?>" id="real_world_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['real_world_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "real_world_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['real_world_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="explore_interests_1_<?php echo $cnt1; ?>">Explore interests</label></td>
+                <td><select name="explore_interests_1_<?php echo $cnt1; ?>" id="explore_interests_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['explore_interests_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "explore_interests_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['explore_interests_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="senior_project_1_<?php echo $cnt1; ?>">Senior project</label></td>
+                <td><select name="senior_project_1_<?php echo $cnt1; ?>" id="senior_project_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['senior_project_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "senior_project_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['senior_project_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="other_interests_1_<?php echo $cnt1; ?>">Other interests</label></td>
+                <td><select name="other_interests_1_<?php echo $cnt1; ?>" id="other_interests_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['other_interests_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "other_interests_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['other_interests_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="eager_learn_1_<?php echo $cnt1; ?>">Eager learn</label></td>
+                <td><select name="eager_learn_1_<?php echo $cnt1; ?>" id="eager_learn_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['eager_learn_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "eager_learn_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['eager_learn_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="continue_learning_1_<?php echo $cnt1; ?>">Continue learning</label></td>
+                <td><select name="continue_learning_1_<?php echo $cnt1; ?>" id="continue_learning_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['continue_learning_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "continue_learning_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['continue_learning_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="succeed_school_1_<?php echo $cnt1; ?>">Succeed school</label></td>
+                <td><select name="succeed_school_1_<?php echo $cnt1; ?>" id="succeed_school_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['succeed_school_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "succeed_school_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['succeed_school_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="intelligence_1_<?php echo $cnt1; ?>">Intelligence</label></td>
+                <td><select name="intelligence_1_<?php echo $cnt1; ?>" id="intelligence_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['intelligence_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "intelligence_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['intelligence_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="learning1_1_<?php echo $cnt1; ?>">Learning1</label></td>
+                <td><select name="learning1_1_<?php echo $cnt1; ?>" id="learning1_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['learning1_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "learning1_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['learning1_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="projects_1_<?php echo $cnt1; ?>">Projects</label></td>
+                <td><select name="projects_1_<?php echo $cnt1; ?>" id="projects_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['projects_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "projects_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['projects_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="learning2_1_<?php echo $cnt1; ?>">Learning 2</label></td>
+                <td><select name="learning2_1_<?php echo $cnt1; ?>" id="learning2_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['learning2_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "learning2_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['learning2_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="learning3_1_<?php echo $cnt1; ?>">Learning 3</label></td>
+                <td><select name="learning3_1_<?php echo $cnt1; ?>" id="learning3_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['learning3_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "learning3_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['learning3_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="teachers_1_<?php echo $cnt1; ?>">Teachers</label></td>
+                <td><select name="teachers_1_<?php echo $cnt1; ?>" id="teachers_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['teachers_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "teachers_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['teachers_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="friends_1_<?php echo $cnt1; ?>">Friends</label></td>
+                <td><select name="friends_1_<?php echo $cnt1; ?>" id="friends_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['friends_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "friends_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['friends_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="other_1_<?php echo $cnt1; ?>">Other</label></td>
+                <td><select name="other_1_<?php echo $cnt1; ?>" id="other_1_<?php echo $cnt1; ?>">
+                  <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php 
+do {  
+?>
+                  <option value="<?php echo $row_rsScores['lasnumber']?>"<?php if (!(strcmp($row_rsScores['lasnumber'], $row_rsEngagement_scores['other_1']))) {echo "SELECTED";} ?>><?php echo $row_rsScores['lasnumber']?> : <?php echo $row_rsScores['lasname']?></option>
+                  <?php
+} while ($row_rsScores = mysql_fetch_assoc($rsScores));
+  $rows = mysql_num_rows($rsScores);
+  if($rows > 0) {
+      mysql_data_seek($rsScores, 0);
+	  $row_rsScores = mysql_fetch_assoc($rsScores);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("Engagement_scores", "other_1", $cnt1); ?></td>
+                <td><?php echo $row_rsEngagement_scores['other_1']; ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="comment_dts_1_<?php echo $cnt1; ?>">Comments for DTS</label></td>
+                <td colspan="2"><textarea name="comment_dts_1_<?php echo $cnt1; ?>" cols="50" rows="5" class="textarea140_500" id="comment_dts_1_<?php echo $cnt1; ?>"><?php echo KT_escapeAttribute($row_rsEngagement_scores['comment_dts_1']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("comment_dts_1");?> <?php echo $tNGs->displayFieldError("Engagement_scores", "comment_dts_1", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="comment_researcher_1_<?php echo $cnt1; ?>">Comments for researchers</label></td>
+                <td colspan="2"><textarea name="comment_researcher_1_<?php echo $cnt1; ?>" cols="50" rows="5" class="textarea140_500" id="comment_researcher_1_<?php echo $cnt1; ?>"><?php echo KT_escapeAttribute($row_rsEngagement_scores['comment_researcher_1']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("comment_researcher_1");?> <?php echo $tNGs->displayFieldError("Engagement_scores", "comment_researcher_1", $cnt1); ?></td>
+              </tr>
+            </table>
+            <input type="hidden" name="kt_pk_Engagement_scores_<?php echo $cnt1; ?>" class="id_field" value="<?php echo KT_escapeAttribute($row_rsEngagement_scores['kt_pk_Engagement_scores']); ?>" />
+            <input type="hidden" name="engagekey_<?php echo $cnt1; ?>" id="engagekey_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsEngagement_scores['engagekey']); ?>" />
+            <input type="hidden" name="scorer1key_<?php echo $cnt1; ?>" id="scorer1key_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsEngagement_scores['scorer1key']); ?>" />
+            <?php } while ($row_rsEngagement_scores = mysql_fetch_assoc($rsEngagement_scores)); ?>
+          <div class="KT_bottombuttons">
+            <div>
+              <?php 
+      // Show IF Conditional region1
+      if (@$_GET['engagescoringkey'] == "") {
+      ?>
+                <input type="submit" name="KT_Insert1" id="KT_Insert1" value="<?php echo NXT_getResource("Insert_FB"); ?>" />
+                <?php 
+      // else Conditional region1
+      } else { ?>
+                <div class="KT_operations">
+                  <input type="submit" name="KT_Insert1" value="<?php echo NXT_getResource("Insert as new_FB"); ?>" onClick="nxt_form_insertasnew(this, 'engagescoringkey')" />
+                </div>
+                <input type="submit" name="KT_Update1" value="<?php echo NXT_getResource("Update_FB"); ?>" />
+                <input type="submit" name="KT_Delete1" value="<?php echo NXT_getResource("Delete_FB"); ?>" onClick="return confirm('<?php echo NXT_getResource("Are you sure?"); ?>');" />
+                <?php }
+      // endif Conditional region1
+      ?>
+              <input type="button" name="KT_Cancel1" value="<?php echo NXT_getResource("Cancel_FB"); ?>" onClick="return UNI_navigateCancel(event, '../includes/nxt/back.php')" />
+            </div>
+          </div>
+        </form>
+      </div>
+      <br class="clearfixplain" />
+    </div>
+    <p>&nbsp;</p>
+    </p>
+<p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsScores);
+
+mysql_free_result($rsEngagement);
+
+mysql_free_result($rsRegistrant);
+?>

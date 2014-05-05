@@ -1,0 +1,699 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE la_lima_practice_data SET userkey=%s, partner=%s, friend=%s, peer=%s, parent=%s, sibling=%s, educator=%s, offspring=%s, therapist=%s, coach=%s, spiritual=%s, student=%s, philosopher=%s, employer=%s, expert=%s, perspectiveother=%s, w_spectrum=%s, w_boundary=%s, w_atman=%s, w_eden=%s, w_god=%s, w_eye=%s, w_transform=%s, w_grace=%s, w_sex=%s, w_history=%s, w_spirit=%s, w_marriage=%s, w_taste=%s, w_psychology=%s, w_everything=%s, w_boomeritis=%s, w_spirituality=%s, w_vision=%s, w_lifepractice=%s, w_choices=%s, w_quantum=%s WHERE lakey=%s",
+                       GetSQLValueString($_POST['userkey'], "int"),
+                       GetSQLValueString($_POST['partner'], "int"),
+                       GetSQLValueString($_POST['friend'], "int"),
+                       GetSQLValueString($_POST['peer'], "int"),
+                       GetSQLValueString($_POST['parent'], "int"),
+                       GetSQLValueString($_POST['sibling'], "int"),
+                       GetSQLValueString($_POST['educator'], "int"),
+                       GetSQLValueString($_POST['offspring'], "int"),
+                       GetSQLValueString($_POST['therapist'], "int"),
+                       GetSQLValueString($_POST['coach'], "int"),
+                       GetSQLValueString($_POST['spiritual'], "int"),
+                       GetSQLValueString($_POST['student'], "int"),
+                       GetSQLValueString($_POST['philosopher'], "int"),
+                       GetSQLValueString($_POST['employer'], "int"),
+                       GetSQLValueString($_POST['expert'], "int"),
+                       GetSQLValueString($_POST['perspectiveother'], "text"),
+                       GetSQLValueString($_POST['w_spectrum'], "int"),
+                       GetSQLValueString($_POST['w_boundary'], "int"),
+                       GetSQLValueString($_POST['w_atman'], "int"),
+                       GetSQLValueString($_POST['w_eden'], "int"),
+                       GetSQLValueString($_POST['w_god'], "int"),
+                       GetSQLValueString($_POST['w_eye'], "int"),
+                       GetSQLValueString($_POST['w_transform'], "int"),
+                       GetSQLValueString($_POST['w_grace'], "int"),
+                       GetSQLValueString($_POST['w_sex'], "int"),
+                       GetSQLValueString($_POST['w_history'], "int"),
+                       GetSQLValueString($_POST['w_spirit'], "int"),
+                       GetSQLValueString($_POST['w_marriage'], "int"),
+                       GetSQLValueString($_POST['w_taste'], "int"),
+                       GetSQLValueString($_POST['w_psychology'], "int"),
+                       GetSQLValueString($_POST['w_everything'], "int"),
+                       GetSQLValueString($_POST['w_boomeritis'], "int"),
+                       GetSQLValueString($_POST['w_spirituality'], "int"),
+                       GetSQLValueString($_POST['w_vision'], "int"),
+                       GetSQLValueString($_POST['w_lifepractice'], "int"),
+                       GetSQLValueString($_POST['w_choices'], "int"),
+                       GetSQLValueString($_POST['w_quantum'], "int"),
+                       GetSQLValueString($_POST['lakey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "assess_lima01_practices.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsActivistPractice = "SELECT practiceareakey, practicecategorykey, practiceareaname FROM la_lima_practice_area WHERE practicecategorykey = 1";
+$rsActivistPractice = mysql_query($query_rsActivistPractice, $Assessment) or die(mysql_error());
+$row_rsActivistPractice = mysql_fetch_assoc($rsActivistPractice);
+$totalRows_rsActivistPractice = mysql_num_rows($rsActivistPractice);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGenerativePractice = "SELECT practiceareakey, practicecategorykey, practiceareaname FROM la_lima_practice_area WHERE practicecategorykey = 2";
+$rsGenerativePractice = mysql_query($query_rsGenerativePractice, $Assessment) or die(mysql_error());
+$row_rsGenerativePractice = mysql_fetch_assoc($rsGenerativePractice);
+$totalRows_rsGenerativePractice = mysql_num_rows($rsGenerativePractice);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRitualPractice = "SELECT practiceareakey, practicecategorykey, practiceareaname FROM la_lima_practice_area WHERE practicecategorykey = 3";
+$rsRitualPractice = mysql_query($query_rsRitualPractice, $Assessment) or die(mysql_error());
+$row_rsRitualPractice = mysql_fetch_assoc($rsRitualPractice);
+$totalRows_rsRitualPractice = mysql_num_rows($rsRitualPractice);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRelational = "SELECT practiceareakey, practicecategorykey, practiceareaname FROM la_lima_practice_area WHERE practicecategorykey = 4";
+$rsRelational = mysql_query($query_rsRelational, $Assessment) or die(mysql_error());
+$row_rsRelational = mysql_fetch_assoc($rsRelational);
+$totalRows_rsRelational = mysql_num_rows($rsRelational);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCreationPractice = "SELECT practiceareakey, practicecategorykey, practiceareaname FROM la_lima_practice_area WHERE practicecategorykey = 5";
+$rsCreationPractice = mysql_query($query_rsCreationPractice, $Assessment) or die(mysql_error());
+$row_rsCreationPractice = mysql_fetch_assoc($rsCreationPractice);
+$totalRows_rsCreationPractice = mysql_num_rows($rsCreationPractice);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMovementPractice = "SELECT practiceareakey, practicecategorykey, practiceareaname FROM la_lima_practice_area WHERE practicecategorykey = 6";
+$rsMovementPractice = mysql_query($query_rsMovementPractice, $Assessment) or die(mysql_error());
+$row_rsMovementPractice = mysql_fetch_assoc($rsMovementPractice);
+$totalRows_rsMovementPractice = mysql_num_rows($rsMovementPractice);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStillnessPractice = "SELECT practiceareakey, practicecategorykey, practiceareaname FROM la_lima_practice_area WHERE practicecategorykey = 7";
+$rsStillnessPractice = mysql_query($query_rsStillnessPractice, $Assessment) or die(mysql_error());
+$row_rsStillnessPractice = mysql_fetch_assoc($rsStillnessPractice);
+$totalRows_rsStillnessPractice = mysql_num_rows($rsStillnessPractice);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsFrequency = "SELECT * FROM scale_frequency ORDER BY frequencykey DESC";
+$rsFrequency = mysql_query($query_rsFrequency, $Assessment) or die(mysql_error());
+$row_rsFrequency = mysql_fetch_assoc($rsFrequency);
+$totalRows_rsFrequency = mysql_num_rows($rsFrequency);
+
+$colname_rsLimaScales = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLimaScales = $_SESSION['log_userkey'];
+}
+$colname2_rsLimaScales = "-1";
+if (isset($_GET['lakey'])) {
+  $colname2_rsLimaScales = $_GET['lakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLimaScales = sprintf("SELECT lakey, userkey, partner, friend, peer, parent, sibling, educator, offspring, therapist, coach, student, spiritual, philosopher, expert, employer, perspectiveother, w_spectrum, w_boundary, w_atman, w_eden, w_god, w_eye, w_transform, w_grace, w_sex, w_history, w_spirit, w_marriage, w_taste, w_psychology, w_everything, w_boomeritis, w_spirituality, w_vision, w_lifepractice, w_choices, w_quantum FROM la_lima_practice_data WHERE lakey = %s AND userkey = %s ", GetSQLValueString($colname2_rsLimaScales, "int"),GetSQLValueString($colname_rsLimaScales, "int"));
+$rsLimaScales = mysql_query($query_rsLimaScales, $Assessment) or die(mysql_error());
+$row_rsLimaScales = mysql_fetch_assoc($rsLimaScales);
+$totalRows_rsLimaScales = mysql_num_rows($rsLimaScales);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsFrequency2 = "SELECT * FROM scale_ratings_amount";
+$rsFrequency2 = mysql_query($query_rsFrequency2, $Assessment) or die(mysql_error());
+$row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+$totalRows_rsFrequency2 = mysql_num_rows($rsFrequency2);
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="//fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Practice scales</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+.psspacedless {
+	line-height: 18px;
+}
+.limamenuwidth {
+	width: 160px;
+}
+.twoColFixRtHdr #container #mainContent #form1 {
+	padding-top: 0px;
+}
+.twoColFixRtHdr #container #mainContent table td {
+	padding-left: 0px;
+}
+-->
+</style>
+<script src="../DTSassets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../DTSassets/SpryValidationTextarea.js" type="text/javascript"></script>
+<script src="../DTSassets/SpryValidationTextField.js" type="text/javascript"></script>
+<link href="../DTSassets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../DTSassets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<link href="../DTSassets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>INTEGRAL LIFE PRACTICE (page 1 of 2)  </h1>
+    <p class="box"><strong class="lima">Note:</strong> If you are returned to this page after hitting the &quot;submit&quot; button, please check to make sure you have entered responses for all of the required (<span class="lmsa">*</span>) items. </p>
+  <h3>Section 1</h3>
+  <form id="form1" name="form1" method="POST" action="<?php echo $editFormAction; ?>">
+    <table width="100%" align="center">
+      <tr valign="baseline">
+        <td colspan="2" class="psspacedless">Rate the frequency with which you are likely to seek the perspectives of the following persons when you are making a challenging decision. (Please use only one category for each person whose perspective you are likely to seek. For example, do not categorize your pastor both as a teacher and a spiritual advisor.)<br />
+        <br /></td>
+      </tr>
+      <tr valign="baseline">
+        <td width="44%" class="WADADataTableCell">A friend<span class="red">*</span></td>
+        <td width="56%" valign="baseline" class="WADADataTableCell"><span id="spryselect1">
+          <select name="friend" class="limamenuwidth" id="friend" value="<?php echo $row_rsLimaScales['friend']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['friend']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['friend']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">A peer<span class="red">*</span></td>
+        <td valign="baseline" class="WADADataTableCell"><span id="spryselect2">
+          <select name="peer" class="limamenuwidth" id="peer" value="<?php echo $row_rsLimaScales['peer']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['peer']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['peer']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">A parent<span class="red">*</span></td>
+        <td valign="baseline" class="WADADataTableCell"><span id="spryselect3">
+          <select name="parent" class="limamenuwidth" id="parent" value="<?php echo $row_rsLimaScales['parent']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['parent']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['parent']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">A sibling<span class="red">*</span></td>
+        <td valign="baseline" class="WADADataTableCell"><span id="spryselect4">
+          <select name="sibling" class="limamenuwidth" id="sibling" value="<?php echo $row_rsLimaScales['sibling']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['sibling']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['sibling']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">A teacher or professor (non-spiritual)<span class="red">*</span></td>
+        <td valign="baseline" class="WADADataTableCell"><span id="spryselect5">
+          <select name="educator" class="limamenuwidth" id="educator" value="<?php echo $row_rsLimaScales['educator']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['educator']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['educator']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">A son or daughter<span class="red">*</span></td>
+        <td valign="baseline" class="WADADataTableCell"><span id="spryselect6">
+          <select name="offspring" class="limamenuwidth" id="offspring" value="<?php echo $row_rsLimaScales['offspring']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['offspring']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['offspring']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">A therapist or counselor<span class="red">*</span></td>
+        <td valign="baseline" class="WADADataTableCell"><span><span id="spryselect7">
+          <select name="therapist" class="limamenuwidth" id="therapist" value="<?php echo $row_rsLimaScales['therapist']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['therapist']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['therapist']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span><span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">A personal coach<span class="red">*</span></td>
+        <td valign="baseline" class="WADADataTableCell"><span id="spryselect8"><span id="spryselect14">
+          <select name="coach" class="limamenuwidth" id="coach" value="<?php echo $row_rsLimaScales['coach']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['coach']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['coach']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span><span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">A student<span class="red">*</span></td>
+        <td valign="baseline" class="WADADataTableCell"><span id="spryselect9"><span id="spryselect15">
+          <select name="student" class="limamenuwidth" id="student" value="<?php echo $row_rsLimaScales['student']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['student']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['student']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span><span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">A spiritual advisor<span class="red">*</span></td>
+        <td valign="baseline" class="WADADataTableCell"><span id="spryselect10">
+          <select name="spiritual" class="limamenuwidth" id="spiritual" value="<?php echo $row_rsLimaScales['spiritual']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['spiritual']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['spiritual']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">A philosopher (who is not primarily a spiritual advisor)<span class="red">*</span></td>
+        <td valign="baseline" class="WADADataTableCell"><span id="spryselect11">
+          <select name="philosopher" class="limamenuwidth" id="philosopher" value="<?php echo $row_rsLimaScales['philosopher']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['philosopher']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['philosopher']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">An expert (or the work of an expert) in the type of issue I am confronting<span class="red">*</span></td>
+        <td valign="baseline" class="WADADataTableCell"><span id="spryselect12">
+          <select name="expert" class="limamenuwidth" id="expert" value="<?php echo $row_rsLimaScales['expert']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['expert']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['expert']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">Your employer <span class="red">*</span></td>
+        <td valign="baseline" class="WADADataTableCell"><span id="spryselect13">
+          <select name="employer" class="limamenuwidth" id="employer" value="<?php echo $row_rsLimaScales['employer']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['employer']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['employer']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">Your  partner/mate<span class="red">*</span></td>
+        <td valign="baseline" class="WADADataTableCell"><span id="spryselect16">
+          <select name="partner" class="limamenuwidth" id="partner" value="<?php echo $row_rsLimaScales['partner']; ?>">
+            <option value="" <?php if (!(strcmp("", $row_rsLimaScales['partner']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsFrequency2['Ratings4key']?>"<?php if (!(strcmp($row_rsFrequency2['Ratings4key'], $row_rsLimaScales['partner']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency2['Rating']?></option>
+            <?php
+} while ($row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2));
+  $rows = mysql_num_rows($rsFrequency2);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency2, 0);
+	  $row_rsFrequency2 = mysql_fetch_assoc($rsFrequency2);
+  }
+?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td class="WADADataTableCell">Are there other types of persons with whom you might consult? If so, please list them.</td>
+        <td valign="baseline" class="WADADataTableCell"><span id="sprytextarea1">
+          <textarea name="perspectiveother" class="textarea080_400" id="perspectiveother"><?php echo $row_rsLimaScales['perspectiveother']; ?></textarea>
+</span></td>
+      </tr>
+    </table>
+    <h3>Section 2    </h3>
+    <p>Please indicate how many times you have read each of the following books.<br />
+    </p>
+    <table>
+      <tr>
+        <td>Spectrum of Consciousness (1977)</td>
+        <td><input name="w_spectrum" type="text" id="w_spectrum" value="<?php echo $row_rsLimaScales['w_spectrum']; ?>" size="3" /></td>
+        <td>The Eye of Spirit (1997)</td>
+        <td><input name="w_spirit" type="text" id="w_spirit" value="<?php echo $row_rsLimaScales['w_spirit']; ?>" size="3" /></td>
+      </tr>
+      <tr>
+        <td>No Boundary (1979)</td>
+        <td><input name="w_boundary" type="text" id="w_boundary" value="<?php echo $row_rsLimaScales['w_boundary']; ?>" size="3" /></td>
+        <td>Marriage of Sense and Soul (1998)</td>
+        <td><input name="w_marriage" type="text" id="w_marriage" value="<?php echo $row_rsLimaScales['w_marriage']; ?>" size="3" /></td>
+      </tr>
+      <tr>
+        <td>The Atman Project (1980)</td>
+        <td><input name="w_atman" type="text" id="w_atman" value="<?php echo $row_rsLimaScales['w_atman']; ?>" size="3" /></td>
+        <td>One Taste (1999)</td>
+        <td><input name="w_taste" type="text" id="w_taste" value="<?php echo $row_rsLimaScales['w_taste']; ?>" size="3" /></td>
+      </tr>
+      <tr>
+        <td>Up from Eden (1981)</td>
+        <td><input name="w_eden" type="text" id="w_eden" value="<?php echo $row_rsLimaScales['w_eden']; ?>" size="3" /></td>
+        <td>Integral Psychology (2000)</td>
+        <td><input name="w_psychology" type="text" id="w_psychology" value="<?php echo $row_rsLimaScales['w_psychology']; ?>" size="3" /></td>
+      </tr>
+      <tr>
+        <td>A Sociable God (1982)</td>
+        <td><input name="w_god" type="text" id="w_god" value="<?php echo $row_rsLimaScales['w_god']; ?>" size="3" /></td>
+        <td>A Theory of Everything (2000)</td>
+        <td><input name="w_everything" type="text" id="w_everything" value="<?php echo $row_rsLimaScales['w_everything']; ?>" size="3" /></td>
+      </tr>
+      <tr>
+        <td>Eye to Eye (1983)</td>
+        <td><input name="w_eye" type="text" id="w_eye" value="<?php echo $row_rsLimaScales['w_eye']; ?>" size="3" /></td>
+        <td>Boomeritis (2002)</td>
+        <td><input name="w_boomeritis" type="text" id="w_boomeritis" value="<?php echo $row_rsLimaScales['w_boomeritis']; ?>" size="3" /></td>
+      </tr>
+      <tr>
+        <td>Transformations of Consciousness (1987)</td>
+        <td><input name="w_transform" type="text" id="w_transform" value="<?php echo $row_rsLimaScales['w_transform']; ?>" size="3" /></td>
+        <td>Integral Spirituality (2006)</td>
+        <td><input name="w_spirituality" type="text" id="w_spirituality" value="<?php echo $row_rsLimaScales['w_spirituality']; ?>" size="3" /></td>
+      </tr>
+      <tr>
+        <td>Grace and Grit (1991)</td>
+        <td><input name="w_grace" type="text" id="w_grace" value="<?php echo $row_rsLimaScales['w_grace']; ?>" size="3" /></td>
+        <td>The Integral Vision (2007)</td>
+        <td><input name="w_vision" type="text" id="w_vision" value="<?php echo $row_rsLimaScales['w_vision']; ?>" size="3" /></td>
+      </tr>
+      <tr>
+        <td>Sex, Ecology, Spirituality (1995)</td>
+        <td><input name="w_sex" type="text" id="w_sex" value="<?php echo $row_rsLimaScales['w_sex']; ?>" size="3" /></td>
+        <td>Integral Life Practice (2008)</td>
+        <td><input name="w_lifepractice" type="text" id="w_lifepractice" value="<?php echo $row_rsLimaScales['w_lifepractice']; ?>" size="3" /></td>
+      </tr>
+      <tr>
+        <td>A Brief History of Everything (1996)</td>
+        <td><input name="w_history" type="text" id="w_history" value="<?php echo $row_rsLimaScales['w_history']; ?>" size="3" /></td>
+        <td>Spiritual Choices (1986)</td>
+        <td><input name="w_choices" type="text" id="w_choices" value="<?php echo $row_rsLimaScales['w_choices']; ?>" size="3" /></td>
+      </tr>
+      <tr>
+        <td>Quantum Questions (1984)</td>
+        <td><input name="w_quantum" type="text" id="w_quantum" value="<?php echo $row_rsLimaScales['w_quantum']; ?>" size="3" /></td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+    </table>
+    <p>&nbsp;</p>
+    <p align="right">
+      <input name="userkey" type="hidden" id="userkey" value="<?php echo $_SESSION['log_userkey']; ?>" />
+      <input name="lakey" type="hidden" id="lakey" value="<?php echo $_GET['lakey']; ?>" />
+       <input type="submit" name="button" id="button" value="SAVE AND GO TO NEXT PAGE" />
+    </p>
+    <input type="hidden" name="MM_update" value="form1" />
+  <script type="text/javascript">
+<!--
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"]});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"]});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"]});
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {validateOn:["blur", "change"]});
+var spryselect6 = new Spry.Widget.ValidationSelect("spryselect6", {validateOn:["blur", "change"]});
+var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {validateOn:["blur", "change"]});
+var spryselect8 = new Spry.Widget.ValidationSelect("spryselect8", {validateOn:["blur", "change"]});
+var spryselect9 = new Spry.Widget.ValidationSelect("spryselect9", {validateOn:["blur", "change"]});
+var spryselect10 = new Spry.Widget.ValidationSelect("spryselect10", {validateOn:["blur", "change"]});
+var spryselect11 = new Spry.Widget.ValidationSelect("spryselect11", {validateOn:["blur", "change"]});
+var spryselect12 = new Spry.Widget.ValidationSelect("spryselect12", {validateOn:["blur", "change"]});
+var spryselect13 = new Spry.Widget.ValidationSelect("spryselect13", {validateOn:["blur", "change"]});
+var spryselect16 = new Spry.Widget.ValidationSelect("spryselect16", {validateOn:["blur", "change"]});
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {validateOn:["blur", "change"], isRequired:false});
+//-->
+<!--
+//-->
+  </script>
+  </form>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsActivistPractice);
+
+mysql_free_result($rsGenerativePractice);
+
+mysql_free_result($rsRitualPractice);
+
+mysql_free_result($rsRelational);
+
+mysql_free_result($rsCreationPractice);
+
+mysql_free_result($rsMovementPractice);
+
+mysql_free_result($rsStillnessPractice);
+
+mysql_free_result($rsFrequency);
+
+mysql_free_result($rsLimaScales);
+
+mysql_free_result($rsUser);
+
+mysql_free_result($rsFrequency2);
+
+mysql_free_result($rsProject);
+
+mysql_free_result($rsRegistrants);
+?>

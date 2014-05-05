@@ -1,0 +1,77 @@
+<?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$row_rsLIMAscores = mysql_fetch_assoc($rsLIMAscores);
+$totalRows_rsLIMAscores = mysql_num_rows($rsLIMAscores);mysql_select_db($database_Assessment, $Assessment);
+$query_rsLIMAscores = "SELECT LIMAscores.limakey, LIMAscores.lasname, LIMAscores.lasnumber_1, LIMAscores.lasnumber_2, LIMAscoreslinescodes.limakey, LIMAscoreslinescodes.ll_lines_1, LIMAscoreslinescodes.ll_lines_1_exemplar, LIMAscoreslinescodes.ll_lines_2, LIMAscoreslinescodes.ll_lines_2_exemplar, LIMAscoreslinescodes.ll_lines_3, LIMAscoreslinescodes.ll_lines_3_exemplar, LIMAscoreslinescodes.ll_lines_4, LIMAscoreslinescodes.ll_lines_4_exemplar, LIMAscoreslinescodes.ll_lines_5, LIMAscoreslinescodes.ll_lines_5_exemplar, LIMAscoreslinescodes.ll_lines_6, LIMAscoreslinescodes.ll_lines_6_exemplar, LIMAscoreslinescodes.ll_lines_7, LIMAscoreslinescodes.ll_lines_7_exemplar, LIMAscoreslinescodes.ll_lines_8, LIMAscoreslinescodes.ll_lines_8_exemplar, LIMAscoreslinescodes.ll_lines_9, LIMAscoreslinescodes.ll_lines_9_exemplar, LIMAscoreslinescodes.ll_lines_10, LIMAscoreslinescodes.ll_lines_10_exemplar, LIMAscoreslinescodes.ll_lines_11, LIMAscoreslinescodes.ll_lines_11_exemplar, LIMAscoreslinescodes.ll_lines_12, LIMAscoreslinescodes.ll_lines_12_exemplar, LIMAscoreslinescodes.ll_lines_13, LIMAscoreslinescodes.ll_lines_13_exemplar, LIMAscoreslinescodes.ll_lines_14, LIMAscoreslinescodes.ll_lines_14_exemplar, LIMAscoreslinescodes.ll_lines_15, LIMAscoreslinescodes.ll_lines_15_exemplar, LIMAscoreslinescodes.ll_lines_16, LIMAscoreslinescodes.ll_lines_16_exemplar, LIMAscoreslinescodes.ll_lines_17, LIMAscoreslinescodes.ll_lines_17_exemplar, LIMAscoreslinescodes.ll_specificlines_1, LIMAscoreslinescodes.ll_specificlines_1_exemplar, LIMAscoreslinescodes.ll_specificlines_2, LIMAscoreslinescodes.ll_specificlines_2_exemplar, LIMAscoreslinescodes.ll_specificlines_3, LIMAscoreslinescodes.ll_specificlines_3_exemplar, LIMAscoreslinescodes.ll_specificlines_4, LIMAscoreslinescodes.ll_specificlines_4_exemplar, LIMAscoreslinescodes.ll_specificlines_5, LIMAscoreslinescodes.ll_specificlines_5_exemplar, LIMAscoreslinescodes.ll_specificlines_6, LIMAscoreslinescodes.ll_specificlines_6_exemplar, LIMAscoreslinescodes.ll_specificlines_7, LIMAscoreslinescodes.ll_specificlines_7_exemplar, LIMAscoreslinescodes.ll_specificlines_8, LIMAscoreslinescodes.ll_specificlines_8_exemplar, LIMAscoreslinescodes.ll_specificlines_9, LIMAscoreslinescodes.ll_specificlines_9_exemplar, LIMAscoreslinescodes.ll_specificlines_10, LIMAscoreslinescodes.ll_specificlines_10_exemplar, LIMAscoreslinescodes.ll_specificlines_11, LIMAscoreslinescodes.ll_specificlines_11_exemplar, LIMAscoreslinescodes.ll_specificlines_12, LIMAscoreslinescodes.ll_specificlines_12_exemplar, LIMAscoreslinescodes.ll_specificlines_13, LIMAscoreslinescodes.ll_specificlines_13_exemplar, LIMAscoreslinescodes.ll_linescontext_1, LIMAscoreslinescodes.ll_linescontext_1_exemplar, LIMAscoreslinescodes.ll_linescontext_2, LIMAscoreslinescodes.ll_linescontext_2_exemplar, LIMAscoreslinescodes.ll_linescontext_3, LIMAscoreslinescodes.ll_linescontext_3_exemplar, LIMAscoreslinescodes.ll_linescontext_4, LIMAscoreslinescodes.ll_linescontext_4_exemplar, LIMAscoreslinescodes.ll_linescontext_5, LIMAscoreslinescodes.ll_linescontext_5_exemplar, LIMAscoreslinescodes.ll_linescontext_6, LIMAscoreslinescodes.ll_linescontext_6_exemplar, LIMAscoreslinescodes.ll_llcontext_1, LIMAscoreslinescodes.ll_llcontext_1_exemplar, LIMAscoreslinescodes.ll_llcontext_2, LIMAscoreslinescodes.ll_llcontext_2_exemplar, LIMAscoreslinescodes.ll_llcontext_3, LIMAscoreslinescodes.ll_llcontext_3_exemplar, LIMAscoreslinescodes.ll_llcontext_4, LIMAscoreslinescodes.ll_llcontext_4_exemplar, LIMAscoreslinescodes.ll_llcontext_5, LIMAscoreslinescodes.ll_llcontext_5_exemplar, LIMAscoreslinescodes.ll_llcontext_6, LIMAscoreslinescodes.ll_llcontext_6_exemplar, LIMAscoreslinescodes.ll_llcontext_7, LIMAscoreslinescodes.ll_llcontext_7_exemplar, LIMAscoreslinescodes.ll_llcontext_8, LIMAscoreslinescodes.ll_llcontext_8_exemplar, LIMAscoreslinescodes.ll_llcontext_9, LIMAscoreslinescodes.ll_llcontext_9_exemplar, LIMAscoreslinescodes.ll_llcontext_10, LIMAscoreslinescodes.ll_llcontext_10_exemplar, LIMAscoreslinescodes.ll_llcontext_11, LIMAscoreslinescodes.ll_llcontext_11_exemplar, LIMAscoreslinescodes.ll_llcontext_12, LIMAscoreslinescodes.ll_llcontext_12_exemplar, LIMAscoreslinescodes.ll_llcontext_13, LIMAscoreslinescodes.ll_llcontext_13_exemplar, LIMAscoreslinescodes.ll_llcontext_14, LIMAscoreslinescodes.ll_llcontext_14_exemplar, LIMAscoreslinescodes.ll_llcontext_15, LIMAscoreslinescodes.ll_llcontext_15_exemplar, LIMAscoreslinescodes.ll_llcontext_16, LIMAscoreslinescodes.ll_llcontext_16_exemplar, LIMAscoreslinescodes.ll_llcontext_17, LIMAscoreslinescodes.ll_llcontext_17_exemplar, LIMAscoreslinescodes.ll_llcontext_18, LIMAscoreslinescodes.ll_llcontext_18_exemplar, LIMAscoreslinescodes.ll_llcontext_19, LIMAscoreslinescodes.ll_llcontext_19_exemplar, LIMAscoreslinescodes.ll_llcontext_20, LIMAscoreslinescodes.ll_llcontext_20_exemplar FROM LIMAscores, LIMAscoreslinescodes WHERE LIMAscoreslinescodes.limakey = LIMAscores.limakey ";
+$rsLIMAscores = mysql_query($query_rsLIMAscores, $Assessment) or die(mysql_error());
+$row_rsLIMAscores = mysql_fetch_assoc($rsLIMAscores);
+$totalRows_rsLIMAscores = mysql_num_rows($rsLIMAscores);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>DTS: LIMA summary download</title>
+</head>
+
+<body>
+  <?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=limalinecodes.txt\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+limakey* lasname* lasnumber_1* lasnumber_2* ll_lines_1* ll_lines_2* ll_lines_3* ll_lines_4* ll_lines_5* ll_lines_6* ll_lines_7* ll_lines_8* ll_lines_9* ll_lines_10* ll_lines_11* ll_lines_12* ll_lines_13* ll_lines_14* ll_lines_15* ll_lines_16* ll_lines_17* ll_specificlines_1*  ll_specificlines_2*  ll_specificlines_3*  ll_specificlines_4*  ll_specificlines_5*  ll_specificlines_6*  ll_specificlines_7*  ll_specificlines_8*  ll_specificlines_9* * ll_specificlines_10*  ll_specificlines_11*  ll_specificlines_12*  ll_specificlines_13*  ll_linescontext_1*  ll_linescontext_2*  ll_linescontext_3*  ll_linescontext_4*  ll_linescontext_5*  ll_linescontext_6*  ll_llcontext_1* ll_llcontext_2* ll_llcontext_3* ll_llcontext_4* ll_llcontext_5* ll_llcontext_6* ll_llcontext_7* ll_llcontext_8* ll_llcontext_9* ll_llcontext_10* ll_llcontext_11* ll_llcontext_12* ll_llcontext_13* ll_llcontext_14* ll_llcontext_15* ll_llcontext_16* ll_llcontext_17* ll_llcontext_18* ll_llcontext_19* ll_llcontext_20* 
+<?php do { ?>
+<?php echo $row_rsLIMAscores['limakey']; ?>*<?php echo $row_rsLIMAscores['lasname']; ?>*<?php echo $row_rsLIMAscores['lasnumber_1']; ?>*<?php echo $row_rsLIMAscores['lasnumber_2']; ?>*<?php echo $row_rsLIMAscores['ll_lines_1']; ?>*<?php echo $row_rsLIMAscores['ll_lines_2']; ?>*<?php echo $row_rsLIMAscores['ll_lines_3']; ?>*<?php echo $row_rsLIMAscores['ll_lines_4']; ?>*<?php echo $row_rsLIMAscores['ll_lines_5']; ?>*<?php echo $row_rsLIMAscores['ll_lines_6']; ?>*<?php echo $row_rsLIMAscores['ll_lines_7']; ?>*<?php echo $row_rsLIMAscores['ll_lines_8']; ?>*<?php echo $row_rsLIMAscores['ll_lines_9']; ?>*<?php echo $row_rsLIMAscores['ll_lines_10']; ?>*<?php echo $row_rsLIMAscores['ll_lines_11']; ?>*<?php echo $row_rsLIMAscores['ll_lines_12']; ?>*<?php echo $row_rsLIMAscores['ll_lines_13']; ?>*<?php echo $row_rsLIMAscores['ll_lines_14']; ?>*<?php echo $row_rsLIMAscores['ll_lines_15']; ?>*<?php echo $row_rsLIMAscores['ll_lines_16']; ?>*<?php echo $row_rsLIMAscores['ll_lines_17']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_1']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_2']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_3']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_4']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_5']; ?>*<?php echo $row_rsLIMAscores['ll_lines_6']; ?>*<?php echo $row_rsLIMAscores['ll_lines_7']; ?>*<?php echo $row_rsLIMAscores['ll_lines_8']; ?>*<?php echo $row_rsLIMAscores['ll_lines_9']; ?>*<?php echo $row_rsLIMAscores['ll_lines_10']; ?>*<?php echo $row_rsLIMAscores['ll_lines_11']; ?>*<?php echo $row_rsLIMAscores['ll_lines_12']; ?>*<?php echo $row_rsLIMAscores['ll_lines_13']; ?>*<?php echo $row_rsLIMAscores['ll_lines_14']; ?>*<?php echo $row_rsLIMAscores['ll_lines_15']; ?>*<?php echo $row_rsLIMAscores['ll_lines_16']; ?>*<?php echo $row_rsLIMAscores['ll_lines_17']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_1']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_2']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_3']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_4']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_5']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_6']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_7']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_8']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_9']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_10']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_11']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_12']; ?>*<?php echo $row_rsLIMAscores['ll_specificlines_13']; ?>*<?php echo $row_rsLIMAscores['ll_linescontext_1']; ?>*<?php echo $row_rsLIMAscores['ll_linescontext_2']; ?>*<?php echo $row_rsLIMAscores['ll_linescontext_3']; ?>*<?php echo $row_rsLIMAscores['ll_linescontext_4']; ?>*<?php echo $row_rsLIMAscores['ll_linescontext_5']; ?>*<?php echo $row_rsLIMAscores['ll_linescontext_6']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_1']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_2']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_3']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_4']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_5']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_6']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_7']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_8']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_9']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_10']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_11']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_12']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_13']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_14']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_15']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_16']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_17']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_18']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_19']; ?>*<?php echo $row_rsLIMAscores['ll_llcontext_20']; ?>*
+<?php } while ($row_rsLIMAscores = mysql_fetch_assoc($rsLIMAscores)); ?>
+<?
+exit();
+?>
+</p>
+</body>
+</html>
+<?php
+mysql_free_result($rsLIMAscores);
+?>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lrjadilemmas>
+<lrjatopic name="television">
+	<lrjadilemma>
+		<![CDATA[  
+		<p>Psychologists disagree about the impact of violent television on children. One group argues that the evidence suggests that television violence causes children to engage in violent behavior. Another group argues that the evidence suggests that television violence prepares children for the realities of adult life, much like fairy tales did before the invention of television.</p>
+		]]>
+	</lrjadilemma>
+</lrjatopic>
+<lrjatopic name="heart disease">
+	<lrjadilemma>
+		<![CDATA[  
+		<p>There have been frequent reports about the relation between fat consumption and heart disease. While scientists agree that the substance that clogs the arteries (plaque) is composed of cholesterol, they disagree about the best way to prevent its build-up. Today, most scientists agree that the best way to reduce the development of plaque is to reduce cholesterol consumption. However, a growing number of scientists point to evidence that the consumption of refined carbohydrates (sugars) may play a larger role in the development of plaque than cholesterol consumption. They therefore advocate reducing the consumption of refined carbohydrates.</p>
+		]]>
+	</lrjadilemma>
+</lrjatopic>
+<lrjatopic name="global warming">
+	<lrjadilemma>	
+		<![CDATA[  
+		<p>Several scientists have raised concerns about global warming, warning us that pollutants released into the air are causing rapid warming of the Earth that is resulting in major environmental changes. They argue that this rapid warming of the planet will result in widespread devastation, and should be curtailed by dramatically reducing airborne pollutants. Other scientists argue that global warming due to pollution is likely to cause fluctuations in mean global temperatures, but that some of these changes will be beneficial, especially in the Northern hemisphere. They argue that, though it is desirable to reduce pollution in the long term (for quality-of-life reasons), the dramatic reduction of airborne pollutants advocated by the first group of scientists would be costly and ineffective, and not necessarily good for everyone.</p>
+		]]>
+	</lrjadilemma>
+</lrjatopic>
+<lrjatopic name="immunization">
+	<lrjadilemma>
+		<![CDATA[  
+		<p>There have been frequent reports about the side effects of immunization. Although scientists and public health professionals claim that immunizations are effective and side effects are minimal and rare, many parents think that any risk of side effects is too great, especialy in the case of immunizations that do not provide complete protection&mdash;of which there are several. Scientists and public health professionals argue that unimmunized children, who can easily become infected with the diseases targeted by immunizations, pose a threat to immunized children, and should not be allowed to attend school until they are immunized. Their parents argue that they have a right to protect their children from the side effects of immunizations, especially when they don't offer complete protection.</p>		
+		]]>
+	</lrjadilemma>
+</lrjatopic>
+<lrjatopic name="hormones">
+	<lrjadilemma>
+		<![CDATA[  
+		<p>Some scientists have raised concerns about possible threats to the environment posed by hormones fed to livestock. While most scientists agree that some of these hormones will eventually make it into the water supply, they disagree about the possible effects. One group of scientists points out the negative effects on food production of withdrawing these hormones and assert that there is no clear evidence that these substances will cause harm. These scientists think it is best to delay action until such evidence exists. In contrast, a second group of scientists point to changes in the sexual organs of several fish and amphibian species as possible evidence that these substances may already be having an effect. They advocate immediately reducing or ending the use of hormones in livestock production.</p>
+		]]>
+		</lrjadilemma>
+</lrjatopic>
+<lrjatopic name="global economy">
+	<lrjadilemma>
+		<![CDATA[  
+		<p>The current global economy is based on an investment-based economic model that requires relatively constant growth. Economists who favor this model point to evidence that the human condition, overall, has improved as a consequence of this system, which has generated heretofore unheard of wealth and distributed it more widely than any previous system. They express great concern that any interference with the current system could cause a total economic collapse resulting in unprecedented human suffering. However, a growing number of economists are convinced that economic growth inevitably will be accompanied by increasing environmental degradation, contributing in the long term to even greater human suffering.</p>
+		]]>
+		</lrjadilemma>
+</lrjatopic>
+</lrjadilemmas>
+
+

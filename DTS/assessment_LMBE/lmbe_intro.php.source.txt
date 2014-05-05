@@ -1,0 +1,361 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+?>
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mbe1.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>MBE introduction</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsTabGroup .TabbedPanelsTab {
+	background-color: #6B8D9B;
+	color: #DCE2EA;
+	padding-left: 4px;
+}
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsTabGroup .TabbedPanelsTab a:hover {
+	background-color: #717F9B;
+}
+-->
+</style>
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #BFDADF;
+	background-image: url(../images/skin/LIMAbackground.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F5FBFB;
+	background-image: url(/images/skin/MBEbackground.gif);
+	position: relative;
+} 
+
+.twoColFixRtHdr #header {
+	height: 160px;
+	margin-top: 0;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	background-image: url(/images/skin/MBEheader.gif);
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #spacer1 {
+	height: 100px;
+	width: 720px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	float: right;
+} 
+.twoColFixRtHdr #menu1 {
+	width: 720px;
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	margin-top: 0;
+	float: right;
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #B9D4DD;
+	background-image: url(/images/skin/MBEmenu.gif);
+	} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 0;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #033;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #033;
+}
+.twoColFixRtHdr #container #menu1 div {
+	color: #0D517F;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #0D517F;
+	line-height: 19px;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a:hover {
+	color: #033;
+}
+.twoColFixRtHdr #container #mainContent h1 {
+	margin-top: 10px;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <div id="spacer1">
+    <div align="right">
+      <!-- end #spacer1 --></div>
+  </div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <!-- end #header --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1 class="style1">Framing Fast-ForWord: An assessment of judgments about issues in MBE  </h1>
+  <p class="redbold">Welcome to the first on-line developmental assessment for MBE!</p>
+  <p>The goal of the following assessment is to give you an opportunity to show how you  make real-life judgments about complex issues in the field of Mind, Brain, and Education. Below, we  provide you with some case study material about a popular educational intervention that claims MBE-type research backing. Take your time looking over the information we provide, including the articles under the <span class="emphasis">research</span> tab, before moving on to address the four broad questions we pose about the case. </p>
+  <p>Please use only the material presented here, and resist your urge to look for more information on-line. When you take this assessment for a second time later in the year, more information will be provided. But for now, stick with what we have given you.</p>
+  <p><span class="emphasis">Carefully</span> read the case study material presented below. When you have finished reading this material, click on the assessment link in the main menu to proceed to the assessment. </p>
+  <p class="redbold">&nbsp;</p>
+  <div id="TabbedPanels1" class="TabbedPanels">
+    <ul class="TabbedPanelsTabGroup">
+      <li class="TabbedPanelsTab">Scientific Learning®</li>
+      <li class="TabbedPanelsTab">background</li>
+      <li class="TabbedPanelsTab">vision</li>
+      <li class="TabbedPanelsTab">testing</li>
+      <li class="TabbedPanelsTab">implementation</li>
+      <li class="TabbedPanelsTab">claims</li>
+      <li class="TabbedPanelsTab">research</li>
+    </ul>
+    <div class="TabbedPanelsContentGroup">
+      <div class="TabbedPanelsContent">
+        <p><br />Scientific Learning is a  financially successful company that offers various educational services and products. Here is a brief history of the company, as found on the company's web site:</p>
+        <h4>Four dedicated individuals. One important mission.<br />
+        </h4>
+        <p>The story of Scientific Learning begins with four research scientists: Michael Merzenich, William Jenkins, Paula Tallal, and Steven Miller. When the work of these four scientists intersected, their collaboration proved that the underlying cognitive processes that influence speech and language problems could be identified—and permanently improved.</p>
+        <p>These findings led to the development of the Fast ForWord® program, a groundbreaking computer-based reading intervention. The scientists then founded Scientific Learning to bring their program out of the lab and into the lives of struggling readers.</p>
+        <p>&nbsp;</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <h3>The Changing Brain</h3>
+        <p>As a student at the University of Portland in the early 1960s, Michael Merzenich discovered an interest in science that led him to the field of neuroscience. He earned his Ph.D. in neurophysiology at Johns Hopkins and went on to the University of California at San Francisco, where he pursued his interest in how the brain processes information. Among his achievements: developing the cochlear implant, which electrically translates acoustic signals into the nerves used for hearing.</p>
+        <p>During the 1970s and 1980s, Merzenich and his colleagues at the University of California, San Francisco, ran a series of experiments designed to illuminate how the brain interpreted stimuli. They discovered that the brain actually changed physiologically when it learned or experienced something new. More significantly, collaborative experiments by Merzenich and William Jenkins, Ph.D.—who joined the UCSF lab in 1980—showed the adult brain also demonstrated change and adaptation in response to behavioral stimuli.</p>
+        <p>“We established that the brain is modified on a substantial scale, both physically and functionally, each time we learn a new skill or develop a new ability,” said Merzenich. “Our brains were created to reinvent and reconfigure themselves throughout our lifetimes.” This ability is known as brain plasticity. Another exciting discovery emerged when Jenkins spearheaded a study that showed progressive training could actually accelerate the rate at which the brain changed.</p>
+        <h3>Auditory Processing and Language<br />
+        </h3>
+        <p>Meanwhile, Paula Tallal was pursuing her Ph.D. in experimental psychology at Cambridge University. She theorized that the speech and language difficulties of children suffering from language-learning difficulties were related to auditory processing problems, meaning the children had difficulty distinguishing between speech sounds.</p>
+        <p>She found that that these children did well discriminating long-duration speech sounds, but had trouble differentiating rapid sounds such as the consonant sounds “ba” and “da.” Intrigued, she used a computerized speech synthesizer to extend the duration of these quick sounds and tested the children with the modified sounds. Amazingly, the children were now able to distinguish between the sounds. “This was a unique and completely novel finding,” says Tallal. “We were able to find the root of the difficulty in temporal-spectral processing, and you could manipulate the results by changing the duration of the sounds.”</p>
+        <p>&nbsp;</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <h3>A Meeting of the Minds<br />
+        </h3>
+        <p>The Santa Fe Institute is a think tank devoted to fostering multidisciplinary collaboration between scientists who might not otherwise work together. In 1993 the institute held a conference at which Merzenich, Tallal, and Steven Miller—who was working with Tallal as a post-doctoral graduate student—were invited to present their research. When she and Merzenich heard each other speak, says Tallal, it all fell into place. “It really clicked that we should work together,” she says.</p>
+        <p>Merzenich saw the possibilities, too. “Bill Jenkins and I had discussed using our training tools, as applied in monkeys, for impaired human populations, and we both realized that Paula’s kind of kid problem might be addressed with our kind of solution,” says Merzenich.</p>
+        <p>The four scientists obtained research funding to develop model training tools. Jenkins took the lead on creating the computer software that would be the foundation of the training components. Jenkins and his team developed complex algorithms that could stretch the speed and enhance the components of speech, but the challenge was how to package the software so it would engage children.</p>
+        <p>The solution? Make a game of it. The software component used to train the brain to increase its sampling-rate characteristics was disguised as something called Circus Sequence, while another component became Old McDonald’s Flying Farm. Within six months, Jenkins, Merzenich, and their colleagues had a prototype product ready to go.</p>
+        <p>&nbsp;</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <h3>Putting it to the Kid Test<br />
+        </h3>
+        <p>Tallal and Miller focused on setting up a “summer-school” study at Rutgers University designed to evaluate the efficacy of the software. They ran the first study for four weeks in July of 1994 with seven children.<br />
+          Throughout the four weeks, expectations were high. So intent were they on keeping tabs on the children’s progress, Jenkins even created a software tracking tool designed to communicate daily data back to the UCSF team via the Internet. Finally, the results were in—and they were excellent.</p>
+        <p>“Six of the seven children made very substantial improvements,” says Tallal. “We were blown away.”<br />
+          Added Merzenich: “The results from this initial study were excellent, wonderful.&quot;</p>
+        <p>Although the scientists were eager to bring the product to market on the strength of those results, they decided to run a second study with a larger sample group. In the summer of 1995, the product, which by then had been substantially refined by Jenkins, was set for a second test. This study included 22 children broken into two groups matched for age, intelligence, and language impairment. One group used the software product with acoustically modified speech; the second group performed the same speech-therapy exercises using non-processed speech.</p>
+        <p>This time, the results were stunning. The children using the version with acoustically modified speech showed a huge improvement in the rate of auditory processing. “The results were spectacular,” says Tallal. “We moved many of the kids well into the normal range, and that’s what I didn’t think could happen. I did not think you could change something as basic as a psychophysical threshold to that degree.”</p>
+        <h3>&nbsp;</h3>
+      </div>
+      <div class="TabbedPanelsContent">
+        <h3>Taking the Next Step<br />
+        </h3>
+        <p>The study results were published in the journal Science in the summer of 1995, and were presented at a conference in November, which sparked an article in the New York Times. The public response was immediate and overwhelming. “Something like 20,000 people tried to call Rutgers to get information, but we don’t know exactly how many because the phone banks blew up,” says Miller. “In the end, we took about 17,000 calls, and CNN covered it.”</p>
+        <p>Soon, Rutgers and UCSF, who jointly owned the technology and the ideas behind it, looked into licensing it for commercial use, but the quality of the licensing applicants was underwhelming. “My view was, the companies and the kinds of software that were out there would not leverage the science correctly,” says Jenkins. “I saw a lot of edutainment software out there purporting to provide educational benefit, but the designs weren’t neuroscience-based. The science was so important and the potential was so big, it didn’t make sense to risk it not being done well.”</p>
+        <p>In early 1996, Merzenich, Tallal, Jenkins, and Miller formed Scientific Learning Corporation.  The company began offering the Fast ForWord program to speech language professionals and school districts across North America, and expanded over time to more than 40 countries worldwide.<br />
+          Today Scientific Learning continues to create educational software that accelerates learning by improving the processing efficiency of the brain.</p>
+        <p>The Fast ForWord® family of products provides struggling readers with computer-delivered exercises that build the cognitive skills required to read and learn effectively.</p>
+        <p>Scientific Learning Reading Assistant™ is the only reading solution to combine advanced speech recognition technology with scientifically-based courseware to help students strengthen fluency, vocabulary and comprehension to become proficient, life-long readers.</p>
+        <p>&nbsp;</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <h3>Product claims</h3>
+        <p>Scientific Learning offers a variety of computer based educational interventions. Here is a description of their most successful product, as found on their web-site:</p>
+        <blockquote>
+          <p>The Fast ForWord program is a reading intervention designed for K-12 education institutions and clinical specialists worldwide whose students are reading below grade level. The Fast ForWord program develops brain processing efficiency through intensive, adaptive exercises. Fast ForWord products offer tested, real-world results for educators and specialists around the globe.<br />
+          </p>
+          <p>The Fast ForWord program develops and strengthens memory, attention, processing rate, and sequencing—the cognitive skills essential for learning and reading success. The strengthening of these skills results in a wide range of improved critical language and reading skills such as phonological awareness, phonemic awareness, fluency, vocabulary, comprehension, decoding, working memory, syntax, grammar, and other skills necessary to learn how to read or to become a better reader.<br />
+          </p>
+          <p>Fast ForWord reading intervention products support existing curriculum—they don't replace it. They align to state mandates and have been an important factor in AYP success. And, most importantly, the gains students achieve are lasting, the result of enduring positive changes in their processing skills and learning capacity.</p>
+          <p>&nbsp;</p>
+        </blockquote>
+      </div>
+      <div class="TabbedPanelsContent">
+        <h3>Preliminary research base</h3>
+        <p>Here are the original articles that provided the research base for the company and its products:</p>
+        <p>Michael M. Merzenich, William M. Jenkins, Paul Johnston, Christoph Schreiner, Steven L. Miller and Paula Tallal. &quot;<a href="../PDF/MBE-FastForWord_Science1.pdf">Temporal processing deficits of language-learning impaired children ameliorated by training</a>&quot; Science, New <em>Series, Vol. 271,</em> No. 5245 (Jan. 5, 1996).</p>
+        <p>Paula Tallal,  Steve L. Miller,  Gail Bedi,  Gary Byma,  Xiaoqin Wang,  Srikantan S. Nagarajan,  Christoph Schreiner, William M. Jenkins,  Michael M. Merzenich. &quot;<a href="../PDF/MBE-FastForWord_Science2.pdf">Language comprehension in language-learning impaired children improved with acoustically modified speech</a>.&quot; <em>Science, New Series, Vol. 271,</em> No. 5245 (Jan. 5, 1996).</p>
+        <h3>Popular press</h3>
+        <p>Here is the article from the <em>New York Times</em> that sparked wide public interest in the company's services.</p>
+        <p>Blakeslee, Sandra. &quot;<a href="../PDF/MBE-Fast_ForWord_New York Times.pdf">Glasses for the ears: Easing children's reading woes</a>&quot; <em>The New York Times.</em> (Nov. 15, 1995).</p>
+        <h3>Continued research base</h3>
+        <p>Scientific learning continues ongoing research about the efficacy of their product. Here are two documents about this facet of the company. One document is a government agency's report summarizing the results of these continuing research efforts, and one an example of teh kind of studies they do.</p>
+        <p>What Works Clearinghouse (2007, July), <a href="../PDF/MBE-WWC_Fast_Forword_070907.pdf"><em>Beginning reading: Fast ForWord</em></a>. U.S. Department of Education: Institute of Education Sciences.</p>
+        <p>Scientific learning Corporation (2005). <a href="../PDF/MBE-30161SpringfieldEduRpt.pdf">Improved early reading skill by student in the Springfield School district who use Fast ForWord to Reading 1</a>. <em>MAPS for Learning: Educator Reports, 9(25)</em> 1-5.</p>
+        <p>&nbsp;</p>
+      </div>
+    </div>
+  </div>
+  <p class="redbold">&nbsp;</p>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <script type="text/javascript">
+<!--
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+//-->
+  </script>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/lmbe/lmbe_intro.php">LMBE instructions</a></li>
+<li><a href="/lmbe/lmbe_assess_start.php">LMBE assessment</a></li>
+<li><a href="/lmbe/indiv_selectlmbe.php">LMBE report</a></li>
+<li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer -->
+  <!-- end #container -->
+</div>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrants);
+
+mysql_free_result($rsRegistrant);
+?>

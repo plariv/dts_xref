@@ -1,0 +1,6 @@
+        <p><a href="http://www.lectica.org/visitors/about_lectatests.php">General information</a></p>
+        <p><a href="/_about/showcase.php?instrument_id=LDMA">LDMA: Decision making</a></p>
+        <p><a href="/_about/showcase.php?instrument_id=LSMA">LSMA: Mindfulness</a></p>
+        <p><a href="/_about/showcase.php?instrument_id=LSUA">LSUA: Self understanding</a></p>
+        <p><a href="/assessments/takingassessments.php">How to take a Lectical assessment</a></p>
+		<p>&nbsp;</p>

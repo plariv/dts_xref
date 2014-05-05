@@ -1,0 +1,102 @@
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+
+// THIS PAGE IS OBSOLETE. The old SMS is obsolete. Redirect to the new SMS start page.
+header('Location: https://www.devtestservice.org/set_session_var_instrument.php?link_id=la_assess/assess_intro.php&sessionVarName=instrument_id&sessionVarValue=SMS'); exit();
+
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+
+
+// Calculate test time for this survey taking
+$colname_rsTestTime = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsTestTime = (get_magic_quotes_gpc()) ? $_SESSION['log_userkey'] : addslashes($_SESSION['log_userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTestTime = sprintf("SELECT mindfulkey, userkey, COUNT(userkey) AS test_times FROM mindfulness WHERE userkey = %s", GetSQLValueString($colname_rsTestTime, "int"));
+$rsTestTime = mysql_query($query_rsTestTime, $Assessment) or die(mysql_error());
+$row_rsTestTime = mysql_fetch_assoc($rsTestTime);
+$totalRows_rsTestTime = mysql_num_rows($rsTestTime);
+
+$test_time_today = $row_rsTestTime['test_times'] + 1;
+
+
+
+
+	
+// if we're updating a current survey record, just move on to that one.
+if (isset($_GET['mindfulkey'])) {
+	
+	$insertGoTo = "m-survey10a.php";
+	if (isset($_SERVER['QUERY_STRING'])) {
+		$insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+		$insertGoTo .= $_SERVER['QUERY_STRING'];
+	}
+	header(sprintf("Location: %s", $insertGoTo));
+	
+	
+} else {	
+	
+	// otherwise, create a new blank record and send user on with that mindfulness key.
+	
+	$insertSQL = sprintf("INSERT INTO mindfulness (timestamp, userkey, instrument_id, testtime) 
+	VALUES (%s, %s, %s, %s)",
+								 GetSQLValueString(date('Y-m-d H:i'), "date"),
+								 GetSQLValueString($_SESSION['log_userkey'], "int"),
+								 GetSQLValueString("SMS2010", "text"),
+								 GetSQLValueString($test_time_today, "int"));
+								 
+	mysql_select_db($database_Assessment, $Assessment);
+	$Result1 = mysql_query($insertSQL, $Assessment) or die(mysql_error());
+	$insert_ID = mysql_insert_id();
+
+	$insertGoTo = "m-survey10a.php?mindfulkey=".$insert_ID;
+	if (isset($_SERVER['QUERY_STRING'])) {
+		$insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+		$insertGoTo .= $_SERVER['QUERY_STRING'];
+	}
+	header(sprintf("Location: %s", $insertGoTo));
+	
+}
+	
+	
+	
+mysql_free_result($rsTestTime);
+	
+?>

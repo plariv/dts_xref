@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: About measurement</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<link href="../css/styles1.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+<h1><img src="../_images/methods/ruler.gif" width="60" height="54" align="left" alt="Ruler" />ABOUT MEASUREMENT        </h1>
+<h3>Good measurement requires…</h3>
+          <ol>
+            <li> the identification of a unidimensional, content and context-independent trait (temperature, length, time);</li>
+            <li> a system for assessing the amount of the trait;<br />
+            </li>
+            <li> determinations of the accuracy of measurements; and finally </li>
+            <li> the calibration of a measure. </li>
+          </ol>
+          <p>A good thermometer has all of the qualities of a good measure. It is a well-calibrated instrument that can be employed to accurately and reliably measure a general, unidimensional trait across a wide range of contexts.</p>
+          <h3>From observations to measures</h3>
+          <p><img src="../_images/methods/thermometer.gif" alt="Thermometer" width="50" height="240" class="padding_right_10 padding-top-5" align="left" />The road from observation to calibration is a long one. For example, the  origins of the thermometer were in  early qualitiative  observations about relative temperatures (hot as boiling water, cold as ice, hot as fire.) After thousands of years of qualitative observations of temperature,  early scientists began to study the phenomenon in earnest. Eventually, a variety of early thermometers were developed, implemented, and refined. Today, all thermometers are calibrated to one of 3 scales—farenheit, kelvin, celsius. They  can be used to measure the temperature of any substance, and they are used widely in every industry, in our homes, and in the devices we use each day. Most of what we are able to do in the 21st century has been made possible by the development of measures like the thermometer. In fact, advances in measurement  have preceded every major advance in science. </p>
+          <h3>Measuring developments in thinking</h3>
+          <p><img src="../_images/methods/scale.gif" alt="Scale" width="90" class="padding_right_10" align="left" />Good measures make scientific progress possible by ensuring that scientists in a given field are speaking a common language. What if cognitive scientists had access to an accurate, valid, and reliable general measure of cognitive development, one that spanned the developmental continuum from birth through adulthood? What might be some of the implications for cognitive research and education? </p>
+          <p>In the 19th century, James Mark Baldwin described a series of developmental levels in children’s and adolescents’ reasoning abilities. He saw each of these levels as changes in the <em>way</em> individuals thought, not just <em>what</em> they thought. In the 20th century, scientists like Jean Piaget expanded upon these insights, describing several different ways of thinking that built upon one another over the course of childhood and adolescence. During the 1970’s and 1980’s, researchers like Karen Kitchener, Patricia King, Lawrence Kohlberg, Robert Kegan, and Kurt Fischer documented similar changes in adulthood. In the 1990’s Theo Dawson undertook the task of translating their qualitative descriptions of developmental levels into a quantitative measure of cognitive development. The result is a developmental metric called the Lectical Assessment System (LAS). Like the thermometer, the LAS is can be employed to accurately and reliably measure a general, unidimensional trait across a wide range of contexts.</p>
+          <h3>More uses of the LAS</h3>
+          <p><strong>First</strong>, the LAS, because it is content independent, can be employed to investigate conceptual development in any knowledge domain—just as a thermometer can be used to check the temperature of any substance. Once reasoning performances are assigned to their place on the developmental dimension, they can be subjected to a variety of content analyses. Matrices of conceptual content by developmental level reveal patterns of conceptual change that are very difficult to expose with conventional methods. While individual growth can only be studied longitudinally (Singer &amp; Willett, 2003), a developmental metric makes it possible to meaningfully examine inter-individual developmental trends in cross-sectional data, putting an end to the questionable practice of using age as a proxy for development (Dawson, Commons, &amp; Wilson, 2005).</p>
+          <p><strong>Second,</strong> the LAS helps to eliminate the effects of sample bias in accounts of conceptual development. Conventional accounts of conceptual development are generally constructed by examining the behavior of individuals in small longitudinal samples. These accounts then form the basis for developmental assessment systems that often confound developmental level and conceptual content, such that particular concepts come to be overly identified with a given developmental level (Dawson, in press; Dawson &amp; Gabrielian, 2003; Dawson et al., 2003). Because the LAS allows us to specify an individual’s place on the developmental continuum without reference to the particular conceptual content of his or her reasoning performance, we are able to examine the empirical relation between particular conceptual content and a given developmental level, making it possible to interpret that relation as part of an independent analysis.</p>
+          <p><strong>Third,</strong> the LAS can be employed to describe conceptual development across the entire developmental continuum, producing seamless accounts of development that can be employed to inform our understanding of developmental processes as well as curriculum design, instruction, and assessment. Though they have contributed importantly to our understanding of conceptual development in science, current accounts of conceptual development in the sciences are generally piecemeal, either because the research targets a particular age-group, or the developmental model being employed—such as the novice/expert model—dictates the comparison of two extreme groups. Attempts to tie together isolated results are complicated by the lack of a strong and coherent developmental theory. The strand maps presented in the Atlas of Science Literacy (2001), represent an important effort to define learning sequences based on the general notion that development moves from concrete to abstract or from simple to complex. An accurate and reliable developmental metric would lend much greater specificity to efforts of this kind.<br />
+          </p>
+<p align="center">&nbsp;</p>
+          <p align="center">&nbsp;</p>
+          <p>&nbsp;</p>
+<p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+  <!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" --><!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

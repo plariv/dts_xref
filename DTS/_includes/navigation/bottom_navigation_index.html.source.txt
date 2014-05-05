@@ -1,0 +1,50 @@
+<div class="container-fluid">	
+<!-- Bottom navigation -->
+    <div class="row-fluid background-pale">
+		<ul class="thumbnails">
+        	<li class="span3">
+            	<article>
+			    	<h3> K-12 assessments</h3>
+  					<p><a href="https://discotest.org/visitors/anatomy.php">Anatomy of a DiscoTest<sup>®</sup></a></p>
+                    <p><a href="https://discotest.org/visitors/heroes.php">Our heroes</a></p>
+		      </article>
+            </li>
+        
+        	<li class="span3">
+            	<article>
+			    	<h3>Adult assessments</h3>
+  					<p><a href="/visitors/about_lectatests.php">Decision making</a></p>
+                    <p><a href="/visitors/about_lectatests.php">Reflective judgment</a></p>
+                    <p><a href="/visitors/about_lectatests.php">Leadership reasoning</a></p>
+                    <p><a href="/visitors/about_lectatests.php">Ethical reasoning</a></p>
+                    <p><a href="/visitors/about_lectatests.php">Self understanding</a></p>
+                    <p><a href="/visitors/about_lectatests.php">Mindfulness</a></p>
+           	  </article>
+            </li>
+ 
+        	<li class="span3">
+            	<article>
+			    	<h3>Literature</h3>
+  					<p><a href="https://devtestservice.org/_about/articles.php">Articles</a></p>
+	  				<p><a href="https://www.devtestservice.org/_about/mission.php">Mission</a></p>
+	  				<p><a href="https://www.devtestservice.org/PDF/2012_0929_virtuous_cycles.pdf">Virtuous cycles (white paper)</a></p>
+	  				<p><a href="https://www.devtestservice.org/_about/devmaieutics.php">Developmental maieutics </a></p>
+	  				<p><a href="https://www.devtestservice.org/_about/measurement.php">Measurement </a></p>
+	  				<p><a href="https://www.devtestservice.org/_about/las_reliability_validity.php">Validity & reliability </a></p>
+           	  </article>
+        	</li>
+ 
+        	<li class="span3">
+            	<article>
+			    	<h3>Other</h3>
+  					<p><a href="https://www.devtestservice.org/_about/work_with_us.php">Jobs &amp; internships</a></p>
+  					<p><a href="https://www.devtestservice.org/_about/bios.php?type=board">Board of Directors</a></p>
+  					<p><a href="https://www.devtestservice.org/_about/bios.php?type=advisor">Advisory Board</a></p>
+  					<p><a href="/annual_reports/reports_list.php">Annual report</a>s</p>
+  					<p><a href="https://www.devtestservice.org/_about/bios.php?type=client">Clients</a></p>
+  					<p><a href="/contactlist.php">Newsletter</a></p>
+				</article>
+            </li>
+        </ul>    
+	</div>
+</div> <!--close container-->

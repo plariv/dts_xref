@@ -1,0 +1,75 @@
+<?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLERA = "-1";
+if (isset($_GET['user_name'])) {
+  $colname_rsLERA = $_GET['user_name'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERA = sprintf("SELECT LERAscores.lerakey, LERAscores_trainees.coderusername2, LERAscores.goodlifelas, LERAscores.goodcitizenlas, LERAscores.moralmeanlas, LERAscores.moralrulelas, LERAscores.dilemma1las, LERAscores.dilemma3las, LERAscores.dilemma1las, LERAscores.lasname, LERAscores_trainees.coderusername2, LERAscores_trainees.goodlifelas2, LERAscores_trainees.goodcitizenlas2, LERAscores_trainees.moralmeanlas2, LERAscores_trainees.dilemma1las2, LERAscores_trainees.dilemma2las2, LERAscores_trainees.dilemma3las2, LERAscores_trainees.moralrulelas2, LERAscores_trainees.lasname2 FROM LERAscores LEFT JOIN LERAscores_trainees ON LERAscores.lerakey = LERAscores_trainees.lerakey WHERE LERAscores_trainees.coderusername2 = %s", GetSQLValueString($colname_rsLERA, "text"));
+$rsLERA = mysql_query($query_rsLERA, $Assessment) or die(mysql_error());
+$row_rsLERA = mysql_fetch_assoc($rsLERA);
+$totalRows_rsLERA = mysql_num_rows($rsLERA);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+<p>
+<?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=tr-leradownload.csv\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+</p>
+<p>
+<?php do { ?>
+<?php echo $row_rsLERA['lerakey']; ?>,<?php echo $row_rsLERA['goodlifelas']; ?>,<?php echo $row_rsLERA['goodcitizenlas']; ?>,<?php echo $row_rsLERA['essay3las']; ?>,<?php echo $row_rsLERA['dilemma1las']; ?>,<?php echo $row_rsLERA['dilemma2las']; ?>,<?php echo $row_rsLERA['dilemma3las']; ?>,<?php echo $row_rsLERA['moralrulelas']; ?>,<?php echo $row_rsLERA['lasname']; ?>,<?php echo $row_rsLERA['coderusername2']; ?>,<?php echo $row_rsLERA['goodlifelas2']; ?>,<?php echo $row_rsLERA['goodcitizenlas2']; ?>,<?php echo $row_rsLERA['moralmeanlas2']; ?>,<?php echo $row_rsLERA['dilemma1las2']; ?>,<?php echo $row_rsLERA['dilemma2las2']; ?>,<?php echo $row_rsLERA['dilemma3las2']; ?>,<?php echo $row_rsLERA['moralrulelas2']; ?>,<?php echo $row_rsLERA['lasname2']; ?>,<br />
+<?php } while ($row_rsLERA = mysql_fetch_assoc($rsLERA)); ?>
+</p>
+<?
+exit();
+?>
+</body>
+</html>
+<?php
+mysql_free_result($rsLERA);
+?>

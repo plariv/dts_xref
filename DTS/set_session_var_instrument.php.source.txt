@@ -1,0 +1,104 @@
+<?php 
+
+include_once 'includes/general_custom_functions.php';
+
+
+
+
+// START THE SESSION AND SET THE COOKIE
+//$sess_name = session_name();
+//if (session_start())
+//{
+// MAN PAGE http://us.php.net/manual/en/function.setcookie.php
+//    setcookie($sess_name, session_id(), NULL, '/');
+//}
+
+
+
+
+if (!isset($_SESSION)) {
+  session_start();
+}
+error_reporting(E_ALL); 
+
+// This may be needed for the header: page redirect to work properly.  It is if the header statement is in a form. 
+  ob_start();
+?>
+
+
+
+<!--
+
+Called from various pages.
+Passed: link_id - tells page where to go next
+        sessionVarName - tells it what session variable to set
+        sessionVarValue - tells it the value of the session variable
+        
+php code to display an alert        
+//   echo "<script language='JavaScript'>"; 
+//   echo "alert('The Instrument selection failed.  Please contact us.');";
+//   echo "</script>";
+
+// javascript to return to caller
+//echo "<script language='JavaScript'>"; 
+//echo "history.back();";
+//echo "</script>";
+
+   // javascript to return to caller
+//   echo "<script language='JavaScript'>"; 
+//   echo "history.back();";
+//   echo "</script>";
+-->
+
+<?php
+
+
+
+	$link_id = ($_GET['link_id']);
+	$sessionVarName = ($_GET['sessionVarName']);
+	$sessionVarValue = ($_GET['sessionVarValue']);
+
+	// **** Compare the session var to set against a whitelist of acceptable session variables to set.
+	// For example, it is NOT acceptable to set 'log_userkey'. Without such a whitelist, this set_session_var_instrument.php could be easily abused by changing the URL link, to completely compromise our site security.
+	$validSessionVariables = " instrument_id ";
+	if (!strpos($validSessionVariables, $sessionVarName) AND $sessionVarName <> "") {
+		// If the session var name is NOT in the whitelist, then crash the page and send an alert email to dtsservice.
+		
+		sendEmail("service@lectica.org", "service@lectica.org", "", 
+			"ALERT - attempt to set invalid session variable '{$sessionVarName}'", 
+			"A user logged in as userkey '".$_SESSION['log_userkey']."' has accessed the set_session_var_instrument.php from the referring address '".$_SERVER['HTTP_REFERER']."' with the invalid URL variables '?".$_SERVER['QUERY_STRING']."'. \n\n The session variable they attempted to set: '".$sessionVarName."' \n The value to set it to: '".$sessionVarValue."' \n\n ");
+		
+		// If the variable value is blank, then just redirect the user to the landing page. Hopefully they won't even notice that something went wrong. DTS is still emailed an alert.
+		if ($sessionVarName == "") {
+			header("Location: landing.php");
+			exit();
+		} else {
+			die("The link you have followed is not valid. Please access the resource you were looking for by going to www.devtestservice.org and logging in normally. Our website staff have been notified so that they can prevent this error from happening in the future. We apologize for the inconvenience, and thank you for your understanding. ");
+		}
+	}
+
+	$_SESSION[$sessionVarName] = $sessionVarValue; 
+	
+	// Check for other acceptable common URL paramters, and prepare them to be passed along to the link_id page.
+	
+	$extraParams = "";
+	$possUrlVars = array("lakey", "role", "type", "scorer_no", "coder", "search", "coursekey", "coursedatekey", "mode");
+	
+	do {
+		
+		if ( isset($_GET[current($possUrlVars)]) ) {
+			if ( strpos(" ".$extraParams, '?') OR strpos(" ".$link_id, '?') ) 
+				{	$extraParams .= "&"; } else { $extraParams .= "?"; }
+			$extraParams .= current($possUrlVars)."=".$_GET[current($possUrlVars)];
+		}
+	} while (next($possUrlVars));
+	
+	
+	
+
+	
+	// This path must be a relative path so we nust develop a standard of folder structure so it always works.
+	header("Location: ".$link_id.$extraParams);
+
+ 
+?>

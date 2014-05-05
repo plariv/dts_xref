@@ -1,0 +1,773 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+//WA Database Search Include
+require_once("../WADbSearch/HelperPHP.php");
+?>
+<?php
+//WA Database Search (Copyright 2005, WebAssist.com)
+//Recordset: rsTimeSheet;
+//Searchpage: employee_timesheet_Results_admin.php;
+//Form: form1;
+$WADbSearch1_DefaultWhere = "";
+if (!session_id()) session_start();
+if ((isset($_POST["WADbSearch1"])) && ($_POST["WADbSearch1"] != "")) {
+  $WADbSearch1 = new FilterDef;
+  $WADbSearch1->initializeQueryBuilder("MYSQL","1");
+  //keyword array declarations
+  $KeyArr0 = array("firstname");
+  $KeyArr1 = array("lastname");
+
+  //comparison list additions
+  $WADbSearch1->keywordComparison($KeyArr0,"".((isset($_POST["Firstname"]))?$_POST["Firstname"]:"")  ."","AND","Includes",",%20","%20","%22","%22",0);
+  $WADbSearch1->keywordComparison($KeyArr1,"".((isset($_POST["Lastname"]))?$_POST["Lastname"]:"")  ."","AND","Includes",",%20","%20","%22","%22",0);
+
+  //save the query in a session variable
+  if (1 == 1) {
+    $_SESSION["WADbSearch1_employee_timesheet_Results_admin"]=$WADbSearch1->whereClause;
+  }
+}
+else     {
+  $WADbSearch1 = new FilterDef;
+  $WADbSearch1->initializeQueryBuilder("MYSQL","1");
+  //get the filter definition from a session variable
+  if (1 == 1)     {
+    if (isset($_SESSION["WADbSearch1_employee_timesheet_Results_admin"]) && $_SESSION["WADbSearch1_employee_timesheet_Results_admin"] != "")     {
+      $WADbSearch1->whereClause = $_SESSION["WADbSearch1_employee_timesheet_Results_admin"];
+    }
+    else     {
+      $WADbSearch1->whereClause = $WADbSearch1_DefaultWhere;
+    }
+  }
+  else     {
+    $WADbSearch1->whereClause = $WADbSearch1_DefaultWhere;
+  }
+}
+$WADbSearch1->whereClause = str_replace("\\''", "''", $WADbSearch1->whereClause);
+$WADbSearch1whereClause = '';
+?>
+<?php
+//WA Database Search (Copyright 2005, WebAssist.com)
+//Recordset: rsTimeSheet;
+//Searchpage: employee_timesheet_Results.php;
+//Form: form1;
+$WADbSearch2_DefaultWhere = "";
+if (!session_id()) session_start();
+if ((isset($_POST["WADbSearch2"])) && ($_POST["WADbSearch2"] != "")) {
+  $WADbSearch2 = new FilterDef;
+  $WADbSearch2->initializeQueryBuilder("MYSQL","1");
+  //keyword array declarations
+
+  //comparison list additions
+  $WADbSearch2->addComparisonFromEdit("date","Start","AND",">=",2);
+  $WADbSearch2->addComparison("date","".WAQB_getEndDate($_POST["End"])  ."","AND","<=",2);
+  $WADbSearch2->addComparisonFromList("project","Project","AND","=",0);
+  $WADbSearch2->addComparisonFromList("work_type","WorkType","AND","=",0);
+
+  //save the query in a session variable
+  if (1 == 1) {
+    $_SESSION["WADbSearch2_employee_timesheet_Results"]=$WADbSearch2->whereClause;
+  }
+}
+else     {
+  $WADbSearch2 = new FilterDef;
+  $WADbSearch2->initializeQueryBuilder("MYSQL","1");
+  //get the filter definition from a session variable
+  if (1 == 1)     {
+    if (isset($_SESSION["WADbSearch2_employee_timesheet_Results"]) && $_SESSION["WADbSearch2_employee_timesheet_Results"] != "")     {
+      $WADbSearch2->whereClause = $_SESSION["WADbSearch2_employee_timesheet_Results"];
+    }
+    else     {
+      $WADbSearch2->whereClause = $WADbSearch2_DefaultWhere;
+    }
+  }
+  else     {
+    $WADbSearch2->whereClause = $WADbSearch2_DefaultWhere;
+  }
+}
+$WADbSearch2->whereClause = str_replace("\\''", "''", $WADbSearch2->whereClause);
+$WADbSearch2whereClause = '';
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as senior")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$maxRows_rsTimeSheet = 15;
+$pageNum_rsTimeSheet = 0;
+if (isset($_GET['pageNum_rsTimeSheet'])) {
+  $pageNum_rsTimeSheet = $_GET['pageNum_rsTimeSheet'];
+}
+$startRow_rsTimeSheet = $pageNum_rsTimeSheet * $maxRows_rsTimeSheet;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTimeSheet = "SELECT employee_timesheet.timesheetkey, employee_timesheet.userkey, employee_timesheet.coded_number, employee_timesheet.`date`, employee_timesheet.work_hours, employee_timesheet.project, employee_timesheet.work_type, Registrants.firstname, Registrants.lastname FROM employee_timesheet, Registrants WHERE employee_timesheet.userkey = Registrants.userkey ORDER BY `date` DESC";
+setQueryBuilderSource($query_rsTimeSheet,$WADbSearch2,false);
+setQueryBuilderSource($query_rsTimeSheet,$WADbSearch1,false);
+$query_limit_rsTimeSheet = sprintf("%s LIMIT %d, %d", $query_rsTimeSheet, $startRow_rsTimeSheet, $maxRows_rsTimeSheet);
+$rsTimeSheet = mysql_query($query_limit_rsTimeSheet, $Assessment) or die(mysql_error());
+$row_rsTimeSheet = mysql_fetch_assoc($rsTimeSheet);
+
+if (isset($_GET['totalRows_rsTimeSheet'])) {
+  $totalRows_rsTimeSheet = $_GET['totalRows_rsTimeSheet'];
+} else {
+  $all_rsTimeSheet = mysql_query($query_rsTimeSheet);
+  $totalRows_rsTimeSheet = mysql_num_rows($all_rsTimeSheet);
+}
+$totalPages_rsTimeSheet = ceil($totalRows_rsTimeSheet/$maxRows_rsTimeSheet)-1;
+
+//total
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTimeSheetTotal = "SELECT employee_timesheet.timesheetkey, employee_timesheet.userkey, employee_timesheet.`date`, sum(employee_timesheet.work_hours) AS total_time, employee_timesheet.work_hours, employee_timesheet.project, employee_timesheet.work_type, Registrants.userkey, Registrants.firstname, Registrants.lastname FROM employee_timesheet, Registrants WHERE employee_timesheet.userkey = Registrants.userkey ORDER BY `date` DESC";
+$rsTimeSheetTotal = mysql_query($query_rsTimeSheetTotal, $Assessment) or die(mysql_error());
+$row_rsTimeSheetTotal = mysql_fetch_assoc($rsTimeSheetTotal);
+$totalRows_rsTimeSheetTotal = mysql_num_rows($rsTimeSheetTotal);
+
+//last name
+
+$colname1_rsTimeSheetLast = "-1";
+if (isset($_POST['Lastname'])) {
+  $colname1_rsTimeSheetLast = (get_magic_quotes_gpc()) ? $_POST['Lastname'] : addslashes($_POST['Lastname']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTimeSheetLast = sprintf("SELECT employee_timesheet.timesheetkey, employee_timesheet.userkey, employee_timesheet.`date`, sum(employee_timesheet.work_hours) AS total_time, employee_timesheet.work_hours, employee_timesheet.project, employee_timesheet.work_type, Registrants.userkey, Registrants.firstname, Registrants.lastname FROM employee_timesheet, Registrants WHERE employee_timesheet.userkey = Registrants.userkey AND lastname = %s ORDER BY `date` DESC", GetSQLValueString($colname1_rsTimeSheetLast, "text"));
+$rsTimeSheetLast = mysql_query($query_rsTimeSheetLast, $Assessment) or die(mysql_error());
+$row_rsTimeSheetLast = mysql_fetch_assoc($rsTimeSheetLast);
+$totalRows_rsTimeSheetLast = mysql_num_rows($rsTimeSheetLast);
+
+//project
+
+$colname2_rsTimeSheetProject = "-1";
+if (isset($_POST['Project'])) {
+  $colname2_rsTimeSheetProject = (get_magic_quotes_gpc()) ? $_POST['Project'] : addslashes($_POST['Project']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTimeSheetProject = sprintf("SELECT employee_timesheet.timesheetkey, employee_timesheet.userkey, employee_timesheet.`date`, sum(employee_timesheet.work_hours) AS total_time, employee_timesheet.work_hours, employee_timesheet.project, employee_timesheet.work_type, Registrants.userkey, Registrants.firstname, Registrants.lastname FROM employee_timesheet, Registrants WHERE employee_timesheet.userkey = Registrants.userkey AND project = %s ORDER BY `date` DESC", GetSQLValueString($colname2_rsTimeSheetProject, "text"));
+$rsTimeSheetProject = mysql_query($query_rsTimeSheetProject, $Assessment) or die(mysql_error());
+$row_rsTimeSheetProject = mysql_fetch_assoc($rsTimeSheetProject);
+$totalRows_rsTimeSheetProject = mysql_num_rows($rsTimeSheetProject);
+
+//work type
+
+$colname3_rsTimeSheetType = "-1";
+if (isset($_POST['WorkType'])) {
+  $colname3_rsTimeSheetType = (get_magic_quotes_gpc()) ? $_POST['WorkType'] : addslashes($_POST['WorkType']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTimeSheetType = sprintf("SELECT employee_timesheet.timesheetkey, employee_timesheet.userkey, employee_timesheet.`date`, sum(employee_timesheet.work_hours) AS total_time, employee_timesheet.work_hours, employee_timesheet.project, employee_timesheet.work_type, Registrants.userkey, Registrants.firstname, Registrants.lastname FROM employee_timesheet, Registrants WHERE employee_timesheet.userkey = Registrants.userkey AND work_type = %s ORDER BY `date` DESC", GetSQLValueString($colname3_rsTimeSheetType, "text"));
+$rsTimeSheetType = mysql_query($query_rsTimeSheetType, $Assessment) or die(mysql_error());
+$row_rsTimeSheetType = mysql_fetch_assoc($rsTimeSheetType);
+$totalRows_rsTimeSheetType = mysql_num_rows($rsTimeSheetType);
+
+//all
+
+$colname1_rsTimeSheetAll = "-1";
+if (isset($_POST['Lastname'])) {
+  $colname1_rsTimeSheetAll = (get_magic_quotes_gpc()) ? $_POST['Lastname'] : addslashes($_POST['Lastname']);
+}
+$colname2_rsTimeSheetAll = "-1";
+if (isset($_POST['Project'])) {
+  $colname2_rsTimeSheetAll = (get_magic_quotes_gpc()) ? $_POST['Project'] : addslashes($_POST['Project']);
+}
+$colname3_rsTimeSheetAll = "-1";
+if (isset($_POST['WorkType'])) {
+  $colname3_rsTimeSheetAll = (get_magic_quotes_gpc()) ? $_POST['WorkType'] : addslashes($_POST['WorkType']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTimeSheetAll = sprintf("SELECT employee_timesheet.timesheetkey, employee_timesheet.userkey, employee_timesheet.`date`, sum(employee_timesheet.work_hours) AS total_time, employee_timesheet.work_hours, employee_timesheet.project, employee_timesheet.work_type, Registrants.userkey, Registrants.firstname, Registrants.lastname FROM employee_timesheet, Registrants WHERE employee_timesheet.userkey = Registrants.userkey AND (lastname = %s AND project = %s AND work_type = %s) ORDER BY `date` DESC", GetSQLValueString($colname1_rsTimeSheetAll, "text"), GetSQLValueString($colname2_rsTimeSheetAll, "text"), GetSQLValueString($colname3_rsTimeSheetAll, "text"));
+$rsTimeSheetAll = mysql_query($query_rsTimeSheetAll, $Assessment) or die(mysql_error());
+$row_rsTimeSheetAll = mysql_fetch_assoc($rsTimeSheetAll);
+$totalRows_rsTimeSheetAll = mysql_num_rows($rsTimeSheetAll);
+
+//lastname project
+
+$colname1_rsTimeSheetN_P = "-1";
+if (isset($_POST['Lastname'])) {
+  $colname1_rsTimeSheetN_P = (get_magic_quotes_gpc()) ? $_POST['Lastname'] : addslashes($_POST['Lastname']);
+}
+$colname2_rsTimeSheetN_P = "-1";
+if (isset($_POST['Project'])) {
+  $colname2_rsTimeSheetN_P = (get_magic_quotes_gpc()) ? $_POST['Project'] : addslashes($_POST['Project']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTimeSheetN_P = sprintf("SELECT employee_timesheet.timesheetkey, employee_timesheet.userkey, employee_timesheet.`date`, sum(employee_timesheet.work_hours) AS total_time, employee_timesheet.work_hours, employee_timesheet.project, employee_timesheet.work_type, Registrants.userkey, Registrants.firstname, Registrants.lastname FROM employee_timesheet, Registrants WHERE employee_timesheet.userkey = Registrants.userkey AND (lastname = %s AND project = %s) ORDER BY `date` DESC", GetSQLValueString($colname1_rsTimeSheetN_P, "text"), GetSQLValueString($colname2_rsTimeSheetN_P, "text"));
+$rsTimeSheetN_P = mysql_query($query_rsTimeSheetN_P, $Assessment) or die(mysql_error());
+$row_rsTimeSheetN_P = mysql_fetch_assoc($rsTimeSheetN_P);
+$totalRows_rsTimeSheetN_P = mysql_num_rows($rsTimeSheetN_P);
+
+//lastname worktype
+
+$colname1_rsTimeSheetN_W = "-1";
+if (isset($_POST['Lastname'])) {
+  $colname1_rsTimeSheetN_W = (get_magic_quotes_gpc()) ? $_POST['Lastname'] : addslashes($_POST['Lastname']);
+}
+$colname3_rsTimeSheetN_W = "-1";
+if (isset($_POST['WorkType'])) {
+  $colname3_rsTimeSheetN_W = (get_magic_quotes_gpc()) ? $_POST['WorkType'] : addslashes($_POST['WorkType']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTimeSheetN_W = sprintf("SELECT employee_timesheet.timesheetkey, employee_timesheet.userkey, employee_timesheet.`date`, sum(employee_timesheet.work_hours) AS total_time, employee_timesheet.work_hours, employee_timesheet.project, employee_timesheet.work_type, Registrants.userkey, Registrants.firstname, Registrants.lastname FROM employee_timesheet, Registrants WHERE employee_timesheet.userkey = Registrants.userkey AND (lastname = %s AND work_type = %s) ORDER BY `date` DESC", GetSQLValueString($colname1_rsTimeSheetN_W, "text"), GetSQLValueString($colname3_rsTimeSheetN_W, "text"));
+$rsTimeSheetN_W = mysql_query($query_rsTimeSheetN_W, $Assessment) or die(mysql_error());
+$row_rsTimeSheetN_W = mysql_fetch_assoc($rsTimeSheetN_W);
+$totalRows_rsTimeSheetN_W = mysql_num_rows($rsTimeSheetN_W);
+
+
+//project  worktype
+
+$colname2_rsTimeSheetP_W = "-1";
+if (isset($_POST['Project'])) {
+  $colname2_rsTimeSheetP_W = (get_magic_quotes_gpc()) ? $_POST['Project'] : addslashes($_POST['Project']);
+}
+$colname3_rsTimeSheetP_W = "-1";
+if (isset($_POST['WorkType'])) {
+  $colname3_rsTimeSheetP_W = (get_magic_quotes_gpc()) ? $_POST['WorkType'] : addslashes($_POST['WorkType']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTimeSheetP_W = sprintf("SELECT employee_timesheet.timesheetkey, employee_timesheet.userkey, employee_timesheet.`date`, sum(employee_timesheet.work_hours) AS total_time, employee_timesheet.work_hours, employee_timesheet.project, employee_timesheet.work_type, Registrants.userkey, Registrants.firstname, Registrants.lastname FROM employee_timesheet, Registrants WHERE employee_timesheet.userkey = Registrants.userkey AND (project = %s AND work_type = %s) ORDER BY `date` DESC", GetSQLValueString($colname2_rsTimeSheetP_W, "text"), GetSQLValueString($colname3_rsTimeSheetP_W, "text"));
+$rsTimeSheetP_W = mysql_query($query_rsTimeSheetP_W, $Assessment) or die(mysql_error());
+$row_rsTimeSheetP_W = mysql_fetch_assoc($rsTimeSheetP_W);
+$totalRows_rsTimeSheetP_W = mysql_num_rows($rsTimeSheetP_W);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTypes = "SELECT * FROM employee_timesheet_types ORDER BY timesheet_work_types ASC";
+$rsTypes = mysql_query($query_rsTypes, $Assessment) or die(mysql_error());
+$row_rsTypes = mysql_fetch_assoc($rsTypes);
+$totalRows_rsTypes = mysql_num_rows($rsTypes);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProjects = "SELECT * FROM employee_timesheet_projects ORDER BY timesheet_projects ASC";
+$rsProjects = mysql_query($query_rsProjects, $Assessment) or die(mysql_error());
+$row_rsProjects = mysql_fetch_assoc($rsProjects);
+$totalRows_rsProjects = mysql_num_rows($rsProjects);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTimeSheetDownload = "SELECT employee_timesheet.timesheetkey, employee_timesheet.userkey, employee_timesheet.coded_number, employee_timesheet.`date`, employee_timesheet.work_hours, employee_timesheet.project, employee_timesheet.work_type, Registrants.firstname, Registrants.lastname FROM employee_timesheet, Registrants WHERE employee_timesheet.userkey = Registrants.userkey ORDER BY `date` DESC";
+setQueryBuilderSource($query_rsTimeSheetDownload,$WADbSearch2,false);
+setQueryBuilderSource($query_rsTimeSheetDownload,$WADbSearch1,false);
+$rsTimeSheetDownload = mysql_query($query_rsTimeSheetDownload, $Assessment) or die(mysql_error());
+$row_rsTimeSheetDownload = mysql_fetch_assoc($rsTimeSheetDownload);
+$totalRows_rsTimeSheetDownload = mysql_num_rows($rsTimeSheetDownload);
+
+
+//Export to Excel Server Behavior
+if (isset($_POST['download'])&&($_POST['download']=="download")){
+	$delim=",";
+	$delim_replace=";";
+	if($delim==""){
+		$lang=(strpos($_SERVER['HTTP_ACCEPT_LANGUAGE'],",")===false)?$_SERVER['HTTP_ACCEPT_LANGUAGE']:substr($_SERVER['HTTP_ACCEPT_LANGUAGE'],0,strpos($_SERVER['HTTP_ACCEPT_LANGUAGE'],","));
+		$semi_array=array("af","zh-hk","zh-mo","zh-cn","zh-sg","zh-tw","fr-ch","de-li","de-ch","it-ch","ja","ko","es-do","es-sv","es-gt","es-hn","es-mx","es-ni","es-pa","es-pe","es-pr","sw");
+		$delim=(in_array($lang,$semi_array) || substr_count($lang,"en")>0)?",":";";
+	}
+	$output="";
+	$include_hdr="1";
+	if($include_hdr=="1"){
+		$totalColumns_rsTimeSheetDownload=mysql_num_fields($rsTimeSheetDownload);
+		for ($x=0; $x<$totalColumns_rsTimeSheetDownload; $x++) {
+			if($x==$totalColumns_rsTimeSheetDownload-1){$comma="";}else{$comma=$delim;}
+			$output = $output.(str_replace("_", " ",mysql_field_name($rsTimeSheetDownload, $x))).$comma;
+		}
+		$output = $output."\r\n";
+	}
+
+	do {  
+				$fixcomma=array();
+    		foreach ($row_rsTimeSheetDownload as $r)
+				{	array_push($fixcomma,str_replace($delim,$delim_replace,$r)); }
+				$line = join($delim, $fixcomma);
+    		$line=str_replace("\r\n", " ",$line);
+    		$line=str_replace("\r", " ",$line);
+    		$line=str_replace("\n", " ",$line);
+    		$line = "$line\n";
+    		$output=$output.$line;
+	} while ($row_rsTimeSheetDownload = mysql_fetch_assoc($rsTimeSheetDownload));
+	$export_encoding="utf-8";
+	$export_encoding=($export_encoding=="")?"":("; charset=".$export_encoding);
+	header("Content-Type: application/xls".$export_encoding);
+	header("Pragma: public");
+	header("Content-Disposition: attachment; filename=time_sheet.csv");
+	header("Content-Type: application/force-download");
+	header("Cache-Control: post-check=0, pre-check=0", false);
+	echo $output;
+	die();
+}
+
+
+
+
+
+
+$queryString_rsTimeSheet = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsTimeSheet") == false && 
+        stristr($param, "totalRows_rsTimeSheet") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsTimeSheet = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsTimeSheet = sprintf("&totalRows_rsTimeSheet=%d%s", $totalRows_rsTimeSheet, $queryString_rsTimeSheet);
+
+
+
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatescore1.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Time sheet history</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<link href="../WA_DataAssist/styles/Refined_Pacifica.css" rel="stylesheet" type="text/css" />
+<link href="../WA_DataAssist/styles/Arial.css" rel="stylesheet" type="text/css" />
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #929292;
+	background-image: url(/images/skin/background.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 1300px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #EAEAEA;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/headerWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footerWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.logintext {
+	line-height: 20px;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="/" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="../" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>TIME SHEET HISTORY</h1>
+    <p><a href="employee_timesheet_Insert.php">enter record</a></p>
+    <table>
+      <tr>
+        <td><form action="employee_timesheet_Results_admin.php" method="post" name="form1" id="form1">
+          <table width="450" border="0" cellpadding="2" cellspacing="0">
+            <tr>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+            </tr>
+            <tr>
+              <td><label for="Start">Date range</label></td>
+              <td><span id="sprytextfield1">
+                <input name="Start" type="text" value="<?php echo (isset($_POST['Start']) ? $_POST['Start'] : ""); ?>" size="11" />
+                <span class="textfieldInvalidFormatMsg">incomplete date</span></span>&nbsp;
+                <label for="End">To:</label>
+  &nbsp;<span id="sprytextfield2">
+  <input name="End" type="text" value="<?php echo (isset($_POST['End']) ? $_POST['End'] : ""); ?>" size="11" />
+  <span class="textfieldInvalidFormatMsg">incomplete date</span></span></td>
+            </tr>
+            <tr>
+              <td><label for="Project">Projects</label></td>
+              <td><select name="Project" class="pulldownwidth200">
+                <option value="">-select one-</option>
+                <?php
+do {  
+?>
+                <option value="<?php echo $row_rsProjects['timesheet_projects']?>" <?php if (!(strcmp($row_rsProjects['timesheet_projects'], (isset($_POST['Project']) ? $_POST['Project'] : "-1") ))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsProjects['timesheet_projects']?></option>
+                <?php
+} while ($row_rsProjects = mysql_fetch_assoc($rsProjects));
+  $rows = mysql_num_rows($rsProjects);
+  if($rows > 0) {
+      mysql_data_seek($rsProjects, 0);
+	  $row_rsProjects = mysql_fetch_assoc($rsProjects);
+  }
+?>
+              </select></td>
+            </tr>
+            <tr>
+              <td><label for="WorkType2">Work types</label></td>
+              <td><select name="WorkType" class="pulldownwidth200">
+                <option value="">-select one-</option>
+                <?php
+do {  
+?>
+                <option value="<?php echo $row_rsTypes['timesheet_work_types']?>" <?php if (!(strcmp($row_rsTypes['timesheet_work_types'], (isset($_POST['WorkType']) ? $_POST['WorkType'] : "-1") ))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsTypes['timesheet_work_types']?></option>
+                <?php
+} while ($row_rsTypes = mysql_fetch_assoc($rsTypes));
+  $rows = mysql_num_rows($rsTypes);
+  if($rows > 0) {
+      mysql_data_seek($rsTypes, 0);
+	  $row_rsTypes = mysql_fetch_assoc($rsTypes);
+  }
+?>
+                </select>
+                <input type="hidden" name="WADbSearch1" value="Submit" /></td>
+            </tr>
+            <tr>
+              <td align="right"><label for="Firstname2">First name</label></td>
+              <td><input type="text" name="Firstname" value="<?php echo (isset($_POST['Firstname']) ? $_POST['Firstname'] : ""); ?>" /></td>
+            </tr>
+            <tr>
+              <td align="right"><label for="Lastname2">Last name</label></td>
+              <td><input type="text" name="Lastname" value="<?php echo (isset($_POST['Lastname']) ? $_POST['Lastname'] : ""); ?>" /></td>
+            </tr>
+          </table>
+          <input type="submit" name="WADbSearch2" value="SEARCH" />
+          &nbsp;
+        </form>
+          <form id="form2" name="form2" method="post" action="">
+            <input type="submit" name="download" id="download" value="DOWNLOAD" />
+			<input name="download" type="hidden" value="download" action="" target="" />
+        </form></td>
+        <td>
+        <table>
+          <tr class="tablehead">
+            <td>Search</td>
+            <td>Hours</td>
+          </tr>
+          <tr>
+            <td>All entries</td>
+            <td width="60"><div align="right">&nbsp;&nbsp;&nbsp;&nbsp;<?php echo $row_rsTimeSheetTotal['total_time']; ?>&nbsp;&nbsp;&nbsp;&nbsp;</div></td>
+            </tr>
+          
+          <tr>
+          	<td>
+            </td>
+            <td>
+            </td>
+          </tr>
+          
+          <tr>
+            <td>Name = &quot;<?php echo $row_rsTimeSheetLast['firstname']; ?> <?php echo $row_rsTimeSheetLast['lastname']; ?>&quot;</td>
+            <td width="60"><div align="right"><?php echo $row_rsTimeSheetLast['total_time']; ?>&nbsp;&nbsp;&nbsp;&nbsp;</div></td>
+          </tr>
+          <tr>
+            <td>Project = &quot;<?php echo $row_rsTimeSheetProject['project']; ?>&quot;</td>
+            <td width="60"><div align="right"><?php echo $row_rsTimeSheetProject['total_time']; ?>&nbsp;&nbsp;&nbsp;&nbsp;</div></td>
+          </tr>
+          <tr>
+            <td>Work type = &quot;<?php echo $row_rsTimeSheetType['work_type']; ?>&quot;</td>
+            <td width="60"><div align="right"><?php echo $row_rsTimeSheetType['total_time']; ?>&nbsp;&nbsp;&nbsp;&nbsp;</div></td>
+          </tr>
+          <tr>
+            <td>Last name = &quot;<?php echo $row_rsTimeSheetAll['lastname']; ?>&quot;, project =  &quot;<?php echo $row_rsTimeSheetAll['project']; ?>&quot;, and work type = &quot;<?php echo $row_rsTimeSheetAll['work_type']; ?>&quot;</td>
+            <td width="60"><div align="right">&nbsp;&nbsp;&nbsp;&nbsp;<?php echo $row_rsTimeSheetAll['total_time']; ?>&nbsp;&nbsp;&nbsp;&nbsp;</div></td>
+          </tr>
+          <tr>
+            <td>Last name = &quot;<?php echo $row_rsTimeSheetN_P['lastname']; ?>&quot; and project = &quot;<?php echo $row_rsTimeSheetN_P['project']; ?>&quot;</td>
+            <td width="60"><div align="right"><?php echo $row_rsTimeSheetN_P['total_time']; ?>&nbsp;&nbsp;&nbsp;&nbsp;</div></td>
+          </tr>
+          <tr>
+            <td>Last name = &quot;<?php echo $row_rsTimeSheetN_W['lastname']; ?>&quot; and work type = &quot;<?php echo $row_rsTimeSheetN_W['work_type']; ?>&quot;</td>
+            <td width="60"><div align="right"><?php echo $row_rsTimeSheetN_W['total_time']; ?>&nbsp;&nbsp;&nbsp;&nbsp;</div></td>
+          </tr>
+          <tr>
+            <td>Project = &quot;<?php echo $row_rsTimeSheetP_W['project']; ?>&quot; and work type = &quot;<?php echo $row_rsTimeSheetP_W['work_type']; ?>&quot;</td>
+            <td><div align="right"><?php echo $row_rsTimeSheetP_W['total_time']; ?>&nbsp;&nbsp;&nbsp;&nbsp;</div></td>
+          </tr>
+          <tr>
+            <td>Name = &quot;<?php echo $row_rsTimeSheetLast['firstname']; ?> <?php echo $row_rsTimeSheetLast['lastname']; ?>&quot; and start time =&quot;<?php echo $row_rsTimeSheetStart['Start']; ?>&quot; and end time = &quot;<?php echo $row_rsTimeSheetEnd['work_type']; ?>&quot;</td>
+            <td width="60"><div align="right"><?php echo $row_rsTimeSheetWorkerTime['total_time']; ?>&nbsp;&nbsp;&nbsp;&nbsp;</div></td>
+          </tr>
+        </table>
+        </td>
+      </tr>
+    </table>
+    <p>From <?php echo ($startRow_rsTimeSheet + 1) ?>&nbsp; to <?php echo min($startRow_rsTimeSheet + $maxRows_rsTimeSheet, $totalRows_rsTimeSheet) ?> &nbsp;of <?php echo $totalRows_rsTimeSheet ?> &nbsp;&nbsp;&nbsp;<a href="<?php printf("%s?pageNum_rsTimeSheet=%d%s", $currentPage, 0, $queryString_rsTimeSheet); ?>">First</a> | <a href="<?php printf("%s?pageNum_rsTimeSheet=%d%s", $currentPage, max(0, $pageNum_rsTimeSheet - 1), $queryString_rsTimeSheet); ?>">Previous</a> | <a href="<?php printf("%s?pageNum_rsTimeSheet=%d%s", $currentPage, min($totalPages_rsTimeSheet, $pageNum_rsTimeSheet + 1), $queryString_rsTimeSheet); ?>">Next</a> | <a href="<?php printf("%s?pageNum_rsTimeSheet=%d%s", $currentPage, $totalPages_rsTimeSheet, $queryString_rsTimeSheet); ?>">Last</a></p>
+<table width="900">
+      <tr class="tablehead">
+        <td>Record no</td>
+        <td>Worker</td>
+        <td>Date</td>
+        <td>Project</td>
+        <td>Work type</td>
+        <td>Hours</td>
+        <td>Interview No.</td>
+        <td>Update</td>
+      </tr>
+      <?php do { ?>
+        <tr>
+          <td><?php echo $row_rsTimeSheet['timesheetkey']; ?></td>
+          <td><?php echo $row_rsTimeSheet['firstname']; ?> <?php echo $row_rsTimeSheet['lastname']; ?></td>
+          <td><?php echo $row_rsTimeSheet['date']; ?></td>
+          <td><?php echo $row_rsTimeSheet['project']; ?></td>
+          <td><?php echo $row_rsTimeSheet['work_type']; ?></td>
+          <td><div align="center"><?php echo $row_rsTimeSheet['work_hours']; ?></div></td>
+          <td><div align="center"><?php echo $row_rsTimeSheet['coded_number']; ?></div></td>
+          <td><div align="center"><a href="employee_timesheet_Update_admin.php?timesheetkey=<?php echo $row_rsTimeSheet['timesheetkey']; ?>">update</a></div></td>
+        </tr>
+        <?php } while ($row_rsTimeSheet = mysql_fetch_assoc($rsTimeSheet)); ?>
+</table>
+
+<p>&nbsp;</p>
+    <script type="text/javascript">
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "date", {format:"yyyy-mm-dd", useCharacterMasking:true, isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "date", {isRequired:false, format:"yyyy-mm-dd", useCharacterMasking:true, validateOn:["blur", "change"]});
+    </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsTimeSheet);
+
+mysql_free_result($rsTimeSheetLast);
+
+mysql_free_result($rsTimeSheetTotal);
+
+mysql_free_result($rsTimeSheetProject);
+
+mysql_free_result($rsTimeSheetType);
+
+mysql_free_result($rsTimeSheetAll);
+
+mysql_free_result($rsTimeSheetP_W);
+
+mysql_free_result($rsTimeSheetN_W);
+
+mysql_free_result($rsTimeSheetN_P);
+
+mysql_free_result($rsTypes);
+
+mysql_free_result($rsProjects);
+
+mysql_free_result($rsTimeSheetDownload);
+?>

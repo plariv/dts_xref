@@ -1,0 +1,124 @@
+<?php 
+
+$lakey = $_GET['lakey'];
+$coder_no = (isset($_GET['coder']) ? $_GET['coder'] : 0);
+$scorer_no = (isset($_GET['scorer_no']) ? $_GET['scorer_no'] : 0);
+
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_base = str_replace("_JOURNAL", "", $instrument_id);
+$qstring = "lakey=".$lakey;
+if (isset($_GET['lacodeskey'])) { $qstring .= "&lacodeskey=".$_GET['lacodeskey']; } 
+if ($coder_no > 0) { $qstring .= "&coder=".$coder_no; }
+if ($scorer_no > 0) { $qstring .= "&scorer_no=".$scorer_no; }
+$cstring = ""; if ($coder_no == 0) { $cstring = "&coder=1"; }
+
+// coding modules - define which instruments they should show up for.
+$pages = array();
+$pages['scoring_select'] = " ALL SCORER ";
+$pages['coding_select'] = " ALL CODER ";
+$pages['score'] = " ALL SCORER ";
+$pages['argumentation'] = " LDMA LLRA LERA LRJA LMBE SMA SMJ LDPA ";
+$pages['perspectives'] = " LDMA ";
+$pages['dm_quality'] = " LDMA ";
+$pages['strengths'] = " LDMA SCORED ";
+$pages['strengths_lsua'] = " LSUA ";
+$pages['strengths_written'] = " LMBE ";
+$pages['rubrics'] = " LLRA LERA LRJA LIMA SMA SMJ LDPA ";
+$pages['survey'] = " LERA SMJ ";
+$pages['confidence'] = " LDMA LLRA LERA LRJA LSUA LIMA SMA SMJ LDPA ";
+
+// avoid crashing if these links are included twice on the same page
+if (!function_exists("checkShowPage")) {
+	function checkShowPage($thisPage) {
+		global $pages, $instrument_id, $instrument_id_base, $_GET;
+		$tabQualifies = FALSE;
+		$requirements = $pages[$thisPage];	// look up the requirements for this report module
+		// check if the current instrument_id is in the whitelist, or if any instrument_id counts
+		if (strpos($requirements, $instrument_id_base) OR strpos($requirements, "ALL")) 
+			{ $tabQualifies = TRUE; }
+		else { return FALSE; }
+		// check if the tab requires a manager status to show
+		if (strpos($requirements, "SCORER")) {
+			if (isset($_GET['scorer_no'])) { $tabQualifies = TRUE; }
+			else { return FALSE; }
+		}
+		if (strpos($requirements, "CODER")) {
+			if (isset($_GET['coder'])) { $tabQualifies = TRUE; }
+			else { return FALSE; }
+		}
+		if (strpos($requirements, "SCORED")) {
+			if (!strpos($instrument_id, "_JOURNAL")) { $tabQualifies = TRUE; }
+			else { return FALSE; }
+		}
+		return $tabQualifies;
+	}
+}
+
+?><?php 
+if (checkShowPage("coding_select")) { ?>
+	<a href="../la_coding/coding_performance_select.php">select performance</a> | <?php }
+	// else { echo "no code select "; }
+if (checkShowPage("scoring_select")) { ?>
+	<a href="../la_scoring/scoring_performance_select.php">select performance</a> | <?php }
+if (checkShowPage("score")) { ?>
+	<a href="../la_scoring/score.php?<?php echo $qstring; ?>">score</a> | <?php } 
+	
+if (checkShowPage('survey')) { 
+	$parts = array('LERA' => 1, 'SMJ' => 1); 
+	for ($i = 1; $i <= $parts[$instrument_id_base]; $i ++) { ?>
+		<a href="../la_coding/code_survey.php?<?php echo $qstring; ?>&part=<?php echo $i; ?>">
+			coder survey<?php if ($parts[$instrument_id_base] > 1) { ?> p<?php echo $i; } ?></a> | <?php
+	}
+} 
+if (checkShowPage('rubrics')) { 
+	$labels = array(	// 0		1														2					3
+			"LLRA" => array("", "qualities", 								"themes", "scales", "", "", ""),
+			"LRJA" => array("", "evidence, inquiry, truth", "", 			"scales", "", "", ""),
+			"LERA" => array("", "ethics themes", 						"", 			"scales", "", "", ""),
+			"LIMA" => array("", "quadrants", 								"levels and lines", "", "", ""),
+			"LDPA" => array("", "DP themes", 								"", 			"scales", "", "", ""),
+			"LDPA" => array("", "DP themes", 								"", 			"scales", "", "", "edit recommendations"),
+			"SMA"  => array("", "mindfulness themes", 			"", 			"", 			"", "", ""),
+			"SMJ"  => array("", "comments", 								"", 			"", 			"", "", ""));
+	$r_queryString = "lakey=".$lakey;
+	if ($coder_no > 0) { $r_queryString .= "&coder=".$coder_no; }
+	if ($scorer_no > 0) { $r_queryString .= "&scorer_no=".$scorer_no; }
+	for ($i = 1; $i <= 6; $i ++) {
+		if ($labels[$instrument_id_base][$i] <> "") {
+			?><a href="../la_coding/code_rubrics.php?mode=<?php echo $i."&".$r_queryString; ?>">
+				<?php echo $labels[$instrument_id_base][$i]; ?></a> | <?php
+		}
+	}
+}
+
+if (checkShowPage("perspectives")) { ?> 
+	<a href="../la_coding/code_ldma_perspective1.php?<?php echo $qstring; ?>">p 1</a> | 
+	<a href="../la_coding/code_ldma_perspective2.php?<?php echo $qstring; ?>">p 2 </a> | 
+	<!--<a href="../la_coding/code_ldma_perspective3.php?<?php echo $qstring; ?>">p 3 </a> | -->
+	<a href="../la_coding/code_ldma_perspective4.php?<?php echo $qstring; ?>">p 3 </a> | <?php 
+} 
+if (checkShowPage('dm_quality')) { ?> 
+	<a href="../la_coding/code_ldma_quality.php?<?php echo $qstring; ?>">dm quality</a> | <?php 
+} 
+if (checkShowPage('strengths')) { ?> 
+	<a href="../la_coding/code_strengths.php?<?php echo $qstring; ?>">strengths</a> | <?php } 
+if (checkShowPage("strengths_written")) { ?> 
+	<a href="../la_coding/code_strengths_write.php?<?php echo $qstring; ?>">strengths</a> | <?php } 
+
+if (checkShowPage('strengths_lsua')) { ?> 
+	<a href="../la_coding/code_lsua_strengths.php?mode=current_strengths&<?php 
+		echo $qstring; ?>">current strengths</a> | 
+	<a href="../la_coding/code_lsua_strengths.php?mode=potential_strengths&<?php 
+		echo $qstring; ?>">potential strengths</a> | 
+	<a href="../la_coding/code_lsua_strengths.php?mode=recommendations&<?php 
+		echo $qstring; ?>">recommendations</a> | <?php 
+} 
+if (checkShowPage("argumentation")) { ?> 
+	<a href="../la_coding/code_argumentation.php?<?php echo $qstring; ?>">argumentation</a> | 
+	<?php 
+} 
+if (checkShowPage('confidence')) { ?> 
+	<a href="../la_coding/coding_confidence.php?<?php echo $qstring; ?>">confidence</a> | <?php 
+} ?>
+<a href="../la_reports/report_individual.php?mode=checkreport&<?php echo $qstring; ?>">report</a>
+  

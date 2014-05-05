@@ -1,0 +1,446 @@
+<?php 
+function tfm_cleanOrderBy($theValue, $defaultSort) {
+	if (preg_match("/^[\w,]{1,50}\s+(asc|desc)\s*$/i",$theValue, $matches)) {
+		return $matches[0];
+	}
+	return $defaultSort;
+}
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?><?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as researcher")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+?>
+<?php
+$tfm_orderby =(!isset($_GET["tfm_orderby"]))?"scorerusername2":$_GET["tfm_orderby"];
+$tfm_order =(!isset($_GET["tfm_order"]))?"ASC":$_GET["tfm_order"];
+$sql_orderby = $tfm_orderby." ".$tfm_order;
+$sql_orderby = tfm_cleanOrderBy($sql_orderby, "scorerusername2");
+?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+//TOMLR Special List Recordset
+$maxRows_rsEnergy = 20;
+$pageNum_rsEnergy = 0;
+if (isset($_GET['pageNum_rsEnergy'])) {
+  $pageNum_rsEnergy = $_GET['pageNum_rsEnergy'];
+}
+$startRow_rsEnergy = $pageNum_rsEnergy * $maxRows_rsEnergy;
+
+// Defining List Recordset variable
+$sqlorderby_rsEnergy = "scorerusername2";
+if (isset($sql_orderby)) {
+  $sqlorderby_rsEnergy = $sql_orderby;
+}
+mysql_select_db($database_Assessment, $Assessment);
+
+$query_rsEnergy = "SELECT Energyscores.energykey, Energyscores.`date`, Energyscores_trainees.scorerusername2 FROM Energyscores LEFT JOIN Energyscores_trainees ON Energyscores.energykey = Energyscores_trainees.energykey ORDER BY {$sqlorderby_rsEnergy}";
+$query_limit_rsEnergy = sprintf("%s LIMIT %d, %d", $query_rsEnergy, $startRow_rsEnergy, $maxRows_rsEnergy);
+$rsEnergy = mysql_query($query_limit_rsEnergy, $Assessment) or die(mysql_error());
+$row_rsEnergy = mysql_fetch_assoc($rsEnergy);
+
+if (isset($_GET['totalRows_rsEnergy'])) {
+  $totalRows_rsEnergy = $_GET['totalRows_rsEnergy'];
+} else {
+  $all_rsEnergy = mysql_query($query_rsEnergy);
+  $totalRows_rsEnergy = mysql_num_rows($all_rsEnergy);
+}
+$totalPages_rsEnergy = ceil($totalRows_rsEnergy/$maxRows_rsEnergy)-1;
+//End TOMLR Special List Recordset
+
+$queryString_rsEnergy = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsEnergy") == false && 
+        stristr($param, "totalRows_rsEnergy") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsEnergy = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsEnergy = sprintf("&totalRows_rsEnergy=%d%s", $totalRows_rsEnergy, $queryString_rsEnergy);
+?>
+<?php
+//sort column headers for rsEnergy
+$tfm_saveParams = explode(",","");
+$tfm_keepParams = "";
+if($tfm_order == "ASC") {
+	$tfm_order = "DESC";
+}else{
+	$tfm_order = "ASC";
+};
+while (list($key,$val) = each($tfm_saveParams)) {
+	if(isset($_GET[$val]))$tfm_keepParams .= ($val)."=".urlencode($_GET[$val])."&";	
+	if(isset($_POST[$val]))$tfm_keepParams .= ($val)."=".urlencode($_POST[$val])."&";
+}
+$tfm_orderbyURL = $_SERVER["PHP_SELF"]."?".$tfm_keepParams."tfm_order=".$tfm_order."&tfm_orderby=";
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateadmin1.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Choose Energy teaser to score</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEndEditable -->
+<link href="../css/styles1.css" rel="stylesheet" type="text/css" />
+
+<script src="../SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+body {
+	background-image: url();
+	background-repeat: repeat;
+	background-color: #EDEEE9;
+	color: #333028;
+}
+.style11 {
+	font-size: 10px;
+	color: #FFFFFF;
+	font-weight: bold;
+}
+#apDiv1 {
+	position:absolute;
+	left:0px;
+	top:-1px;
+	width:1000;
+	height:71px;
+	z-index:15;
+}
+#apDiv2 {
+	position:absolute;
+	left:43px;
+	top:122px;
+	width:780px;
+	height:17px;
+	z-index:4;
+}
+#apDiv3 {
+	position:absolute;
+	left:168px;
+	top:295px;
+	width:539px;
+	height:17px;
+	z-index:8;
+}
+#apDiv4 {
+	position:absolute;
+	left:704px;
+	top:122px;
+	width:42px;
+	height:17px;
+	z-index:3;
+}
+#apDiv5 {
+	position:absolute;
+	left:0px;
+	top:70px;
+	width:1000px;
+	z-index:5;
+	background-color: #F8FBFB;
+	height: 1038px;
+}
+#apDiv6 {
+	position:absolute;
+	left:275px;
+	top:124px;
+	width:629px;
+	z-index:6;
+}
+#apDiv7 {
+	position:absolute;
+	left:127px;
+	top:941px;
+	width:625px;
+	height:15px;
+	z-index:7;
+}
+#apDiv8 {
+	position:absolute;
+	left:95px;
+	top:203px;
+	width:156px;
+	height:208px;
+	z-index:8;
+}
+#apDiv9 {
+	position:absolute;
+	left:95px;
+	top:596px;
+	width:156px;
+	z-index:9;
+}
+#apDiv10 {
+	position:absolute;
+	left:94px;
+	top:68px;
+	width:157px;
+	height:119px;
+	z-index:10;
+}
+#apDiv11 {
+	position:absolute;
+	left:84px;
+	top:1097px;
+	width:145px;
+	height:45px;
+	z-index:11;
+}
+#apDiv12 {
+	position:absolute;
+	left:83px;
+	top:869px;
+	width:146px;
+	height:54px;
+	z-index:12;
+}
+#apDiv13 {
+	position:absolute;
+	left:82px;
+	top:806px;
+	width:147px;
+	height:3px;
+	z-index:13;
+	background-color: #627ECF;
+}
+#apDiv14 {
+	position:absolute;
+	left:95px;
+	top:478px;
+	width:156px;
+	height:39px;
+	z-index:12;
+}
+#apDiv15 {
+	position:absolute;
+	left:93px;
+	top:1045px;
+	width:127px;
+	height:39px;
+	z-index:13;
+}
+#apDiv16 {
+	position:absolute;
+	left:4px;
+	top:3px;
+	width:30px;
+	height:28px;
+	z-index:14;
+	border-top-width: 0px;
+	border-right-width: 0px;
+	border-bottom-width: 0px;
+	border-left-width: 0px;
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+}
+#apDiv17 {
+	position:absolute;
+	left:670px;
+	top:64px;
+	width:229px;
+	height:23px;
+	z-index:16;
+	padding-top: 4px;
+}
+#apDiv18 {
+	position:absolute;
+	left:696px;
+	top:82px;
+	width:202px;
+	height:25px;
+	z-index:17;
+}
+#apDiv19 {
+	position:absolute;
+	left:94px;
+	top:68px;
+	width:157px;
+	height:1832px;
+	z-index:5;
+	background-color: #E2E2E2;
+}
+-->
+</style>
+<link href="../SpryAssets/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+<div id="apDiv1">
+  <img src="../images/dtsskinold/DTSheader1.gif" alt="DTS masthead" width="1000" height="69" align="left" />
+</div>
+<div id="apDiv6"><!-- InstanceBeginEditable name="body" -->
+  <td valign="top"><h1><img src="../images/dtsskinold/EnergyLogo.jpg" width="103" height="43" alt="Energy" /></h1>
+    <h1>TRAINEE/CO-RATER: CHOOSE ENERGY TEASER TO SCORE</h1>
+    <p><a href="t-reviewenergy.php">review Energy Teaser</a> | <a href="t-choosetoscore.php">select an assessment to score or review<br />
+      <br />
+    </a>    </p>
+    <p class="copyright">&nbsp;
+      <?php //$TFM_navLinks
+if ($pageNum_rsEnergy > 0) {
+  printf('<a href="'."%s?pageNum_rsEnergy=%d%s", $currentPage, 0, $queryString_rsEnergy.'">First</a>');
+}else{
+  echo "First";
+}
+echo " | ";
+if ($pageNum_rsEnergy > 0) {
+  printf('<a href="'."%s?pageNum_rsEnergy=%d%s", $currentPage, max(0, $pageNum_rsEnergy - 1), $queryString_rsEnergy.'">Previous</a>');
+}else{
+  echo "Previous";
+}
+echo " | ";
+if ($pageNum_rsEnergy < $totalPages_rsEnergy) { 
+  printf('<a href="'."%s?pageNum_rsEnergy=%d%s", $currentPage, $pageNum_rsEnergy + 1, $queryString_rsEnergy.'">Next</a>');
+}else{
+  echo "Next";
+}
+echo " | ";
+if ($pageNum_rsEnergy < $totalPages_rsEnergy) { 
+  printf('<a href="'."%s?pageNum_rsEnergy=%d%s", $currentPage, $totalPages_rsEnergy, $queryString_rsEnergy.'">Last</a>');
+}else{
+  echo "Last";
+}
+?>
+    </p>
+    <p class="copyright">records <?php echo ($startRow_rsEnergy + 1) ?> to <?php echo min($startRow_rsEnergy + $maxRows_rsEnergy, $totalRows_rsEnergy) ?> of <?php echo $totalRows_rsEnergy ?></p>
+    <table width="98%" border="0" class="tableindent">
+      <tr class="energybackground">
+        <td class="tablehead3"><a href="<?Php echo ($tfm_orderbyURL); ?>energykey">Energy key</a></td>
+        <td class="tablehead3"><a href="<?Php echo ($tfm_orderbyURL); ?>Date">Date</a></td>
+        <td class="tablehead3"><a href="<?Php echo ($tfm_orderbyURL); ?>scorerusername2">Trainee ID</a></td>
+        <td class="tablehead3">Score</td>
+      </tr>
+      <?php do { ?>
+        <tr>
+          <td><div align="center"><?php echo $row_rsEnergy['energykey']; ?></div></td>
+          <td><div align="center"><?php echo $row_rsEnergy['date']; ?></div></td>
+          <td><div align="center"><?php echo $row_rsEnergy['scorerusername2']; ?></div></td>
+          <td><div align="center"><a href="t-scoreenergy.php?energykey=<?php echo $row_rsEnergy['energykey']; ?>">select</a></div></td>
+        </tr>
+        <?php } while ($row_rsEnergy = mysql_fetch_assoc($rsEnergy)); ?>
+    </table>  
+  <!-- InstanceEndEditable -->
+  <p align="center" class="browsernote">&nbsp;</p>
+  <p align="center" class="browsernote">&nbsp;</p>
+  <p align="center" class="browsernote">
+  </p>
+  <div align="center"></div>
+  <p align="center" class="copyright">&nbsp;</p>
+</div>
+<div id="apDiv8">
+  <h3 align="left">Administration</h3>
+  <ul id="MenuBar3" class="MenuBarVertical">
+    <li><a href="../scoring/chooseassessment.php">SCORING</a></li>
+    <li><a href="t-choosetoscore.php" class="MenuBarItemSubmenu">TRAINING</a>
+      <ul>
+        <li><a href="t-choosetoscore.php">TRAINEES</a></li>
+        <li><a href="tr-choose.php">ANALYSTS</a></li>
+      </ul>
+    </li>
+    <li><a href="../projects/partnerchoices.php">RESEARCH</a></li>
+    <li><a href="../analysis/a.php">ANALYSIS</a></li>
+    <li><a href="../assessments/assessmentsOLD/select_assess.php">ASSESSMENTS</a></li>
+    <li><a href="../admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">ADMIN</a>
+      <ul>
+        <li><a href="../admin/bulkbalanceselect.php">ACCOUNT BALANCE</a></li>
+        <li><a href="../admin/registrations.php">REGISTRANTS</a></li>
+        <li><a href="../admin/emailtoemaillist.php">MAIL TO EMAIL LIST</a></li>
+        <li><a href="../admin/emailtoregistrants.php">MAIL TO REGISTRANTS</a></li>
+        <li><a href="../admin/emailtoresellers.php">MAIL TO RESELLERS</a></li>
+        <li><a href="../admin/emailrecipientdelete1.php">DELETE EMAIL RECIPIENT</a></li>
+      </ul>
+    </li>
+    <li><a href="../graphics/graphics.php">GRAPHICS</a></li>
+  </ul>
+</div>
+<div id="apDiv9"><!-- InstanceBeginEditable name="New" --><!-- InstanceEndEditable -->
+
+  <p class="copyright">&nbsp;</p>
+  <p class="copyright">&nbsp;</p>
+  <p class="copyright">&nbsp;</p>
+  <p class="copyright">&nbsp;</p>
+  <p class="copyright">©2010, Developmental Testing Service, INC. All rights reserved.
+  </p>
+  <p align="center" class="copyright"><a href="../index.php"><img src="../images/dtsskinold/DTSlogo.gif" width="26" height="26" alt="DTS logo" /></a></p>
+<p>&nbsp;</p>
+</div>
+<div id="apDiv10"><!-- InstanceBeginEditable name="Graphic" --><img src="../images/corner/AsterSky2.jpg" width="157" height="120" alt="Aster" /><!-- InstanceEndEditable --></div>
+<div id="apDiv14">
+  <h3>Search DTS</h3>
+  <form action="http://www.google.com/cse" class="indent" id="cse-search-box">
+  <div>
+    <input type="hidden" name="cx" value="013728306127544288581:qryb8cweja4" />
+    <input type="hidden" name="ie" value="UTF-8" />
+    <input type="text" name="q" size="17" />
+    <input type="submit" name="sa" value="Search" />
+  </div>
+</form>
+<script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=cse-search-box&lang=en"></script>
+</div>
+<div id="apDiv17">
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="../security/logIn.php">log in</a>    </li>
+    <li><a href="../index.html">home</a></li>
+    <li><a href="../contactus.php">contact</a>    </li>
+</ul>
+</div>
+<div id="apDiv19"></div>
+<script type="text/javascript">
+<!--
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"../SpryAssets/SpryMenuBarDownHover.gif", imgRight:"../SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar3 = new Spry.Widget.MenuBar("MenuBar3", {imgRight:"../SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsEnergy);
+?>

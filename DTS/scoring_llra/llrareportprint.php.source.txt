@@ -1,0 +1,479 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? "'" . doubleval($theValue) . "'" : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLLRA = "-1";
+if (isset($_GET['llrakey'])) {
+  $colname_rsLLRA = $_GET['llrakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRA = sprintf("SELECT llrakey, `date`, user_name, manlevel, quality1, essay1, quality2, essay2, quality3, essay3, quality4, essay4, essay5, testtime FROM llra WHERE llrakey = %s", GetSQLValueString($colname_rsLLRA, "int"));
+$rsLLRA = mysql_query($query_rsLLRA, $Assessment) or die(mysql_error());
+$row_rsLLRA = mysql_fetch_assoc($rsLLRA);
+$totalRows_rsLLRA = mysql_num_rows($rsLLRA);
+
+$colname_rsManlasart = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsManlasart = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlasart = sprintf("SELECT manlasart.manlasvert, manlasart.manlaspie, manlasart.lasname FROM manlasart WHERE lasname = %s", GetSQLValueString($colname_rsManlasart, "text"));
+$rsManlasart = mysql_query($query_rsManlasart, $Assessment) or die(mysql_error());
+$row_rsManlasart = mysql_fetch_assoc($rsManlasart);
+$totalRows_rsManlasart = mysql_num_rows($rsManlasart);
+
+$colname_rsManlevelart = "-1";
+if (isset($_GET['llrakey'])) {
+  $colname_rsManlevelart = $_GET['llrakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlevelart = sprintf("SELECT manlevelart.manlevelkey, manlevelart.manlevel3graphs, manlevelart.manlevelgraphs, llra.manlevel, llra.llrakey, manlevelart.manlevel3graphstitle, manlevelart.manlevelgraphstitle FROM manlevelart, llra WHERE llra.manlevel=manlevelart.manlevelkey AND llra.llrakey = %s", GetSQLValueString($colname_rsManlevelart, "int"));
+$rsManlevelart = mysql_query($query_rsManlevelart, $Assessment) or die(mysql_error());
+$row_rsManlevelart = mysql_fetch_assoc($rsManlevelart);
+$totalRows_rsManlevelart = mysql_num_rows($rsManlevelart);
+
+$colname_rsLLRAintroman = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLLRAintroman = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAintroman = sprintf("SELECT * FROM llraintroman WHERE lasname = %s", GetSQLValueString($colname_rsLLRAintroman, "text"));
+$rsLLRAintroman = mysql_query($query_rsLLRAintroman, $Assessment) or die(mysql_error());
+$row_rsLLRAintroman = mysql_fetch_assoc($rsLLRAintroman);
+$totalRows_rsLLRAintroman = mysql_num_rows($rsLLRAintroman);
+
+$colname_rsLLRAqualities1 = "-1";
+if (isset($_GET['llrakey'])) {
+  $colname_rsLLRAqualities1 = $_GET['llrakey'];
+}
+$colname2_rsLLRAqualities1 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname2_rsLLRAqualities1 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAqualities1 = sprintf("SELECT llra.llrakey, llra.quality1, llraqualities.lasname, llraqualities.quality, llraqualities.`description` FROM llra, llraqualities WHERE llra.llrakey = %s AND llraqualities.lasname = %s and llra.quality1 = llraqualities.quality", GetSQLValueString($colname_rsLLRAqualities1, "int"),GetSQLValueString($colname2_rsLLRAqualities1, "text"));
+$rsLLRAqualities1 = mysql_query($query_rsLLRAqualities1, $Assessment) or die(mysql_error());
+$row_rsLLRAqualities1 = mysql_fetch_assoc($rsLLRAqualities1);
+$totalRows_rsLLRAqualities1 = mysql_num_rows($rsLLRAqualities1);
+
+$colname_rsLLRAqualities2 = "-1";
+if (isset($_GET['llrakey'])) {
+  $colname_rsLLRAqualities2 = $_GET['llrakey'];
+}
+$colname2_rsLLRAqualities2 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname2_rsLLRAqualities2 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAqualities2 = sprintf("SELECT llra.llrakey, llra.quality2, llraqualities.lasname, llraqualities.quality, llraqualities.`description` FROM llra, llraqualities WHERE llra.llrakey = %s AND llraqualities.lasname = %s and llra.quality2 = llraqualities.quality", GetSQLValueString($colname_rsLLRAqualities2, "int"),GetSQLValueString($colname2_rsLLRAqualities2, "text"));
+$rsLLRAqualities2 = mysql_query($query_rsLLRAqualities2, $Assessment) or die(mysql_error());
+$row_rsLLRAqualities2 = mysql_fetch_assoc($rsLLRAqualities2);
+$totalRows_rsLLRAqualities2 = mysql_num_rows($rsLLRAqualities2);
+
+$colname_rsLLRAqualities3 = "-1";
+if (isset($_GET['llrakey'])) {
+  $colname_rsLLRAqualities3 = $_GET['llrakey'];
+}
+$colname2_rsLLRAqualities3 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname2_rsLLRAqualities3 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAqualities3 = sprintf("SELECT llra.llrakey, llra.quality3, llraqualities.lasname, llraqualities.quality, llraqualities.`description` FROM llra, llraqualities WHERE llra.llrakey = %s AND llraqualities.lasname = %s and llra.quality3 = llraqualities.quality", GetSQLValueString($colname_rsLLRAqualities3, "int"),GetSQLValueString($colname2_rsLLRAqualities3, "text"));
+$rsLLRAqualities3 = mysql_query($query_rsLLRAqualities3, $Assessment) or die(mysql_error());
+$row_rsLLRAqualities3 = mysql_fetch_assoc($rsLLRAqualities3);
+$totalRows_rsLLRAqualities3 = mysql_num_rows($rsLLRAqualities3);
+
+$colname_rsLLRAqualities4 = "-1";
+if (isset($_GET['llrakey'])) {
+  $colname_rsLLRAqualities4 = $_GET['llrakey'];
+}
+$colname2_rsLLRAqualities4 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname2_rsLLRAqualities4 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAqualities4 = sprintf("SELECT llra.llrakey, llra.quality4, llraqualities.lasname, llraqualities.quality, llraqualities.`description` FROM llra, llraqualities WHERE llra.llrakey = %s AND llraqualities.lasname = %s and llra.quality4 = llraqualities.quality", GetSQLValueString($colname_rsLLRAqualities4, "int"),GetSQLValueString($colname2_rsLLRAqualities4, "text"));
+$rsLLRAqualities4 = mysql_query($query_rsLLRAqualities4, $Assessment) or die(mysql_error());
+$row_rsLLRAqualities4 = mysql_fetch_assoc($rsLLRAqualities4);
+$totalRows_rsLLRAqualities4 = mysql_num_rows($rsLLRAqualities4);
+
+$colname_rsManlevelcomment = "-1";
+if (isset($_GET['llrakey'])) {
+  $colname_rsManlevelcomment = $_GET['llrakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlevelcomment = sprintf("SELECT manlevelcomment.manlevelkey, manlevelcomment.manlevelcomment, llra.manlevel, llra.llrakey FROM manlevelcomment, llra WHERE llra.manlevel=manlevelcomment.manlevelkey AND llra.llrakey=%s", GetSQLValueString($colname_rsManlevelcomment, "int"));
+$rsManlevelcomment = mysql_query($query_rsManlevelcomment, $Assessment) or die(mysql_error());
+$row_rsManlevelcomment = mysql_fetch_assoc($rsManlevelcomment);
+$totalRows_rsManlevelcomment = mysql_num_rows($rsManlevelcomment);
+
+$colname_rsManleveljuxtapose = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsManleveljuxtapose = $_GET['lasname'];
+}
+$colname2_rsManleveljuxtapose = "-1";
+if (isset($_GET['llrakey'])) {
+  $colname2_rsManleveljuxtapose = $_GET['llrakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManleveljuxtapose = sprintf("SELECT manleveljuxtapose.lasname, manleveljuxtapose.manlevelkey, manleveljuxtapose.manleveljuxtapose, llra.manlevel, llra.llrakey FROM manleveljuxtapose, llra WHERE manleveljuxtapose.lasname = %s AND manleveljuxtapose.manlevelkey=llra.manlevel  and llra.llrakey=%s", GetSQLValueString($colname_rsManleveljuxtapose, "text"),GetSQLValueString($colname2_rsManleveljuxtapose, "int"));
+$rsManleveljuxtapose = mysql_query($query_rsManleveljuxtapose, $Assessment) or die(mysql_error());
+$row_rsManleveljuxtapose = mysql_fetch_assoc($rsManleveljuxtapose);
+$totalRows_rsManleveljuxtapose = mysql_num_rows($rsManleveljuxtapose);
+
+$colname_rsLLRAgrowth = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLLRAgrowth = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAgrowth = sprintf("SELECT * FROM llragrowth WHERE lasname = %s", GetSQLValueString($colname_rsLLRAgrowth, "text"));
+$rsLLRAgrowth = mysql_query($query_rsLLRAgrowth, $Assessment) or die(mysql_error());
+$row_rsLLRAgrowth = mysql_fetch_assoc($rsLLRAgrowth);
+$totalRows_rsLLRAgrowth = mysql_num_rows($rsLLRAgrowth);
+
+$colname_rsLLRAlessons = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLLRAlessons = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAlessons = sprintf("SELECT * FROM llralessons WHERE lasname = %s", GetSQLValueString($colname_rsLLRAlessons, "text"));
+$rsLLRAlessons = mysql_query($query_rsLLRAlessons, $Assessment) or die(mysql_error());
+$row_rsLLRAlessons = mysql_fetch_assoc($rsLLRAlessons);
+$totalRows_rsLLRAlessons = mysql_num_rows($rsLLRAlessons);
+
+$colname_rsRegistrant = "-1";
+if (isset($_GET['llrakey'])) {
+  $colname_rsRegistrant = $_GET['llrakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrant = sprintf("SELECT registrants.firstname, registrants.lastname, registrants.userkey, llra.userkey, llra.llrakey FROM registrants, llra WHERE registrants.userkey = llra.userkey  AND llra.llrakey = %s", GetSQLValueString($colname_rsRegistrant, "int"));
+$rsRegistrant = mysql_query($query_rsRegistrant, $Assessment) or die(mysql_error());
+$row_rsRegistrant = mysql_fetch_assoc($rsRegistrant);
+$totalRows_rsRegistrant = mysql_num_rows($rsRegistrant);
+
+$colname_rsLLRAscores = "-1";
+if (isset($_GET['llrakey'])) {
+  $colname_rsLLRAscores = $_GET['llrakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAscores = sprintf("SELECT * FROM llrascores WHERE llrakey = %s", GetSQLValueString($colname_rsLLRAscores, "int"));
+$rsLLRAscores = mysql_query($query_rsLLRAscores, $Assessment) or die(mysql_error());
+$row_rsLLRAscores = mysql_fetch_assoc($rsLLRAscores);
+$totalRows_rsLLRAscores = mysql_num_rows($rsLLRAscores);
+
+$colname_rsLLRAgeneral = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLLRAgeneral = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAgeneral = sprintf("SELECT * FROM llrageneraldescriptions WHERE lasname = %s", GetSQLValueString($colname_rsLLRAgeneral, "text"));
+$rsLLRAgeneral = mysql_query($query_rsLLRAgeneral, $Assessment) or die(mysql_error());
+$row_rsLLRAgeneral = mysql_fetch_assoc($rsLLRAgeneral);
+$totalRows_rsLLRAgeneral = mysql_num_rows($rsLLRAgeneral);
+
+$colname_rsProjectRespondents = "-1";
+if (isset($_GET['llrakey'])) {
+  $colname_rsProjectRespondents = $_GET['llrakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProjectRespondents = sprintf("SELECT projectrespondents.userkey, projectrespondents.userkey, llra.llrakey, llra.userkey, llra.user_name  FROM projectrespondents, llra WHERE llra.llrakey = %s AND projectrespondents.userkey = llra.userkey", GetSQLValueString($colname_rsProjectRespondents, "int"));
+$rsProjectRespondents = mysql_query($query_rsProjectRespondents, $Assessment) or die(mysql_error());
+$row_rsProjectRespondents = mysql_fetch_assoc($rsProjectRespondents);
+$totalRows_rsProjectRespondents = mysql_num_rows($rsProjectRespondents);
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template2.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LLRA report</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<style type="text/css">
+<!--
+.style11 {
+	font-size: 10px;
+	line-height: normal;
+}
+-->
+</style>
+<style type="text/css">
+<!--
+.style12 {	font-size: 10px;
+	line-height: normal;
+}
+.style12 {	font-size: 10px
+}
+-->
+</style>
+<style type="text/css">
+<!--
+.style13 {	font-size: 10px;
+	line-height: normal;
+}
+.style13 {	font-size: 10px
+}
+-->
+</style>
+<style type="text/css">
+<!--
+.style14 {	font-size: 10px;
+	line-height: normal;
+}
+.style14 {	font-size: 10px
+}
+-->
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	background-image: url();
+	background-repeat: repeat;
+	background-color: #EDEEE9;
+}
+#apDiv1 {
+	position:absolute;
+	left:0;
+	top:0px;
+	width:780px;
+	height:110;
+	z-index:15;
+}
+#apDiv2 {
+	position:absolute;
+	left:43px;
+	top:122px;
+	width:780px;
+	height:17px;
+	z-index:4;
+}
+#apDiv3 {
+	position:absolute;
+	left:168px;
+	top:295px;
+	width:539px;
+	height:17px;
+	z-index:8;
+}
+#apDiv4 {
+	position:absolute;
+	left:704px;
+	top:122px;
+	width:42px;
+	height:17px;
+	z-index:3;
+}
+#apDiv5 {
+	position:absolute;
+	left:122px;
+	top:113px;
+	width:753px;
+	z-index:5;
+}
+#apDiv6 {
+	position:absolute;
+	left:260px;
+	top:135px;
+	width:522px;
+	z-index:6;
+}
+#apDiv7 {
+	position:absolute;
+	left:127px;
+	top:941px;
+	width:625px;
+	height:15px;
+	z-index:7;
+}
+#apDiv8 {
+	position:absolute;
+	left:83px;
+	top:257px;
+	width:147px;
+	height:269px;
+	z-index:8;
+}
+#apDiv9 {
+	position:absolute;
+	left:83px;
+	top:586px;
+	width:146px;
+	z-index:9;
+	background-color: #FFFFFF;
+	height: 233px;
+}
+#apDiv10 {
+	position:absolute;
+	left:83px;
+	top:134px;
+	width:146px;
+	height:107px;
+	z-index:10;
+}
+#apDiv11 {
+	position:absolute;
+	left:84px;
+	top:926px;
+	width:145px;
+	height:45px;
+	z-index:11;
+}
+#apDiv12 {
+	position:absolute;
+	left:83px;
+	top:836px;
+	width:146px;
+	height:54px;
+	z-index:12;
+}
+-->
+</style>
+<link href="../css/styles1.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+<!--
+#apDiv13 {
+	position:absolute;
+	left:82px;
+	top:806px;
+	width:147px;
+	height:3px;
+	z-index:13;
+	background-color: #627ECF;
+}
+.style11 {
+	font-size: 10px
+}
+.style4 {	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10px;
+}
+#apDiv16 {	position:absolute;
+	left:4px;
+	top:3px;
+	width:30px;
+	height:28px;
+	z-index:14;
+}
+#apDiv17 {
+	position:absolute;
+	left:647px;
+	top:62px;
+	width:232px;
+	height:21px;
+	z-index:16;
+	padding-top: 4px;
+}
+-->
+</style>
+<script src="../SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+#apDiv14 {
+	position:absolute;
+	left:315px;
+	top:68px;
+	width:351px;
+	height:17px;
+	z-index:17;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="apDiv1"><img src="../images/dtsskinold/DTSheader1.gif" alt="DTS masthead" width="1000" height="66" /></div>
+<div id="apDiv5"><!-- InstanceBeginEditable name="main" -->
+  <h1>Under construction</h1>
+<!-- InstanceEndEditable -->
+  <p>&nbsp;</p>
+  <div align="center" class="copyright"> </div>
+</div>
+<div id="apDiv17">
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="../security/logIn.php">log in</a></li>
+    <li><a href="../index.html">home</a></li>
+    <li><a href="../contactus.php">contact</a></li>
+  </ul>
+</div>
+<div id="apDiv14">
+<p class="copyright">©2010, Developmental Testing Service, INC. All rights reserved.
+    </p>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"../SpryAssets/SpryMenuBarDownHover.gif", imgRight:"../SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrant);
+
+mysql_free_result($rsLLRAscores);
+
+mysql_free_result($rsLLRAgeneral);
+
+mysql_free_result($rsProjectRespondents);
+
+mysql_free_result($rsLLRA);
+
+mysql_free_result($rsManlasart);
+
+mysql_free_result($rsManlevelart);
+
+mysql_free_result($rsLLRAintroman);
+
+mysql_free_result($rsLLRAqualities1);
+
+mysql_free_result($rsLLRAqualities2);
+
+mysql_free_result($rsLLRAqualities3);
+
+mysql_free_result($rsLLRAqualities4);
+
+mysql_free_result($rsManlevelcomment);
+
+mysql_free_result($rsManleveljuxtapose);
+
+mysql_free_result($rsLLRAgrowth);
+
+mysql_free_result($rsLLRAlessons);
+
+?>

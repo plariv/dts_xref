@@ -1,0 +1,141 @@
+<?php
+include_once ("../includes/dts_functions.php");
+ 
+if (!WA_Auth_RulePasses("Logged in to registrants")) { WA_Auth_RestrictAccess("../security/logIn.php"); }
+$userkey = $_SESSION['log_userkey'];
+$lakey = $_GET['lakey'];
+$lacodeskey = '';
+if (isset($_GET['lacodeskey'])) { $lacodeskey = $_GET['lacodeskey']; } 
+
+$role = "";
+// If you're a DTS coder, give whatever role you asked for.
+// else, treat you as a teacher coder who only sees a couple pages.
+if (isset($_GET['scorer_no']) AND WA_Auth_RulePasses("Logged in as analyst")) { 
+	$role = "scorer"; 
+} else if (isset($_SESSION['role'])) {
+	if (WA_Auth_RulePasses("Logged in as coder")) { $role = $_SESSION['role']; }
+	else { $role = "teacher-coder"; }
+}
+
+// Figure out which coder you are, and which coding table you should be writing to
+$coder = 0;
+if (isset($_GET['coder'])) { $coder = SQLstr($_GET['coder'], "int"); }
+if (isset($_GET['scorer_no'])) { $coder = 1; }
+
+$table = "la_codes_".$coder;
+$table = str_replace("_1", "", $table);
+
+
+
+// check if there is already a la_codes (or la_codes_2 etc.) entry for this lakey record.
+$query_rsLaData = sprintf("SELECT d.userkey, d.instrument_id, 
+		d.coding_started, d.coded_1, d.coded_2, d.coded_3, 
+		d.coderkey_1, d.coderkey_2, d.coderkey_3, c.lakey AS codeskey
+	FROM la_data d 
+		LEFT JOIN {$table} c ON d.lakey = c.lakey 
+	WHERE d.lakey = %s", 
+		SQLstr($lakey, "int"));
+$rsLaData = mysql_query($query_rsLaData) or die(mysql_error());
+$row_rsLaData = mysql_fetch_assoc($rsLaData);
+if (mysql_num_rows($rsLaData) == 0) { die("ERROR - no data record found for that lakey."); }
+
+// Instrument_id is based on that of the record under inspection
+$instrument_id = $row_rsLaData['instrument_id'];
+$instrument_id_base = str_replace("_JOURNAL", "", $instrument_id);
+
+if (!WA_Auth_RulePasses("Logged in as teacher assistant") AND $row_rsLaData['userkey'] <> $userkey) { 
+	WA_Auth_RestrictAccess("../security/logIn.php"); 
+}
+
+
+
+
+
+// 						PREPARE THE RECORD FOR CODING
+
+// If there's no row for this lakey in the codes table, create one.
+// Also create a row if a trainee wants to start a "new" la_codes_4 row.
+if ($row_rsLaData['codeskey'] <> $lakey OR $lacodeskey == 'new')
+{
+	$insertSQL = sprintf("INSERT INTO {$table} 
+		(lakey, instrument_id, coderkey, coded, date_created) 
+		VALUES (%s, %s, %s, 0, DATE(NOW()))",
+			SQLstr($lakey, "int"),
+			SQLstr($instrument_id, "text"),
+			SQLstr($userkey, 'int'));
+	echo $insertSQL."<br>"; 
+	$Result1 = mysql_query($insertSQL) 
+		or die("ERROR creating new coding record: ".mysql_error());
+	if ($lacodeskey <> '') { $lacodeskey = mysql_insert_id(); } 
+}
+
+// Coding-status markers are NOT set when scorers pass through this page; only when you're coding.
+// Also, 4th-coders (aka trainees) don't use the la_data update columns.
+if ($role <> "scorer" AND $coder <> 4) {
+
+	// Mark this record as coding started
+	// **** This applies in the common scenario where a record was in the coding queue and is being started for the first time; it also applies in the rarer scenario where a coder has free time and wants to work on one of the old records that we had never coded.
+	if ($row_rsLaData['coding_started'] <> 1) {
+		$updateSQL = sprintf("UPDATE la_data d 
+			SET d.coding_started=1 WHERE d.lakey = %s ",
+				SQLstr($lakey, "int"));
+		$Result2 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+	}
+	
+	// Mark this record as started by this coder, if hasn't already been claimed
+	if ($row_rsLaData['coderkey_'.$coder] < 1) {
+		$updateSQL = sprintf("UPDATE la_data d 
+			SET d.coderkey_{$coder}=%s, d.coded_{$coder}=0 WHERE d.lakey = %s ",
+				SQLstr($userkey, "int"),
+				SQLstr($lakey, "int"));
+		$Result3 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+	}
+	
+}
+
+// mark if Theo has touched this record
+if ($userkey == 1000000539) { 
+	$sql = sprintf("UPDATE la_data d SET coded_1_theo = 1 WHERE lakey = %s ",
+		SQLstr($lakey, 'int'));
+	$result = mysql_query($sql) or die(mysql_error());
+}
+
+
+
+//						REDIRECT TO PROPER PAGE
+
+// SCORERS will pass through this page too. 
+if ($role == "scorer") { 
+	if ($instrument_id_base == "FOLA") 			{ $url = "code_argumentation.php"; }
+	else if ($instrument_id_base == "LDMA") { $url = "code_ldma_quality.php"; }
+	else if ($instrument_id_base == "LLRA") { $url = "code_rubrics.php"; }
+	else if ($instrument_id_base == "LERA") { $url = "code_rubrics.php"; }
+	else if ($instrument_id_base == "LRJA") { $url = "code_rubrics.php"; }
+	else if ($instrument_id_base == "SMA") { $url = "code_rubrics.php"; }
+	else if ($instrument_id_base == "LIMA") { $url = "code_rubrics.php"; }
+	else if ($instrument_id_base == "LDPA") { $url = "code_rubrics.php"; }
+	else 																		{ $url = "code_strengths.php"; }
+}
+else { // you're a coder
+	// if ($role == "teacher-coder") 					{ $url = "code_strengths_write.php"; } 
+	if ($instrument_id_base == "LSUA") { $url = "code_lsua_strengths.php"; } 
+	else if ($instrument_id_base == "LDMA") { $url = "code_ldma_perspective1.php"; } 
+	else if ($instrument_id_base == "LLRA") { $url = "code_rubrics.php"; }
+	else if ($instrument_id_base == "LRJA") { $url = "code_rubrics.php"; }
+	else if ($instrument_id_base == "LERA") { $url = "code_rubrics.php"; }
+	else if ($instrument_id_base == "LIMA") { $url = "code_rubrics.php"; }
+	else if ($instrument_id_base == "LDPA") { $url = "code_rubrics.php"; }
+	else if ($instrument_id_base == "SMA") { $url = "code_rubrics.php"; }
+	else if ($instrument_id_base == "SMJ") { $url = "code_survey.php"; }
+	else 																		{ $url = "code_argumentation.php"; } // arg is default
+}
+
+$url .= '?'.$_SERVER['QUERY_STRING'];
+// may need to specify lacodeskey
+if ($lacodeskey > 0) { 
+	$url = str_replace("lacodeskey", 'n', $url);
+	$url .= "&lacodeskey={$lacodeskey}";
+}
+header("Location: {$url}"); exit();
+
+?>

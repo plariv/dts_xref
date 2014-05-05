@@ -1,0 +1,929 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['php_self'];
+if (isset($_SERVER['query_string'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['query_string']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE limascoresquadrantcodes SET q_upperleft_1=%s, q_upperleft_1_exemplar=%s, q_upperleft_2=%s, q_upperleft_2_exemplar=%s, q_upperleft_3=%s, q_upperleft_3_exemplar=%s, q_upperleft_4=%s, q_upperleft_4_exemplar=%s, q_upperleft_5=%s, q_upperleft_5_exemplar=%s, q_upperleft_6=%s, q_upperleft_6_exemplar=%s, q_upperleft_7=%s, q_upperleft_7_exemplar=%s, q_upperleft_8=%s, q_upperleft_8_exemplar=%s, q_upperleft_9=%s, q_upperleft_9_exemplar=%s, q_upperleft_10=%s, q_upperleft_10_exemplar=%s, q_upperleft_11=%s, q_upperleft_11_exemplar=%s, q_upperleft_12=%s, q_upperleft_12_exemplar=%s, q_upperleft_13=%s, q_upperleft_13_exemplar=%s, q_upperleft_14=%s, q_upperleft_14_exemplar=%s, q_upperleft_15=%s, q_upperleft_15_exemplar=%s, q_upperleft_16=%s, q_upperleft_16_exemplar=%s, q_upperleft_17=%s, q_upperleft_17_exemplar=%s, q_upperleft_18=%s, q_upperleft_18_exemplar=%s, q_upperleft_19=%s, q_upperleft_19_exemplar=%s, q_upperleft_20=%s, q_upperleft_20_exemplar=%s, q_upperright_1=%s, q_upperright_1_exemplar=%s, q_upperright_2=%s, q_upperright_2_exemplar=%s, q_upperright_3=%s, q_upperright_3_exemplar=%s, q_upperright_4=%s, q_upperright_4_exemplar=%s, q_upperright_5=%s, q_upperright_5_exemplar=%s, q_upperright_6=%s, q_upperright_6_exemplar=%s, q_upperright_7=%s, q_upperright_7_exemplar=%s, q_upperright_8=%s, q_upperright_8_exemplar=%s, q_upperright_9=%s, q_upperright_9_exemplar=%s, q_upperright_10=%s, q_upperright_10_exemplar=%s, q_upperright_11=%s, q_upperright_11_exemplar=%s, q_upperright_12=%s, q_upperright_12_exemplar=%s, q_upperright_13=%s, q_upperright_13_exemplar=%s, q_upperright_14=%s, q_upperright_14_exemplar=%s, q_upperright_15=%s, q_upperright_15_exemplar=%s WHERE limakey=%s",
+                       GetSQLValueString(isset($_POST['q_upperleft_1']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_1_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_2']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_2_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_3']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_3_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_4']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_4_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_5']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_5_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_6']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_6_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_7']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_7_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_8']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_8_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_9']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_9_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_10']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_10_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_11']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_11_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_12']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_12_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_13']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_13_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_14']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_14_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_15']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_15_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_16']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_16_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_17']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_17_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_18']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_18_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_19']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_19_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperleft_20']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperleft_20_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_1']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_1_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_2']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_2_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_3']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_3_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_4']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_4_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_5']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_5_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_6']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_6_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_7']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_7_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_8']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_8_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_9']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_9_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_10']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_10_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_11']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_11_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_12']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_12_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_13']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_13_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_14']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_14_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['q_upperright_15']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['q_upperright_15_exemplar'], "text"),
+                       GetSQLValueString($_POST['limakey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "limacodingquadrants3.php";
+  if (isset($_SERVER['query_string'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['query_string'];
+  }
+  header(sprintf("location: %s", $updateGoTo));
+}
+
+
+$colname_rsLIMA = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsLIMA = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLIMA = sprintf("SELECT limakey, considerations, quadrants, levelslines, bestresponse FROM lima WHERE limakey = %s", GetSQLValueString($colname_rsLIMA, "int"));
+$rsLIMA = mysql_query($query_rsLIMA, $Assessment) or die(mysql_error());
+$row_rsLIMA = mysql_fetch_assoc($rsLIMA);
+$totalRows_rsLIMA = mysql_num_rows($rsLIMA);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_1 = "SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 26";
+$rsQ_upperleft_1 = mysql_query($query_rsQ_upperleft_1, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_1 = mysql_fetch_assoc($rsQ_upperleft_1);
+$totalRows_rsQ_upperleft_1 = mysql_num_rows($rsQ_upperleft_1);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_2 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 27", GetSQLValueString($colname_rsQ_upperleft_2, "int"));
+$rsQ_upperleft_2 = mysql_query($query_rsQ_upperleft_2, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_2 = mysql_fetch_assoc($rsQ_upperleft_2);
+$totalRows_rsQ_upperleft_2 = mysql_num_rows($rsQ_upperleft_2);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_3 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 28", GetSQLValueString($colname_rsQ_upperleft_3, "int"));
+$rsQ_upperleft_3 = mysql_query($query_rsQ_upperleft_3, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_3 = mysql_fetch_assoc($rsQ_upperleft_3);
+$totalRows_rsQ_upperleft_3 = mysql_num_rows($rsQ_upperleft_3);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_4 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 29", GetSQLValueString($colname_rsQ_upperleft_4, "int"));
+$rsQ_upperleft_4 = mysql_query($query_rsQ_upperleft_4, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_4 = mysql_fetch_assoc($rsQ_upperleft_4);
+$totalRows_rsQ_upperleft_4 = mysql_num_rows($rsQ_upperleft_4);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_5 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 30", GetSQLValueString($colname_rsQ_upperleft_5, "int"));
+$rsQ_upperleft_5 = mysql_query($query_rsQ_upperleft_5, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_5 = mysql_fetch_assoc($rsQ_upperleft_5);
+$totalRows_rsQ_upperleft_5 = mysql_num_rows($rsQ_upperleft_5);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_6 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 31", GetSQLValueString($colname_rsQ_upperleft_6, "int"));
+$rsQ_upperleft_6 = mysql_query($query_rsQ_upperleft_6, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_6 = mysql_fetch_assoc($rsQ_upperleft_6);
+$totalRows_rsQ_upperleft_6 = mysql_num_rows($rsQ_upperleft_6);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_7 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 32", GetSQLValueString($colname_rsQ_upperleft_7, "int"));
+$rsQ_upperleft_7 = mysql_query($query_rsQ_upperleft_7, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_7 = mysql_fetch_assoc($rsQ_upperleft_7);
+$totalRows_rsQ_upperleft_7 = mysql_num_rows($rsQ_upperleft_7);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_8 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 33", GetSQLValueString($colname_rsQ_upperleft_8, "int"));
+$rsQ_upperleft_8 = mysql_query($query_rsQ_upperleft_8, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_8 = mysql_fetch_assoc($rsQ_upperleft_8);
+$totalRows_rsQ_upperleft_8 = mysql_num_rows($rsQ_upperleft_8);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_9 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 34", GetSQLValueString($colname_rsQ_upperleft_9, "int"));
+$rsQ_upperleft_9 = mysql_query($query_rsQ_upperleft_9, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_9 = mysql_fetch_assoc($rsQ_upperleft_9);
+$totalRows_rsQ_upperleft_9 = mysql_num_rows($rsQ_upperleft_9);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_10 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 35", GetSQLValueString($colname_rsQ_upperleft_10, "int"));
+$rsQ_upperleft_10 = mysql_query($query_rsQ_upperleft_10, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_10 = mysql_fetch_assoc($rsQ_upperleft_10);
+$totalRows_rsQ_upperleft_10 = mysql_num_rows($rsQ_upperleft_10);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_11 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 36", GetSQLValueString($colname_rsQ_upperleft_11, "int"));
+$rsQ_upperleft_11 = mysql_query($query_rsQ_upperleft_11, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_11 = mysql_fetch_assoc($rsQ_upperleft_11);
+$totalRows_rsQ_upperleft_11 = mysql_num_rows($rsQ_upperleft_11);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_12 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 37", GetSQLValueString($colname_rsQ_upperleft_12, "int"));
+$rsQ_upperleft_12 = mysql_query($query_rsQ_upperleft_12, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_12 = mysql_fetch_assoc($rsQ_upperleft_12);
+$totalRows_rsQ_upperleft_12 = mysql_num_rows($rsQ_upperleft_12);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_13 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 38", GetSQLValueString($colname_rsQ_upperleft_13, "int"));
+$rsQ_upperleft_13 = mysql_query($query_rsQ_upperleft_13, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_13 = mysql_fetch_assoc($rsQ_upperleft_13);
+$totalRows_rsQ_upperleft_13 = mysql_num_rows($rsQ_upperleft_13);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_14 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 39", GetSQLValueString($colname_rsQ_upperleft_14, "int"));
+$rsQ_upperleft_14 = mysql_query($query_rsQ_upperleft_14, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_14 = mysql_fetch_assoc($rsQ_upperleft_14);
+$totalRows_rsQ_upperleft_14 = mysql_num_rows($rsQ_upperleft_14);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_15 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 40", GetSQLValueString($colname_rsQ_upperleft_15, "int"));
+$rsQ_upperleft_15 = mysql_query($query_rsQ_upperleft_15, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_15 = mysql_fetch_assoc($rsQ_upperleft_15);
+$totalRows_rsQ_upperleft_15 = mysql_num_rows($rsQ_upperleft_15);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_16 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 41", GetSQLValueString($colname_rsQ_upperleft_16, "int"));
+$rsQ_upperleft_16 = mysql_query($query_rsQ_upperleft_16, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_16 = mysql_fetch_assoc($rsQ_upperleft_16);
+$totalRows_rsQ_upperleft_16 = mysql_num_rows($rsQ_upperleft_16);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_17 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 42", GetSQLValueString($colname_rsQ_upperleft_17, "int"));
+$rsQ_upperleft_17 = mysql_query($query_rsQ_upperleft_17, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_17 = mysql_fetch_assoc($rsQ_upperleft_17);
+$totalRows_rsQ_upperleft_17 = mysql_num_rows($rsQ_upperleft_17);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_18 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 43", GetSQLValueString($colname_rsQ_upperleft_18, "int"));
+$rsQ_upperleft_18 = mysql_query($query_rsQ_upperleft_18, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_18 = mysql_fetch_assoc($rsQ_upperleft_18);
+$totalRows_rsQ_upperleft_18 = mysql_num_rows($rsQ_upperleft_18);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_19 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 44", GetSQLValueString($colname_rsQ_upperleft_19, "int"));
+$rsQ_upperleft_19 = mysql_query($query_rsQ_upperleft_19, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_19 = mysql_fetch_assoc($rsQ_upperleft_19);
+$totalRows_rsQ_upperleft_19 = mysql_num_rows($rsQ_upperleft_19);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperleft_20 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 45", GetSQLValueString($colname_rsQ_upperleft_20, "int"));
+$rsQ_upperleft_20 = mysql_query($query_rsQ_upperleft_20, $Assessment) or die(mysql_error());
+$row_rsQ_upperleft_20 = mysql_fetch_assoc($rsQ_upperleft_20);
+$totalRows_rsQ_upperleft_20 = mysql_num_rows($rsQ_upperleft_20);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_1 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 46", GetSQLValueString($colname_rsQ_upperright_1, "int"));
+$rsQ_upperright_1 = mysql_query($query_rsQ_upperright_1, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_1 = mysql_fetch_assoc($rsQ_upperright_1);
+$totalRows_rsQ_upperright_1 = mysql_num_rows($rsQ_upperright_1);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_2 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 47", GetSQLValueString($colname_rsQ_upperright_2, "int"));
+$rsQ_upperright_2 = mysql_query($query_rsQ_upperright_2, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_2 = mysql_fetch_assoc($rsQ_upperright_2);
+$totalRows_rsQ_upperright_2 = mysql_num_rows($rsQ_upperright_2);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_3 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 48", GetSQLValueString($colname_rsQ_upperright_3, "int"));
+$rsQ_upperright_3 = mysql_query($query_rsQ_upperright_3, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_3 = mysql_fetch_assoc($rsQ_upperright_3);
+$totalRows_rsQ_upperright_3 = mysql_num_rows($rsQ_upperright_3);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_4 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 49", GetSQLValueString($colname_rsQ_upperright_4, "int"));
+$rsQ_upperright_4 = mysql_query($query_rsQ_upperright_4, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_4 = mysql_fetch_assoc($rsQ_upperright_4);
+$totalRows_rsQ_upperright_4 = mysql_num_rows($rsQ_upperright_4);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_5 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 50", GetSQLValueString($colname_rsQ_upperright_5, "int"));
+$rsQ_upperright_5 = mysql_query($query_rsQ_upperright_5, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_5 = mysql_fetch_assoc($rsQ_upperright_5);
+$totalRows_rsQ_upperright_5 = mysql_num_rows($rsQ_upperright_5);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_6 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 51", GetSQLValueString($colname_rsQ_upperright_6, "int"));
+$rsQ_upperright_6 = mysql_query($query_rsQ_upperright_6, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_6 = mysql_fetch_assoc($rsQ_upperright_6);
+$totalRows_rsQ_upperright_6 = mysql_num_rows($rsQ_upperright_6);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_7 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 52", GetSQLValueString($colname_rsQ_upperright_7, "int"));
+$rsQ_upperright_7 = mysql_query($query_rsQ_upperright_7, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_7 = mysql_fetch_assoc($rsQ_upperright_7);
+$totalRows_rsQ_upperright_7 = mysql_num_rows($rsQ_upperright_7);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_8 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 53", GetSQLValueString($colname_rsQ_upperright_8, "int"));
+$rsQ_upperright_8 = mysql_query($query_rsQ_upperright_8, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_8 = mysql_fetch_assoc($rsQ_upperright_8);
+$totalRows_rsQ_upperright_8 = mysql_num_rows($rsQ_upperright_8);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_9 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 54", GetSQLValueString($colname_rsQ_upperright_9, "int"));
+$rsQ_upperright_9 = mysql_query($query_rsQ_upperright_9, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_9 = mysql_fetch_assoc($rsQ_upperright_9);
+$totalRows_rsQ_upperright_9 = mysql_num_rows($rsQ_upperright_9);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_10 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 55", GetSQLValueString($colname_rsQ_upperright_10, "int"));
+$rsQ_upperright_10 = mysql_query($query_rsQ_upperright_10, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_10 = mysql_fetch_assoc($rsQ_upperright_10);
+$totalRows_rsQ_upperright_10 = mysql_num_rows($rsQ_upperright_10);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_11 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 56", GetSQLValueString($colname_rsQ_upperright_11, "int"));
+$rsQ_upperright_11 = mysql_query($query_rsQ_upperright_11, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_11 = mysql_fetch_assoc($rsQ_upperright_11);
+$totalRows_rsQ_upperright_11 = mysql_num_rows($rsQ_upperright_11);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_12 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 57", GetSQLValueString($colname_rsQ_upperright_12, "int"));
+$rsQ_upperright_12 = mysql_query($query_rsQ_upperright_12, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_12 = mysql_fetch_assoc($rsQ_upperright_12);
+$totalRows_rsQ_upperright_12 = mysql_num_rows($rsQ_upperright_12);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_13 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 58", GetSQLValueString($colname_rsQ_upperright_13, "int"));
+$rsQ_upperright_13 = mysql_query($query_rsQ_upperright_13, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_13 = mysql_fetch_assoc($rsQ_upperright_13);
+$totalRows_rsQ_upperright_13 = mysql_num_rows($rsQ_upperright_13);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_14 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 59", GetSQLValueString($colname_rsQ_upperright_14, "int"));
+$rsQ_upperright_14 = mysql_query($query_rsQ_upperright_14, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_14 = mysql_fetch_assoc($rsQ_upperright_14);
+$totalRows_rsQ_upperright_14 = mysql_num_rows($rsQ_upperright_14);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsQ_upperright_15 = sprintf("SELECT * FROM limacodes_quadrants WHERE limaquadrantskey = 60", GetSQLValueString($colname_rsQ_upperright_15, "int"));
+$rsQ_upperright_15 = mysql_query($query_rsQ_upperright_15, $Assessment) or die(mysql_error());
+$row_rsQ_upperright_15 = mysql_fetch_assoc($rsQ_upperright_15);
+$totalRows_rsQ_upperright_15 = mysql_num_rows($rsQ_upperright_15);
+
+$colname_rsLIMAquadrants = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsLIMAquadrants = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLIMAquadrants = sprintf("SELECT limakey, q_upperleft, q_upperleft_1, q_upperleft_1_exemplar, q_upperleft_2, q_upperleft_2_exemplar, q_upperleft_3, q_upperleft_3_exemplar, q_upperleft_4, q_upperleft_4_exemplar, q_upperleft_5, q_upperleft_5_exemplar, q_upperleft_6, q_upperleft_6_exemplar, q_upperleft_7, q_upperleft_7_exemplar, q_upperleft_8, q_upperleft_8_exemplar, q_upperleft_9, q_upperleft_9_exemplar, q_upperleft_10, q_upperleft_10_exemplar, q_upperleft_11, q_upperleft_11_exemplar, q_upperleft_12, q_upperleft_12_exemplar, q_upperleft_13, q_upperleft_13_exemplar, q_upperleft_14, q_upperleft_14_exemplar, q_upperleft_15, q_upperleft_15_exemplar, q_upperleft_16, q_upperleft_16_exemplar, q_upperleft_17, q_upperleft_17_exemplar, q_upperleft_18, q_upperleft_18_exemplar, q_upperleft_19, q_upperleft_19_exemplar, q_upperleft_20, q_upperleft_20_exemplar, q_upperright, q_upperright_1, q_upperright_1_exemplar, q_upperright_2, q_upperright_2_exemplar, q_upperright_3, q_upperright_3_exemplar, q_upperright_4, q_upperright_4_exemplar, q_upperright_5, q_upperright_5_exemplar, q_upperright_6, q_upperright_6_exemplar, q_upperright_7, q_upperright_7_exemplar, q_upperright_8, q_upperright_8_exemplar, q_upperright_9, q_upperright_9_exemplar, q_upperright_10, q_upperright_10_exemplar, q_upperright_11, q_upperright_11_exemplar, q_upperright_12, q_upperright_12_exemplar, q_upperright_13, q_upperright_13_exemplar, q_upperright_14, q_upperright_14_exemplar, q_upperright_15, q_upperright_15_exemplar FROM limascoresquadrantcodes WHERE limakey = %s", GetSQLValueString($colname_rsLIMAquadrants, "int"));
+$rsLIMAquadrants = mysql_query($query_rsLIMAquadrants, $Assessment) or die(mysql_error());
+$row_rsLIMAquadrants = mysql_fetch_assoc($rsLIMAquadrants);
+$totalRows_rsLIMAquadrants = mysql_num_rows($rsLIMAquadrants);
+
+?><div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelimascore1.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LIMA coding</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" --><!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #5F8F8C;
+	background-image: url(/images/skin/LIMAbackground.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 1300px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LIMAheaderWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #7DACAC;
+	background-image: url(/images/skin/LIMAmenu.jpg);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #7DACAC;
+	background-image: url(/images/skin/LIMAmenu.jpg);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 1246px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 2;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footerWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:link {
+	color: #929292;
+}
+.twoColFixRtHdr #container .indent46 a:visited {
+	color: #929292;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:hover {
+	color: #474A47;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="/" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="../" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+<a href="/scoring/chooseassessment.php">choose assessment</a> | <a href="/scoring/chooselima.php">choose LIMA</a>  | <a href="/scoring/bulkcustomerselect.php">sortable</a><a href="/scoring_lima/lima_sortable.php"></a> | <a href="/scoring_lima/lima-comments1.php">phase comments</a> | <a href="/scoring_lima/lima-strengthmeaning1.php">strength integral meaning</a> | <a href="/scoring_lima/lima-strengthlife1.php">strength integral life</a> | <a href="/scoring_lima/lima-strengthmodel1.php">strength  model</a> | <br />
+<a href="/scoring_lima/lima-strengthlines1.php">strength lines</a> | <a href="/scoring_lima/lima-strengthleadership1.php">strength integral leadership</a> | <a href="/scoring_lima/lima-growthmeaning1.php">growth integral meaning</a> | <a href="/scoring_lima/lima-growthlife1.php">growth</a><a href="/codingLIMA/lima-emotion1.php"> integral life</a> | <a href="/scoring_lima/lima-growthmodel1.php">growth integral model</a> | <a href="/codingLIMA/lima-communication1.php">growth lines</a> | <a href="/codingLIMA/lima-communication1.php">growth integral leadership</a> | <a href="/scoring_lima/lima-recommendations1.php">recommendations</a>  
+</div>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>QUADRANTS  CODING FOR LIMA NUMBER <?php echo $_GET['limakey']; ?> (page 1)  </h1>
+  <h3>Upper left and upper right quadrants  </h3>
+  <form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+    <table>
+      <tr class="tablehead">
+        <td colspan="2">Code</td>
+        <td>Exemplar or summary</td>
+        <td>Quadrants essay</td>
+      </tr>
+      <tr>
+        <td colspan="3"><strong>Upper left quadrant  is described in terms of…</strong></td>
+        <td rowspan="37"><p><?php echo $row_rsLIMA['quadrants']; ?></p>
+          <p>&nbsp;</p></td>
+      </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_1'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_1" type="checkbox" id="q_upperleft_1" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_1['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_1_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_1_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_2'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_2" type="checkbox" id="q_upperleft_2" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_2['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_2_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_2_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_3'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_3" type="checkbox" id="q_upperleft_3" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_3['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_3_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_3_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_4'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_4" type="checkbox" id="q_upperleft_4" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_4['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_4_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_4_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_5'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_5" type="checkbox" id="q_upperleft_5" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_5['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_5_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_5_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_6'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_6" type="checkbox" id="q_upperleft_6" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_6['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_6_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_6_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_7'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_7" type="checkbox" id="q_upperleft_7" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_7['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_7_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_7_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_8'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_8" type="checkbox" id="q_upperleft_8" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_8['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_8_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_8_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_9'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_9" type="checkbox" id="q_upperleft_9" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_9['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_9_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_9_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_10'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_10" type="checkbox" id="q_upperleft_10" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_10['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_10_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_10_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_11'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_11" type="checkbox" id="q_upperleft_11" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_11['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_11_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_11_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_12'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_12" type="checkbox" id="q_upperleft_12" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_12['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_12_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_12_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_13'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_13" type="checkbox" id="q_upperleft_13" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_13['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_13_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_13_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_14'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_14" type="checkbox" id="q_upperleft_14" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_14['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_14_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_14_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_15'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_15" type="checkbox" id="q_upperleft_15" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_15['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_15_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_15_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_16'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_16" type="checkbox" id="q_upperleft_16" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_16['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_16_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_16_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_17'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_17" type="checkbox" id="q_upperleft_17" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_17['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_17_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_17_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_18'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_18" type="checkbox" id="q_upperleft_18" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_18['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_18_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_18_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_19'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_19" type="checkbox" id="q_upperleft_19" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_19['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_19_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_19_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperleft_20'],1))) {echo "checked=\"checked\"";} ?> name="q_upperleft_20" type="checkbox" id="q_upperleft_20" value="1" /></td>
+        <td><?php echo $row_rsQ_upperleft_20['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperleft_20_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperleft_20_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td colspan="3"><strong>Upper right quadrant</strong></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_1'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_1" type="checkbox" id="q_upperright_1" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_1['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_1_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_1_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_2'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_2" type="checkbox" id="q_upperright_2" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_2['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_2_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_2_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_3'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_3" type="checkbox" id="q_upperright_3" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_3['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_3_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_3_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_4'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_4" type="checkbox" id="q_upperright_4" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_4['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_4_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_4_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_5'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_5" type="checkbox" id="q_upperright_5" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_5['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_5_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_5_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_6'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_6" type="checkbox" id="q_upperright_6" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_6['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_6_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_6_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_7'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_7" type="checkbox" id="q_upperright_7" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_7['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_7_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_7_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_8'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_8" type="checkbox" id="q_upperright_8" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_8['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_8_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_8_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_9'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_9" type="checkbox" id="q_upperright_9" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_9['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_9_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_9_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_10'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_10" type="checkbox" id="q_upperright_10" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_10['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_10_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_10_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_11'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_11" type="checkbox" id="q_upperright_11" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_11['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_11_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_11_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_12'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_12" type="checkbox" id="q_upperright_12" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_12['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_12_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_12_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_13'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_13" type="checkbox" id="q_upperright_13" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_13['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_13_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_13_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_14'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_14" type="checkbox" id="q_upperright_14" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_14['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_14_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_14_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td><input <?php if (!(strcmp($row_rsLIMAquadrants['q_upperright_15'],1))) {echo "checked=\"checked\"";} ?> name="q_upperright_15" type="checkbox" id="q_upperright_15" value="1" /></td>
+        <td><?php echo $row_rsQ_upperright_15['quadrantsdescription']; ?></td>
+        <td><textarea name="q_upperright_15_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAquadrants['q_upperright_15_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td><div align="right">
+          <input type="submit" value="SUBMIT" />
+        </div></td>
+        <td>&nbsp;</td>
+      </tr>
+    </table>
+    <input type="hidden" name="limakey" value="<?php echo $row_rsLIMAquadrants['limakey']; ?>" />
+    <input type="hidden" name="MM_update" value="form1" />
+    <input type="hidden" name="limakey" value="<?php echo $row_rsLIMAquadrants['limakey']; ?>" />
+  </form>
+  <p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+<!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href=/landing.phpl">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer -->
+  <!-- end #container -->
+</div>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLIMA);
+
+mysql_free_result($rsQ_upperleft_1);
+
+mysql_free_result($rsQ_upperleft_2);
+
+mysql_free_result($rsQ_upperleft_3);
+
+mysql_free_result($rsQ_upperleft_4);
+
+mysql_free_result($rsQ_upperleft_5);
+
+mysql_free_result($rsQ_upperleft_6);
+
+mysql_free_result($rsQ_upperleft_7);
+
+mysql_free_result($rsQ_upperleft_8);
+
+mysql_free_result($rsQ_upperleft_9);
+
+mysql_free_result($rsQ_upperleft_10);
+
+mysql_free_result($rsQ_upperleft_11);
+
+mysql_free_result($rsQ_upperleft_12);
+
+mysql_free_result($rsQ_upperleft_13);
+
+mysql_free_result($rsQ_upperleft_14);
+
+mysql_free_result($rsQ_upperleft_15);
+
+mysql_free_result($rsQ_upperleft_16);
+
+mysql_free_result($rsQ_upperleft_17);
+
+mysql_free_result($rsQ_upperleft_18);
+
+mysql_free_result($rsQ_upperleft_19);
+
+mysql_free_result($rsQ_upperleft_20);
+
+mysql_free_result($rsQ_upperright_1);
+
+mysql_free_result($rsQ_upperright_2);
+
+mysql_free_result($rsQ_upperright_3);
+
+mysql_free_result($rsQ_upperright_4);
+
+mysql_free_result($rsQ_upperright_5);
+
+mysql_free_result($rsQ_upperright_6);
+
+mysql_free_result($rsQ_upperright_7);
+
+mysql_free_result($rsQ_upperright_8);
+
+mysql_free_result($rsQ_upperright_9);
+
+mysql_free_result($rsQ_upperright_10);
+
+mysql_free_result($rsQ_upperright_11);
+
+mysql_free_result($rsQ_upperright_12);
+
+mysql_free_result($rsQ_upperright_13);
+
+mysql_free_result($rsQ_upperright_14);
+
+mysql_free_result($rsQ_upperright_15);
+
+mysql_free_result($rsLIMAquadrants);
+
+?>

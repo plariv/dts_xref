@@ -1,0 +1,635 @@
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Leadership development</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryAccordion.js" type="text/javascript"></script>
+<script type="text/javascript">
+<!--
+function MM_popupMsg(msg) { //v1.0
+  alert(msg);
+}
+//-->
+</script>
+<style type="text/css">
+<!--
+.style11 {font-size: 11px}
+-->
+</style>
+<link href="../SpryAssets/SpryAccordion.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+
+/* ~~ Element/tag selectors ~~ */
+/* ~~ this container surrounds all other divs giving them their percentage-based width ~~ */
+.container {
+	padding: 0px;
+	width: 100%;
+	max-width: 2000px;/* a max-width may be desirable to keep this layout from getting too wide on a large monitor. This keeps line length more readable. IE6 does not respect this declaration. */
+	min-width: 780px;/* a min-width may be desirable to keep this layout from getting too narrow. This keeps line length more readable in the side columns. IE6 does not respect this declaration. */
+	background: #FFF;
+	margin: 0 auto; /* the auto value on the sides, coupled with the width, centers the layout. It is not needed if you set the .container's width to 100%. */
+}
+.container p {
+	padding-left: 15px;
+}
+
+.inner_container {
+	padding: 0px;
+	margin-right: 5%;
+	margin-left: 5%;
+	float: left:
+}
+
+/* ~~ the header is not given a width. It will extend the full width of your layout. It contains an image placeholder that should be replaced with your own linked logo ~~ */
+
+.header1_container {
+	background-color: #93CCCB;
+	float: left;
+	width: 100%;
+	height: 85px;
+	position: relative;/* this gives IE6 hasLayout to properly clear */
+	clear: both; /* this clear property forces the .container to understand where the columns end and contain them */
+}
+.header1_column1 {
+	float: left;
+	width: 30%;
+	height: 60px;
+	background-image: url(/_images/logos/lectica_logo_solo.png);
+	background-repeat: no-repeat;
+	margin-left: 5%;
+	margin-top: 15px;
+}
+.header1_column2 {
+	float: right;
+	height: 100%;
+	padding-right: 5%;
+}
+.header2 {
+	background: #FFF;
+	float: left;
+	width: 100%;
+	margin-bottom: 20px;
+	position: relative;/* this gives IE6 hasLayout to properly clear */
+	clear: both; /* this clear property forces the .container to understand where the columns end and contain them */
+}
+.header1a {
+	float: left;
+	width: 100%;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #CCC;
+	background-color: #000;
+	padding-left: 5%;
+	padding-right: 5%;
+	padding-top: 6px;
+	padding-bottom: 6px;
+	position: relative;/* this gives IE6 hasLayout to properly clear */
+	clear: both; /* this clear property forces the .container to understand where the columns end and contain them */
+}
+.container .header1_column2 p {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	padding-top: 29px;
+	color: #676767;
+	font-size: 170%;
+}
+.container .header1_sidebar1 p {
+	padding-top: 29px;
+	color: #C2E6E8;
+}
+.container .header1_column2 a {
+	text-decoration: none;
+	color: #008A8C;
+	font-weight: 300;
+}
+.container .header1_column2 a:hover {
+	text-decoration: none;
+	color: #C33C2C;
+}
+.container .header1a a {
+	text-decoration: none;
+	color: #929292;
+}
+.container .header1a a:hover {
+	text-decoration: none;
+	color: #CCCCCC;
+}
+.container .header1a h3 {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 400;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	color: #929292;
+	font-size: 140%;
+}
+.container .inner_container .sidebar1 {
+	padding-left: 10px;
+}
+/* ~~ These are the columns for the layout. ~~ 
+
+1) Padding is only placed on the top and/or bottom of the divs. The elements within these divs have padding on their sides. This saves you from any "box model math". Keep in mind, if you add any side padding or border to the div itself, it will be added to the width you define to create the *total* width. You may also choose to remove the padding on the element in the div and place a second div within it with no width and the padding necessary for your design.
+
+2) No margin has been given to the columns since they are all floated. If you must add margin, avoid placing it on the side you're floating toward (for example: a right margin on a div set to float right). Many times, padding can be used instead. For divs where this rule must be broken, you should add a "display:inline" declaration to the div's rule to tame a bug where some versions of Internet Explorer double the margin.
+
+3) Since classes can be used multiple times in a document (and an element can also have multiple classes applied), the columns have been assigned class names instead of IDs. For example, two sidebar divs could be stacked if necessary. These can very easily be changed to IDs if that's your preference, as long as you'll only be using them once per document.
+
+4) If you prefer your nav on the right instead of the left, simply float these columns the opposite direction (all right instead of all left) and they'll render in reverse order. There's no need to move the divs around in the HTML source.
+
+*/
+.column1 {
+	float: left;
+	width: 79%;
+	margin-bottom: 10px;
+	margin-top: 10px;
+	border-right-width: 1px;
+	border-right-style: solid;
+	border-right-color: #CCC;
+}
+.column1 p {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 140%;
+	line-height: 28px;
+	padding-right: 40px;
+	padding-left: 0px;
+	padding-bottom: 0%;
+	padding-top: 0%;
+	margin-bottom: 2%;
+	margin-top: 1%;
+}
+.column1 h1,h2,h3,h4,h5,h6 {
+	padding-bottom: 0%;
+	padding-top: 0%;
+	margin-bottom: 1%;
+	margin-top: 3%;
+}
+.column1 h1 {
+	font-size: 260%;
+	line-height: 30px;
+	padding-right: 30px;
+}
+.column1 h2 {
+	font-size: 200%;
+	line-height: 28px;
+}
+.column1 h3 {
+	font-size: 170%;
+	line-height: 28px;
+}
+.column1 h4 {
+	font-size: 150%;
+	line-height: 28px;
+}
+.column1 ul {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 100%;
+	padding-bottom: 0%;
+	padding-top: 0%;
+	margin-bottom: 2%;
+	margin-top: 1%;
+}
+.column1 ol {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 100%;
+	padding-bottom: 0%;
+	padding-top: 0%;
+	margin-bottom: 2%;
+	margin-top: 1%;
+}
+.column1 li {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 140%;
+	padding-right: 40px;
+	padding-left: 0px;
+}
+.column1 td {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 130%;	
+	line-height: 20px;
+}
+.column1 th {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 130%;	
+	line-height: 20px;
+}
+.column1 .box {
+	width: 87%;	
+	padding: 10px;	
+}
+.column1 .box p {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 400;
+	font-size: 100%;
+	padding: 0px;
+	margin: 0px;
+	line-height: 24px;
+}
+.column2 {
+	width: 1%;
+	float: left;
+	margin-bottom: 10px;
+}
+.sidebar1 {
+	float: left;
+	width: 19%;
+	margin-bottom: 10px;
+}
+.sidebar1 p {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 120%;
+	line-height: 24px;
+	padding-right: 10px;
+	padding-left: 10px;
+	margin-top: 5px;
+	margin-bottom: 4px;
+	margin-right: 0px;
+	margin-left: 0px;
+	font-size: 150%;
+}
+.sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.sidebar1 p a {
+	color: #606060;
+	text-decoration: none;
+	font-weight: 300;
+}
+.sidebar1 p a:active {
+	color: #008A8C;
+}
+.sidebar1 p a:visited {
+	color: #606060;
+}
+.sidebar1 p a:hover {
+	color: #008A8C;
+	font-weight: 400;
+}
+.sidebar1 .CollapsiblePanelTab {
+	font-size: 150%;
+	color: #3B3B3B;
+}
+.sidebar1 .CollapsiblePanelTabHover, .CollapsiblePanelOpen .CollapsiblePanelTabHover {
+	color: #C33C2C;
+}
+
+
+/* ~~ This grouped selector gives the lists in the .content area space ~~ */
+.content ul, .content ol { 
+	padding: 0 15px 15px 40px; /* this padding mirrors the right padding in the headings and paragraph rule above. Padding was placed on the bottom for space between other elements on the lists and on the left to create the indention. These may be adjusted as you wish. */
+}
+
+/* ~~ The navigation list styles (can be removed if you choose to use a premade flyout menu like Spry) ~~ */
+
+/* ~~The footer ~~ */
+.footer1 {
+	margin: 0px;
+	padding: 0px;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #CCC;
+	border-top-width: 1px;
+	border-top-style: solid;
+	border-top-color: #CCC;
+	position: relative;/* this gives IE6 hasLayout to properly clear */
+	clear: both; /* this clear property forces the .container to understand where the columns end and contain them */
+}
+.footer2_column1 {
+	background-color: #93CCCB;
+	float: left;
+	width: 25%;
+	margin: 0px;
+	height: 220px;
+	position: relative;/* this gives IE6 hasLayout to properly clear */
+	clear: both; /* this clear property forces the .container to understand where the columns end and contain them */
+}
+.footer2_column2 {
+	background-color: #93CCCB;
+	width: 25%;
+	float: left;
+	height: 220px;
+}
+.footer2_sidebar1 {
+	background-color: #93CCCB;
+	float: left;
+	width: 25%;
+	height: 220px;
+}
+.footer2_column4 {
+	background-color: #93CCCB;
+	float: left;
+	width: 25%;
+	height: 220px;
+}
+.footer3_container {
+	background-color: #93CCCB;
+	float: left;
+	width: 100%;
+	position: relative;/* this gives IE6 hasLayout to properly clear */
+	clear: both; /* this clear property forces the .container to understand where the columns end and contain them */
+}
+.footer3_column1 {
+	float: left;
+	margin-left: 5%;
+	padding-bottom: 10px;
+}
+.footer3_column2 {
+	float: right;
+	padding-bottom: 10px;
+	margin-right: 5%;
+}
+.footer3_container .footer3_column1 a {
+	text-decoration: none;
+	color: #008A8C;
+	font-weight: 300;
+}
+.footer3_container .footer3_column1 a:hover {
+	text-decoration: none;
+	color: #C33C2C;
+}
+.footer3_container .footer3_column1 p {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300
+	color: #FFF;
+	font-size: 160%;
+	padding-top: 6px;
+}
+.footer3_container .footer3_column2 p {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300
+	color: #FFF;
+	font-size: 120%;
+	padding-top: 6px;
+	color: #FFF;
+	font-weight: 300;
+}
+
+-->
+</style><!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+  		<div class="header1_column1"><!-- end .header1_column1 --></div>
+			<div class="header1_column2">
+    			<p><a href="http://www.discotest.org">DiscoTests</a>
+    			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    			<a href="/_about/articles.php">Research</a>
+    			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    			<a href="/contactus.php">Contracting</a></p>
+			</div><!-- end .header1_column2 -->
+		</div>
+
+		<br class="clearfloat" />
+
+		<div class="header1a">
+  			<h3><a href="http://lectica.org">HOME</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+  			<a href="../landing.php">SELECT</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="http://lectica.org/visitors/about.php">ABOUT</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <a href="/contactus.php">CONTACT US</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="/security/logIn.php">LOG IN</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="/security/logout.php">LOG OUT</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="../security/registration.php">REGISTER</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;
+			<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  			You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+  		</div><!-- end .header1a -->
+	
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+		<div class="column1">
+   <!-- InstanceBeginEditable name="main" -->
+<td valign="top"><h1>LEADERSHIP DEVELOPMENT</h1>
+          <p>As you  know, leadership is a complex skill, a marriage of expertise and reasoning,  emotional maturity, interpersonal skills, dispositions, and personality. A comprehensive portrait of a leader would, ideally, include measurements of all of these dimensions. Assessments of factual knowledge, preferences, and personality have been around for many years and are likely to be part of your assessment toolbox, but reliable assessments of interpersonal skills, reasoning, and emotional maturity have emerged only recently. Our work focuses on reasoning. We use a revolutionary new technology to design accurate and reliable assessments that measure how well leaders/managers think about common workplace scenarios, issues, or dilemmas. </p>
+          <p>&nbsp;</p>
+          <div id="Accordion1" class="Accordion">
+            <div class="AccordionPanel">
+              <div class="AccordionPanelTab">Assessments for leadership coaches &amp; consultants</div>
+              <div class="AccordionPanelContent">
+                <p>To date, we have completed the research required to design five assessments for leaders/managers— the <a href="../about/assessldma.php">LDMA</a> (managerial decision making), <a href="../about/assessllra.php">LLRA</a> (leadership reasoning), <a href="../about/assesslrja.php">LRJA</a> (reflective judgment), and in certain situations, the <a href="../about/assesslsua.php">LSUA</a> (self-understanding) and <a href="../about/assesslera.php">LERA</a> (ethical reasoning). </p>
+                <p>You may find it easier to understand some of the information on the remainder of this page if you first read our <a href="../about/assessments.php">bac</a><a href="../about/assessments.php">kgroun</a><a href="file:///Theo/Users/Theo/Sites/index-3.html">d information</a> on the assessments. </p>
+                <p>For a short summary of the basic strucure of leadership reasoning at different levels, <a href="../PDF/LeadershipDomainStructure.pdf">click here</a>.</p>
+                <p>&nbsp;</p>
+              </div>
+            </div>
+            <div class="AccordionPanel">
+              <div class="AccordionPanelTab">Lectical™ Assessment: A new standard in developmental assessment</div>
+              <div class="AccordionPanelContent">
+                <p>In 1990, our founder, Theo Dawson, began the journey that led to the design, testing, and implememtation of a developmental assessment system called the <a href="http://lectica.info">Lectical™ Assessment System</a>. The system is based on Harvard Professor <a href="http://www.gse.harvard.edu/~ddl/publication.htm">Kurt Fischer's</a> <em>Dynamic Skill Scale</em>, and can be used to score the developmental level of any sample of reasoning in any area of knowledge.</p>
+                <p>The Skill Scale is composed of 13 levels, which cover the entire life-span. Our  assessments have been designed to capture the top 5 levels of the scale, which are observed in adolescence and adulthood. Junior high school students primarily reason at levels 9 and 10, high school students usually reason at level 10 in several areas of knowledge, and college graduates or individuals with equivalent knowledge and experience are likely to demonstrate reasoning at level 11 in some areas. A small percentage of adults reason at levels 12 or 13 in one or more disciplines.</p>
+                <p>Our assessment system reliably  distinguishes 4  phases per level. This means we can identify 8-10 distinct phases in the workplace, each of which has specific implications for performance.</p>
+                <p>For general information about our assessments, <a href="../about/assessments.php">click here</a>.</p>
+                <p>&nbsp;</p>
+              </div>
+            </div>
+            <div class="AccordionPanel">
+              <div class="AccordionPanelTab">Important information about the development of reasoning skills</div>
+              <div class="AccordionPanelContent">
+                <p>Our research into the development of leadership reasoning has exposed several more or less distinct knowledge areas, each of which unfolds through the same general sequence of developmental levels. Interestingly, although it is usually desirable for skills in all of these knowledge areas to develop at the same rate, a substantial body of research shows that this is not always the case. In fact, <span class="emphasis">reasoning  skills in different knowledge areas often develop at different rates</span>. For example, a philosophy major may score near the top of our scale on  reflective judgment, but perform no better than the average college sophomore on managerial decision making, whereas a mid-level manager may perform as expected on managerial decision making but lag behind in reflective judgment.</p>
+                <p>For this reason,<span class="emphasis"> it is necessary to assess development in the specific areas that are important to you</span>. If you want to know how a mid-level manger approaches workplace conflicts involving multiple competing perspectives, you need an assessment of workplace decision-making. If you want to know how she is likely to approach learning and inquiry, you need an assessment of reflective judgment. If you want to know how she thinks about and values the leadership role, you need an assessment of leadership reasoning. If you want a profile, you need a multidimensional assessment.</p>
+              </div>
+            </div>
+            <div class="AccordionPanel">
+              <div class="AccordionPanelTab">Our leadership model</div>
+              <div class="AccordionPanelContent">
+                <p>We think of leadership as a set of interwoven skills that develop over time. These skills are most likely to be developed when leaders cultivate a habit of critical reflection on their own practice, purposefully broaden and deepen their existing knowledge through information and perspective seeking, <a href="http://theodawson.net/?p=248">develop excellent collaboration skills</a>, and obtain good mentoring. Leaders are more likely to do these things if they work in a culture that rewards learning.</p>
+                <p>No single skill or personality profile makes one leader greater than another. Good leaders are balanced. They maintiain all of their skills at a level that meets the task demands of their work.</p>
+                <p>&nbsp;</p>
+              </div>
+            </div>
+            <div class="AccordionPanel">
+              <div class="AccordionPanelTab">LDMA (Lectical Managerial Decision Making Assessment)</div>
+              <div class="AccordionPanelContent">
+                <p><em>For management students, managers, and individuals who are thinking about moving into management</em></p>
+                <p>The <a href="../about/assessldma.php">LDMA</a> examines the quality of  adults' decision making skills when confronted with real-life leadership problems that require the coordination of different perspectives, values, and power relationships. For example, a dilemma presented in one form of the LDMA requires the test taker to deal with a hostile employee response  to  demands made by a new senior manager. Another dilemma asks the test taker how to deal with an employee whose level of productivity has suddenly decreased during a period of high customer demand. </p>
+                <p> The LDMA is composed of two sections. Section 1 consists of a dilemma followed by several probes requiring short essay responses. Section 2 is a survey-like questionnaire. </p>
+                <p><span class="emphasis">The LDMA may be the single most important assessment in our leadership portfolio.</span> To a great extent, leadership success depends upon one's ability to make high quality decisions. If you are going to use one assessment of leadership skills, we encourage you to consider the LDMA.</p>
+                <p><span class="TabbedPanelsContent"><a href="../about/assessldma.php">Learn more</a> about the LDMA. </span></p>
+                <p><a href="http://devtestservice.org/bulkcustomers/guestselectreport.php?bulkcustomerkey=1000000090">View  sample reports.</a></p>
+                <p>&nbsp;</p>
+              </div>
+            </div>
+            <div class="AccordionPanel">
+              <div class="AccordionPanelTab">LLRA (Lectical Leadership Reasoning Assessment)</div>
+              <div class="AccordionPanelContent">
+                <p class="TabbedPanelsContent"><em>For  students, managers and other leaders, and individuals who are thinking about moving into a leadership role</em></p>
+                <p class="TabbedPanelsContent">The <a href="../about/assessllra.php">LLRA</a> examines how leaders think about the leadership role. In section 1 of the LLRA, testees are asked to name several qualities of good leaders and explain their choices in a series of short essays. Section 2 is a survey-like questionnaire. </p>
+                <p class="TabbedPanelsContent">There is a large <a href="../about/referenceslead.html">research literature</a> on the relation between leadership reasoning and leader performance. This literature shows that (1)  a leader's mental model of the leadership role has a direct impact on his or her behavior and therefore effectiveness, (2)  more developed mental models of the leadership role are associated with greater leader effectiveness,  (3) leaders are more effective when employees' mental models of leadership line up with the mental models of their leaders, and (4) leaders with more developed mental models of leadership can handle more complex leadership situations. </p>
+                <p class="TabbedPanelsContent"><a href="../about/assessllra.php">Learn more</a> about the LLRA. </p>
+                <p class="TabbedPanelsContent"><a href="http://devtestservice.org/bulkcustomers/guestselectreport.php?bulkcustomerkey=1000000090">View  sample reports.</a></p>
+                <p class="TabbedPanelsContent">&nbsp;</p>
+              </div>
+            </div>
+            <div class="AccordionPanel">
+              <div class="AccordionPanelTab">LRJA (Lectical Reflective Judgment Assessment)</div>
+              <div class="AccordionPanelContent">
+                <p><em>For  students, managers and other leaders, and individuals who are thinking about moving into a leadership role</em></p>
+                <p>Building upon the work of <a href="http://gsi.berkeley.edu/textonly/resources/learning/perry.html">Perry</a> and <a href="http://www.umich.edu/~refjudg/reflectivejudgmentmodel.html">Kitchener &amp; King</a>, we have designed a general assessment of student's reflective judgment—the <a href="../about/assesslrja.php">LRJA</a>. This assessment, which requires testees to reason through one of several challenging real-world dilemmas, is composed of a set of essay questions, followed by a short  survey. Level of performance on this assessment provides a measure of how an individual generally approaches knowledge and learning. </p>
+                <p>In the modern workplace, continuous learning is essential. It is especially important for anyone   climbing the management ladder. There is a substantial <a href="../about/referencesrj.html">research literature</a> on the relation between reflective judgment and learning. This literature shows that individuals whose reflective judgment skills are more developed can work with more complex and abstract information. The LRJA is especially useful in helping to determine (1) what kind of training will be useful to a particular individual and (2) if  the individual handles information and inquiry well enough to tackle the task demands of a particular management position.</p>
+                <p><a href="../about/assesslrja.php">Learn more</a> about the LRJA. </p>
+                <p><a href="http://devtestservice.org/bulkcustomers/guestselectreport.php?bulkcustomerkey=1000000090">View  sample reports.</a></p>
+                <p>&nbsp;</p>
+                <p></p>
+              </div>
+            </div>
+            <div class="AccordionPanel">
+              <div class="AccordionPanelTab">LERA (Lectical Ethical Reasoning Assessment)</div>
+              <div class="AccordionPanelContent">
+                <p><em>For  students, managers and other leaders, and individuals who are thinking about moving into a leadership role</em></p>
+                <p>The <a href="../about/assesslera.php">LERA</a> examines how people think about the <em>good </em>and the<em> right</em>. This includes their thinking about the good life and good citizenship, the meaning of morality, and how they deal with ethical issues. Most of what we have learned about the development of reasoning about the good comes from <a href="../about/referencesmj.html">research</a> by  Armon,  Keller, Edelstein, Kohlberg, Colby, Damon, Rest, Selman, and others, and of course, our own research on moral  and evaluative reasoning.</p>
+                <p>The LERA is composed of a series of essay questions that ask testees to show how they think about different aspects of <em>the good</em> and <em>the right</em>. </p>
+                <p>How we think about the good influences many of the choices we make in life, and reflection of the kind people  engage in when they take this assessment is  important for personal growth. </p>
+                <p><a href="../about/assesslera.php">Learn more</a> about the LERA. </p>
+                <p><a href="http://devtestservice.org/bulkcustomers/guestselectreport.php?bulkcustomerkey=1000000090">View  sample reports.</a></p>
+                <p></p>
+                <p>&nbsp;</p>
+              </div>
+            </div>
+            <div class="AccordionPanel">
+              <div class="AccordionPanelTab">LSUA (Lectical Self Understanding Assessment)</div>
+              <div class="AccordionPanelContent">
+                <p><em>For  students, managers and other leaders, and individuals who are thinking about moving into a leadership role</em></p>
+                <p>Our <a href="../about/assesslsua.php">self understanding</a> assessment is  informed by our own research on the development of self understanding in adulthood as well as the <a href="../about/referencesself.html">research</a> of Loevinger, Augusto Blasi, Albert Bandura, Robert Kegan, Kurt Fischer, Daniel Hart, Gil Noam, and Cherly Armon, among others. </p>
+                <p>In this assessment, test-takers are asked to think about themselves as  members of a variety of relationships. They are also  asked to think about the difference between their &quot;ideal&quot; and &quot;real&quot; selves. </p>
+                <p>How we think about ourselves and our relationships has important implications for  life-satisfaction and success. Self-reflection of the kind individuals  engage in when they take this assessment is considered by many psychologists to be important for personal growth. In other words, taking the assessment, by itself, can be an important learning experience. </p>
+                <p>Persons taking the <a href="../about/assesslsua.php">LSUA</a> must be working  with a mentor, counselor, or coach who can help them interpret the results. </p>
+                <p><a href="../about/assesslsua.php">Learn more</a> about the LSUA.</p>
+                <p><a href="http://devtestservice.org/bulkcustomers/guestselectreport.php?bulkcustomerkey=1000000090">View  sample reports.</a></p>
+                <p>&nbsp;</p>
+              </div>
+            </div>
+<div class="AccordionPanel">
+  <div class="AccordionPanelTab">Working with DTS</div>
+              <div class="AccordionPanelContent">
+                <p>If you are interested any of our services, would like to follow up on a special offer, or would like more information, <a href="../contactus.php">email</a> us anytime.</p>
+                <p>We offer a 20% discount to all non-profit organizations that can provide documentation of their status.</p>
+                <p>If you would like to stay informed, please join our <a href="../contactlist.php">mailing list</a>.</p>
+                <p>&nbsp;</p>
+              </div>
+            </div>
+</div>
+  <p>&nbsp;</p></td>
+<!-- InstanceEndEditable -->
+    <!-- end .column1 --></div>
+  <div class="column2">
+    <!-- end .column2 --></div>
+  <div class="sidebar1">
+      <!-- end #sidebar1 -->
+    <div id="CollapsiblePanel1" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">ABOUT US</div>
+      <div class="CollapsiblePanelContent">
+        <p><a href="http://www.lectica.org/visitors/about.php">About</a></p>
+        <p><a href="/landing.php">Select</a></p>
+        <p><a href="/_about/mission.php">Mission</a></p>
+        <p><a href="/_about/articles.php">Literature</a></p>
+        <p><a href="/_about/legal.php">Legal</a></p>
+        <p><a href="http://discotest.org/index_discotest.html">DiscoTest™</a>        </p>
+        <p><a href="/_about/work_with_us.php">Jobs and internships</a></p>
+        <p><a href="/_about/bios.php?type=client">Our clients</a></p>
+        <p><a href="/_about/bios.php?type=board">Executive Board</a></p>
+        <p><a href="/_about/bios.php?type=advisor">Advisory Board</a></p>
+        <p><a href="http://theodawson.net/?page_id=2">FAQ</a></p>
+        <p>&nbsp;</p>
+      </div>
+    </div>
+    <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      <div class="CollapsiblePanelContent">
+        <p><a href="http://www.lectica.org/visitors/about_lectatests.php">General information</a></p>
+        <p><a href="/about/showcase_ldma.php">LDMA: Decision making</a></p>
+        <p><a href="/about/assesslera.php">LERA: Ethical reasoning</a></p>
+        <p><a href="/about/assessllra.php">LLRA: Leadership reasoning</a></p>
+        <p><a href="/about/assesslrja.php">LRJA: Reflective judgment</a></p>
+        <p><a href="/about/assesslsua.php">LSUA: Self understanding</a></p>
+        <p><a href="/about/assesslima.php">LIMA: Integral model</a></p>
+        <p><a href="/assessments/takingassessments.php">How to take a Lectical assessment</a></p>
+<p>&nbsp;</p>
+      </div>
+    </div>
+    
+    <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">ADMIN</div>
+      <div class="CollapsiblePanelContent">
+        <p><a href="/_about/working_with_dts.php">Working with us</a></p>
+        <p><a href="customers/customerpolicies.php">Policies &amp; schedules</a></p>
+        <p><a href="checkout/payment.php">Make a payment</a></p>
+      </div>
+    </div>
+    <p>&nbsp;</p>
+  <!-- InstanceBeginEditable name="sidebar2" -->
+  <div align="center"><br />
+  </div>
+  <!-- InstanceEndEditable --><br />
+  <!-- InstanceBeginEditable name="sidebar3" --><!-- InstanceEndEditable --></div>
+<!-- end .sidebar1 --></div>
+<!-- end .inner_container --></div>
+
+
+  <div class="footer3_container">
+  <div class="footer3_column1">
+    <p><a href="https://lectica.org.php">About us</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="/_about/articles.php">Research</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="/contactus.php">Contracting</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="/security/logIn.php">Log in</a></p>    
+    <!-- end .footer3_column1 --></div>
+  <div class="footer3_column2">
+<p align="right">©2010-2012, Lectica, Inc. All rights reserved.</p>
+<!-- end .footer3_column2 --></div>
+  <!-- end .footer3_container --></div>
+ 
+<!-- end .container --></div>
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

@@ -1,0 +1,1382 @@
+<?php require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" ); 
+include_once '../includes/dts_functions.php';
+include('report_custom_functions.php');
+
+mysql_select_db($database_Assessment, $Assessment);
+
+
+
+
+
+/* Buffered identification of URL and SESSION variables. Sometimes they're not present. Introducing them in this sort of way, helps us to avoid breaking pages when expected variables aren't present. */
+
+
+
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_name = str_replace("_JOURNAL", " Journal", $instrument_id);
+$instrument_id_base = str_replace("_JOURNAL", "", $instrument_id);
+
+
+$userkey = -1;
+// You can only view bulk reports for another person (userkey specified) if you're a DTS analyst.
+if (isset($_GET['userkey']) AND $_GET['userkey'] <> "") {
+	if (WA_Auth_RulePasses("Logged in as analyst")) {
+		$userkey = $_GET['userkey'];
+	} else {
+		WA_Auth_RestrictAccess("../security/logIn.php");
+	}
+} else if (isset($_SESSION['log_userkey'])) {
+	$userkey = $_SESSION['log_userkey'];
+} else {
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+$view = "normal";
+if (isset($_GET['view'])) {
+	$view = $_GET['view'];
+}
+$list = "normal";
+if (isset($_GET['list'])) {
+	$list = $_GET['list'];
+}
+
+$query_string = "";
+if (isset($_SERVER['QUERY_STRING'])) {
+	$query_string = $_SERVER['QUERY_STRING'];
+} 
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+$limit = 100; 
+if (isset($_GET['limit'])) { $limit = SQLstr($_GET['limit'], "int"); } 
+if (isset($_POST['limit'])) { $limit = SQLstr($_POST['limit'], "int"); } 
+
+
+
+if ($userkey == 1000000800 AND false) {
+	$to = "swolcott@wolcottlynch.com"; 
+	$from = "service@lectica.org";
+	$cc = "topher@lectica.org";
+	$subject = "Lectica test #5: Please confirm that you see this email";
+	$body = "Hello Susan, 
+	Hopefully this is the last step. Can you please write back to confirm for me that you received this email?
+	Thanks!
+	Topher Hunt";
+	sendEmail($to, $from, $cc, $subject, $body);
+}
+
+
+
+
+
+
+//		PREPARE SEARCH / FILTER STATE TO BE SAVED IN EVENT OF PAGE REFRESH
+// the page may be refreshed using GET to prevent the annoying redirect message.
+// store settings for reference on current page
+
+$search = array(
+	'(s)firstname' => '',  
+	'(s)lastname' => '',   
+	'(s)r:userkey' => '',
+	'(s)lakey' => '',
+	'(s)da:instrument_id' => '',
+	'(s)bulkuserkey' => '',  
+	'(s)group' => '',  
+	'(s)manlevelkey' => '', 
+	'(s)branch' => '',
+	'(s)supervisor' => '',  
+	'(s)last_login(low)' => '',  
+	'(s)last_login(high)' => '',
+	'(s)assignmentkey' => '',
+	'(h)status' => '',
+	'(s)timestamp(low)' => '',
+	'(s)timestamp(high)' => '',
+	'(s)date_completed(low)' => '',
+	'(s)date_completed(high)' => '',
+	'(s)date_release(low)' => '',
+	'(s)date_release(high)' => '',
+	'(s)email' => '',
+	'(s)lasnumber_1(low)' => '',
+	'(s)lasnumber_1(high)' => '',
+	'(s)code491(low)' => '',
+	'(s)code491(high)' => '',
+	'(s)code493(low)' => '',
+	'(s)code493(high)' => ''
+	);
+
+// Here we also have an opportunity to set defaults for what columns show.
+$show = array(
+	'userkey' => 0,
+	'email' => 0,
+	'bc' => 0,   
+	'group' => 1,   
+	'date_started' => 0,
+	'date_completed' => 0,
+	'date_release' => 0,
+	'lakey' => 0,
+	'test_time' => 0,
+	'status' => 1, 
+	'all_results' => 0,
+	'score' => 1,
+	'assignment' => 0
+	);
+	
+$urlSearchStatus = "limit=".$limit; // store settings in case we need to refresh
+
+// If GET variables are set, plop those values into the search array.
+if (isset($_GET) AND count($_GET) > 0) {
+	
+	// reset the show-columns status, to wipe the defaults. If the user has unchecked a show-by-default column, this is the easiest way to make it stay hidden.
+	reset($show); $i = 0;
+	while ($i < count($show)) { $show[key($show)] = 0; $i++; next($show); }
+	
+	$i = 0;
+	while ($i < count($_GET)) {
+		//die("in GET search loop");
+		if (strpos(" ".key($_GET),"(s)") OR strpos(" ".key($_GET),"(h)")) { 
+			$urlSearchStatus .= "&".key($_GET)."=".current($_GET); 
+			$search[key($_GET)] = current($_GET);
+		}
+		if (strpos(" ".key($_GET),"show_")) { 
+			$urlSearchStatus .= "&".key($_GET)."=".current($_GET); 
+			$show[str_replace("show_", "", key($_GET))] = current($_GET);
+		}
+		$i ++;
+		next($_GET);
+	} 
+}
+
+// If POST variables are set, those values should override the GET values.
+if (isset($_POST['search']) OR isset($_POST['submit_changes'])) {
+	
+	// reset the show-columns status, to wipe the defaults. If the user has unchecked a show-by-default column, this is the easiest way to make it stay hidden.
+	reset($show); $i = 0;
+	while ($i < count($show)) { $show[key($show)] = 0; $i++; next($show); }
+	
+	$urlSearchStatus = "limit=".$limit;
+	// echo "search started... ";
+	// print_r($_POST);
+	reset($_POST);
+	$i = 0;
+	while ($i < count($_POST)) {
+		if ((strpos(" ".key($_POST),"(s)") OR strpos(" ".key($_POST),"(h)")) AND current($_POST) <> "") { 
+			// echo " | post found: ".key($_POST);
+			$urlSearchStatus .= "&".key($_POST)."=".current($_POST); 
+			$search[key($_POST)] = current($_POST);
+		}
+		
+		if (strpos(" ".key($_POST),"show_")) { 
+			$urlSearchStatus .= "&".key($_POST)."=".current($_POST); 
+			$show[str_replace("show_", "", key($_POST))] = current($_POST);
+		}
+		$i ++;
+		next($_POST);
+	} 
+	// echo " done with POST parsing. ".$urlSearchStatus;
+	// exit(); // <-- All of these commented-out lines are useful for troubleshooting. 
+}
+
+
+
+// If POST was set for the search box, REFRESH the page again so that the search state variables are pulled from GET instead of POST.
+// At the same time, this will prepare the sort/search functionality for each query. This function looks at $_POST and $_GET and sets $_SESSION['sort'] and $_SESSION['search'] if appropriate input is found.
+// **** initializeSortSearch cannot be run until AFTER the post and get variables are sorted out for this page, because it changes the key labels and mess up those other functions.
+initializeSortSearch($urlSearchStatus);
+if (isset($_POST['search'])) { 
+	header("Location: ".$currentPage."?".$urlSearchStatus);
+	exit();
+}
+
+
+
+
+
+
+
+
+// Fetch information on the logged-in bulkcustomer
+// This should ensure the email is fetched, even if this person isn't a client (but an admin instead).
+$query_rsBulkCustomerInfo = sprintf("SELECT b.bulkcustomerkey, b.username4students, r.firstname, r.lastname, r.user_level, r.email 
+	FROM registrants r
+		LEFT JOIN bulkcustomerinfo b ON r.userkey = b.bulkcustomerkey
+	WHERE r.userkey = %s",
+		SQLstr($userkey, "int"));
+$rsBulkCustomerInfo = mysql_query($query_rsBulkCustomerInfo, $Assessment) or die(mysql_error());
+$row_rsBulkCustomerInfo = mysql_fetch_assoc($rsBulkCustomerInfo);
+$totalRows_rsBulkCustomerInfo = mysql_num_rows($rsBulkCustomerInfo);
+
+// Set up the filter for the bulk customer, so they only see their OWN test takers
+$filter_user = " d.resellerkey = ".SQLstr($userkey, "int")." ";
+if (WA_Auth_RulePasses("Logged in as analyst")) { 
+	$see_all = TRUE; 
+	// **** Leaving out the demo accounts filter: d.userkey <> 888 AND d.userkey <> 999
+	$filter_user = " 1=1 ";	
+}
+
+// Prepare boilerplate text for emails
+$rsBp = mysql_query("SELECT * FROM la_boilerplate WHERE type = 'admin'") or die("ERROR: ".mysql_error());
+$bp = array();
+while ($row = mysql_fetch_assoc($rsBp)) { $bp[$row['name']] = $row['la_boilerplate_text']; }
+
+
+
+
+// 				SEND EMAIL REMINDER
+// to a person who has started but not completed the assessment yet.		
+ 
+if (isset($_GET['reminder']) AND $_GET['reminder'] <> "") {
+	
+	// Fetch information on the test taker
+	$query_rsTestTaker = sprintf("SELECT r.email, r.firstname, r.lastname, d.instrument_id 
+		FROM registrants r JOIN la_data d ON d.userkey = r.userkey 
+		WHERE d.lakey = %s AND {$filter_user} ",
+			SQLstr($_GET['lakey'], "int"));
+	$rsTestTaker = mysql_query($query_rsTestTaker) or die(mysql_error());
+	$row_rsTestTaker = mysql_fetch_assoc($rsTestTaker);
+	
+	// update date of last reminder to today
+	$updateSQL = sprintf("UPDATE la_data SET date_reminded=%s WHERE lakey=%s",
+			SQLstr(date('Y-m-d'), "date"),
+			SQLstr($_GET['lakey'], "int"));
+	$Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+	
+	// Use pretty names (not just address) in addressing the test taker.
+	$email_to = $row_rsTestTaker['email'];
+	$email_from = $row_rsBulkCustomerInfo['email'];
+	$email_cc = array($row_rsBulkCustomerInfo['email'], "service@lectica.org");
+	
+	
+	// $email_to = "topher@lectica.org";
+	// $email_from = "service@lectica.org";
+	// $email_cc = "topher@lectica.org";
+	
+	$subject = "";
+	$body = "";
+	
+	$instrument_name = str_replace("_JOURNAL", " Journal", $row_rsTestTaker['instrument_id']);
+	$instrument_base = str_replace("_JOURNAL", "", $row_rsTestTaker['instrument_id']);
+	$date_started = date('F jS', strtotime($_GET['date_started']));
+	
+	$subject .= $bp['email_remindercomplete_title']; 
+	$subject = str_replace("[INSTRUMENT_NAME]", $instrument_base, $subject);
+	
+	$body .= $bp['email_remindercomplete'];
+	$body = str_replace("[INSTRUMENT_NAME]", $instrument_name, $body);
+	$body = str_replace("[INSTRUMENT_BASE]", $instrument_base, $body);
+	$body = str_replace("[DATE_STARTED]", $date_started, $body);
+	
+	// Don't let demo testers send obnoxious fake emails.
+	if ($_SESSION['log_userkey'] <> 999) {
+		sendEmail($email_to, $email_from, $email_cc, $subject, $body);
+	}
+	
+	$refreshURL = $currentPage;
+	$refreshURL .= isset($_GET['userkey']) ? "&userkey=".$_GET['userkey'] : "";
+	$refreshURL .= isset($_GET['pageNum_rsLaData']) ? "&pageNum_rsLaData=".$_GET['pageNum_rsLaData'] : "";
+	
+	header("Location: ".$refreshURL);
+	exit();
+}
+
+
+
+// RELEASE REPORT
+// to the test taker. Only available for finalized records. 
+
+if (isset($_GET['release']) AND $_GET['release'] == "yes") {
+	
+	// Single lakey or multiple?
+	$lakeys = array();
+	if (isset($_GET['lakey'])) { $lakeys[] = $_GET['lakey']; }
+	else if (isset($_GET['lakeys'])) { $lakeys = explode("-", $_GET['lakeys']); }
+	
+	foreach ($lakeys as $lakey) { 
+		if ($lakey == 0) { continue; } // ignore any blanks
+		// echo "Releasing report #{$lakey}.<br>";
+		
+		// Fetch information on the test taker
+		$query_rsTestTaker = sprintf("SELECT d.lakey, r.email, r.firstname, r.lastname, d.instrument_id 
+		FROM registrants r JOIN la_data d ON d.userkey = r.userkey 
+		WHERE d.lakey = %s AND {$filter_user} ",
+				SQLstr($lakey, 'int'));
+		$rsTestTaker = mysql_query($query_rsTestTaker, $Assessment) or die(mysql_error());
+		$row_rsTestTaker = mysql_fetch_assoc($rsTestTaker);
+		
+		// update the record to show that it has been released
+		$updateSQL = sprintf("UPDATE la_data SET finalized='1', date_released=%s WHERE lakey=%s",
+				SQLstr(date('Y-m-d'), "date"),
+				SQLstr($row_rsTestTaker['lakey'], "int"));
+		$Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+		
+		// email notify the test taker; CC to the bulk user (who just sent the email).
+		// Also CC us.
+		// Use pretty names (not just address) in addressing the test taker.
+		$email_to = array($row_rsTestTaker['email'] => 
+											$row_rsTestTaker['firstname']." ".$row_rsTestTaker['lastname']);
+		$email_from = array($row_rsBulkCustomerInfo['email']);
+		$email_cc = array($row_rsBulkCustomerInfo['email'], "service@lectica.org");
+		
+		$subject = "";
+		$body = "";
+		
+		$name = $row_rsTestTaker['firstname']." ".$row_rsTestTaker['lastname'];
+		$instrument_name = str_replace("_JOURNAL", " Journal", $row_rsTestTaker['instrument_id']);
+		$instrument_base = str_replace("_JOURNAL", "", $row_rsTestTaker['instrument_id']);
+		
+		$subject .= $bp['email_report_title'];
+		$subject = str_replace("[NAME]", $name, $subject);
+		$subject = str_replace("[INSTRUMENT_NAME]", $instrument_base, $subject);
+		$body .= $bp['email_report'];
+		$body = str_replace('..', '.', $body);
+		$body = str_replace("[NAME]", $name, $body);
+		$body = str_replace("[INSTRUMENT_NAME]", $instrument_name, $body);
+		$body = str_replace("[INSTRUMENT_BASE]", $instrument_base, $body);
+		
+		sendEmail($email_to, $email_from, $email_cc, $subject, $body); // */
+	}
+	
+	// die();
+	
+	$refreshURL = "bc_select.php?";
+	$refreshURL .= isset($_GET['userkey']) ? "userkey=".$_GET['userkey']."&" : "";
+	$refreshURL .= isset($_GET['pageNum_rsLaData']) ? 
+		"pageNum_rsLaData=".$_GET['pageNum_rsLaData']."&" : "";
+	header("Location: ".$refreshURL);
+	exit();
+	
+}
+
+if (isset($_GET['hide_sumreport'])) {
+	
+	// Hide this record from summary reports
+	$updateSQL = sprintf("UPDATE la_data d SET d.hidden_sumreport = 1 
+		WHERE d.lakey = %s AND {$filter_user} ",
+			SQLstr($_GET['hide_sumreport'], "int"));
+	$Result1 = mysql_query($updateSQL) or die("Error hiding this report. Please contact us for help.");
+	
+	$refreshURL = "bc_select.php";
+	header("Location: ".$refreshURL); exit();
+}
+
+if (isset($_GET['show_sumreport'])) {
+	$lakey = $_GET['show_sumreport'];
+	
+	// Un-hide this record on summary reports
+	$updateSQL = sprintf("UPDATE la_data d SET d.hidden_sumreport = 0 
+		WHERE d.lakey = %s AND {$filter_user} ",
+			SQLstr($lakey, "int"));
+	$Result1 = mysql_query($updateSQL) or die("Error showing this report. Please contact us for help.");
+	
+	$refreshURL = "bc_select.php";
+	header("Location: ".$refreshURL); exit();
+}
+
+
+
+
+
+//										QUERIES FOR THE FILTER MENUS
+
+$query_rsFilterBc = sprintf("SELECT r.bulkuserkey, COUNT(DISTINCT d.lakey) AS numpeople, 
+IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer
+FROM registrants r
+JOIN la_data d ON r.userkey = d.userkey AND d.instrument_id LIKE %s 
+JOIN registrants rb ON r.bulkuserkey = rb.userkey
+WHERE ".$filter_user." AND rb.userkey IS NOT NULL 
+GROUP BY bulkcustomer ",
+		"'%{$instrument_id_base}%'");
+$rsFilterBc = mysql_query($query_rsFilterBc, $Assessment) or die("rsFilterBc: ".mysql_error());
+$row_rsFilterBc = mysql_fetch_assoc($rsFilterBc);
+$totalRows_rsFilterBc = mysql_num_rows($rsFilterBc);
+
+$query_rsFilterGroup = sprintf("SELECT r.`group`, COUNT(DISTINCT r.userkey) AS numpeople 
+FROM registrants r 
+JOIN la_data d ON r.userkey = d.userkey AND d.instrument_id LIKE %s
+WHERE ".$filter_user." AND r.`group` <> '' GROUP BY r.`group`", 
+		"'%{$instrument_id_base}%'");
+$rsFilterGroup = mysql_query($query_rsFilterGroup, $Assessment) or die("rsFilterGroup: ".mysql_error());
+$row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup);
+$totalRows_rsFilterGroup = mysql_num_rows($rsFilterGroup);
+
+$query_rsFilterAssign = sprintf("SELECT a.*, dil.dilemma_name, dil.dilemmakey, 
+	COUNT(DISTINCT r.userkey) AS numpeople 
+FROM la_assignments a 
+LEFT JOIN students_assignments sa ON sa.assignmentkey = a.assignmentkey 
+LEFT JOIN registrants r ON r.userkey = sa.userkey 
+LEFT JOIN la_dilemmas dil ON a.assign_dilemmakey = dil.dilemmakey
+LEFT JOIN la_data d ON r.userkey = d.userkey
+WHERE (".$filter_user." OR a.bulkcustomerkey = {$userkey})
+	AND a.instrument_id LIKE %s
+GROUP BY a.assignmentkey ORDER BY a.assign_group, a.date_start ",
+		SQLstr('%'.$instrument_id_base.'%', "text"));
+$rsFilterAssign = mysql_query($query_rsFilterAssign, $Assessment) or die("rsFilterAssign: ".mysql_error());
+$row_rsFilterAssign = mysql_fetch_assoc($rsFilterAssign);
+$totalRows_rsFilterAssign = mysql_num_rows($rsFilterAssign);
+
+$query_rsFilterTime = sprintf("SELECT test_time, COUNT(DISTINCT d.lakey) AS numpeople 
+FROM registrants r
+JOIN la_data d ON r.userkey = d.userkey 
+WHERE ".$filter_user." GROUP BY test_time");
+$rsFilterTime = mysql_query($query_rsFilterTime, $Assessment) or die("rsFilterTime: ".mysql_error());
+$row_rsFilterTime = mysql_fetch_assoc($rsFilterTime);
+$totalRows_rsFilterTime = mysql_num_rows($rsFilterTime);
+
+
+
+
+
+
+
+
+// --------------------- QUERIES FOR THE RECORD SELECTION PANEL ------------------------ //
+
+/* PARTIAL RESTRICTED ACCESS
+	The results-related columns of this query will NOT show if the test taker 
+	has not authorized the bulk customer to view their results.
+	In rsSelectRecord01, "d" is the generic record of the fact that that person took the test.
+	"d" is where all the result data are fetched from. */
+
+
+$maxRows_rsLaData = ($limit);
+$pageNum_rsLaData = 0;
+if (isset($_GET['pageNum_rsLaData'])) {
+  $pageNum_rsLaData = $_GET['pageNum_rsLaData'];
+}
+$startRow_rsLaData = $pageNum_rsLaData * $maxRows_rsLaData;
+
+$query_rsLaData = sprintf("SELECT d.lakey, d.instrument_id, d.test_time, d.resellerkey, 
+		d.bc_allowedtoview, d.hidden_sumreport, 
+		d.completed, d.finalized, d.timestamp, d.date_reminded, d.date_completed, d.date_released, 
+		r.userkey, r.firstname, r.lastname, r.group, r.email, r.bulkuserkey, 
+		IF(rb.company <> '', LEFT(rb.company, 15), CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer, 
+		ROUND( s.lasnumber_1, 1) AS lasnumber_1, s.scored_1, c.coded, 
+		c.code491, c.code492, c.code493, # rubrics-averages slots
+		sd.result_avg_page1, sd.result_avg_page2, sd.result_avg_page3, 
+		a.assignmentkey, a.date_release, a.date_release, 
+		CASE 
+			WHEN d.completed = 0 THEN 'started'
+			WHEN d.completed = 1 AND d.finalized = 0 AND d.bc_allowedtoview = 0 THEN 'access denied'
+			WHEN d.completed = 1 AND d.finalized = 0 AND d.bc_allowedtoview = 1 
+																							 				AND d.coded_1 = 0 THEN 'completed'
+			WHEN d.completed = 1 AND d.finalized = 0 AND d.coded_1 = 1 THEN 'processed'
+			WHEN d.completed = 1 AND d.finalized = 2 THEN 'finalized'
+			WHEN d.completed = 1 AND d.finalized = 1 THEN 'released'
+			WHEN d.completed = 1 AND d.finalized = 3 THEN 'locked'
+			WHEN d.completed = 2 THEN 'locked'
+		END AS status,
+		CASE 
+			WHEN d.completed = 0 THEN 1
+			WHEN d.completed = 1 AND d.finalized = 0 AND d.bc_allowedtoview = 0 THEN 2
+			WHEN d.completed = 1 AND d.finalized = 0 AND d.bc_allowedtoview = 1 AND c.coded IS NULL THEN 3
+			WHEN d.completed = 1 AND d.finalized = 0 AND c.coded = 1 THEN 4
+			WHEN d.completed = 1 AND d.finalized = 2 THEN 5
+			WHEN d.completed = 1 AND d.finalized = 1 THEN 6
+			WHEN d.completed = 1 AND d.finalized = 3 THEN 7
+			WHEN d.completed = 2 THEN 8
+		END AS status_order
+	FROM la_data d
+		JOIN registrants r ON d.userkey = r.userkey
+		LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+		LEFT JOIN la_codes c ON ( d.lakey = c.lakey AND d.bc_allowedtoview = 1 AND d.coded_1 = 1 )
+		LEFT JOIN la_scores s ON ( d.lakey = s.lakey AND d.bc_allowedtoview = 1 AND d.scored_1 = 1 )
+		LEFT JOIN la_survey_data sd ON d.lakey = sd.lakey
+		LEFT JOIN la_assignments a ON d.assignmentkey = a.assignmentkey
+	WHERE {$filter_user} AND d.instrument_id LIKE %s AND d.userkey <> 888 AND d.userkey <> 999
+		AND d.completed <> 2 ",
+			SQLstr('%'.$instrument_id_base.'%', 'text'));
+$queryFilter_rsLaData = querySortSearch($query_rsLaData, "", "status DESC");
+$query_rsLaData .= $queryFilter_rsLaData;
+$queryLimit_rsLaData = $query_rsLaData;
+// limit query results, unless the BC opted to show all results.
+if (!$show['all_results']) { 
+	$queryLimit_rsLaData .= sprintf(" LIMIT %d, %d", $startRow_rsLaData, $maxRows_rsLaData);
+}
+$rsLaData = mysql_query($queryLimit_rsLaData) or die("rsLaData: ".mysql_error());
+$row_rsLaData = mysql_fetch_assoc($rsLaData);
+ // die($query_rsLaData);
+$totalRows_rsLaData = mysql_num_rows($rsLaData);
+
+$rsLaDataAll = mysql_query($query_rsLaData, $Assessment) or die("rsLaDataAll: ".mysql_error());
+$totalRows_rsLaDataAll = mysql_num_rows($rsLaDataAll);
+
+
+
+
+
+if (isset($_GET['download'])) { 
+	
+	$query_rsDownload = sprintf("SELECT r.firstname, r.lastname, r.group,
+		a.instrument_id AS assigned_to, a.date_start AS starts, a.date_end AS due, 
+		%s AS date_started, 
+	CASE 
+		WHEN d.completed = 0 THEN 'started'
+		WHEN d.completed = 1 AND d.finalized = 0 AND d.bc_allowedtoview = 0
+			THEN 'access denied'
+		WHEN d.completed = 1 AND d.finalized = 0 AND d.bc_allowedtoview = 1 AND c.coded IS NULL
+			THEN 'completed'
+		WHEN d.completed = 1 AND d.finalized = 0 AND c.coded = 1 
+			THEN 'processed'
+		WHEN d.completed = 1 AND d.finalized = 2 THEN 'finalized'
+		WHEN d.completed = 1 AND d.finalized = 1 THEN 'released'
+		WHEN d.completed = 1 AND d.finalized = 3 THEN 'locked'
+		WHEN d.completed = 2 THEN 'locked'
+	END AS status
+	
+	FROM registrants r 
+	LEFT JOIN registrants rs ON r.supervisor_userkey = rs.userkey
+	LEFT JOIN demogs_man_level dem on r.manlevelkey = dem.manlevelkey
+	LEFT JOIN students_assignments sa ON r.userkey = sa.userkey
+	LEFT JOIN la_assignments a ON sa.assignmentkey = a.assignmentkey
+	
+	LEFT JOIN la_data d ON (r.userkey = d.userkey AND d.assignmentkey = a.assignmentkey)
+	LEFT JOIN la_codes c ON ( d.lakey = c.lakey AND d.bc_allowedtoview = 1 AND c.coded = 1 )
+	LEFT JOIN la_scores s ON ( d.lakey = s.lakey AND d.bc_allowedtoview = 1 AND s.scored_1 = 1 )
+	
+	WHERE r.bulkuserkey = %s ",
+			"DATE_FORMAT(d.timestamp, '%Y-%c-%d')",
+			SQLstr($userkey, "int"));
+			
+	// Run the same filter on this download query, as what was run on the rsLaData query, but turn off sort.
+	$query_rsDownload .= querySortSearch($query_rsLaData, "", "", 0);
+	// always sort by specified columns.
+	$query_rsDownload .= " ORDER BY r.group, r.lastname, r.firstname ";
+	
+	$rsDownload = mysql_query($query_rsDownload, $Assessment) or die(mysql_error());
+	$totalRows_rsDownload = mysql_num_rows($rsDownload);
+	// die($query_rsDownload);
+	downloadData( $rsDownload, date('Y-m-d')."_completionList" );
+	exit();
+	
+	
+	
+}
+
+
+
+
+
+
+
+// Variables to preserve query strings from the prior page. Used with the recordset paging links.
+
+$queryString_rsLaData = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsLaData") == false && 
+        stristr($param, "totalRows_rsLaData") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsLaData = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsLaData = sprintf("&totalRows_rsLaData=%d%s", $totalRows_rsLaData, $queryString_rsLaData);
+
+
+
+
+
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Select&nbsp;<?php echo $instrument_id; ?>&nbsp;report</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+<script src="../includes/fullcalendar/fullcalendar.min.js" type="text/javascript"></script>
+<link href="../includes/fullcalendar/fullcalendar.css" rel="stylesheet" type="text/css" />
+
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	
+	$('#filter_header').click(function(){
+		$('#filter_box').toggle(200);
+	});
+	
+	$('#release_all_real').hide();
+	$('#release_all').click(function(){
+		$(this).hide();
+		$('#release_all_real').show();
+	});
+	
+	$('.hotspot').click(function(){
+		$(this).next().show();
+		$(this).hide();
+	}); 
+	
+});
+</script>
+
+<style type="text/css">
+.twoColFixRtHdr #container #mainContent h3 {
+	padding-top: 10px;
+}
+.twoColFixRtHdr #container #mainContent table {
+	margin-top: 0px;
+}
+.twoColFixRtHdr #container #mainContent #CollapsiblePanel3 {
+	margin-right: 50px;
+}
+
+.box { width: 800px; }
+
+.hotspot {
+	cursor: pointer; cursor: hand	
+	height:100%; 
+	width:100%;
+	text-decoration: none;
+}
+
+.tooltip {
+	display:none;
+}
+
+
+</style>
+
+
+
+
+
+<link href="../SpryAssets/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><?php include 'bc_links.php'; ?><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>SELECT AN INDIVIDUAL REPORT </h1>
+    
+  
+    
+    
+    <div id="CollapsiblePanel3" class="CollapsiblePanel">
+    	<?php if ($instrument_id <> "SMA" AND $instrument_id <> "SMJ" AND $instrument_id <> "SMS") { ?>
+      <div class="CollapsiblePanelTab">DEADLINES</div>
+      <div class="CollapsiblePanelContent">
+        
+      <?php deadlinesCalendar($currentPage, $userkey); ?>
+    	
+      </div>
+      <?php } ?>
+    </div>
+    
+    
+    <div id="CollapsiblePanel1" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">DOWNLOADS</div>
+      <div class="CollapsiblePanelContent">
+      
+      <table width="800">
+        <tr>
+        <td>
+      <h3><a href="<?php echo $currentPage; ?>?download=all">download all test taker status</a></h3>
+      <p>        This downloads a .csv file of all test takers' completion status. This download does not contain results. <br />
+        The columns in this spreadsheet are: </p>
+      <ul>
+        <li>First name</li>
+        <li>Last name</li>
+        <li>Group (&quot;session&quot;) </li>
+        <li>Branch</li>
+        <li>Department</li>
+        <li>Supervisor</li>
+        <li>Management  level</li>
+        <li>Assigned to (which assessment)</li>
+        <li>Assignment start date</li>
+        <li>Assignment end date</li>
+        <li>Existing record found (if any)</li>
+        <li>Date the existing record was created</li>
+        <li>This person's completion status for this assignment      </li>
+      </ul>
+      <h3><a href="report_bulkcustomer.php?download=all">download all results</a></h3>
+      <p>This downloads a .csv file of all <?php echo $instrument_id; ?> test results under your bulk customer account. <br />
+        The columns in this spreadsheet are:</p>
+      <ul>
+        <li>The assessment taken</li>
+        <li>Test time (for this assessment)</li>
+        <li>Date completed</li>
+        <li>First name</li>
+        <li>Last name </li>
+        <li>Management level</li>
+        <li>Group (&quot;session&quot;)</li>
+        <li>Whether you have permission to view their results</li>
+        <li>Lectical score</li>
+        <li>Quality of perspective taking</li>
+        <li>Quality of perspective seeking</li>
+        <li>Argumentation quality</li>
+        <li>Contextual thinking score</li>
+        </ul>
+      <p>&nbsp;</p></td>
+        </tr></table>
+      
+      </div>
+    </div>
+    
+    <table width="800"><tr><td>
+      <p>If you do not see results for all of your clients on this page, some of them may not have entered the correct Reseller/ Teacher/Researcher ID. If you are missing results, <a href="../contactus.php">contact us</a> and we will try to help.</p>
+    </td></tr></table>
+    
+          
+    <h3><a id="filter_header" style="cursor:pointer; ">FILTER RESULTS</a></h3>
+    
+    <?php
+			if (isset($_SESSION['search']) AND $_SESSION['search'] <> "") { 
+				$searchDesc = $_SESSION['search'];
+				$searchDesc = str_replace(array("(s)", "(h)"), "", $searchDesc);
+				$searchDesc = str_replace("(low):", " >= '", $searchDesc);
+				$searchDesc = str_replace("(high):", " <= '", $searchDesc);
+				$searchDesc = str_replace("(=):", " = '", $searchDesc);
+				$searchDesc = str_replace(":", " contains '", $searchDesc);
+				$searchDesc = str_replace(",", "' AND ", $searchDesc);
+				$searchDesc = substr($searchDesc, 0, strlen($searchDesc)-5);
+				?><p><strong>Current filter: </strong> <?php echo $searchDesc; ?> | 
+        	<a href="<?php echo $currentPage; ?>?search=clear">clear filter</a></p><?php 
+			} else { ?>
+				<p><a href="?search=(h)status:finalized,">only show finalized</a></p><?php
+			} ?>
+      
+   	<div id="filter_box" style="display: none; ">      
+    
+    <table border="0">
+    	<form name="form1" action="<?php echo $currentPage; ?>" method="post">
+      <tr>
+        <td align="right">Name</td>
+        <td width="340">first <span id="sprytextfield">
+          <input name="(s)firstname" type="text" 
+        	value="<?php echo $search['(s)firstname']; ?>" size="11" /></span> 
+        last <span id="sprytextfield2">
+        <input name="(s)lastname" type="text" 
+        	value="<?php echo $search['(s)lastname']; ?>" size="11" />
+        </span></td>
+      </tr>
+      <?php if (WA_Auth_RulePasses("Logged in as analyst")) { ?>
+      <tr>
+        <td align="right">          
+        	Show userkey
+          <input type="checkbox" name="show_userkey" value="1" 
+						<?php if ($show['userkey']) { ?>checked="checked"<?php } ?> /></td>
+        <td><input name="(s)r:userkey" type="text" 
+        	value="<?php echo $search['(s)r:userkey']; ?>" size="14" /></td>
+      </tr>
+			<?php } ?>
+      <tr>
+        <td align="right">          Show date started 
+          <input type="checkbox" name="show_date_started" value="1" 
+						<?php if ($show['date_started']) { ?>checked="checked"<?php } ?> /></td>
+        <td width="340">from <span id="sprytextfield8">
+          <input name="(s)timestamp(low)" type="text" value="<?php 
+					echo $search['(s)timestamp(low)']; ?>" size="10" />
+          <span class="textfieldInvalidFormatMsg">Invalid format.</span></span> 
+          to <span id="sprytextfield9">
+          <input name="(s)timestamp(high)" type="text" value="<?php 
+					echo $search['(s)timestamp(high)']; ?>" size="10" />
+          <span class="textfieldInvalidFormatMsg">Invalid format.</span></span> (yyyy-mm-dd)
+        </td>
+      </tr>
+      <?php if (WA_Auth_RulePasses("Logged in as analyst")) { ?>
+      <tr>
+        <td align="right">          
+        	Show record #
+            <input type="checkbox" name="show_lakey" value="1" 
+						<?php if ($show['lakey']) { ?>checked="checked"<?php } ?> /></td>
+        <td><input name="(s)lakey" type="text" value="<?php echo $search['(s)lakey']; ?>" size="14" />
+        </td>
+      </tr>
+			<?php } ?>
+      <tr>
+        <td align="right">          Show date completed 
+          <input type="checkbox" name="show_date_completed" value="1" 
+						<?php if ($show['date_completed']) { ?>checked="checked"<?php } ?> />
+        </td>
+        <td width="340">from <span id="sprytextfield11">
+          <input name="(s)date_completed(low)" type="text" value="<?php 
+					echo $search['(s)date_completed(low)']; ?>" size="10" />
+          <span class="textfieldInvalidFormatMsg">Invalid format.</span></span> 
+          to <span id="sprytextfield12">
+          <input name="(s)date_completed(high)" type="text" value="<?php 
+					echo $search['(s)date_completed(high)']; ?>" size="10" />
+          <span class="textfieldInvalidFormatMsg">Invalid format.</span></span> (yyyy-mm-dd)
+        </td>
+      </tr>
+      <?php if (WA_Auth_RulePasses("Logged in as analyst")) { ?>
+      <tr>
+        <td align="right">          Show bulk customer
+          <input type="checkbox" name="show_bc" value="1" 
+						<?php if ($show['bc']) { ?>checked="checked"<?php } ?> /></td>
+        <td><select name="(s)bulkuserkey" id="(s)bulkuserkey">
+          <option value="" <?php if(!strcmp($search['(s)bulkuserkey'], "")) 
+						{ echo "selected=\"selected\""; } ?>> - view all - </option>
+          <?php do { ?>
+          <option value="<?php echo $row_rsFilterBc['bulkuserkey']?>" 
+          	<?php if(!strcmp($search['(s)bulkuserkey'], $row_rsFilterBc['bulkuserkey'])) 
+						{ echo "selected=\"selected\""; } ?>><?php echo $row_rsFilterBc['bulkcustomer'].
+						" &nbsp; (".$row_rsFilterBc['numpeople'].")"; ?></option>
+          <?php } while ($row_rsFilterBc = mysql_fetch_assoc($rsFilterBc));
+						$rows = mysql_num_rows($rsFilterBc);
+						if($rows > 0) {
+								mysql_data_seek($rsFilterBc, 0);
+							$row_rsFilterBc = mysql_fetch_assoc($rsFilterBc);
+						} ?>
+        </select>
+      	</td>
+      </tr>
+			<?php } ?>
+      <tr>
+        <td align="right">Show date released 
+          <input type="checkbox" name="show_date_release" value="1" 
+						<?php if ($show['date_release']) { ?>checked="checked"<?php } ?> />
+        </td>
+        <td width="340">from <span id="sprytextfield13">
+          <input name="(s)date_release(low)" type="text" value="<?php 
+					echo $search['(s)date_release(low)']; ?>" size="10" />
+          <span class="textfieldInvalidFormatMsg">Invalid format.</span></span> 
+          to <span id="sprytextfield14">
+          <input name="(s)date_release(high)" type="text" value="<?php 
+					echo $search['(s)date_release(high)']; ?>" size="10" />
+          <span class="textfieldInvalidFormatMsg">Invalid format.</span></span> (yyyy-mm-dd)
+        </td>
+      </tr>
+      <tr>  
+          <td align="right">Show email
+          <input type="checkbox" name="show_email" value="1" 
+						<?php if ($show['email']) { ?>checked="checked"<?php } ?> /></td>
+        <td><input name="(s)email" type="text" value="<?php echo $search['(s)email']; ?>" size="14" />
+        </td>  
+			</tr>
+      <tr>
+        <td align="right"> Show assignment
+          <input type="checkbox" name="show_assignment" value="1" 
+						<?php if ($show['assignment']) { ?>checked="checked"<?php } ?> /></td>
+        <td width="340"><span id="spryselect4">
+          <select name="(s)assignmentkey" class="pulldownwidth200" id="(s)assignmentkey">
+            <option value="" <?php if (!(strcmp("", $search['(s)assignmentkey']))) 
+									{ echo "selected=\"selected\""; } ?>> - view all - </option>
+            <?php 
+								// List groups available to me (based on the test takers already in our system) 
+								do {   
+      	if ($row_rsFilterAssign['assignmentkey'] <> "") { ?>
+            <option value="<?php echo $row_rsFilterAssign['assignmentkey']?>" 
+						<?php if (!(strcmp($row_rsFilterAssign['assignmentkey'], $search['(s)assignmentkey']))) 
+						{ echo "selected=\"selected\""; } 
+						?>>
+              <?php 
+							if (WA_Auth_RulePasses("Logged in as analyst")) 
+								{ echo $row_rsFilterAssign['assignmentkey']." - "; }
+							echo str_replace("_", " ", $row_rsFilterAssign['instrument_id']); 
+							?>
+              , group <?php echo $row_rsFilterAssign['assign_group']; 
+							?>: <?php echo ($row_rsFilterAssign['dilemma_name'] <> "" ? 
+							$row_rsFilterAssign['dilemma_name']." dilemma, " : ""); 
+							?> from <?php echo $row_rsFilterAssign['date_start']; ?> to <?php 
+							echo $row_rsFilterAssign['date_end']; ?></option> 
+							<?php 
+						} } while ($row_rsFilterAssign = mysql_fetch_assoc($rsFilterAssign));
+						$rows = mysql_num_rows($rsFilterAssign);
+						if($rows > 0) {
+								mysql_data_seek($rsFilterAssign, 0);
+							$row_rsFilterAssign = mysql_fetch_assoc($rsFilterAssign);
+						} ?>
+          </select>
+          <span class="selectRequiredMsg"><br />
+            Please select an item.</span></span>
+       </td>
+      </tr>
+      <tr>   
+        <td align="right">Show group
+          <input type="checkbox" name="show_group" value="1" 
+						<?php if ($show['group']) { ?>checked="checked"<?php } ?> />
+       	</td>
+        <td><span id="spryselect2">
+          <select name="(s)group" id="(s)group">
+            <option value="" <?php if(!strcmp($search['(s)group'], "")) 
+						{ echo "selected=\"selected\""; } ?>> - view all - </option>
+            <?php do { ?>
+            <option value="<?php echo $row_rsFilterGroup['group']?>" 
+          	<?php if(!strcmp($search['(s)group'], $row_rsFilterGroup['group'])) 
+						{ echo "selected=\"selected\""; } ?>><?php 
+							echo $row_rsFilterGroup['group']." (".$row_rsFilterGroup['numpeople'].")"; 
+							?></option>
+            <?php } while ($row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup));
+                $rows = mysql_num_rows($rsFilterGroup);
+                if($rows > 0) {
+                    mysql_data_seek($rsFilterGroup, 0);
+                  $row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup);
+                } ?>
+          </select>
+        </span>
+        </td>    
+			</tr>
+      <tr>
+        <td align="right">Show  status
+          <input type="checkbox" name="show_status" value="1" 
+						<?php if ($show['status']) { ?>checked="checked"<?php } ?> /></td>
+        <td width="340"><span id="spryselect10">
+          <select name="(h)status" class="pulldownwidth200" id="(h)status">
+            <option value="" <?php if (!(strcmp("", $search['(h)status']))) 
+							{ echo "selected=\"selected\""; } ?>> - view all - </option>
+            <option value="<?php echo "started"; ?>" 
+							<?php if (!(strcmp("started", $search['(h)status']))) 
+              { echo "selected=\"selected\""; } ?>>started</option>
+            <option value="<?php echo "completed"; ?>" 
+							<?php if (!(strcmp("completed", $search['(h)status']))) 
+              { echo "selected=\"selected\""; } ?>>completed</option>
+            <option value="<?php echo "processed"; ?>" 
+							<?php if (!(strcmp("processed", $search['(h)status']))) 
+              { echo "selected=\"selected\""; } ?>>processed</option>
+            <option value="<?php echo "finalized"; ?>" 
+							<?php if (!(strcmp("finalized", $search['(h)status']))) 
+              { echo "selected=\"selected\""; } ?>>finalized</option>
+            <option value="<?php echo "released"; ?>" 
+							<?php if (!(strcmp("released", $search['(h)status']))) 
+              { echo "selected=\"selected\""; } ?>>released to test taker</option>
+            <option value="<?php echo "locked"; ?>" 
+							<?php if (!(strcmp("locked", $search['(h)status']))) 
+              { echo "selected=\"selected\""; } ?>>locked (cannot be released)</option>
+          </select>
+          <span class="selectRequiredMsg"><br />
+            Please select an item.</span></span>
+        </td>
+      </tr>
+      <tr>
+      	<? $score_col = 'lasnumber_1';
+      	if ($instrument_id_base == 'LLRA') { $score_col = 'code493'; }
+      	if ($instrument_id_base == 'LRJA') { $score_col = 'code491'; }
+      	if ($instrument_id_base == 'LERA') { $score_col = 'code491'; }
+      	if ($instrument_id_base == 'LIMA') { $score_col = 'code493'; }
+      	if ($instrument_id_base == 'LIMA') { $score_col = 'code493'; }
+      	if ($instrument_id_base == 'SMS') { $score_col = 'result_avg_page1'; }
+      	if ($instrument_id_base == 'SMA') { $score_col = 'code491'; }
+      	?>
+        <td align="right">Show score from
+          <input type="checkbox" name="show_score" value="1" 
+						<?php if ($show['score']) { ?>checked="checked"<?php } ?> /></td><td><span id="sprytextfield3">
+          <input name="(s)<? echo $score_col; ?>(low)" type="text" value="<?php 
+            echo $search["(s){$score_col}(low)"]; ?>" size="4" /></span>
+           to <span id="sprytextfield4">
+          <input name="(s)<? echo $score_col; ?>(high)" type="text" value="<?php 
+            echo $search["(s){$score_col}(high)"]; ?>" size="4" />
+          </span>
+          </td> 
+      </tr>
+      <tr>
+        <td align="center"></td>
+        <td align="left">
+        	<table border="0" cellpadding="0" cellspacing="0">
+          <tr>
+            <td> Show </td>
+            <td><input type="radio" name="show_all_results" value="0" id="show_results_0" 
+				<?php if (!$show['all_results']) { ?> checked="checked"<?php } ?> />
+              <span id="sprytextfield10">
+                <input name="limit" type="text" value="<?php echo $limit; ?>" size="4" />
+                <span class="textfieldInvalidFormatMsg">Invalid format.</span></span> results <br />
+              <input type="radio" name="show_all_results" value="1" id="show_results_1" 
+        <?php if ($show['all_results']) { ?> checked="checked"<?php } ?> />
+              All results 
+            </td>
+          </tr>
+        	</table>
+        </td>
+      </tr>
+      <tr>
+      	<td></td>
+        <td><input type="submit" name="search" value="SEARCH" /></td>
+      </tr>
+    	</form> 
+    </table>
+    
+    </div>
+     
+    
+    <p>Showing <?php 
+		if ($totalRows_rsLaData == $totalRows_rsLaDataAll) { ?>
+			all <?php echo $totalRows_rsLaData; ?> records <?php
+		} else { 
+			echo $totalRows_rsLaData; ?> of <?php echo $totalRows_rsLaDataAll; ?> records <?php
+		} ?>
+    </p>
+        
+    <table>
+      <tr class="select-a">
+        <?php
+        if ($show['date_started']) { ?>
+        <th><a href="<?php echo $currentPage; 
+          ?>?sort=timestamp&<?php echo $query_string; ?>">Date started</a></th> <?php
+        } 
+        if ($show['userkey']) { ?>
+        <th><a href="<?php echo $currentPage; 
+            ?>?sort=userkey&<?php echo $query_string; ?>">Userkey</a></th> <?php
+        } ?>
+          
+        <th><a href="<?php echo $currentPage; 
+          ?>?sort=lastname&<?php echo $query_string; ?>">Name</a></th> <?php
+        
+				if ($show['email']) { ?>
+        <th><a href="<?php echo $currentPage; 
+          ?>?sort=email&<?php echo $query_string; ?>">Email</a></th> <?php
+        } 
+				
+        if ($show['date_completed']) { ?>
+        <th><a href="<?php echo $currentPage; 
+          ?>?sort=date_completed&<?php echo $query_string; ?>">Date completed</a></th> <?php
+        } 
+        if ($show['date_release']) { ?>
+        <th><a href="<?php echo $currentPage; 
+          ?>?sort=date_release&<?php echo $query_string; ?>">Release date</a></th> <?php
+        } 
+        if ($show['bc']) { ?>
+        <th><a href="<?php echo $currentPage; 
+          ?>?sort=bulkcustomer&<?php echo $query_string; ?>">Bulk customer</a></th> <?php
+        } 
+        if ($show['group']) { ?>
+          <th><a href="<?php echo $currentPage; 
+          ?>?sort=group&<?php echo $query_string; ?>">Group</a></th> <?php
+        } 
+        if (1) { ?>
+        <th><a href="<?php echo $currentPage; 
+          ?>?sort=instrument_id&<?php echo $query_string; ?>">Instrument</a></th> <?php
+        } 
+        if ($show['assignment']) { ?>
+        <th><a href="<?php echo $currentPage; 
+          ?>?sort=date_release&<?php echo $query_string; ?>">Due</a></th> <?php
+        } 
+        if ($show['test_time']) { ?>
+        <th><a href="<?php echo $currentPage; 
+          ?>?sort=test_time&<?php echo $query_string; ?>">Test time</a></th> <?php 
+        } 
+        if ($instrument_id_base == "LMBE") { ?>
+        <th><a href="<?php echo $currentPage; 
+          ?>?sort=coded&<?php echo $query_string; ?>">Commented</a></th> <?php 
+        } 
+        if ($show['status']) { ?>
+        <th><a href="<?php echo $currentPage; 
+          ?>?sort=status_order&<?php echo $query_string; ?>">Status</a></th> <?php 
+        } 
+        if ($show['score']) { ?>
+        <th><a href="<?php echo $currentPage;            ?>?sort=lasnumber_1&amp;<?php echo $query_string; ?>">Score</a></th> <?php 
+        } ?>
+        <th align="center">Report</th>
+        <th align="center">Hide</th>
+        <th>Actions</th>
+      </tr>
+      
+      
+      <?php 
+			// track the lakey of all finalized records, so I can provide a link to release all.
+			$finalized_lakeys = "-";
+			$finalized_count = 0;
+			do { 
+				if ($row_rsLaData['status'] == "finalized") { 
+					$finalized_count ++;
+					$finalized_lakeys .= $row_rsLaData['lakey']."-";
+				}
+			?><tr class="select-a"><?php
+        if ($show['date_started']) { ?>
+          <td><div align="center">
+          <?php echo date('Y-m-d', strtotime($row_rsLaData['timestamp'])); ?></div></td> <?php
+        } 
+        if ($show['userkey']) { ?>
+          <td><div align="center"><?php echo $row_rsLaData['userkey']; ?></div></td> <?php
+        } ?>
+        
+        <td><div align="left">
+          <?php echo $row_rsLaData['firstname']." ".$row_rsLaData['lastname']; ?></div></td> <?php
+        
+				if ($show['email']) { ?>
+          <td><?php echo $row_rsLaData['email']; ?></td> <?php
+        } 
+				
+        if ($show['date_completed']) { ?>
+          <td><div align="center">
+          <?php echo date('Y-m-d', strtotime($row_rsLaData['date_completed'])); ?></div></td> <?php
+        } 
+        if ($show['date_release']) { ?>
+        <td><div align="center"><?php 
+            if ($row_rsLaData['lakey'] <> "") { 
+              echo ($row_rsLaData['date_release'] <> "" ? 
+              date('Y-m-d', strtotime($row_rsLaData['date_release'])) : "<em>no assignment</em>"); 
+            } ?></div></td> <?php
+        }
+        if ($show['bc']) { ?>
+          <td><?php echo $row_rsLaData['bulkcustomer']; ?></td> <?php
+        }
+        if ($show['group']) { ?>
+          <td><div align="center"><?php echo $row_rsLaData['group']; ?></div></td> <?php
+        } ?>
+          <td><div align="center"><?php 
+            echo $row_rsLaData['instrument_id']; ?></div></td> <?php
+        if ($show['assignment']) { ?>
+          <td><div align="center"><?php 
+            if ($row_rsLaData['date_release'] <> "") { 
+              echo $row_rsLaData['date_release']; 
+            } else { ?><span class="red">not assigned</span> <?php } 
+            ?></div></td> <?php
+        } 
+        if ($show['test_time']) { ?>
+        <td><div align="center">
+          <?php 
+            $time = $row_rsLaData['test_time'];
+            echo $time;
+            if ($time == 1) { echo "st"; }
+            else if ($time == 2) { echo "nd"; }
+            else if ($time == 3) { echo "rd"; }
+            else if ($time > 3)  { echo "th"; }
+          ?></div></td> <?php 
+        } 
+        if ($instrument_id_base == "LMBE") { ?>
+        <td><div align="center"><?php echo ($row_rsLaData['coded'] == 1 ? 
+            "yes" : "no"); ?></a></div></td> <?php 
+        } 
+        if ($show['status']) { ?>
+          <td align="center">
+            <a href="../la_scoring/view.php?lakey=<?php 
+              echo $row_rsLaData['lakey']; ?>" target="_blank"><?php 
+            if ($row_rsLaData['status'] == "locked") { ?><span class="red"><?php } 
+            else { echo "<span>"; } 
+            echo $row_rsLaData['status']; ?></span></a>
+          </td><?php 
+        } 
+        if ($show['score']) { ?>
+        <td class="tablebody" align="center"><?php 
+          $score = "";
+					// Instrument determines where score comes from
+					if ($row_rsLaData['instrument_id'] == "LDMA") { $score = $row_rsLaData['lasnumber_1']; }
+          else if ($row_rsLaData['instrument_id'] == "LDMA_JOURNAL") { $score = "journal"; } 
+          else if ($row_rsLaData['instrument_id'] == "LSUA_JOURNAL") { $score = "journal"; } 
+					else if ($row_rsLaData['instrument_id'] == "LLRA_JOURNAL") { $score = $row_rsLaData['code493']; }
+					else if ($row_rsLaData['instrument_id'] == "LRJA_JOURNAL") { $score = $row_rsLaData['code491']; }
+					else if ($row_rsLaData['instrument_id'] == "LERA_JOURNAL") { $score = $row_rsLaData['code491']; }
+					else if ($row_rsLaData['instrument_id'] == "LIMA_JOURNAL") { $score = $row_rsLaData['code493']; }
+					else if ($row_rsLaData['instrument_id'] == "SMS") { $score = $row_rsLaData['result_avg_page1']; }
+					else if ($row_rsLaData['instrument_id'] == "SMA") { $score = $row_rsLaData['code491']; }
+					else if ($row_rsLaData['instrument_id'] == "LIMA") { $score = $row_rsLaData['code491']; }
+					// Not-yet-finalized scores aren't shown
+					if ($row_rsLaData['finalized'] == 0) { $score = "..."; }
+					// Not-yet-released scores are wrapped in parentheses to mark that they're not final
+					if ($row_rsLaData['finalized'] == 2) { $score = "(".$score.")"; }
+          // Scores with no permission given to client, aren't shown
+          if ($row_rsLaData['bc_allowedtoview'] <> 1) { $score = "<em>private</em>"; }
+					
+					echo $score; ?>
+         </td> <?php 
+        } ?>
+        
+        <td class="background_gray_light" align="center"><?php 
+          if ($row_rsLaData['finalized'] > 0) { ?>
+            <a href="report_individual.php?lakey=<?php 
+            echo $row_rsLaData['lakey']; ?>">view</a><?php 
+          } else if ($row_rsLaData['scored_1'] > 1) { ?>
+            <em>not available</em> <?php 
+          } ?>
+        </td>
+        <td>
+          <?php $label = "hide"; $action = "hide"; $inlabel = "exclude from ";
+					if ($row_rsLaData['hidden_sumreport'] == 1) { 
+						$label = "show"; $action = "show"; $inlabel = "include in ";
+					} ?>
+          <a href="?<?php echo $action; ?>_sumreport=<?php echo $row_rsLaData['lakey']; ?>">
+          	<?php echo $label; ?></a>
+          <!--<a class='hotspot'><?php echo $label; ?></a>
+					<span class='tooltip'>
+          	<a href="?<?php echo $action; ?>_sumreport=<?php echo $row_rsLaData['lakey']; ?>">
+            <?php echo $inlabel; ?> <br />summary report</a>
+          </span> -->
+        </td>
+        
+        <td class="background_gray_light"><div align="center"><?php 
+        
+        //				CONTEXT-SENSITIVE LINKS TO TAKE AN ACTION WITH THIS RECORD
+        // Possible actions are releasing the report, and sending a reminder to complete.
+        
+        // if this isn't a real data row, show nothing. (and skip the rest of this IF-ELSE chain)
+        if ($row_rsLaData['lakey'] == "") { } 
+        
+        // is the report locked (so you can't do anything with it)?
+        else if ($row_rsLaData['finalized'] == 3 OR $row_rsLaData['completed'] == 2) { 
+          echo "<span class='red'><em>locked</em></span>";
+        }
+				
+        // maybe the report is incomplete and needs a reminder? 
+        else if ($row_rsLaData['completed'] == 0) { 
+          // if they have been reminded today, then don't allow re-reminding.
+          if ($row_rsLaData['date_reminded'] == date('Y-m-d')) {
+            ?><em>(sent today)</em><?php 
+          }
+          else {
+            // otherwise, create a link... then decide what to show inside it. ?>
+            <a href="<?php echo $currentPage; ?>?reminder=yes&date_started=<?php 
+              echo $row_rsLaData['timestamp']; ?>&lakey=<?php 
+              echo $row_rsLaData['lakey'];
+              echo (isset($_GET['userkey']) ? "&userkey=".$_GET['userkey'] : ""); ?>">
+            <?php 
+            // if they have never been reminded...
+            if ($row_rsLaData['date_reminded'] == 0) { ?>
+              send reminder</a> <?php
+            }
+            // if they have been reminded, indicate the date last reminded.
+            else { ?>
+              reminded <?php echo $row_rsLaData['date_reminded']; ?></a> <?php 
+            }
+          }
+        }
+        
+        // is this report ready to release? 
+        else if ($row_rsLaData['finalized'] == 2) { ?>
+          <a href="<?php 
+            echo $currentPage."?release=yes&lakey=".$row_rsLaData['lakey']."&".$query_string; ?>">
+            release report</a> <?php 
+        }
+        
+        // is the report already released? **** maybe the status column makes this obsolete...
+        else if ($row_rsLaData['finalized'] == 1) { 
+          if ($row_rsLaData['date_released'] == date('Y-m-d')) { 
+            echo "<em>released today</em>"; 
+          } 
+          else if ($row_rsLaData['date_released'] <> "") { 
+              echo "<em>released ".date('Y-m-d', strtotime($row_rsLaData['date_released']))."</em>"; 
+          } 
+          else { 
+            echo "<em>released</em></a>"; 
+          } 
+        } 
+        
+        
+        ?></div></td>
+      </tr>
+      <?php } while ($row_rsLaData = mysql_fetch_assoc($rsLaData)); ?>
+    </table>
+    
+    <?php if ($finalized_count > 0) { ?>
+    	<p>
+      <a id="release_all">Release <?php echo $finalized_count; ?> reports</a><br />
+      <a id="release_all_real" href="?release=yes&lakeys=<?php echo $finalized_lakeys; ?>">
+      	Really release <?php echo $finalized_count; ?> reports?</a></p>
+    <?php } // ?>
+        
+      
+        <h3>&nbsp;</h3>
+    <p>&nbsp;</p>
+  <p></p>
+
+
+<script type="text/javascript">
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"], isRequired:false});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {isRequired:false, validateOn:["change", "blur"]});
+var spryselect10 = new Spry.Widget.ValidationSelect("spryselect10", {isRequired:false, validateOn:["change", "blur"]});
+
+var sprytextfield = new Spry.Widget.ValidationTextField("sprytextfield", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield8 = new Spry.Widget.ValidationTextField("sprytextfield8", "date", {isRequired:false, format:"yyyy-mm-dd", useCharacterMasking:true, validateOn:["blur", "change"]});
+var sprytextfield9 = new Spry.Widget.ValidationTextField("sprytextfield9", "date", {isRequired:false, format:"yyyy-mm-dd", useCharacterMasking:true, validateOn:["blur", "change"]});
+var sprytextfield10 = new Spry.Widget.ValidationTextField("sprytextfield10", "integer", {isRequired:false, useCharacterMasking:true, validateOn:["blur", "change"]});
+
+var sprytextfield11 = new Spry.Widget.ValidationTextField("sprytextfield11", "date", {isRequired:false, useCharacterMasking:true, validateOn:["blur", "change"], format:"yyyy-mm-dd"});
+var sprytextfield12 = new Spry.Widget.ValidationTextField("sprytextfield12", "date", {isRequired:false, useCharacterMasking:true, validateOn:["blur", "change"], format:"yyyy-mm-dd"});
+var sprytextfield13 = new Spry.Widget.ValidationTextField("sprytextfield13", "date", {isRequired:false, useCharacterMasking:true, validateOn:["blur", "change"], format:"yyyy-mm-dd"});
+var sprytextfield14 = new Spry.Widget.ValidationTextField("sprytextfield14", "date", {isRequired:false, useCharacterMasking:true, validateOn:["blur", "change"], format:"yyyy-mm-dd"});
+var sprytextfield4 = new Spry.Widget.ValidationTextField("sprytextfield4", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield3 = new Spry.Widget.ValidationTextField("sprytextfield3", "none", {isRequired:false, validateOn:["blur", "change"]});
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+</script>
+  
+  
+	<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+
+
+?>

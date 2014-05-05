@@ -1,0 +1,1506 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+
+// Start trigger
+$formValidation = new tNG_FormValidation();
+$formValidation->addField("happy", true, "numeric", "", "", "", "");
+$formValidation->addField("transmit", true, "numeric", "", "", "", "");
+$formValidation->addField("persuade", true, "numeric", "", "", "", "");
+$formValidation->addField("understand", true, "numeric", "", "", "", "");
+$formValidation->addField("compromise", true, "numeric", "", "", "", "");
+$formValidation->addField("supervisorwants", true, "numeric", "", "", "", "");
+$formValidation->addField("morale", true, "numeric", "", "", "", "");
+$formValidation->addField("employeesfirst", true, "numeric", "", "", "", "");
+$formValidation->addField("longterm", true, "numeric", "", "", "", "");
+$formValidation->addField("superperspective", true, "numeric", "", "", "", "");
+$formValidation->addField("missiondept", true, "numeric", "", "", "", "");
+$formValidation->addField("customers", true, "numeric", "", "", "", "");
+$formValidation->addField("priorities", true, "numeric", "", "", "", "");
+$formValidation->addField("benefitboth", true, "numeric", "", "", "", "");
+$formValidation->addField("unbiased", true, "numeric", "", "", "", "");
+$formValidation->addField("supervisorgoals", true, "numeric", "", "", "", "");
+$formValidation->addField("uniqueprocess", true, "numeric", "", "", "", "");
+$formValidation->addField("productivity", true, "numeric", "", "", "", "");
+$formValidation->addField("doesntunderstand", true, "numeric", "", "", "", "");
+$formValidation->addField("overhead", true, "numeric", "", "", "", "");
+$formValidation->addField("helpemployees", true, "numeric", "", "", "", "");
+$formValidation->addField("advocate", true, "numeric", "", "", "", "");
+$formValidation->addField("dialogue", true, "numeric", "", "", "", "");
+$formValidation->addField("employeesupport", true, "numeric", "", "", "", "");
+$formValidation->addField("planfit", true, "numeric", "", "", "", "");
+$formValidation->addField("generalprocess", true, "numeric", "", "", "", "");
+$formValidation->addField("seekadvice", true, "numeric", "", "", "", "");
+$formValidation->addField("openmind", true, "numeric", "", "", "", "");
+$formValidation->addField("employeerut", true, "numeric", "", "", "", "");
+$formValidation->addField("listenconcerns", true, "numeric", "", "", "", "");
+$formValidation->addField("consultpeers", true, "numeric", "", "", "", "");
+$formValidation->addField("trialimplement", true, "numeric", "", "", "", "");
+$formValidation->addField("facilitator", true, "numeric", "", "", "", "");
+$formValidation->addField("leavemanagement", true, "numeric", "", "", "", "");
+$formValidation->addField("seekfeedback", true, "numeric", "", "", "", "");
+$formValidation->addField("othersexperience", true, "numeric", "", "", "", "");
+$formValidation->addField("weighneeds", true, "numeric", "", "", "", "");
+$formValidation->addField("companypolicy", true, "numeric", "", "", "", "");
+$tNGs->prepareValidation($formValidation);
+// End trigger
+
+// calculate total
+$code_employees = 0;
+$code_employees += $_POST['happy'];
+$code_employees += $_POST['morale'];
+$code_employees += $_POST['employeesfirst'];
+$code_employees += $_POST['advocate'];
+$code_employees += $_POST['listenconcerns'];
+$code_employees += $_POST['seekfeedback'];
+
+// calc average
+$code_totalemployees = 6;
+
+$code_averageemployees = $code_employees / $code_totalemployees;
+
+$_SESSION["code_average"] = $code_average;
+$_SESSION["code_missing_count"] = $code_missing_count;
+$_SESSION["code_missing_count_mass"] = $code_missing_count_mass;
+$_SESSION["code_missing_count_chemical"] = $code_missing_count_chemical;
+$_SESSION["code_missing_count_state"] = $code_missing_count_state;
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? "'" . doubleval($theValue) . "'" : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings1 = "SELECT * FROM Ratings2";
+$rsRatings1 = mysql_query($query_rsRatings1, $Assessment) or die(mysql_error());
+$row_rsRatings1 = mysql_fetch_assoc($rsRatings1);
+$totalRows_rsRatings1 = mysql_num_rows($rsRatings1);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings2 = "SELECT * FROM Ratings2";
+$rsRatings2 = mysql_query($query_rsRatings2, $Assessment) or die(mysql_error());
+$row_rsRatings2 = mysql_fetch_assoc($rsRatings2);
+$totalRows_rsRatings2 = mysql_num_rows($rsRatings2);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings3 = "SELECT * FROM Ratings2";
+$rsRatings3 = mysql_query($query_rsRatings3, $Assessment) or die(mysql_error());
+$row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+$totalRows_rsRatings3 = mysql_num_rows($rsRatings3);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings4 = "SELECT * FROM Ratings2";
+$rsRatings4 = mysql_query($query_rsRatings4, $Assessment) or die(mysql_error());
+$row_rsRatings4 = mysql_fetch_assoc($rsRatings4);
+$totalRows_rsRatings4 = mysql_num_rows($rsRatings4);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings5 = "SELECT * FROM Ratings2";
+$rsRatings5 = mysql_query($query_rsRatings5, $Assessment) or die(mysql_error());
+$row_rsRatings5 = mysql_fetch_assoc($rsRatings5);
+$totalRows_rsRatings5 = mysql_num_rows($rsRatings5);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings6 = "SELECT * FROM Ratings2";
+$rsRatings6 = mysql_query($query_rsRatings6, $Assessment) or die(mysql_error());
+$row_rsRatings6 = mysql_fetch_assoc($rsRatings6);
+$totalRows_rsRatings6 = mysql_num_rows($rsRatings6);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings7 = "SELECT * FROM Ratings2";
+$rsRatings7 = mysql_query($query_rsRatings7, $Assessment) or die(mysql_error());
+$row_rsRatings7 = mysql_fetch_assoc($rsRatings7);
+$totalRows_rsRatings7 = mysql_num_rows($rsRatings7);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings8 = "SELECT * FROM Ratings2";
+$rsRatings8 = mysql_query($query_rsRatings8, $Assessment) or die(mysql_error());
+$row_rsRatings8 = mysql_fetch_assoc($rsRatings8);
+$totalRows_rsRatings8 = mysql_num_rows($rsRatings8);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings9 = "SELECT * FROM Ratings2";
+$rsRatings9 = mysql_query($query_rsRatings9, $Assessment) or die(mysql_error());
+$row_rsRatings9 = mysql_fetch_assoc($rsRatings9);
+$totalRows_rsRatings9 = mysql_num_rows($rsRatings9);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings10 = "SELECT * FROM Ratings2";
+$rsRatings10 = mysql_query($query_rsRatings10, $Assessment) or die(mysql_error());
+$row_rsRatings10 = mysql_fetch_assoc($rsRatings10);
+$totalRows_rsRatings10 = mysql_num_rows($rsRatings10);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings11 = "SELECT * FROM Ratings2";
+$rsRatings11 = mysql_query($query_rsRatings11, $Assessment) or die(mysql_error());
+$row_rsRatings11 = mysql_fetch_assoc($rsRatings11);
+$totalRows_rsRatings11 = mysql_num_rows($rsRatings11);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings12 = "SELECT * FROM Ratings2";
+$rsRatings12 = mysql_query($query_rsRatings12, $Assessment) or die(mysql_error());
+$row_rsRatings12 = mysql_fetch_assoc($rsRatings12);
+$totalRows_rsRatings12 = mysql_num_rows($rsRatings12);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings13 = "SELECT * FROM Ratings2";
+$rsRatings13 = mysql_query($query_rsRatings13, $Assessment) or die(mysql_error());
+$row_rsRatings13 = mysql_fetch_assoc($rsRatings13);
+$totalRows_rsRatings13 = mysql_num_rows($rsRatings13);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings14 = "SELECT * FROM Ratings2";
+$rsRatings14 = mysql_query($query_rsRatings14, $Assessment) or die(mysql_error());
+$row_rsRatings14 = mysql_fetch_assoc($rsRatings14);
+$totalRows_rsRatings14 = mysql_num_rows($rsRatings14);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings15 = "SELECT * FROM Ratings2";
+$rsRatings15 = mysql_query($query_rsRatings15, $Assessment) or die(mysql_error());
+$row_rsRatings15 = mysql_fetch_assoc($rsRatings15);
+$totalRows_rsRatings15 = mysql_num_rows($rsRatings15);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings16 = "SELECT * FROM Ratings2";
+$rsRatings16 = mysql_query($query_rsRatings16, $Assessment) or die(mysql_error());
+$row_rsRatings16 = mysql_fetch_assoc($rsRatings16);
+$totalRows_rsRatings16 = mysql_num_rows($rsRatings16);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings17 = "SELECT * FROM Ratings2";
+$rsRatings17 = mysql_query($query_rsRatings17, $Assessment) or die(mysql_error());
+$row_rsRatings17 = mysql_fetch_assoc($rsRatings17);
+$totalRows_rsRatings17 = mysql_num_rows($rsRatings17);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings18 = "SELECT * FROM Ratings2";
+$rsRatings18 = mysql_query($query_rsRatings18, $Assessment) or die(mysql_error());
+$row_rsRatings18 = mysql_fetch_assoc($rsRatings18);
+$totalRows_rsRatings18 = mysql_num_rows($rsRatings18);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings19 = "SELECT * FROM Ratings2";
+$rsRatings19 = mysql_query($query_rsRatings19, $Assessment) or die(mysql_error());
+$row_rsRatings19 = mysql_fetch_assoc($rsRatings19);
+$totalRows_rsRatings19 = mysql_num_rows($rsRatings19);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings20 = "SELECT * FROM Ratings2";
+$rsRatings20 = mysql_query($query_rsRatings20, $Assessment) or die(mysql_error());
+$row_rsRatings20 = mysql_fetch_assoc($rsRatings20);
+$totalRows_rsRatings20 = mysql_num_rows($rsRatings20);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings21 = "SELECT * FROM Ratings2";
+$rsRatings21 = mysql_query($query_rsRatings21, $Assessment) or die(mysql_error());
+$row_rsRatings21 = mysql_fetch_assoc($rsRatings21);
+$totalRows_rsRatings21 = mysql_num_rows($rsRatings21);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings22 = "SELECT * FROM Ratings2";
+$rsRatings22 = mysql_query($query_rsRatings22, $Assessment) or die(mysql_error());
+$row_rsRatings22 = mysql_fetch_assoc($rsRatings22);
+$totalRows_rsRatings22 = mysql_num_rows($rsRatings22);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings23 = "SELECT * FROM Ratings2";
+$rsRatings23 = mysql_query($query_rsRatings23, $Assessment) or die(mysql_error());
+$row_rsRatings23 = mysql_fetch_assoc($rsRatings23);
+$totalRows_rsRatings23 = mysql_num_rows($rsRatings23);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings24 = "SELECT * FROM Ratings2";
+$rsRatings24 = mysql_query($query_rsRatings24, $Assessment) or die(mysql_error());
+$row_rsRatings24 = mysql_fetch_assoc($rsRatings24);
+$totalRows_rsRatings24 = mysql_num_rows($rsRatings24);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings25 = "SELECT * FROM Ratings2";
+$rsRatings25 = mysql_query($query_rsRatings25, $Assessment) or die(mysql_error());
+$row_rsRatings25 = mysql_fetch_assoc($rsRatings25);
+$totalRows_rsRatings25 = mysql_num_rows($rsRatings25);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings26 = "SELECT * FROM Ratings2";
+$rsRatings26 = mysql_query($query_rsRatings26, $Assessment) or die(mysql_error());
+$row_rsRatings26 = mysql_fetch_assoc($rsRatings26);
+$totalRows_rsRatings26 = mysql_num_rows($rsRatings26);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings27 = "SELECT * FROM Ratings2";
+$rsRatings27 = mysql_query($query_rsRatings27, $Assessment) or die(mysql_error());
+$row_rsRatings27 = mysql_fetch_assoc($rsRatings27);
+$totalRows_rsRatings27 = mysql_num_rows($rsRatings27);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings28 = "SELECT * FROM Ratings2";
+$rsRatings28 = mysql_query($query_rsRatings28, $Assessment) or die(mysql_error());
+$row_rsRatings28 = mysql_fetch_assoc($rsRatings28);
+$totalRows_rsRatings28 = mysql_num_rows($rsRatings28);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings29 = "SELECT * FROM Ratings2";
+$rsRatings29 = mysql_query($query_rsRatings29, $Assessment) or die(mysql_error());
+$row_rsRatings29 = mysql_fetch_assoc($rsRatings29);
+$totalRows_rsRatings29 = mysql_num_rows($rsRatings29);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings30 = "SELECT * FROM Ratings2";
+$rsRatings30 = mysql_query($query_rsRatings30, $Assessment) or die(mysql_error());
+$row_rsRatings30 = mysql_fetch_assoc($rsRatings30);
+$totalRows_rsRatings30 = mysql_num_rows($rsRatings30);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings31 = "SELECT * FROM Ratings2";
+$rsRatings31 = mysql_query($query_rsRatings31, $Assessment) or die(mysql_error());
+$row_rsRatings31 = mysql_fetch_assoc($rsRatings31);
+$totalRows_rsRatings31 = mysql_num_rows($rsRatings31);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings32 = "SELECT * FROM Ratings2";
+$rsRatings32 = mysql_query($query_rsRatings32, $Assessment) or die(mysql_error());
+$row_rsRatings32 = mysql_fetch_assoc($rsRatings32);
+$totalRows_rsRatings32 = mysql_num_rows($rsRatings32);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings33 = "SELECT * FROM Ratings2";
+$rsRatings33 = mysql_query($query_rsRatings33, $Assessment) or die(mysql_error());
+$row_rsRatings33 = mysql_fetch_assoc($rsRatings33);
+$totalRows_rsRatings33 = mysql_num_rows($rsRatings33);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings34 = "SELECT * FROM Ratings2";
+$rsRatings34 = mysql_query($query_rsRatings34, $Assessment) or die(mysql_error());
+$row_rsRatings34 = mysql_fetch_assoc($rsRatings34);
+$totalRows_rsRatings34 = mysql_num_rows($rsRatings34);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings35 = "SELECT * FROM Ratings2";
+$rsRatings35 = mysql_query($query_rsRatings35, $Assessment) or die(mysql_error());
+$row_rsRatings35 = mysql_fetch_assoc($rsRatings35);
+$totalRows_rsRatings35 = mysql_num_rows($rsRatings35);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings36 = "SELECT * FROM Ratings2";
+$rsRatings36 = mysql_query($query_rsRatings36, $Assessment) or die(mysql_error());
+$row_rsRatings36 = mysql_fetch_assoc($rsRatings36);
+$totalRows_rsRatings36 = mysql_num_rows($rsRatings36);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings37 = "SELECT * FROM Ratings2";
+$rsRatings37 = mysql_query($query_rsRatings37, $Assessment) or die(mysql_error());
+$row_rsRatings37 = mysql_fetch_assoc($rsRatings37);
+$totalRows_rsRatings37 = mysql_num_rows($rsRatings37);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings38 = "SELECT * FROM Ratings2";
+$rsRatings38 = mysql_query($query_rsRatings38, $Assessment) or die(mysql_error());
+$row_rsRatings38 = mysql_fetch_assoc($rsRatings38);
+$totalRows_rsRatings38 = mysql_num_rows($rsRatings38);
+
+// Make an update transaction instance
+$upd_LDMA = new tNG_update($conn_Assessment);
+$tNGs->addTransaction($upd_LDMA);
+// Register triggers
+$upd_LDMA->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Update1");
+$upd_LDMA->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$upd_LDMA->registerTrigger("END", "Trigger_Default_Redirect", 99, "../checkout/checkouttest1.php");
+// Add columns
+$upd_LDMA->setTable("LDMA");
+$upd_LDMA->addColumn("happy", "NUMERIC_TYPE", "POST", "happy");
+$upd_LDMA->addColumn("transmit", "NUMERIC_TYPE", "POST", "transmit");
+$upd_LDMA->addColumn("persuade", "NUMERIC_TYPE", "POST", "persuade");
+$upd_LDMA->addColumn("understand", "NUMERIC_TYPE", "POST", "understand");
+$upd_LDMA->addColumn("compromise", "NUMERIC_TYPE", "POST", "compromise");
+$upd_LDMA->addColumn("supervisorwants", "NUMERIC_TYPE", "POST", "supervisorwants");
+$upd_LDMA->addColumn("morale", "NUMERIC_TYPE", "POST", "morale");
+$upd_LDMA->addColumn("employeesfirst", "NUMERIC_TYPE", "POST", "employeesfirst");
+$upd_LDMA->addColumn("longterm", "NUMERIC_TYPE", "POST", "longterm");
+$upd_LDMA->addColumn("superperspective", "NUMERIC_TYPE", "POST", "superperspective");
+$upd_LDMA->addColumn("missiondept", "NUMERIC_TYPE", "POST", "missiondept");
+$upd_LDMA->addColumn("customers", "NUMERIC_TYPE", "POST", "customers");
+$upd_LDMA->addColumn("priorities", "NUMERIC_TYPE", "POST", "priorities");
+$upd_LDMA->addColumn("benefitboth", "NUMERIC_TYPE", "POST", "benefitboth");
+$upd_LDMA->addColumn("unbiased", "NUMERIC_TYPE", "POST", "unbiased");
+$upd_LDMA->addColumn("supervisorgoals", "NUMERIC_TYPE", "POST", "supervisorgoals");
+$upd_LDMA->addColumn("uniqueprocess", "NUMERIC_TYPE", "POST", "uniqueprocess");
+$upd_LDMA->addColumn("productivity", "NUMERIC_TYPE", "POST", "productivity");
+$upd_LDMA->addColumn("doesntunderstand", "NUMERIC_TYPE", "POST", "doesntunderstand");
+$upd_LDMA->addColumn("overhead", "NUMERIC_TYPE", "POST", "overhead");
+$upd_LDMA->addColumn("helpemployees", "NUMERIC_TYPE", "POST", "helpemployees");
+$upd_LDMA->addColumn("advocate", "NUMERIC_TYPE", "POST", "advocate");
+$upd_LDMA->addColumn("dialogue", "NUMERIC_TYPE", "POST", "dialogue");
+$upd_LDMA->addColumn("employeesupport", "NUMERIC_TYPE", "POST", "employeesupport");
+$upd_LDMA->addColumn("planfit", "NUMERIC_TYPE", "POST", "planfit");
+$upd_LDMA->addColumn("generalprocess", "NUMERIC_TYPE", "POST", "generalprocess");
+$upd_LDMA->addColumn("seekadvice", "NUMERIC_TYPE", "POST", "seekadvice");
+$upd_LDMA->addColumn("openmind", "NUMERIC_TYPE", "POST", "openmind");
+$upd_LDMA->addColumn("employeerut", "NUMERIC_TYPE", "POST", "employeerut");
+$upd_LDMA->addColumn("listenconcerns", "NUMERIC_TYPE", "POST", "listenconcerns");
+$upd_LDMA->addColumn("consultpeers", "NUMERIC_TYPE", "POST", "consultpeers");
+$upd_LDMA->addColumn("trialimplement", "NUMERIC_TYPE", "POST", "trialimplement");
+$upd_LDMA->addColumn("facilitator", "NUMERIC_TYPE", "POST", "facilitator");
+$upd_LDMA->addColumn("leavemanagement", "NUMERIC_TYPE", "POST", "leavemanagement");
+$upd_LDMA->addColumn("seekfeedback", "NUMERIC_TYPE", "POST", "seekfeedback");
+$upd_LDMA->addColumn("othersexperience", "NUMERIC_TYPE", "POST", "othersexperience");
+$upd_LDMA->addColumn("weighneeds", "NUMERIC_TYPE", "POST", "weighneeds");
+$upd_LDMA->addColumn("companypolicy", "NUMERIC_TYPE", "POST", "companypolicy");
+$upd_LDMA->addColumn("makesense", "STRING_TYPE", "POST", "makesense");
+$upd_LDMA->addColumn("itdepends", "STRING_TYPE", "POST", "itdepends");
+$upd_LDMA->addColumn("moreinfo", "STRING_TYPE", "POST", "moreinfo");
+$upd_LDMA->addColumn("notrepresented", "STRING_TYPE", "POST", "notrepresented");
+$upd_LDMA->addColumn("comments", "STRING_TYPE", "POST", "comments");
+$upd_LDMA->addColumn("coded", "NUMERIC_TYPE", "POST", "coded");
+$upd_LDMA->addColumn("completed", "NUMERIC_TYPE", "POST", "completed");
+$upd_LDMA->setPrimaryKey("ldmakey", "NUMERIC_TYPE", "GET", "ldmakey");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsLDMA = $tNGs->getRecordset("LDMA");
+$row_rsLDMA = mysql_fetch_assoc($rsLDMA);
+$totalRows_rsLDMA = mysql_num_rows($rsLDMA);
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateldma2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LDMA survey</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<style type="text/css">
+<!--
+.style11 {color: #A52D1D}
+-->
+</style>
+<?php echo $tNGs->displayValidationRules();?><!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #FFF9F3;
+	background-image: url(/images/skin/LDMAcontainer2.jpg);
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LDMAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 3;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 0px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+	background-image: url(/images/skin/LDMAmenu4.jpg);
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/LDMAfooter2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #menu1 div {
+	color: #FFE1D0;
+}
+.twoColFixRtHdr #container #menu1 #MenuBar2 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+        <td valign="top"><h1>SURVEY (PAGE 3 OF 3)</h1>
+          <h2>Instructions</h2>
+          <p><span class="emphasis"><strong>You're almost finished!</strong></span> This final part of the assessment offers you an opportunity to tell us more about your leadership preferences  as they apply to the dilemma (repeated below). Please rate your level of agreement with each statement.</p>
+          <p>You have been a second line supervisor in one of the most technically savvy offices in the company for the last three years. Almost 80% of the employees have at least Masters' degrees and many have doctoral degrees in engineering or computer science. This has been much easier than your last management position, because here you have such great respect for the ability and drive of your employees. When your supervisor retired 3 months ago, the senior leadership team decided to replace her with an executive hired from outside the company. The individual that was finally selected after a lengthy interview process has only been on the job for 1 week and is already stirring things up. After his first walk-through of the spaces, essentially a large cubicle farm, he announced that he was going to redesign the space to &quot;open things up&quot; and encourage greater collaboration and exchange of ideas among members of the group. You have been presented with a drawing of how the space will be reconfigured and a very aggressive time-line for the work, both of which you share with your employees. This normally quiet, reserved group is visibly outraged. How can they be expected to do highly technical work without the quiet and privacy of their cubicles? What's wrong with using a conference room when collaboration is called for? They are looking to you to stand up for them.</p>
+          <p>&nbsp;
+            <?php
+	echo $tNGs->getErrorMsg();
+?>
+          <form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+            <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+              <tr>
+                <td width="361" class="KT_th"><label for="happy">The most important thing is to keep the 
+                employees happy.</label></td>
+                <td width="317"><select name="happy" id="happy">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings1['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings1['Ratingkey'], $row_rsLDMA['happy']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings1['Rating']?></option>
+                    <?php
+} while ($row_rsRatings1 = mysql_fetch_assoc($rsRatings1));
+  $rows = mysql_num_rows($rsRatings1);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings1, 0);
+	  $row_rsRatings1 = mysql_fetch_assoc($rsRatings1);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "happy"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="transmit">My responsibility would be to transmit  
+                employee feedback to the new supervisor.</label></td>
+                <td><select name="transmit" id="transmit">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings2['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings2['Ratingkey'], $row_rsLDMA['transmit']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings2['Rating']?></option>
+                    <?php
+} while ($row_rsRatings2 = mysql_fetch_assoc($rsRatings2));
+  $rows = mysql_num_rows($rsRatings2);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings2, 0);
+	  $row_rsRatings2 = mysql_fetch_assoc($rsRatings2);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "transmit"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="persuade">My responsibility would be to persuade  
+                my subordinates to go along with the  
+                changes.</label></td>
+                <td><select name="persuade" id="persuade">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings3['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings3['Ratingkey'], $row_rsLDMA['persuade']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings3['Rating']?></option>
+                    <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "persuade"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="understand">It would be important to understand  
+                the perspectives of the employees.</label></td>
+                <td><select name="understand" id="understand">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings4['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings4['Ratingkey'], $row_rsLDMA['understand']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings4['Rating']?></option>
+                    <?php
+} while ($row_rsRatings4 = mysql_fetch_assoc($rsRatings4));
+  $rows = mysql_num_rows($rsRatings4);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings4, 0);
+	  $row_rsRatings4 = mysql_fetch_assoc($rsRatings4);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "understand"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="compromise">It would be best to find a compromise  
+                between what the new supervisor wants  
+                and what the employees want.</label></td>
+                <td><select name="compromise" id="compromise">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings5['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings5['Ratingkey'], $row_rsLDMA['compromise']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings5['Rating']?></option>
+                    <?php
+} while ($row_rsRatings5 = mysql_fetch_assoc($rsRatings5));
+  $rows = mysql_num_rows($rsRatings5);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings5, 0);
+	  $row_rsRatings5 = mysql_fetch_assoc($rsRatings5);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "compromise"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="supervisorwants">It would be my responsibility to do  
+                what the new supervisor wants.</label></td>
+                <td><select name="supervisorwants" id="supervisorwants">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings6['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings6['Ratingkey'], $row_rsLDMA['supervisorwants']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings6['Rating']?></option>
+                    <?php
+} while ($row_rsRatings6 = mysql_fetch_assoc($rsRatings6));
+  $rows = mysql_num_rows($rsRatings6);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings6, 0);
+	  $row_rsRatings6 = mysql_fetch_assoc($rsRatings6);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "supervisorwants"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="morale">It would be my responsibility to help  
+                maintain the morale of the employees.</label></td>
+                <td><select name="morale" id="morale">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings7['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings7['Ratingkey'], $row_rsLDMA['morale']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings7['Rating']?></option>
+                    <?php
+} while ($row_rsRatings7 = mysql_fetch_assoc($rsRatings7));
+  $rows = mysql_num_rows($rsRatings7);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings7, 0);
+	  $row_rsRatings7 = mysql_fetch_assoc($rsRatings7);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "morale"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="employeesfirst">The needs of the employees should  
+                come first in this situation.</label></td>
+                <td><select name="employeesfirst" id="employeesfirst">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings8['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings8['Ratingkey'], $row_rsLDMA['employeesfirst']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings8['Rating']?></option>
+                    <?php
+} while ($row_rsRatings8 = mysql_fetch_assoc($rsRatings8));
+  $rows = mysql_num_rows($rsRatings8);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings8, 0);
+	  $row_rsRatings8 = mysql_fetch_assoc($rsRatings8);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "employeesfirst"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="longterm">It is important to consider the  
+                long-term consequences of changing  
+                the workplace environment.</label></td>
+                <td><select name="longterm" id="longterm">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings9['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings9['Ratingkey'], $row_rsLDMA['longterm']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings9['Rating']?></option>
+                    <?php
+} while ($row_rsRatings9 = mysql_fetch_assoc($rsRatings9));
+  $rows = mysql_num_rows($rsRatings9);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings9, 0);
+	  $row_rsRatings9 = mysql_fetch_assoc($rsRatings9);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "longterm"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="superperspective">It would be important to understand  
+                the perspective of the new supervisor.</label></td>
+                <td><select name="superperspective" id="superperspective">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings10['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings10['Ratingkey'], $row_rsLDMA['superperspective']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings10['Rating']?></option>
+                    <?php
+} while ($row_rsRatings10 = mysql_fetch_assoc($rsRatings10));
+  $rows = mysql_num_rows($rsRatings10);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings10, 0);
+	  $row_rsRatings10 = mysql_fetch_assoc($rsRatings10);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "superperspective"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="missiondept">It would be important to consider the  
+                mission of my department when making  
+                this kind of decision.</label></td>
+                <td><select name="missiondept" id="missiondept">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings11['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings11['Ratingkey'], $row_rsLDMA['missiondept']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings11['Rating']?></option>
+                    <?php
+} while ($row_rsRatings11 = mysql_fetch_assoc($rsRatings11));
+  $rows = mysql_num_rows($rsRatings11);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings11, 0);
+	  $row_rsRatings11 = mysql_fetch_assoc($rsRatings11);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "missiondept"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="customers">It would be important to consider my  
+                customers when making this decision.</label></td>
+                <td><select name="customers" id="customers">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings12['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings12['Ratingkey'], $row_rsLDMA['customers']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings12['Rating']?></option>
+                    <?php
+} while ($row_rsRatings12 = mysql_fetch_assoc($rsRatings12));
+  $rows = mysql_num_rows($rsRatings12);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings12, 0);
+	  $row_rsRatings12 = mysql_fetch_assoc($rsRatings12);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "customers"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="priorities">It would be important to identify  
+                priorities in this situation.</label></td>
+                <td><select name="priorities" id="priorities">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings13['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings13['Ratingkey'], $row_rsLDMA['priorities']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings13['Rating']?></option>
+                    <?php
+} while ($row_rsRatings13 = mysql_fetch_assoc($rsRatings13));
+  $rows = mysql_num_rows($rsRatings13);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings13, 0);
+	  $row_rsRatings13 = mysql_fetch_assoc($rsRatings13);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "priorities"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="benefitboth">The best solution would benefit both  
+                the new supervisor and the employees.</label></td>
+                <td><select name="benefitboth" id="benefitboth">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings14['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings14['Ratingkey'], $row_rsLDMA['benefitboth']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings14['Rating']?></option>
+                    <?php
+} while ($row_rsRatings14 = mysql_fetch_assoc($rsRatings14));
+  $rows = mysql_num_rows($rsRatings14);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings14, 0);
+	  $row_rsRatings14 = mysql_fetch_assoc($rsRatings14);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "benefitboth"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="unbiased">In this situation, it would be important  
+                to remain unbiased.</label></td>
+                <td><select name="unbiased" id="unbiased">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings15['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings15['Ratingkey'], $row_rsLDMA['unbiased']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings15['Rating']?></option>
+                    <?php
+} while ($row_rsRatings15 = mysql_fetch_assoc($rsRatings15));
+  $rows = mysql_num_rows($rsRatings15);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings15, 0);
+	  $row_rsRatings15 = mysql_fetch_assoc($rsRatings15);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "unbiased"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="supervisorgoals">It would be important for me to  
+                understand the new supervisor's  
+                goals.</label></td>
+                <td><select name="supervisorgoals" id="supervisorgoals">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings16['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings16['Ratingkey'], $row_rsLDMA['supervisorgoals']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings16['Rating']?></option>
+                    <?php
+} while ($row_rsRatings16 = mysql_fetch_assoc($rsRatings16));
+  $rows = mysql_num_rows($rsRatings16);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings16, 0);
+	  $row_rsRatings16 = mysql_fetch_assoc($rsRatings16);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "supervisorgoals"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="uniqueprocess">Every problem is different and  
+                requires a unique decision  
+                  making process.</label></td>
+                <td><select name="uniqueprocess" id="uniqueprocess">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings17['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings17['Ratingkey'], $row_rsLDMA['uniqueprocess']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings17['Rating']?></option>
+                    <?php
+} while ($row_rsRatings17 = mysql_fetch_assoc($rsRatings17));
+  $rows = mysql_num_rows($rsRatings17);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings17, 0);
+	  $row_rsRatings17 = mysql_fetch_assoc($rsRatings17);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "uniqueprocess"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="productivity">The most important thing is to  
+                maintain or improve employee  
+                productivity.</label></td>
+                <td><select name="productivity" id="productivity">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings18['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings18['Ratingkey'], $row_rsLDMA['productivity']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings18['Rating']?></option>
+                    <?php
+} while ($row_rsRatings18 = mysql_fetch_assoc($rsRatings18));
+  $rows = mysql_num_rows($rsRatings18);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings18, 0);
+	  $row_rsRatings18 = mysql_fetch_assoc($rsRatings18);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "productivity"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="doesntunderstand">The main problem in this scenario is  
+                that the new supervisor doesn't understand  
+                the way things work in this department.</label></td>
+                <td><select name="doesntunderstand" id="doesntunderstand">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings19['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings19['Ratingkey'], $row_rsLDMA['doesntunderstand']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings19['Rating']?></option>
+                    <?php
+} while ($row_rsRatings19 = mysql_fetch_assoc($rsRatings19));
+  $rows = mysql_num_rows($rsRatings19);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings19, 0);
+	  $row_rsRatings19 = mysql_fetch_assoc($rsRatings19);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "doesntunderstand"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="overhead">This is one case in which it would be okay  
+                to go over the head of my supervisor.</label></td>
+                <td><select name="overhead" id="overhead">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings20['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings20['Ratingkey'], $row_rsLDMA['overhead']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings20['Rating']?></option>
+                    <?php
+} while ($row_rsRatings20 = mysql_fetch_assoc($rsRatings20));
+  $rows = mysql_num_rows($rsRatings20);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings20, 0);
+	  $row_rsRatings20 = mysql_fetch_assoc($rsRatings20);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "overhead"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="helpemployees">It would be my responsibility to help  
+                employees understand the new  
+                supervisor's goals.</label></td>
+                <td><select name="helpemployees" id="helpemployees">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings21['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings21['Ratingkey'], $row_rsLDMA['helpemployees']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings21['Rating']?></option>
+                    <?php
+} while ($row_rsRatings21 = mysql_fetch_assoc($rsRatings21));
+  $rows = mysql_num_rows($rsRatings21);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings21, 0);
+	  $row_rsRatings21 = mysql_fetch_assoc($rsRatings21);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "helpemployees"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="advocate">My responsibility would be to advocate  
+                for the employees.</label></td>
+                <td><select name="advocate" id="advocate">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings22['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings22['Ratingkey'], $row_rsLDMA['advocate']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings22['Rating']?></option>
+                    <?php
+} while ($row_rsRatings22 = mysql_fetch_assoc($rsRatings22));
+  $rows = mysql_num_rows($rsRatings22);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings22, 0);
+	  $row_rsRatings22 = mysql_fetch_assoc($rsRatings22);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "advocate"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="dialogue">It would be important to create some  
+                dialogue between the employees and  
+                the new supervisor.</label></td>
+                <td><select name="dialogue" id="dialogue">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings23['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings23['Ratingkey'], $row_rsLDMA['dialogue']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings23['Rating']?></option>
+                    <?php
+} while ($row_rsRatings23 = mysql_fetch_assoc($rsRatings23));
+  $rows = mysql_num_rows($rsRatings23);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings23, 0);
+	  $row_rsRatings23 = mysql_fetch_assoc($rsRatings23);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "dialogue"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="employeesupport">In general, you should have the  
+                support of the employees before  
+                implementing a plan like this one.</label></td>
+                <td><select name="employeesupport" id="employeesupport">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings24['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings24['Ratingkey'], $row_rsLDMA['employeesupport']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings24['Rating']?></option>
+                    <?php
+} while ($row_rsRatings24 = mysql_fetch_assoc($rsRatings24));
+  $rows = mysql_num_rows($rsRatings24);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings24, 0);
+	  $row_rsRatings24 = mysql_fetch_assoc($rsRatings24);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "employeesupport"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="planfit">It is important to consider how the  
+                supervisor's plan fits in with other  
+                changes happening in the company.</label></td>
+                <td><select name="planfit" id="planfit">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings25['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings25['Ratingkey'], $row_rsLDMA['planfit']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings25['Rating']?></option>
+                    <?php
+} while ($row_rsRatings25 = mysql_fetch_assoc($rsRatings25));
+  $rows = mysql_num_rows($rsRatings25);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings25, 0);
+	  $row_rsRatings25 = mysql_fetch_assoc($rsRatings25);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "planfit"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="generalprocess">Most problems can be solved by  
+                following a good general decision making  
+                process.</label></td>
+                <td><select name="generalprocess" id="generalprocess">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings26['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings26['Ratingkey'], $row_rsLDMA['generalprocess']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings26['Rating']?></option>
+                    <?php
+} while ($row_rsRatings26 = mysql_fetch_assoc($rsRatings26));
+  $rows = mysql_num_rows($rsRatings26);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings26, 0);
+	  $row_rsRatings26 = mysql_fetch_assoc($rsRatings26);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "generalprocess"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="seekadvice">I would seek advice about how to handle  
+                this problem from someone in senior  
+                management.</label></td>
+                <td><select name="seekadvice" id="seekadvice">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings27['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings27['Ratingkey'], $row_rsLDMA['seekadvice']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings27['Rating']?></option>
+                    <?php
+} while ($row_rsRatings27 = mysql_fetch_assoc($rsRatings27));
+  $rows = mysql_num_rows($rsRatings27);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings27, 0);
+	  $row_rsRatings27 = mysql_fetch_assoc($rsRatings27);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "seekadvice"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="openmind">In this situation, it would be important  
+                to keep an open mind.</label></td>
+                <td><select name="openmind" id="openmind">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings28['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings28['Ratingkey'], $row_rsLDMA['openmind']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings28['Rating']?></option>
+                    <?php
+} while ($row_rsRatings28 = mysql_fetch_assoc($rsRatings28));
+  $rows = mysql_num_rows($rsRatings28);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings28, 0);
+	  $row_rsRatings28 = mysql_fetch_assoc($rsRatings28);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "openmind"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="employeerut">The main problem in this scenario is that  
+                the employees are stuck in a rut.</label></td>
+                <td><select name="employeerut" id="employeerut">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings29['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings29['Ratingkey'], $row_rsLDMA['employeerut']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings29['Rating']?></option>
+                    <?php
+} while ($row_rsRatings29 = mysql_fetch_assoc($rsRatings29));
+  $rows = mysql_num_rows($rsRatings29);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings29, 0);
+	  $row_rsRatings29 = mysql_fetch_assoc($rsRatings29);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "employeerut"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="listenconcerns">It would be important to listen carefully to  
+                the concerns of the employees.</label></td>
+                <td><select name="listenconcerns" id="listenconcerns">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings30['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings30['Ratingkey'], $row_rsLDMA['listenconcerns']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings30['Rating']?></option>
+                    <?php
+} while ($row_rsRatings30 = mysql_fetch_assoc($rsRatings30));
+  $rows = mysql_num_rows($rsRatings30);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings30, 0);
+	  $row_rsRatings30 = mysql_fetch_assoc($rsRatings30);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "listenconcerns"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="consultpeers">It would be best to consult with one of my  
+                peers before deciding what to do in this  
+                situation.</label></td>
+                <td><select name="consultpeers" id="consultpeers">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings31['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings31['Ratingkey'], $row_rsLDMA['consultpeers']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings31['Rating']?></option>
+                    <?php
+} while ($row_rsRatings31 = mysql_fetch_assoc($rsRatings31));
+  $rows = mysql_num_rows($rsRatings31);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings31, 0);
+	  $row_rsRatings31 = mysql_fetch_assoc($rsRatings31);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "consultpeers"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="trialimplement">It would be a good idea to encourage the  
+                supervisor to consider a trial implementation  
+                of the plan.</label></td>
+                <td><select name="trialimplement" id="trialimplement">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings32['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings32['Ratingkey'], $row_rsLDMA['trialimplement']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings32['Rating']?></option>
+                    <?php
+} while ($row_rsRatings32 = mysql_fetch_assoc($rsRatings32));
+  $rows = mysql_num_rows($rsRatings32);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings32, 0);
+	  $row_rsRatings32 = mysql_fetch_assoc($rsRatings32);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "trialimplement"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="facilitator">It would be useful to bring in a facilitator  
+                to help mediate a solution.</label></td>
+                <td><select name="facilitator" id="facilitator">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings33['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings33['Ratingkey'], $row_rsLDMA['facilitator']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings33['Rating']?></option>
+                    <?php
+} while ($row_rsRatings33 = mysql_fetch_assoc($rsRatings33));
+  $rows = mysql_num_rows($rsRatings33);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings33, 0);
+	  $row_rsRatings33 = mysql_fetch_assoc($rsRatings33);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "facilitator"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="leavemanagement">This is the kind of problem that makes me  
+                want to leave management.</label></td>
+                <td><select name="leavemanagement" id="leavemanagement">
+
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings34['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings34['Ratingkey'], $row_rsLDMA['leavemanagement']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings34['Rating']?></option>
+                    <?php
+} while ($row_rsRatings34 = mysql_fetch_assoc($rsRatings34));
+  $rows = mysql_num_rows($rsRatings34);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings34, 0);
+	  $row_rsRatings34 = mysql_fetch_assoc($rsRatings34);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "leavemanagement"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="seekfeedback">In general, it is essential to seek feedback  
+                from employees before implementing a  
+                change of this kind.</label></td>
+                <td><select name="seekfeedback" id="seekfeedback">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings35['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings35['Ratingkey'], $row_rsLDMA['seekfeedback']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings35['Rating']?></option>
+                    <?php
+} while ($row_rsRatings35 = mysql_fetch_assoc($rsRatings35));
+  $rows = mysql_num_rows($rsRatings35);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings35, 0);
+	  $row_rsRatings35 = mysql_fetch_assoc($rsRatings35);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "seekfeedback"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="othersexperience">It would be important to look at other  
+                organizations' experiences with the kind of  
+                changes the new supervisor is planning.</label></td>
+                <td><select name="othersexperience" id="othersexperience">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings36['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings36['Ratingkey'], $row_rsLDMA['othersexperience']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings36['Rating']?></option>
+                    <?php
+} while ($row_rsRatings36 = mysql_fetch_assoc($rsRatings36));
+  $rows = mysql_num_rows($rsRatings36);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings36, 0);
+	  $row_rsRatings36 = mysql_fetch_assoc($rsRatings36);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "othersexperience"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="weighneeds">It is important to weigh the needs of the  
+                employees against the expectations of  
+                the supervisor.</label></td>
+                <td><select name="weighneeds" id="weighneeds">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings37['Ratingkey']?>"<?php if (!(strcmp($row_rsRatings37['Ratingkey'], $row_rsLDMA['weighneeds']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings37['Rating']?></option>
+                    <?php
+} while ($row_rsRatings37 = mysql_fetch_assoc($rsRatings37));
+  $rows = mysql_num_rows($rsRatings37);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings37, 0);
+	  $row_rsRatings37 = mysql_fetch_assoc($rsRatings37);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "weighneeds"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="companypolicy">It is important to consult company policy  
+                in situations of this kind.</label></td>
+                <td><select name="companypolicy" id="companypolicy">
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRatings38['Rating']?>"<?php if (!(strcmp($row_rsRatings38['Rating'], $row_rsLDMA['companypolicy']))) {echo "SELECTED";} ?>><?php echo $row_rsRatings38['Rating']?></option>
+                    <?php
+} while ($row_rsRatings38 = mysql_fetch_assoc($rsRatings38));
+  $rows = mysql_num_rows($rsRatings38);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings38, 0);
+	  $row_rsRatings38 = mysql_fetch_assoc($rsRatings38);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("LDMA", "companypolicy"); ?> </td>
+              </tr>
+              <tr>
+                <td colspan="2" class="KT_th">I found it difficult to rate some of the items in the preferences section, because...</td>
+                </tr>
+              <tr>
+                <td class="KT_th"><label for="makesense">Some of the items didn't make sense.</label></td>
+                <td><input  <?php if (!(strcmp(KT_escapeAttribute($row_rsLDMA['makesense']),"Y"))) {echo "checked";} ?> type="checkbox" name="makesense" id="makesense" value="Y" />
+                    <?php echo $tNGs->displayFieldError("LDMA", "makesense"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="itdepends">I frequently found myself thinking, &quot;it  
+                depends&quot;, which made it difficult to  
+                provide one rating.</label></td>
+                <td><input  <?php if (!(strcmp(KT_escapeAttribute($row_rsLDMA['itdepends']),"Y"))) {echo "checked";} ?> type="checkbox" name="itdepends" id="itdepends" value="Y" />
+                    <?php echo $tNGs->displayFieldError("LDMA", "itdepends"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="moreinfo">I often wanted to know more about the  
+                specifics of the situation before committing  
+                myself to a rating.</label></td>
+                <td><input  <?php if (!(strcmp(KT_escapeAttribute($row_rsLDMA['moreinfo']),"Y"))) {echo "checked";} ?> type="checkbox" name="moreinfo" id="moreinfo" value="Y" />
+                    <?php echo $tNGs->displayFieldError("LDMA", "moreinfo"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="notrepresented">My way of thinking was not well-represented  
+                by the items.</label></td>
+                <td><input  <?php if (!(strcmp(KT_escapeAttribute($row_rsLDMA['notrepresented']),"Y"))) {echo "checked";} ?> type="checkbox" name="notrepresented" id="notrepresented" value="Y" />
+                    <?php echo $tNGs->displayFieldError("LDMA", "notrepresented"); ?> </td>
+              </tr>
+              <tr>
+                <td colspan="2" class="KT_th">Your comments</td>
+              </tr>
+              <tr>
+                <td colspan="2" class="KT_th"><textarea name="comments" cols="60" rows="4" id="comments"><?php echo KT_escapeAttribute($row_rsLDMA['comments']); ?></textarea>
+                <?php echo $tNGs->displayFieldHint("comments");?> <?php echo $tNGs->displayFieldError("LDMA", "comments"); ?> </td>
+              </tr>
+              <tr class="KT_buttons">
+                <td colspan="2"><input type="submit" name="KT_Update1" id="KT_Update1" value="Insert responses" />                </td>
+              </tr>
+            </table>
+          </form>
+          <p>&nbsp;</p>
+          </p></td>
+        <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRatings1);
+
+mysql_free_result($rsRatings2);
+
+mysql_free_result($rsRatings3);
+
+mysql_free_result($rsRatings4);
+
+mysql_free_result($rsRatings5);
+
+mysql_free_result($rsRatings6);
+
+mysql_free_result($rsRatings7);
+
+mysql_free_result($rsRatings8);
+
+mysql_free_result($rsRatings9);
+
+mysql_free_result($rsRatings10);
+
+mysql_free_result($rsRatings11);
+
+mysql_free_result($rsRatings12);
+
+mysql_free_result($rsRatings13);
+
+mysql_free_result($rsRatings14);
+
+mysql_free_result($rsRatings15);
+
+mysql_free_result($rsRatings16);
+
+mysql_free_result($rsRatings17);
+
+mysql_free_result($rsRatings18);
+
+mysql_free_result($rsRatings19);
+
+mysql_free_result($rsRatings20);
+
+mysql_free_result($rsRatings21);
+
+mysql_free_result($rsRatings22);
+
+mysql_free_result($rsRatings23);
+
+mysql_free_result($rsRatings24);
+
+mysql_free_result($rsRatings25);
+
+mysql_free_result($rsRatings26);
+
+mysql_free_result($rsRatings27);
+
+mysql_free_result($rsRatings28);
+
+mysql_free_result($rsRatings29);
+
+mysql_free_result($rsRatings30);
+
+mysql_free_result($rsRatings31);
+
+mysql_free_result($rsRatings32);
+
+mysql_free_result($rsRatings33);
+
+mysql_free_result($rsRatings34);
+
+mysql_free_result($rsRatings35);
+
+mysql_free_result($rsRatings36);
+
+mysql_free_result($rsRatings37);
+
+mysql_free_result($rsRatings38);
+?>

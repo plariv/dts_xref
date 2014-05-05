@@ -1,0 +1,282 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: skill levels</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+
+// JQUERY to manage hidden elements on the page
+$(document).ready(function() {
+	
+	$('.hotspot').tooltip({
+		position: 'bottom center', 
+		effect: 'fade', 
+		fadeInSpeed: 100,
+		fadeOutSpeed: 100,
+		delay:300,
+		layout: '<span/>',
+		events: {
+			def: 'mouseover, mouseleave'
+		}
+	}); 
+	
+	$('.hotspot').mouseover(function() {
+		this.style.backgroundColor = "#d0d0d0";	
+	});
+	
+	$('.hotspot').mouseout(function() {
+		this.style.backgroundColor = "";
+	});
+	
+	// Add instrument-specific class to each <a> link
+	$('a').addClass('a-<?php echo strtolower($instrument_id); ?>');
+	
+});
+
+
+</script>
+<style type="text/css">
+
+/* tooltip styling. by default the element to be styled is .tooltip  */
+.tooltip {
+	display:none;
+	background:#FFF;
+	font-size:90%;
+	line-height:140%;
+	min-width: 200px;
+	max-width: 300px;
+	background: #FFC;
+	padding-right: 20px;
+	padding-left: 20px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-left: 10px;
+	-moz-box-shadow: 2px 2px 5px #888;
+	-webkit-box-shadow: 2px 2px 5px #888;
+	box-shadow: 2px 2px 5px #888;
+	z-index: 999;
+}
+
+.hotspot {
+	cursor: pointer; cursor: hand	
+	height:100%; 
+	width:100%; 
+	position:relative;
+}
+.inner_container .column1 .minimalist-a tr th {
+	font-size: 140%;
+}
+</style>
+
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+<h1>Skill levels	</h1>
+<p>The following table provides descriptions of skill levels 6-12. If you'd like to learn more about the principles behind the Lectical Assessment System, see our <a href="hierarchical_complexity.php">hierarchical complexity</a> page.</p>
+		<table width="96%" class="minimalist-a margin-t20-b20">
+			  <tr>
+			    <th width="15%">Level</th>
+			    <th width="45%">Concepts</th>
+			    <th>Logical structure</th>
+		      </tr>
+			  <tr>
+			    <td><strong>6</strong><br />
+			      <br />
+			      <strong>Single representations<br />
+			        26-40 mos</strong></td>
+			    <td><strong>Concepts are 1st order representational sets</strong><br />
+			      These coordinate symbolic systems. In responses to the Joe dilemma, for example, the concept of camping coordinates activities like swimming, sleeping in a tent, and painting, and the concept of a paper route coordinates activities like riding a bike, delivering papers, and receiving money.</td>
+			    <td><strong>The logical structure is definitional</strong><br />
+			      It identifies one aspect of a single representation—as in &quot;Camping is fun,&quot; in which fun is an &quot;aspect&quot; of camp.</td>
+		      </tr>
+			  <tr>
+			    <td><strong>7</strong><br />
+			      <br />
+			      <strong>Representational mappings<br />
+			        4-5 years</strong></td>
+			    <td><strong>Concepts are 2nd order representational sets</strong><br />
+			      These coordinate or modify representational sets (the concepts constructed at the single representations level). The very popular representational mappings Lectical™ level concept of having favorites, for example, can be employed to rank camping and fishing. &quot;Camping is my favorite, and fishing is my next favorite.&quot; Concepts like <i>being mean, keeping a promise, changing one’s mind</i>, and <i>sharing</i> also become common at this Lectical™ level. &quot;[Joe’s father] is just being mean; he is taking the money away from his kids.&quot;</td>
+			    <td><strong>The logical structure is linear</strong><br />
+			      It coordinates one aspect of two or more representations—as in, &quot;If you do not do what your father tells you to do, he will get really mad at you,&quot; in which doing what your father says and not doing what your father says are coordinated by his anticipated reaction.</td>
+		      </tr>
+			  <tr>
+			    <td><strong>8</strong><br />
+			      <br />
+			      <strong>Representational systems<br />
+			        6-7 years</strong></td>
+			    <td><strong>Concepts are 3rd order representational sets</strong><br />
+			      These coordinate elements of representational systems. For example, the concept of trust, articulated for the first time at this Lectical™ level, can be used to describe the system of interactions between Joe and his father. &quot;Joe trusted [his Dad] that he could go to the camp if he saved enough money, and then his father just breaks it, and the promise is very important.&quot; Concepts like <i>to turn against, to blame, to believe</i>, and <i>being fair</i> are also infrequently observed before this level. &quot;[If you break a promise] they will not like you anymore, and your friends will turn against you.&quot;</td>
+			    <td><strong>The logical structure is multivariate</strong><br />
+			      It coordinates multiple aspects of two or more representations—as in, &quot;If Joe’s Dad says Joe can go to camp, then he says he can’t go to camp, that’s not fair because Joe worked hard and then his Dad changed his mind,&quot; in which two conflicting representations of Dad’s authority are evaluated in terms of his changed mind and Joe’s hard work.</td>
+		      </tr>
+			  <tr>
+			    <td><strong>9</strong><br />
+			      <strong><br />
+			        Single abstractions<br />
+			        9-11 years</strong></td>
+			    <td><strong>Concepts are 1st order abstractions</strong><br />
+			      These coordinate representational systems. For example, the concept of trustworthiness, articulated for the first time at this Lectical™ level, defines those qualities that make a person trustworthy rather than describing a particular situation in which trust is felt or not felt. It is composed of qualities that produce trust, such as <i>telling the truth, keeping secrets</i>, and<i> keeping promises</i>. &quot;It's always nice…to be trustworthy. Because, then, if [someone has] a secret, they can come and talk to you.&quot; Concepts like<i> kindness, keeping your word, respect</i>, and <i>guilt</i> are also rare before the this level. &quot;If you don't do something you promise, you'll feel really guilty.&quot;</td>
+			    <td><strong>The logical structure is definitional</strong><br />
+			      It identifies one aspect of a single abstraction—as in, &quot;Making a promise is giving your word,&quot; in which giving one's word is an &quot;aspect&quot; of a promise.</td>
+		      </tr>
+			  <tr>
+			    <td><strong>10<br />
+			      <br />
+			      Abstract mappings</strong></td>
+			    <td><strong>Concepts are 2nd order abstractions </strong><br />
+			      These coordinate or modify abstractions. For example, the abstract mappings level concept basis can be employed to coordinate the elements essential to a good relationship. &quot;To me, [trust and respect are] the basis of a relationship, and without them you really don't have one.&quot; Concepts like <i>coming to an agreement, making a commitment, building trust</i>, and <i>compromise</i> are also rare before this Lectical™ level. &quot;I think [Joe and his father] could come to an agreement or compromise that they are both comfortable with.&quot;</td>
+			    <td><strong>The logical structure is linear</strong><br />
+			      The most complex logical structure of this Lectical™ level coordinates one aspect of two or more abstractions—as in, &quot;Joe has a right to go to camp because his father said he could go if he saved up the money, and Joe lived up to his commitment.&quot; Here, Joe's fulfillment of his father's conditions determines whether Joe has a right or does not have a right to go to camp.</td>
+		      </tr>
+			  <tr>
+			    <td><strong>11<br />
+			      <br />
+			      Abstract systems</strong></td>
+			    <td><strong>Concepts are 3rd order abstractions</strong><br />
+			      These coordinate elements of abstract systems. For example, the concept of personal integrity–which is rare before the abstract systems level–refers to the coordination of and adherence to notions of fairness, trustworthiness, honesty, preservation of the golden rule, etc., in one’s actions. &quot;[You should keep your word] for your own integrity. For your own self-worth, really. Just to always be the kind of person that you would want to be dealing with.&quot; Concepts like <i>verbal contract, moral commitment, functional, development, social structure</i>, and <i>foundation</i> are also uncommon before the abstract systems level. &quot;A promise is the verbal contract, the moral commitment that the father made to his son. It is the only way for the child to…develop his moral thinking—from watching his parent's moral attitude.&quot;</td>
+			    <td><strong>The logical structure is multivariate</strong><br />
+			      The most complex logical structure of this level coordinates multiple aspects of two or more abstractions. &quot;Following through with his commitment and actually experiencing camp combine to promote Joe’s growth and development, not just physically but psychologically, emotionally, and spiritually.&quot; Here, multiple facets of Joe’s personal development are promoted when he both keeps his commitment and accomplishes his goal.</td>
+		      </tr>
+			  <tr>
+			    <td><strong>12</strong><br />
+			      <br />
+			      <strong>Single axioms/ principles</strong></td>
+			    <td><strong>Concepts are 1st order axioms/ principles</strong><br />
+			      These coordinate abstract systems. The notion of the social contract, for example, results from the coordination of human interests (where individual human beings are treated as systems). &quot;Everybody wants to be treated equally and have a sense of fair play. Because this is so, we have an obligation to one another to enter into a social contract that optimizes equality and fairness.&quot; Concepts like <em><i>autonomy, fair play, heteronomy, higher order principle</i>,</em> and <i><em>philosophical principle</em></i> are rare before the single axioms/ principles level. &quot;The only time we’re justified in breaking the social contract is when a higher principle, such as the right to life, intervenes.&quot;</td>
+			    <td><strong>The logical structure is definitional</strong><br />
+			      It identifies one aspect of a principle or axiom coordinating systems—as in, &quot;Contracts are articulations of a unique human quality, mutual trust, which coordinates human relations.&quot; Here, contracts are seen as the instantiation of a broader principle coordinating human interactions.</td>
+		      </tr>
+	    </table>
+			<h3>Scoring</h3>
+            <p>Learning to score with the LAS is a long and challenging process that involves many hours of instruction and study. At this time, we only teach  qualified individuals who are working with DTS/DiscoTest. Our Certified Analysts are the only people who can legally call themselves Lectical Analysts or claim to be using the LAS to score performances.</p>
+            <p>We also offer an annual course, Foundations of Lectical Assessment (<a href="../courses/about_course.php?coursekey=102">FOLA</a>), that covers the core literature and basics of the scoring system. The FOLA does not qualify participants to score, but does provide the basic knowledge required to effectively work with or conduct research with LectaTests and DiscoTests.</p>
+            <p>&nbsp;</p>
+	  <!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+		<!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" -->
+		<!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

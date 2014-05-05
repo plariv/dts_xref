@@ -1,0 +1,48 @@
+<?php require_once('Connections/Assessment.php'); ?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_verifyRs = "-1";
+if (isset($_POST['email'])) {
+  $colname_verifyRs = (get_magic_quotes_gpc()) ? $_POST['email'] : addslashes($_POST['email']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_verifyRs = sprintf("SELECT * FROM Registrants WHERE email = %s", GetSQLValueString($colname_verifyRs, "text"));
+$verifyRs = mysql_query($query_verifyRs, $Assessment) or die(mysql_error());
+$row_verifyRs = mysql_fetch_assoc($verifyRs);
+$totalRows_verifyRs = mysql_num_rows($verifyRs);
+
+mysql_free_result($verifyRs);
+?>
+<?php if ($totalRows_verifyRs > 0) { // Show if recordset not empty ?>
+  This email address already exists in our database. Please use another one.
+  <?php } // Show if recordset not empty ?>

@@ -1,0 +1,244 @@
+<?php 
+require_once('../Connections/Assessment.php');
+require_once( '../WA_SecurityAssist/Helper_PHP.php' ); 
+include_once '../includes/general_custom_functions.php';
+mysql_select_db($database_Assessment, $Assessment);
+
+
+
+$userkey = -1;
+if (isset($_SESSION['log_userkey'])) { $userkey = $_SESSION['log_userkey']; } 
+$instrument_id = "FOLA";
+$_SESSION['instrument_id'] = "FOLA";
+
+$videokey = 0;
+if (isset($_GET['video'])) { $videokey = $_GET['video']; } 
+if ($videokey == "2011_1025_public_lg_d1_socialjustice") { $videokey = 101; }
+
+// Admin_access is used to insert a whitelist into the SQL access query, for DTS employees.
+$admin_access = 0;
+if (WA_Auth_RulePasses("Logged in as analyst")) { $admin_access = 1; }
+
+
+// 1) fetch the information for this video. verify that it exists.
+$query_rsVideo = sprintf("SELECT v.*,
+		CASE 
+			WHEN v.access_public = 1 THEN 1
+			WHEN v.access_coursekey = c.coursekey THEN 1
+			WHEN {$admin_access} = 1 THEN 1
+			ELSE 0
+		END access
+	FROM videorecordings v
+		LEFT JOIN course_registration_old cr ON %s = cr.userkey
+		LEFT JOIN course_dates_old cd ON cr.coursedatekey = cd.coursedatekey
+		LEFT JOIN courses_old c ON cd.coursekey = c.coursekey
+	WHERE videokey = %s 
+	ORDER BY access DESC",
+		SQLstr($userkey, "int"),
+		SQLstr($videokey, "int"));
+$rsVideo = mysql_query($query_rsVideo, $Assessment) or die(mysql_error());
+$row_rsVideo = mysql_fetch_assoc($rsVideo);
+$totalRows_rsVideo = mysql_num_rows($rsVideo);
+
+//topher($query_rsVideo);
+
+
+// 2) fetch the access information for this video. 
+
+
+$access = FALSE;
+
+// 'access' column is 1 if either condition for viewing is met.
+if ($row_rsVideo['access'] == 1 OR $videokey == 0) { $access = TRUE; }
+
+if ($access <> TRUE) { WA_Auth_RestrictAccess("../security/logIn.php"); }
+
+
+
+
+
+
+
+
+?>
+
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: View recording</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+.twoColFixRtHdr #container #mainContent ol {
+	padding-left: 35px;
+}
+</style>
+
+
+
+
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --> 
+  
+<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  
+  <h1><?php echo $row_rsVideo['title']; ?></h1>
+  <?php 
+	if ($row_rsVideo['subtitle'] <> "") {  ?>
+  	<h3><?php echo $row_rsVideo['subtitle']; ?></h3>
+		<?php 
+	} 
+	if ($row_rsVideo['intro'] <> "") { echo $row_rsVideo['intro']; } 
+	
+	
+	if ($totalRows_rsVideo == 0) { ?>
+  	<p><strong>The link to view this video is incorrect or incomplete.</strong> If you opened this link from an email, please copy and paste the link from the email into your browser's address bar.</p>
+  	<?php 
+	} else { 
+		
+		// Show link to external recording
+		if ($row_rsVideo['link'] <> "") {
+			?><p><a href="<?php echo $row_rsVideo['link']; ?>" target="_blank">
+      	View recording of this lecture</a></p><?php
+		}
+		
+		// Show attached files
+		if ($row_rsVideo['assets'] <> "") {
+			$assets = explode("|||", $row_rsVideo['assets']);
+			do {
+				$asset = current($assets);
+				$type = $type = str_replace("_", " ", $asset);
+				$desc = "";
+				if (strpos($asset, ".pdf")) { $desc = " (PDF of slides)"; }
+				if (strpos($asset, ".mp3")) { $desc = " (MP3 recording)"; }
+				if (strpos($asset, ".zip")) { $desc = " (compressed folder)"; }
+				?><p>Download <a href="http://devtestservice.org/courses/course_files/recordings/<?php 
+					echo $asset; ?>" target="_blank"><?php echo $type; ?></a> <?php echo $desc; ?></p><?php 
+			} while (next($assets));
+		}
+		
+		if ($row_rsVideo['path'] <> "") { ?>
+  
+			<script type='text/javascript' 
+							src='https://devtestservice.org/includes/video/swfobject.js'></script>
+        
+        <div id='mediaspace1'>
+          <h4>Content on this page requires a newer version of Adobe Flash Player.</h4>
+          <p><a href="https://www.adobe.com/go/getflashplayer">
+          <img src="https://www.adobe.com/images/shared/download_buttons/get_flash_player.gif" 
+              alt="Get Adobe Flash player" /></a></p>
+          <p>You may also view this video by clicking on one of the download links, below.</p>
+        </div>
+        
+      <script type='text/javascript'>
+          var so = new SWFObject('https://devtestservice.org/includes/video/player.swf','mpl','640','480','9');
+          so.addParam('allowfullscreen','true');
+          so.addParam('allowscriptaccess','always');
+          so.addParam('wmode','opaque');
+          so.addVariable('author','Developmental Testing Service, Inc.');
+          so.addVariable('description','Private video. Please do not distribute.');
+          so.addVariable('file','http://devtestservice.org/courses/course_files/recordings/<?php 
+            echo $row_rsVideo['path']; ?>.f4v');
+          so.addVariable('title','Adult interview (television dilemma)');
+          so.addVariable('stretching','uniform');
+          so.addVariable('plugins','shortcuts-1'); 
+          so.addVariable('shortcuts.slowmotion', 'true'); 
+          
+          so.write('mediaspace1');
+      </script>  
+  
+  		<?php 
+		}
+	} ?>
+  
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+
+
+
+?>

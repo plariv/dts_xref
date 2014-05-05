@@ -1,0 +1,269 @@
+<?php require_once('../Connections/Assessment.php');?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+
+<?php
+if ((((isset($_POST["remembermeoption"]))?$_POST["remembermeoption"]:"") != ""))     {
+  setcookie("RememberMePWD", "".((isset($_POST["userpassword"]))?$_POST["userpassword"]:"")  ."", time()+(60*60*24*30), "/", "", 0);
+}
+?><?php
+if ((((isset($_POST["remembermeoption"]))?$_POST["remembermeoption"]:"") != ""))     {
+  setcookie("RememberMeUN", "".((isset($_POST["user_name"]))?$_POST["user_name"]:"")  ."", time()+(60*60*24*30), "/", "", 0);
+}
+?><?php
+if (isset($_POST["LogIn"]) && !isset($_POST["remembermeoption"]))     {
+  setcookie("RememberMePWD", "", time()+(60*60*24*30), "/", "", 0);
+}
+?><?php
+if (isset($_POST["LogIn"]) && !isset($_POST["remembermeoption"]))     {
+  setcookie("RememberMeUN", "", time()+(60*60*24*30), "/", "", 0);
+}
+?>
+
+
+<?php
+if($_SERVER["REQUEST_METHOD"] == "POST") {
+	
+	// On successful login, sends the user to landing.php. That page then decides whether to send them somewhere else.
+	
+	// This variable tells the page (on authentication) to allow a second attempt if the user got the pw wrong the first time; and to send to the "Forgot password" page if they've guessed wrong twice.
+	$failRedirectTo = "";
+	if (isset($_GET['reason']) AND $_GET['reason'] == "wrong") {
+		$failRedirectTo = "email_pw.php";
+	} else {
+		$failRedirectTo = $_SERVER["PHP_SELF"]."?reason=wrong";
+	} 
+	
+	$WA_Auth_Parameter = array(
+	"connection" => $Assessment,
+	"database" => $database_Assessment,
+	"tableName" => "registrants",
+	"columns" => explode($WA_Auth_Separator,"user_name".$WA_Auth_Separator."password"),
+	"columnValues" => explode($WA_Auth_Separator,"".((isset($_POST["user_name"]))?$_POST["user_name"]:"")  ."".$WA_Auth_Separator."".((isset($_POST["userpassword"]))?$_POST["userpassword"]:"")  .""),
+	"columnTypes" => explode($WA_Auth_Separator,"text".$WA_Auth_Separator."text"),
+	"sessionColumns" => explode($WA_Auth_Separator,"userkey".$WA_Auth_Separator."user_level".$WA_Auth_Separator."firstname".$WA_Auth_Separator."lastname"),
+	"sessionNames" => explode($WA_Auth_Separator,"log_userkey".$WA_Auth_Separator."log_user_level".$WA_Auth_Separator."log_firstname".$WA_Auth_Separator."log_lastname"),
+	"successRedirect" => "../landing.php?status=login",
+	"failRedirect" => $failRedirectTo,
+	"gotoPreviousURL" => TRUE,
+	"keepQueryString" => FALSE		// I'm trying removing the query string a person previously had. 
+										// Not a dealbreaker to turn this back on.
+	);
+	
+	WA_AuthenticateUser($WA_Auth_Parameter);
+}
+
+
+
+
+include '../includes/general_custom_functions.php';
+
+
+
+
+?>
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Log In</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<link href="../WA_SecurityAssist/styles/Refined_Pacifica.css" rel="stylesheet" type="text/css" />
+<link href="../WA_SecurityAssist/styles/Verdana.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+.inner_container .column1 table tr td {
+	font-size: 110%;
+	font-weight: 400;
+	line-height: 120%;
+}
+</style>
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+    <div id="LogInContainer">
+      <form action="<?php echo ($_SERVER["PHP_SELF"].(isset($_SERVER["QUERY_STRING"])?"?".htmlentities($_SERVER["QUERY_STRING"]):""));?>" method="post" name="WAATKLogInForm" id="WAATKLogInForm">
+      <h1>LOG IN</h1>
+      <?php 
+			
+			$reason = "";
+			if (isset($_GET['reason']) AND $_GET['reason'] <> "") {
+				$reason = $_GET['reason'];
+			}
+			
+			if ($reason == "registered") { ?>
+				<div class="box"><p>Thank you for registering with us. To take an assessment or view results, please log in with your new username and password.</p></div>
+			<?php } ?>
+			
+			<?php if ($reason == "privatereport") { ?>
+      	<div class="box">
+        <p class="red">You have been denied access to an individual's report page because you are not authorized to view their data. If you are not logged in, please log in here, or <?php contactUsForHelp("contact us"); ?> if you believe you should be able to see the report.</p></div>
+			<?php } ?>
+      
+      <?php if ($reason == "accessdenied") { ?>
+      	<div class="box">
+        <p class="red">You do not have the appropriate level of access to view the selected page. If you think you have reached this message in error, please <?php contactUsForHelp("contact us for help", "Page requested = ".$_GET['accesscheck']); ?>.</p></div>
+			<?php } ?>
+      
+      <?php if ($reason == "wrong") { ?>
+      	<div class="box">
+          <p class="red">That username / password combination is incorrect. Please try again.</p>
+          <p class="red">Because of improvements to the DTS site, you may be unable to log in using your old password. </p>
+          <p class="red"><a href="email_pw.php">Click here if you have forgotten your password</a> or would like to receive a temporary password.</p>
+      	</div>
+			<?php } ?>
+      
+      <p>If you have not yet registered, <a href="registration.php">click here</a>. </p>
+      <table>
+        <tr>
+          <td align='right' width='100'>User name</th>
+          <td><input name="user_name" type="text" value="<?php echo((isset($_COOKIE["RememberMeUN"]) && isset($_COOKIE["RememberMePWD"]))?$_COOKIE["RememberMeUN"]:"") ?>" size="13" /></td>
+        </tr>
+        <tr>
+          <td align='right'>Password</td>
+          <td><input name="userpassword" type="password"  value="<?php echo((isset($_COOKIE["RememberMePWD"]))?$_COOKIE["RememberMePWD"]:"") ?>" size="13" /></td>
+        </tr>
+        <tr>
+          <td align='right'><input type="checkbox" name="remembermeoption" <?php echo((isset($_COOKIE["RememberMeUN"]))?"checked":"") ?> value="1" /></td>
+          <td>Remember me</td>
+        </tr>
+      </table>
+      <input type="hidden" name="firstname" id="firstname" value="<?php echo ((isset($_POST["firstname"]))?$_POST["firstname"]:""); ?>" />
+      <input type="hidden" name="lastname" id="lastname" value="<?php echo((isset($_POST["lastname"]))?$_POST["lastname"]:"") ?>" />
+      <div>
+        <input style='font-size:130%;' type="Submit" name="LogIn" id="LogIn" value="LOG IN" />
+</div>
+    </form>
+</div>
+      <p>&nbsp; </p>
+      <p><a href="email_pw.php">Forgot password?</a></p>
+      
+<script type="text/javascript">
+document.WAATKLogInForm.user_name.focus();
+</script>
+      
+  <!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+  <!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" --><!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

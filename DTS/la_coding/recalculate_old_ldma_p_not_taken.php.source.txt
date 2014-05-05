@@ -1,0 +1,83 @@
+<? 
+include_once ("../includes/dts_functions.php");
+include_once ("coding_functions.php");
+
+bench();
+
+$start_key = 0;
+$end_key = 9999999;
+
+// for each lakey in this table (lakey is unique for these tables)
+$lakey = $start_key;
+while ($lakey <= $end_key) {
+
+	// look up data on the next lakey
+	$sql = sprintf("SELECT c.*, d.dilemmakey
+		FROM la_codes c
+			JOIN la_data d ON c.lakey = d.lakey
+		WHERE c.lakey > %s AND d.instrument_id LIKE %s 
+			AND d.date_coded_1 < '2013-08-22' AND d.coded_1 = 1 
+			AND IFNULL(c.code461, 0) = 0
+		ORDER BY lakey LIMIT 1",
+			SQLstr($lakey, 'int'),
+			"'LDMA%'");
+	$rsCodes = mysql_query($sql) or die("ERROR looking up next lakey.");
+	// if there are no more records in this table, break and continue to the next table
+	if (mysql_num_rows($rsCodes) == 0) { break; }
+	$codes = mysql_fetch_assoc($rsCodes);
+	$lakey = $codes['lakey'];
+	echo "Finding a P-not-taken for lakey {$lakey}... ";
+
+	// get list of perspectives relevant to this dilemma
+	if ($codes['dilemmakey'] == 0) { continue; }
+	$sql = sprintf("SELECT code_ptaken AS code, dilemma_%s AS ie 
+		FROM la_ldma_perspectives WHERE dilemma_%s >= 1",
+			zeropad(intval($codes['dilemmakey']), 2),
+			zeropad(intval($codes['dilemmakey']), 2));
+	$rsPerspectives = mysql_query($sql) or die("ERROR fetching list of perspectives: ".mysql_error());
+	$perspectives = array();
+	while ($row = mysql_fetch_assoc($rsPerspectives)) { $perspectives[] = $row; }
+
+	// find the first perspective that is not marked.
+	// First, search for explicit perspectives. Then if none, search for implicit.
+	$not_taken = 0;
+	foreach ($perspectives as $p) {
+		// ignore implicit perspectives (for this first round)
+		if ($p['ie'] == 2) { continue; }
+		if ($codes['code'.zeropad($p['code'], 3)] == 0) {
+			$not_taken = $p['code'];
+			break;
+		}
+	}
+	// if no missing explicit perspectives were found, look for an implicit one.
+	if ($not_taken == 0) { 
+		echo "Looking for an implicit perspective... ";
+		foreach ($perspectives as $p) { 
+			if ($codes['code'.zeropad($p['code'], 3)] == 0) {
+				$not_taken = $p['code'];
+				break;
+			}
+		}
+	}
+	// if still no missing perspective was found, then skip this record.
+	if ($not_taken == 0) { 
+		echo "**** This performance mentioned all relevant perspectives. ****<br />";
+		continue;
+	}
+
+	echo "Perspective {$not_taken} was not taken. <br />";
+	// if (rand(0, 100) == 1) { die(); }
+
+	// update this record
+	$sql = sprintf("UPDATE la_codes SET code461 = %s WHERE lakey = %s",
+		SQLstr($not_taken, 'int'),
+		SQLstr($lakey, 'int'));
+	$result = mysql_query($sql) or die("ERROR updating this record: ".mysql_error());
+
+} // END LOOP: for each lakey
+
+echo "<br>";
+
+bench("All P-not-taken calculations"); 
+
+?>

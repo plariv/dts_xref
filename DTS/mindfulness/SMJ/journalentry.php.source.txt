@@ -1,0 +1,296 @@
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../../security/logIn.php");
+}
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_insert"])) && ($_POST["MM_insert"] == "form1")) {
+  $insertSQL = sprintf("INSERT INTO Journal (journalkey, userkey, teacherkey, takey, `date`, journalentry_1, journalentry_2) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                       GetSQLValueString($_POST['journalkey'], "int"),
+                       GetSQLValueString($_POST['userkey'], "int"),
+                       GetSQLValueString($_POST['teacherkey'], "int"),                       	                       GetSQLValueString($_POST['takey'], "int"),                       	                       GetSQLValueString($_POST['date'], "text"),
+                       GetSQLValueString($_POST['journalentry_1'], "text"),
+                       GetSQLValueString($_POST['journalentry_2'], "text"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($insertSQL, $Assessment) or die(mysql_error());
+
+  $insertGoTo = "indiv_journalentries.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+    $insertGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $insertGoTo));
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsBulkcustomers = "SELECT bulkcustomerkey, username4students, journal FROM BulkCustomerInfo WHERE sms = 1 ORDER BY username4students";
+$rsBulkcustomers = mysql_query($query_rsBulkcustomers, $Assessment) or die(mysql_error());
+$row_rsBulkcustomers = mysql_fetch_assoc($rsBulkcustomers);
+$totalRows_rsBulkcustomers = mysql_num_rows($rsBulkcustomers);
+
+$colname_rsUser = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsUser = (get_magic_quotes_gpc()) ? $_SESSION['log_userkey'] : addslashes($_SESSION['log_userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsUser = sprintf("SELECT userkey, firstname, lastname, takey FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsUser, "int"));
+$rsUser = mysql_query($query_rsUser, $Assessment) or die(mysql_error());
+$row_rsUser = mysql_fetch_assoc($rsUser);
+$totalRows_rsUser = mysql_num_rows($rsUser);
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mindfulness3.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Journal entry</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../../DTSassets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../../DTSassets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../../DTSassets/SpryValidationTextarea.js" type="text/javascript"></script>
+
+<!--Script for a universal error message at the bottom of the page if any spry widgets are missing.
+	  Taken from labs.adobe.com/technologies/spry/samples/validationwidgets/Single_error_message_onSubmit.html
+    and http://forums.adobe.com/message/3616795 . -->
+<script type="text/javascript">
+<!--
+	var errorsOnSubmit = function(form){
+	var ret = Spry.Widget.Form.validate(form);
+	var errorZone= document.getElementById('error_zone');
+	if (!ret){
+		errorZone.style.visibility = 'visible';
+		errorZone.style.backgroundColor = 'red';
+	}else{
+		errorZone.style.visibility = 'hidden';
+	}
+	return ret;
+}
+//-->
+</script>
+
+<link href="../../DTSassets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../../DTSassets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../../DTSassets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+	background-color: #93B3C8;
+}
+.oneColFixCtrHdr #container {
+	width: 780px;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #7799B8;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+	background-image: url(/images/mindful/m-background.gif);
+}
+.oneColFixCtrHdr #header {
+	background-color: #DDDDDD;
+	background-image: url(/images/mindful/m-header.gif);
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+	height: 104px;
+}
+.oneColFixCtrHdr #menu {
+	background-color: #4172A1;
+	padding-top: 0;
+	padding-right: 40px;
+	padding-bottom: 0;
+	height: 20px;
+	background-image: url(/images/skin/SMSmenu.jpg);
+}
+.oneColFixCtrHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0;
+	vertical-align: text-bottom;
+}
+.oneColFixCtrHdr #mainContent {
+	padding: 0 20px;
+}
+.oneColFixCtrHdr #footer {
+	padding: 0 10px;
+}
+.oneColFixCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+-->
+</style>
+<link href="/css/styles3.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssets/SpryMenuBarHorizontalmind.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="oneColFixCtrHdr">
+
+<div id="container">
+  <div id="header">
+    <h1>&nbsp;</h1>
+  <!-- end #header --></div>
+  <div id="menu">
+       <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/landing.php">home</a></li>
+<li><a href="/mindfulness/SMS/m-articles.html">articles</a></li>
+        <li><a href="/mindfulness/SMS/m-intro.html">intro</a></li>
+        <li><a href="/mindfulness/SMS/m-survey10a.php">survey</a></li>
+        <li><a href="/mindfulness/SMS/m-suggestions.php">ideas</a></li>
+        <li><a href="/mindfulness/SMS/m-teacherinfo.php" class="MenuBarItemSubmenu">teachers</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/bc_viewsms.php">view SMS results</a></li>
+            <li><a href="/mindfulness/SMJ/teacher_viewjournalentries.php">view SMS journal</a></li>
+            <li><a href="/bulkcustomers/bulkpolicies.php">policies &amp; schedules</a></li>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+        <li><a href="#" class="MenuBarItemSubmenu">research</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+    </ul>
+    <!-- end #menu --></div>
+  <div id="mainContent">
+    <!-- InstanceBeginEditable name="Main" -->
+  <h1>Journal entry for <?php echo $row_rsUser['firstname']; ?> <?php echo $row_rsUser['lastname']; ?></h1>
+  <p class="pspaced"><strong>You must complete this entry in a single sitting, without leaving your computer idle for more than ten minutes at a time.</strong> If you must leave your computer, save this page to your desktop or cut and paste the entry into a word processor. If you know in advance that you will not be able to complete the entry in a single sitting,  copy this page for reference and write your entry in a word processing application (Word, Open Office, Notepad, Pages, etc.).  When you are finished, you can log in again,  then paste your entry into the field below. Before cutting and pasting, please save your word processor file in .txt  format, close it, then reopen it. Otherwise, what we see on our end may be very difficult to read.</p>
+  <p class="pspaced"><em>Journal entries are stored on a secure server. We share them with no one without your authorization. However, given that there is no 100% security solution, we recommend that, to protect yourself and others, you do not use the real name of any person, and that you never discuss private information of any kind.</em></p>
+  <p class="pspaced"><strong>Note:</strong> If you return to this page after hitting the &quot;submit&quot; button, please check to make sure you have entered responses for all of the required (<span class="red">*</span>) items. </p>
+  <p>&nbsp;</p>
+  <p><strong>Make your journal entry here.</strong> When you have finished making your journal entry, click  the submit button.</p>
+  <form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+    <table width="85%">
+      <tr>
+        <td width="36%">Select the User ID of your instructor/mentor/coach/clinician. If you do not want anyone other than yourself to be able to view your entries, select &quot;no-one&quot;.<span class="star">*</span></td>
+        <td width="64%"><span id="spryselect1">
+          <select name="teacherkey">
+            <option value="">-select one-</option>
+            <option value="0">no one</option>
+  <?php
+do {  
+?>
+            <option value="<?php echo $row_rsBulkcustomers['bulkcustomerkey']?>"><?php echo $row_rsBulkcustomers['username4students']?></option>
+            <?php
+} while ($row_rsBulkcustomers = mysql_fetch_assoc($rsBulkcustomers));
+  $rows = mysql_num_rows($rsBulkcustomers);
+  if($rows > 0) {
+      mysql_data_seek($rsBulkcustomers, 0);
+	  $row_rsBulkcustomers = mysql_fetch_assoc($rsBulkcustomers);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td colspan="2">Today's date<span class="star">*&nbsp;&nbsp; </span><span id="sprytextfield1">
+          <input type="text" name="date" value="<?php echo date("Y-m-d")?>" size="20	" />
+          <span class="textfieldRequiredMsg">A value is required.</span><span class="textfieldMinCharsMsg">Minimum number of characters not met.</span><span class="textfieldMaxCharsMsg">Exceeded maximum number of characters.</span><span class="textfieldInvalidFormatMsg">Invalid format.</span></span></td>
+        </tr>
+      <tr valign="baseline">
+        <td colspan="2">Formal practice<span class="star">*</span></td>
+        </tr>
+      <tr valign="baseline">
+        <td colspan="2"><span id="sprytextarea1">
+          <textarea name="journalentry_1" cols="84" rows="18"></textarea>
+          <span class="textareaRequiredMsg">A value is required.</span></span></td>
+        </tr>
+      <tr valign="baseline">
+        <td colspan="2">Informal practice<span class="star">*</span></td>
+        </tr>
+      <tr valign="baseline">
+        <td colspan="2"><span id="sprytextarea2">
+          <textarea name="journalentry_2" cols="84" rows="18"></textarea>
+          <span class="textareaRequiredMsg">A value is required.</span></span></td>
+        </tr>
+      <tr valign="baseline">
+      	<td colspan="2">&nbsp;<span id="error_zone" style="visibility:hidden;">Errors: There are some errors in the form. Please correct them.</span></td>
+      </tr>
+      <tr valign="baseline"
+        <td>&nbsp;</td>
+        <td><div align="right">
+          <input type="submit" value="Submit" />
+        </div></td>
+      </tr>
+    </table>
+    <input type="hidden" name="journalkey" value="" />
+    <input type="hidden" name="userkey" value="<?php echo $_SESSION['log_userkey']; ?>" />
+    <input type="hidden" name="takey" value="<?php echo $row_rsUser['takey']; ?>" />
+    <input type="hidden" name="MM_insert" value="form1" />
+  </form>
+  <p>&nbsp;</p>
+  <p></p>
+  <script type="text/javascript">
+<!--
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]});
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "date", {validateOn:["blur", "change"], hint:"mm/dd/yyyy", format:"yyyy-mm-dd", useCharacterMasking:true});
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {validateOn:["blur", "change"]});
+var sprytextarea2 = new Spry.Widget.ValidationTextarea("sprytextarea2", {validateOn:["blur", "change"]});
+//-->
+  </script>
+<!-- InstanceEndEditable -->
+	<!-- end #mainContent --></div>
+  <div id="footer">
+    <p align="center">©2010-2011 Sharon Solloway. All rights reserved.</p>
+  <!-- end #footer --></div>
+<!-- end #container --></div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsBulkcustomers);
+
+mysql_free_result($rsUser);
+
+// **** rsTeachers is absent from this page - so I'll get rid of this reference too.
+// mysql_free_result($rsTeachers);
+?>

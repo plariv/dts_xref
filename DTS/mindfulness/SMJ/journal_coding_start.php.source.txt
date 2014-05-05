@@ -1,0 +1,90 @@
+<?php
+  ob_start();
+?>
+
+
+<?php   // SetSessionVar.php
+// Sessiom start & error reporting requred for session variables code
+if (!isset($_SESSION)) {
+  session_start();
+}
+error_reporting(E_ALL); 
+?>
+
+
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php  require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+// Recordset for journal_codes - we need to be able to check in journal_codes for an existing coder entry for the same journalkey. If exists, don't create a duplicate.
+
+$colname_rsJournalCodes = "-1";
+if (isset($_GET['journalkey'])) {
+  $colname_rsJournalCodes = $_GET['journalkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsJournalCodes = sprintf("SELECT journalcodeskey, journalkey, coded, coderkey FROM journal_codes WHERE journalkey = %s", GetSQLValueString($colname_rsJournalCodes, "int"));
+$rsJournalCodes = mysql_query($query_rsJournalCodes, $Assessment) or die(mysql_error());
+$row_rsJournalCodes = mysql_fetch_assoc($rsJournalCodes);
+$totalRows_rsJournalCodes = mysql_num_rows($rsJournalCodes);
+
+
+/**** Temporary solution until we figure out a better way to prevent entering duplicates into the journal_codes table. Duplicates (multiple entries for the same journalkey) are avoided this way, but if by any glitch the wrong initial values were set to coderkey or coded, the entry won't be treated properly by other pages.  */
+if ($row_rsJournalCodes['journalkey'] <> $_GET['journalkey']) {
+
+	$insertSQL = sprintf("INSERT INTO journal_codes (journalcodeskey, journalkey, coderkey, coded) VALUES (%s, %s, %s, %s)",
+                       GetSQLValueString("", "int"),
+                       GetSQLValueString($_GET['journalkey'], "int"),
+                       GetSQLValueString($_SESSION['log_userkey'], "text"),
+                       GetSQLValueString(1, "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($insertSQL, $Assessment) or die(mysql_error());
+  $insert_ID = mysql_insert_id();
+  
+}
+	
+  $insertGoTo = "journal_coding_1.php?journalcodeskey=$insert_ID";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+    $insertGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $insertGoTo));
+
+
+mysql_free_result($rsJournalCodes);
+?>

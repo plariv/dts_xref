@@ -1,0 +1,78 @@
+ <?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as senior")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLSUA = "-1";
+if (isset($_GET['bulkcustomerkey'])) {
+  $colname_rsLSUA = (get_magic_quotes_gpc()) ? $_GET['bulkcustomerkey'] : addslashes($_GET['bulkcustomerkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUA = sprintf("SELECT LSUA.lsuakey, LSUA.userkey, LSUA.user_name, LSUA.testtime, LSUA.age, LSUA.`date`, LSUA.bulkcustomerkey, Registrants.userkey, Registrants.firstname, Registrants.lastname, Registrants.email, LSUA.datefinalized, LSUA.age, LSUA.edulevel, LSUA.sex, LSUA.ethnicity1, LSUA.`language`, LSUA.englishquality, LSUA.aspect1, LSUA.aspect1essay, LSUA.aspect2, LSUA.aspect2essay, LSUA.aspect3, LSUA.aspect3essay, LSUA.aspect4, LSUA.aspect4essay, LSUA.generalself, LSUA.idealself  FROM LSUA, Registrants WHERE LSUA.bulkcustomerkey = %s AND Registrants.userkey = LSUA.userkey", GetSQLValueString($colname_rsLSUA, "int"));
+$rsLSUA = mysql_query($query_rsLSUA, $Assessment) or die(mysql_error());
+$row_rsLSUA = mysql_fetch_assoc($rsLSUA);
+$totalRows_rsLSUA = mysql_num_rows($rsLSUA);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+<?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=LSUAunscored.txt\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+lsuakey **date **testtime **firstname **lastname **email **datefinalized **age **edulevel **sex **ethnicity1 **language **englishquality **aspect1 **aspect1essay **aspect2 **aspect2essay **aspect3 **aspect3essay **aspect4 **aspect4essay **generalself **idealself,,,
+<?php do { ?>
+<?php echo $row_rsLSUA['lsuakey']; ?>**<?php echo $row_rsLSUA['date']; ?>**<?php echo $row_rsLSUA['testtime']; ?>**<?php echo $row_rsLSUA['firstname']; ?>**<?php echo $row_rsLSUA['lastname']; ?>**<?php echo $row_rsLSUA['email']; ?>**<?php echo $row_rsLSUA['datefinalized']; ?>**<?php echo $row_rsLSUA['age']; ?>**<?php echo $row_rsLSUA['edulevel']; ?>**<?php echo $row_rsLSUA['sex']; ?>**<?php echo $row_rsLSUA['ethnicity1']; ?>**<?php echo $row_rsLSUA['language']; ?>**<?php echo $row_rsLSUA['englishquality']; ?>**<?php echo $row_rsLSUA['aspect1']; ?>**<?php echo $row_rsLSUA['aspect1essay']; ?>**<?php echo $row_rsLSUA['aspect2']; ?>**<?php echo $row_rsLSUA['aspect2essay']; ?>**<?php echo $row_rsLSUA['aspect3']; ?>**<?php echo $row_rsLSUA['aspect3essay']; ?>**<?php echo $row_rsLSUA['aspect4']; ?>**<?php echo $row_rsLSUA['aspect4essay']; ?>**<?php echo $row_rsLSUA['generalself']; ?>**<?php echo $row_rsLSUA['idealself']; ?>,,,
+<?php } while ($row_rsLSUA = mysql_fetch_assoc($rsLSUA)); ?>
+<?
+exit();
+?>
+
+</body>
+</html>
+<?php
+mysql_free_result($rsLSUA);
+?>

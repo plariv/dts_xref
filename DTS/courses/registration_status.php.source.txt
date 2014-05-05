@@ -1,0 +1,245 @@
+<?php 
+require_once('../includes/dts_functions.php');
+
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php"); }
+$userkey = $_SESSION['log_userkey'];
+
+$_SESSION['instrument_id'] = "FOLA";
+
+if (!isset($_GET['coursekey'])) { header("Location: ../landing.php"); exit(); }
+$coursekey = $_GET['coursekey'];
+
+
+
+// the course
+$sql = sprintf("SELECT c.*, IF(cr.key > 0, 1, 0) AS i_am_registered,
+    cr.registered_as_student, cr.is_confirmed_as_student, cr.will_take_course_level, 
+    cr.amount_paid, cr.is_deposit_received, cr.is_paid_in_full,
+    (cr.amount_charged - cr.amount_paid) AS amount_owed,
+    s.day_of_week, s.time_of_day, s.duration_mins
+  FROM courses c 
+    LEFT JOIN course_registrations cr ON c.key = cr.coursekey AND cr.userkey = %s
+    LEFT JOIN course_class_sections s ON cr.sectionkey = s.key
+  WHERE c.key = %s",
+    SQLstr($userkey, 'int'),
+    SQLstr($coursekey, 'int'));
+$rsCourse = mysql_query($sql) or die("ERROR finding this course info.".mysql_error());
+$course = mysql_fetch_assoc($rsCourse);
+$is_lectures_only = false; if ($course['is_lectures_only'] == 1) { $is_lectures_only = true; }
+$word_course = "course"; if ($is_lectures_only) { $word_course = "series"; }
+
+// Array of days of week. Indexed 0-6 same as date() does it.
+$days = array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday');
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: Registration status</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<style type="text/css">
+
+</style>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --> 
+	
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>REGISTRATION STATUS</h1>
+
+  <h3><? echo $course['title']; ?></h3>
+
+  <? if (!$is_lectures_only) { ?>
+    <table>
+      <tr>
+        <td>Pay in full by</td>
+        <td><? echo ($course['register_by_date'] <> '' ? date('F jS', strtotime($course['register_by_date'])): '?'); ?>
+      </tr>
+      <tr>
+        <td>Course starts</td>
+        <td><? echo ($course['date_start'] <> '' ? date('F jS', strtotime($course['date_start'])): '?'); ?>
+      </tr>
+    </table>
+  <? } ?>
+
+  <p><a href='syllabus.php?coursekey=<? echo $coursekey; ?>'>view syllabus</a></p>
+  <p>To navigate to the FOLA Lecture Series syllabus from the <a href="http://lectica.org">home page</a>, click on LectaTests, then click on the FOLA button and choose &quot;View Syllabus&quot;. Choose a module tab to learn about readings or view a lecture.</p>
+
+  <h3>Your registration status</h3>
+  <? if ($course['i_am_registered']) { ?>
+    <p>You are registered for this <? echo $word_course; ?>.</p>
+    <? if (!$is_lectures_only) { ?>
+      <p>
+        Classes will be on <? echo $days[$course['day_of_week']]; ?>s, 
+        <? echo date('g:i A', strtotime($course['time_of_day'])); ?> to
+        <? echo date('g:i A', 
+          strtotime("+{$course['duration_mins']} minutes", 
+            strtotime($course['time_of_day']))); ?> 
+        EST.
+      </p>
+    <? } ?>
+    
+    <? if (!$is_lectures_only) { ?>
+      <h3>Course level</h3>
+      <p>You're taking this course at the 
+        <? if ($course['will_take_course_level'] == 2) { ?>
+          Certificate Level.
+        <? } else { ?>
+          General Education Level.
+        <? } ?>
+      </p>
+    <? } ?>
+
+    <? if ($course['registered_as_student']) { ?>
+      <p>
+        <? if ($course['is_confirmed_as_student']) { ?>
+          We've received your documents confirming your student status.
+        <? } else { ?>
+          <span class='red'>You've registered as a student, but we haven't received your confirming documents yet.</span>
+        <? } ?>
+      </p>
+    <? } ?>
+
+    <h3>Course fees</h3>
+    <p>
+      <? if ($course['is_paid_in_full']) { ?>
+        <p>
+          You've fully paid for this <? echo $word_course; ?>.
+          <? if ($is_lectures_only) { ?>
+            <a href='syllabus.php?coursekey=<? echo $coursekey; ?>'>start watching now</a>
+          <? } ?>
+        </p>
+      <? } else { ?>
+
+        <? if (!$is_lectures_only) { ?>
+          <? if ($course['is_deposit_received']) { ?>
+            <p>We've received your deposit, but you haven't paid the full <? echo $word_course; ?> fee yet.</p>
+          <? } else { ?>
+            <p><span class='red'>We haven't yet received your deposit of $<? echo $course['deposit_amount']; ?>.</span> We need your deposit in order to reserve your place in the course. 
+            <a href='../checkout/payment.php?for_course=<? echo $coursekey; ?>&amount=<? echo $course['deposit_amount']; ?>'>pay deposit</a></p>
+          <? } ?>
+        <? } ?>
+
+        <table>
+          <tr>
+            <td>Amount paid</td>
+            <td>$<? echo ($course['amount_paid'] > 0 ? $course['amount_paid'] : '0'); ?></td>
+          </tr>
+          <tr>
+            <td>Amount owed</td>
+            <td>$<? echo ($course['amount_owed'] > 0 ? $course['amount_owed'] : '0'); ?></td>
+          </tr>
+          <tr>
+            <td></td>
+            <td><a href='../checkout/payment.php?for_course=<? echo $coursekey; ?>&amount=<? echo $course['amount_owed']; ?>'>pay balance</a></td>
+          </tr>
+        </table>
+
+        <p>If your payment isn't reflected in the numbers shown above, please <a href='/contactus.php'>contact us</a> so we can sort it out.<p>
+
+      <? } ?>
+    </p>
+
+  <? } else { ?>
+    <p><span class='red'>You are not registered for this <? echo $word_course; ?>.</span> 
+    <a href='register.php?coursekey=<? echo $coursekey; ?>'>Click here</a> to register.</p>
+  <? } ?>
+   
+  <p>Please don't hesitate to <a href='../contactus.php'>contact us</a> with any questions.</p>
+  <p>&nbsp;</p>
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrant);
+
+mysql_free_result($rsStates);
+
+mysql_free_result($rsCountries);
+
+mysql_free_result($rsCourse);
+?>

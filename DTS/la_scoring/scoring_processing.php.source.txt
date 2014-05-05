@@ -1,0 +1,225 @@
+<?php 
+include_once '../includes/dts_functions.php';
+
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+$userkey = $_SESSION['log_userkey'];
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+$instrument_id = $_SESSION['instrument_id'];
+
+
+
+$lakey = $_GET['lakey'];
+$scorer_no = $_GET['scorer_no'];
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+
+//
+// FETCHING RECORD SETS and storing them in arrays
+// 
+
+// Record sets for email and la_data updating query
+$sql = sprintf("SELECT d.lakey, d.instrument_id, 
+	d.scored_{$scorer_no}, d.scorerkey_{$scorer_no}, 
+	s.confidencekey_{$scorer_no}, s.lasnumber_1, s.lasnumber_2, s.lasnumber_3 
+	FROM la_data d
+		JOIN la_scores s ON d.lakey = s.lakey
+	WHERE d.lakey = %s ", 
+		SQLstr($lakey, "int"));
+$rsData = mysql_query($sql, $Assessment) or die(mysql_error());
+$data = mysql_fetch_assoc($rsData);
+
+
+// get logged-in scorer's name
+$sql = "SELECT firstname, lastname, email FROM registrants WHERE userkey=".
+	SQLstr($userkey, "int");
+$rsScorer = mysql_query($sql, $Assessment) or die(mysql_error());
+$scorer = mysql_fetch_assoc($rsScorer);
+
+
+
+// Fetch comments from coder and scorer
+$query_rsComments = sprintf("SELECT d.lakey, d.dilemmakey, di.dilemma_name, d.assignmentkey,
+s.codes_probe01, s.codes_probe02, s.codes_probe03, s.codes_probe04, s.codes_probe05, s.codes_probe06, s.codes_probe07, s.codes_probe08, s.codes_probe09, s.codes_probe10, 
+s.scorer_comment_1, s.scorer_comment_2, s.scorer_comment_3, c.codercomment, c.code_recommend
+FROM la_scores s 
+JOIN la_data d ON s.lakey = d.lakey
+LEFT JOIN la_dilemmas di ON d.dilemmakey = di.dilemmakey
+LEFT JOIN la_codes c ON c.lakey = s.lakey 
+WHERE s.lakey = %s", 
+		SQLstr($lakey, "int"));
+$rsComments = mysql_query($query_rsComments, $Assessment) or die(mysql_error());
+$row_rsComments = mysql_fetch_assoc($rsComments);
+$totalRows_rsComments = mysql_num_rows($rsComments);
+
+$scorerCommentText = "";
+// Generate the text for any scorer comments which are relevant.
+if ($totalRows_rsComments > 0) {
+	$i = 1;
+	while ($i <= 10) {
+		$i_pad = str_pad($i, 2, "0", STR_PAD_LEFT);
+		if ($row_rsComments['codes_probe'.$i_pad] <> "") {
+			$scorerCommentText .= "Scorer comment - essay ".$i.":\n";
+			$scorerCommentText .= $row_rsComments['codes_probe'.$i_pad]."\n";
+		}
+		$i ++;
+	}
+}
+
+
+// calculate difference scores
+
+$diff_1_2 = "";
+$diff_1_3 = "";
+
+if ($scorer_no == 1) {
+	if ($data['lasnumber_2'] <> "") {
+		$diff_1_2 = $data['lasnumber_1'] - $data['lasnumber_2'];
+	}
+	if ($data['lasnumber_3'] <> "") {
+		$diff_1_3 = $data['lasnumber_1'] - $data['lasnumber_3'];
+	}
+} 
+else if ($scorer_no == 2) {
+	$diff_1_2 = $data['lasnumber_1'] - $data['lasnumber_2'];
+} 
+else if ($scorer_no == 3) {
+	$diff_1_3 = $data['lasnumber_1'] - $data['lasnumber_3'];
+}
+
+
+
+// **** Move this update command as early as possible: meaning, scoring_confidence.php.
+
+/* SQL UPDATE COMMANDS: 
+declare a string variable (here $updateSQL_something) containing the SQL command, then run the command by calling the function mysql_query().*/
+
+// The SQL statement is built in little pieces:
+$updateSQL_scores = "UPDATE la_scores s JOIN la_data d ON s.lakey = d.lakey SET "; 
+
+// IF this entry hasn't been scored, mark it as scored and put a date in date_scored_#. But if this entry HAS been scored, mark it as rescored and put a date in rescored_#_date.
+// The status columns are all marked in la_data now, rather than being kept in la_scores.
+
+if ($data["scored_{$scorer_no}"] <> 1) {
+	$updateSQL_scores .= sprintf("d.scored_{$scorer_no}='1', d.date_scored_{$scorer_no}=%s, 
+		d.scorerkey_{$scorer_no}=%s",
+			SQLstr(date("Y-m-d"), "date"),
+			SQLstr($userkey, "int"));
+			// Notice that the scorerkey_# value is only updated if 
+			// the performance hasn't yet been scored for this scorer #.
+} else { 
+	$updateSQL_scores .= sprintf("d.rescored_{$scorer_no}=1, d.date_rescored_{$scorer_no}=%s, 
+		d.rescorerkey_{$scorer_no}=%s", 
+		SQLstr(date("Y-m-d"), "date"),
+		SQLstr($userkey, "int")); 
+}
+
+if ($diff_1_2 <> "") {
+	$updateSQL_scores .= ", diff_1_2='".$diff_1_2."'";
+}
+if ($diff_1_3 <> "") {
+	$updateSQL_scores .= ", diff_1_3='".$diff_1_3."'";
+}
+
+$updateSQL_scores .= sprintf(" WHERE d.lakey=%s", SQLstr($lakey, "int"));	
+// Run the query
+$Result1 = mysql_query($updateSQL_scores, $Assessment) or die(mysql_error());
+	
+
+
+// ---- ALERT EMAILS ----
+	
+// Email Theo if there are any comments.
+if ($row_rsComments['code_recommend'] <> "") {
+		// OR $row_rsComments['codercomment'] <> "" OR $scorerCommentText <> ""
+	
+	$email_to = "service@lectica.org";
+	// $email_to = "topher@lectica.org";
+	$email_from = "service@lectica.org";
+	$email_cc = $scorer['email'];	
+	// If Theo scored, don't send her 2 emails.
+	if (strpos(" ".$scorer['email'], "theo")) { $email_cc = ""; }
+	
+	// if Theo 2nd-scored, CC Zak.
+	if ($_SESSION['log_userkey'] == 1000000539 AND $scorer_no == 2) {
+		$email_cc .= "zak@lectica.org";
+	}
+	
+	$subject = "Scorer comments from ".$scorer['firstname']." ".$scorer['lastname']." on ".$instrument_id." #".$lakey;
+	
+	$body = "Date: ".date('Y-m-d')."\n";
+	$body .= "Lakey: ".$lakey."\n";
+	$body .= "Dilemma: #".$row_rsComments['dilemmakey']." - ".$row_rsComments['dilemma_name']."\n";
+	$body .= "Score: ".$data['lasnumber_'.$scorer_no]."\n\n";
+	
+	// Coding comments, if present
+	$codingCommentText = "";
+	$codingCommentText .= ($row_rsComments['codercomment'] <> "") ? 
+		"Coder comment: ".str_replace("<br>", "\n", $row_rsComments['codercomment'])."\n" : "";
+	$codingCommentText .= ($row_rsComments['code_recommend'] <> "") ? 
+		"Code recommendation: ".str_replace("<br>", "\n", $row_rsComments['code_recommend'])."\n" : "";
+	if ($codingCommentText <> "") {
+		//$body .= "Coding / strengths / recommendations comments:\n";
+		$body .= $codingCommentText;
+	}
+	
+	$body .= "\n";
+	$body .= $scorerCommentText;
+	$body .= "\n\nLinks:\n";
+	$body .= "Score — http://www.devtestservice.org/la_scoring/score.php?lakey=".$lakey."&scorer_no=1  \n";
+	$body .= "Code from start — http://www.devtestservice.org/la_coding/code_argumentation.php?lakey=".$lakey."&scorer_no=1  \n";
+	$body .= "Code strengths — http://www.devtestservice.org/la_coding/code_strengths.php?lakey=".$lakey."&scorer_no=1  \n";
+	
+	sendEmail($email_to, $email_from, $email_cc, $subject, $body);
+}
+
+// Email Clint if this record has a high score
+if ($scorer_no == 1 AND $data['lasnumber_1'] >= 11.6) { 
+
+	$email_to = "clint@lectica.org";
+	$email_from = "service@lectica.org";
+
+	$subject = "{$instrument_id} #{$lakey} scored with a high score "; 
+
+	$body = "Date: ".date('Y-m-d')."\n"
+		."Lakey: {$lakey}\n"
+		."Score: {$data['lasnumber_1']}\n"
+		."Scored by: {$scorer['firstname']}\n\n"
+		."Links:\n"
+		."Score — http://www.devtestservice.org/la_scoring/score.php?lakey={$lakey}&scorer_no=1 \n"
+		."Code — http://www.devtestservice.org/la_coding/code_argumentation.php?lakey={$lakey}&scorer_no=1 \n";
+	
+	sendEmail($email_to, $email_from, $email_from, $subject, $body);
+}
+
+
+
+
+
+
+
+			
+/* This processing page comes after all coding pages - at the end of the coding process. */
+if ($scorer_no == '1') { 
+	$updateGoTo = "../la_reports/report_individual.php?mode=checkreport";
+	//$updateGoTo = "scoring_performance_select.php";
+} else {
+	$updateGoTo = "scoring_performance_select.php";
+}
+if (isset($_SERVER['QUERY_STRING'])) {
+	$updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+	$updateGoTo .= $_SERVER['QUERY_STRING'];
+}
+header(sprintf("Location: %s", $updateGoTo));
+
+	
+
+?>

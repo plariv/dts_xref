@@ -1,0 +1,449 @@
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php
+
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+	
+	// **** removed from this update command: sms09emocause=%s, sms09thankful=%s, sms09positive=%s, 
+  $updateSQL = sprintf("UPDATE Mindfulness SET userkey=%s, sms09transanger=%s, sms09seethoughts=%s, sms09joy=%s, sms09examine=%s, prompt06=%s, sms09lifeinsight=%s, sms09control=%s, sms09observe1=%s, sms09attention1=%s, prompt07=%s WHERE mindfulkey=%s",
+                       GetSQLValueString($_POST['userkey'], "int"),
+                       GetSQLValueString($_POST['sms09transanger'], "int"),
+                       GetSQLValueString($_POST['sms09seethoughts'], "int"),
+                       //GetSQLValueString($_POST['sms09emocause'], "int"),
+                       //GetSQLValueString($_POST['sms09thankful'], "int"),
+                       GetSQLValueString($_POST['sms09joy'], "int"),
+                       GetSQLValueString($_POST['sms09examine'], "int"),
+                       GetSQLValueString($_POST['prompt06'], "text"),
+                       GetSQLValueString($_POST['sms09lifeinsight'], "int"),
+                       GetSQLValueString($_POST['sms09control'], "int"),
+                       //GetSQLValueString($_POST['sms09positive'], "int"),
+                       GetSQLValueString($_POST['sms09observe1'], "int"),
+                       GetSQLValueString($_POST['sms09attention1'], "int"),
+                       GetSQLValueString($_POST['prompt07'], "text"),
+                       GetSQLValueString($_POST['mindfulkey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "m-survey10d.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));
+}
+
+
+
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulType = "SELECT * FROM MindfulType ORDER BY MindfulType ASC";
+$rsMindfulType = mysql_query($query_rsMindfulType, $Assessment) or die(mysql_error());
+$row_rsMindfulType = mysql_fetch_assoc($rsMindfulType);
+$totalRows_rsMindfulType = mysql_num_rows($rsMindfulType);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings4 = "SELECT * FROM Ratings4";
+$rsRatings4 = mysql_query($query_rsRatings4, $Assessment) or die(mysql_error());
+$row_rsRatings4 = mysql_fetch_assoc($rsRatings4);
+$totalRows_rsRatings4 = mysql_num_rows($rsRatings4);
+
+$colname_rsMindful = "-1";
+if (isset($_GET['mindfulkey'])) {
+  $colname_rsMindful = $_GET['mindfulkey'];
+}
+$userkey_rsMindful = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $userkey_rsMindful = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindful = sprintf("SELECT mindfulkey, %s, sms09transanger, prompt06, sms09seethoughts, sms09emocause, sms09nature, sms09thankful, sms09joy, sms09examine, sms09lifeinsight, sms09control, prompt07, sms09positive, sms09observe1, sms09satisfied, sms09attention1, sms09fresh, sms09peace, sms09hurt, sms09sand, sms09nojudgment, sms09body, sms09listen, prompt03, sms09stress, sms09attention2, sms09change, sms09observe2, sms09ordinary, sms09noticeself FROM Mindfulness WHERE mindfulkey = %s", GetSQLValueString($userkey_rsMindful, "int"),GetSQLValueString($colname_rsMindful, "int"));
+$rsMindful = mysql_query($query_rsMindful, $Assessment) or die(mysql_error());
+$row_rsMindful = mysql_fetch_assoc($rsMindful);
+$totalRows_rsMindful = mysql_num_rows($rsMindful);
+
+
+
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mindfulness1.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Mindfulness survey: Survey page 3</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+-->
+</style>
+<link href="../../WA_DataAssist/styles/Refined_Pacifica.css" rel="stylesheet" type="text/css" />
+<script src="../../DTSassets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../../DTSassets/SpryValidationTextarea.js" type="text/javascript"></script>
+<link href="../../DTSassets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../../DTSassets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+	background-color: #93B3C8;
+}
+.oneColFixCtrHdr #container {
+	width: 780px;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #7799B8;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+	background-image: url(/images/mindful/m-background.gif);
+}
+.oneColFixCtrHdr #header {
+	background-color: #DDDDDD;
+	background-image: url(/images/mindful/m-header.gif);
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+	height: 104px;
+}
+.oneColFixCtrHdr #menu {
+	background-color: #8AB3C4;
+	padding-top: 0;
+	padding-right: 40px;
+	padding-bottom: 0;
+	height: 20px;
+	background-image: url(/images/skin/SMSmenu.jpg);
+}
+.oneColFixCtrHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0;
+	vertical-align: text-bottom;
+}
+.oneColFixCtrHdr #mainContent {
+	padding-top: 30;
+	padding-right: 45px;
+	padding-bottom: 0;
+	padding-left: 45px;
+}
+.oneColFixCtrHdr #footer {
+	padding: 0 10px;
+}
+.oneColFixCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+-->
+</style>
+<link href="/css/styles3.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssets/SpryMenuBarHorizontalmind.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="oneColFixCtrHdr">
+
+<div id="container">
+  <div id="header">
+    <h1>&nbsp;</h1>
+  <!-- end #header --></div>
+  <div id="menu">
+       <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/landing.php">home</a></li>
+<li><a href="/mindfulness/SMS/m-articles.html">articles</a></li>
+        <li><a href="/mindfulness/SMS/m-intro.html">intro</a></li>
+        <li><a href="/mindfulness/SMS/m-start.php">survey</a></li>
+        <li><a href="/mindfulness/SMS/m-suggestions.php">ideas</a></li>
+        <li><a href="/mindfulness/SMS/m-teacherinfo.php" class="MenuBarItemSubmenu">teachers</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/bc_viewsms.php">view SMS results</a></li>
+            <li><a href="/mindfulness/SMJ/teacher_viewjournalentries.php">view SMS journal</a></li>
+            <li><a href="/bulkcustomers/bulkpolicies.php">policies &amp; schedules</a></li>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+        <li><a href="#" class="MenuBarItemSubmenu">research</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+    </ul>
+    <!-- end #menu --></div>
+  <div id="mainContent">
+    <!-- InstanceBeginEditable name="Main" -->
+  <h1 class="indent10">SMS (page 3 of 5)</h1>
+  <!--COMMENTING OUT as I don't think we need these warnings anymore.****<p><span class="pspaced"><strong class="ldma">Note:</strong> If you return to this page after hitting the &quot;submit&quot; button, please check to make sure you have entered responses for all of the required (<span class="star">*</span>) items. </span></p>
+  <p>If you wish to edit your answers to quesions on the previous page, <a href="m-survey10b.php?mindfulkey=<?php echo $_GET['mindfulkey']; ?>"><strong>click here</strong></a>. (Do not use the back button.)</p>-->
+  <h3><img src="../../images/mindful/DiscoLineLit.jpg" width="668" height="3" alt="line" />
+  </h3>
+     <form action="<?php echo $editFormAction; ?>" method="POST" name="form1" id="form1">
+      <table width="100%" align="center">
+        <tr valign="baseline">
+          <td>I am able to transform my anger into compassion.<span class="star">*</span></td>
+          <td valign="baseline"><span id="spryselect31">
+            <select name="sms09transanger" id="sms09transanger">
+              <option value="" <?php if (!(strcmp("", $row_rsMindful['sms09transanger']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsRatings4['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings4['Ratings4key'], $row_rsMindful['sms09transanger']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings4['Rating']?></option>
+              <?php
+} while ($row_rsRatings4 = mysql_fetch_assoc($rsRatings4));
+  $rows = mysql_num_rows($rsRatings4);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings4, 0);
+	  $row_rsRatings4 = mysql_fetch_assoc($rsRatings4);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+</tr>
+        <tr valign="baseline">
+          <td>Explain what it means to transform anger into compassion. <br />
+            <br />
+          After you have explained this, please describe a recent example from your life.</td>
+          <td valign="baseline"><span id="sprytextarea7">
+            <textarea name="prompt06" cols="45" rows="10"><?php echo $row_rsMindful['prompt06']; ?></textarea>
+          </span></td>
+</tr>
+        <tr valign="baseline">
+          <td>I am able to observe my thoughts without being caught up in them.<span class="star">*</span></td>
+          <td valign="baseline"><span id="spryselect32">
+            <select name="sms09seethoughts" id="sms09seethoughts">
+              <option value="" <?php if (!(strcmp("", $row_rsMindful['sms09seethoughts']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsRatings4['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings4['Ratings4key'], $row_rsMindful['sms09seethoughts']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings4['Rating']?></option>
+              <?php
+} while ($row_rsRatings4 = mysql_fetch_assoc($rsRatings4));
+  $rows = mysql_num_rows($rsRatings4);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings4, 0);
+	  $row_rsRatings4 = mysql_fetch_assoc($rsRatings4);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+</tr>
+        <tr valign="baseline">
+          <td>I find great joy in ordinary experiences.<span class="star">*</span></td>
+          <td valign="baseline"><span id="spryselect36">
+            <select name="sms09joy" id="sms09joy">
+              <option value="" <?php if (!(strcmp("", $row_rsMindful['sms09joy']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsRatings4['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings4['Ratings4key'], $row_rsMindful['sms09joy']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings4['Rating']?></option>
+              <?php
+} while ($row_rsRatings4 = mysql_fetch_assoc($rsRatings4));
+  $rows = mysql_num_rows($rsRatings4);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings4, 0);
+	  $row_rsRatings4 = mysql_fetch_assoc($rsRatings4);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+</tr>
+        <tr valign="baseline">
+          <td>I am able consciously to examine my life.<span class="star">*</span></td>
+          <td valign="baseline"><span id="spryselect37">
+            <select name="sms09examine" id="sms09examine">
+              <option value="" <?php if (!(strcmp("", $row_rsMindful['sms09examine']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsRatings4['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings4['Ratings4key'], $row_rsMindful['sms09examine']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings4['Rating']?></option>
+              <?php
+} while ($row_rsRatings4 = mysql_fetch_assoc($rsRatings4));
+  $rows = mysql_num_rows($rsRatings4);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings4, 0);
+	  $row_rsRatings4 = mysql_fetch_assoc($rsRatings4);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+</tr>
+        <tr>
+          <td width="45%">I have insights about things in my life.<span class="star">*</span></td>
+        <td width="55%" valign="baseline"><span id="spryselect38">
+          <select name="sms09lifeinsight" id="sms09lifeinsight">
+            <option value="" <?php if (!(strcmp("", $row_rsMindful['sms09lifeinsight']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsRatings4['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings4['Ratings4key'], $row_rsMindful['sms09lifeinsight']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings4['Rating']?></option>
+            <?php
+} while ($row_rsRatings4 = mysql_fetch_assoc($rsRatings4));
+  $rows = mysql_num_rows($rsRatings4);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings4, 0);
+	  $row_rsRatings4 = mysql_fetch_assoc($rsRatings4);
+  }
+?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr valign="baseline">
+          <td>I am able to consciously  control my responses to things that are happening around me.<span class="star">*</span></td>
+        <td valign="baseline"><span id="spryselect39">
+          <select name="sms09control" id="sms09control">
+            <option value="" <?php if (!(strcmp("", $row_rsMindful['sms09control']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsRatings4['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings4['Ratings4key'], $row_rsMindful['sms09control']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings4['Rating']?></option>
+            <?php
+} while ($row_rsRatings4 = mysql_fetch_assoc($rsRatings4));
+  $rows = mysql_num_rows($rsRatings4);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings4, 0);
+	  $row_rsRatings4 = mysql_fetch_assoc($rsRatings4);
+  }
+?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr valign="baseline">
+          <td>Explain what it means  to consciously control your responses to things that are happening around you.<br />
+            <br />
+          After you have explained this, please describe a recent example from your life.</td>
+          <td valign="baseline"><span id="sprytextarea5">
+          <textarea name="prompt07" cols="45" rows="10"><?php echo $row_rsMindful['prompt07']; ?></textarea>
+          </span></td>
+        </tr>
+        <tr valign="baseline">
+          <td>I observe experiences while I participate in them.<span class="star">*</span></td>
+        <td valign="baseline"><span id="spryselect41">
+          <select name="sms09observe1" id="sms09observe1">
+            <option value="" <?php if (!(strcmp("", $row_rsMindful['sms09observe1']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsRatings4['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings4['Ratings4key'], $row_rsMindful['sms09observe1']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings4['Rating']?></option>
+            <?php
+} while ($row_rsRatings4 = mysql_fetch_assoc($rsRatings4));
+  $rows = mysql_num_rows($rsRatings4);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings4, 0);
+	  $row_rsRatings4 = mysql_fetch_assoc($rsRatings4);
+  }
+?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr valign="baseline">
+          <td>I am able to pay attention to what is happening in the present moment.<span class="star">*</span></td>
+        <td valign="baseline"><span id="spryselect43">
+          <select name="sms09attention1" id="sms09attention1">
+            <option value="" <?php if (!(strcmp("", $row_rsMindful['sms09attention1']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsRatings4['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings4['Ratings4key'], $row_rsMindful['sms09attention1']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings4['Rating']?></option>
+            <?php
+} while ($row_rsRatings4 = mysql_fetch_assoc($rsRatings4));
+  $rows = mysql_num_rows($rsRatings4);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings4, 0);
+	  $row_rsRatings4 = mysql_fetch_assoc($rsRatings4);
+  }
+?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr valign="baseline">
+          <td>&nbsp;</td>
+          <td><div align="right">
+            <p>
+              <input type="submit" value="submit and go to next page" />
+            </p>
+</div></td>
+        </tr>
+      </table>
+      <input type="hidden" name="userkey" value="<?php echo $_SESSION['log_userkey']; ?>" />
+      <input name="mindfulkey" type="hidden" id="mindfulkey" value="<?php echo $row_rsMindful['mindfulkey']; ?>" />
+      <input type="hidden" name="MM_update" value="form1" />
+    </form>
+    <p>&nbsp;</p>
+<br />
+<script type="text/javascript">
+<!--
+var spryselect38 = new Spry.Widget.ValidationSelect("spryselect38", {validateOn:["blur", "change"]});
+var spryselect39 = new Spry.Widget.ValidationSelect("spryselect39", {validateOn:["blur", "change"]});
+var spryselect41 = new Spry.Widget.ValidationSelect("spryselect41", {validateOn:["blur", "change"]});
+var spryselect43 = new Spry.Widget.ValidationSelect("spryselect43", {validateOn:["blur", "change"]});
+var sprytextarea5 = new Spry.Widget.ValidationTextarea("sprytextarea5", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextarea7 = new Spry.Widget.ValidationTextarea("sprytextarea7", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect37 = new Spry.Widget.ValidationSelect("spryselect37", {validateOn:["blur", "change"]});
+var spryselect36 = new Spry.Widget.ValidationSelect("spryselect36", {validateOn:["blur", "change"]});
+var spryselect32 = new Spry.Widget.ValidationSelect("spryselect32", {validateOn:["blur", "change"]});
+var spryselect31 = new Spry.Widget.ValidationSelect("spryselect31", {validateOn:["blur", "change"]});
+//-->
+</script>
+<!-- InstanceEndEditable -->
+	<!-- end #mainContent --></div>
+  <div id="footer">
+    <p align="center">©2010-2011 Sharon Solloway. All rights reserved.</p>
+  <!-- end #footer --></div>
+<!-- end #container --></div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRatings4);
+
+mysql_free_result($rsMindful);
+
+mysql_free_result($rsMindfulType);
+?>

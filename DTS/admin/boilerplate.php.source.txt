@@ -1,0 +1,457 @@
+<?php 
+include_once '../includes/dts_functions.php';	
+
+if (!WA_Auth_RulePasses("Logged in as admin")) { WA_Auth_RestrictAccess("../security/logIn.php"); } 
+$userkey = $_SESSION['log_userkey'];
+
+// insert a row
+if (isset($_GET['create_row'])) {
+	$sql_create = sprintf("INSERT INTO la_boilerplate (name, who_updated) VALUES ('new_row', %s)",
+		SQLstr($userkey, 'int'));
+	$result = mysql_query($sql_create) or die("ERROR adding blank boilerplate row: ".mysql_error());
+	$key = mysql_insert_id();
+	header("Location: ?edit={$key}"); exit();
+}
+
+// update a row
+if (isset($_POST['orig_hash'])) {
+	
+	// print_r($_POST); die();
+	
+	// variables for this row
+	$key = $_POST['key'];
+	$type = $_POST['type'];
+	$instrument = $_POST['instrument'];
+	$name = $_POST['name'];
+	$description = $_POST['desc'];
+	$text = $_POST['text'];
+	$hash_claimed = $_POST['orig_hash'];
+	
+	// build a hash of the existing row in the db, for comparison
+	$sql_existing = sprintf("SELECT * FROM la_boilerplate WHERE la_boilerplatekey = %s",
+		SQLstr($key, 'int'));
+	$rsExisting = mysql_query($sql_existing) or die("ERROR checking for overwrites: ".mysql_error());
+	$r = mysql_fetch_assoc($rsExisting);
+	$hash_existing = hash('md5', $r['la_boilerplatekey'].$r['type'].$r['instrument_id'].
+		$r['name'].$r['la_boilerplate_desc'].$r['la_boilerplate_text']);
+	
+	// if another person has updated this boilerplate row, default to recovery mode
+	if ($hash_claimed <> $hash_existing OR $hash_claimed == '') {
+		echo "Hash claimed: {$hash_claimed}<br>Hash found: {$hash_existing}<br><br>";
+		$message = sprintf("ERROR: It appears that this boilerplate row was changed by someone else 
+			while you were making your changes. To prevent overwriting others' changes, please copy 
+			your updates and then click the link below (or open in a new tab) 
+			to edit the updated version of the text.<br><br>
+			Link to refresh: <a href='boilerplate.php?edit=%s'>link</a><br><br>
+			Type: %s<br>
+			Instrument: %s<br>
+			Name: %s<br>
+			Description: <xmp>%s</xmp>
+			Content: <xmp>%s</xmp>",
+				$key,
+				$type,
+				$instrument,
+				$name,
+				$description,
+				$text);
+		die($message);
+	}
+	
+	// update the boilerplate row
+	$sql_update = sprintf("UPDATE la_boilerplate 
+		SET type = %s, instrument_id = %s, name = %s, la_boilerplate_desc = %s, 
+			la_boilerplate_text = %s, who_updated = %s 
+		WHERE la_boilerplatekey = %s",
+			SQLstr($type, 'text'),
+			SQLstr($instrument, 'text'),
+			SQLstr($name, 'text'),
+			SQLrstr($description),
+			SQLrstr($text),
+			SQLstr($userkey, 'int'),
+			SQLstr($key, 'int'));
+	$result = mysql_query($sql_update) or die("ERROR saving row: ".mysql_error().$sql_update);
+	
+	// refresh view
+	$url_type = ''; if (isset($_GET['type'])) { $url_type = '?type='.$_GET['type']; }
+	header("Location: boilerplate.php".$url_type); exit();
+}
+
+// hard PHP filter (category)
+$sql_filters = "";
+if (isset($_GET['type']) AND $_GET['type'] <> '') { 
+	$sql_filters .= sprintf(" AND type = %s ", SQLstr($_GET['type'], 'text')); 
+}
+if (isset($_GET['instrument_id'])) { 
+	$sql_filters .= sprintf(" AND instrument_id = %s ", SQLstr($_GET['instrument_id'], 'text')); }
+$edit = 0;
+if (isset($_GET['edit'])) { $edit = intval($_GET['edit']); }
+
+// select all boilerplate rows
+$sql = "SELECT * FROM la_boilerplate WHERE 1=1 {$sql_filters} ORDER BY type, name";
+$rsBoilerplate = mysql_query($sql) or die("ERROR building boilerplates list: ".mysql_error());
+
+// list of types
+$sql = "SELECT type FROM la_boilerplate WHERE type <> '' GROUP BY type ORDER BY type";
+$rsTypes = mysql_query($sql) or die("ERROR building types list: ".mysql_error());
+
+// list of instruments
+$sql = "SELECT instrument_id FROM la_boilerplate WHERE instrument_id <> '' 
+	GROUP BY instrument_id ORDER BY instrument_id";
+$rsInstruments = mysql_query($sql) or die("ERROR building instruments list: ".mysql_error());
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Boilerplate</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<script src="../includes/jquery.js"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<script src="../includes/jquery.dotimeout.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+<script src="../includes/jquery.highlight.js" type="text/javascript"></script>
+<script src="../_assets/js/bootstrap.min.js"></script>
+<link href="../_assets/css/bootstrap.css" rel="stylesheet" type="text/css">
+<link href="../_assets/css/bootstrap-responsive.css" rel="stylesheet" type="text/css">
+<link href="../_assets/_css/custom.css" rel="stylesheet" type="text/css">
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+	
+	$('.collapse_tab').click(function(){
+		var content = $(this).parent().find('.collapse_content');
+		content.slideToggle(200);
+	});
+	
+	$('.list_row').hover(function(){
+		$(this).addClass('list_row_hover');
+	}, function(){
+		$(this).removeClass('list_row_hover');
+	});
+	
+	$('.list_row').click(function(){
+		var row = $(this);
+		var row_key = row.attr('row_key');
+		var row_type = row.find('.display_type').text();
+		var row_instrument = row.find('.display_instrument').text();
+		var row_name = row.find('.display_name').text();
+		var row_desc = row.find('.display_desc').text();
+		var row_text = row.attr('orig_text');
+		var orig_hash = row.attr('orig_hash');
+		$('#window_edit').modal();
+		$('#title_key').text(row_key);
+		$('#title_name').text(row_name);
+		$('#title_permalink').attr('href', '?type='+row_type+'&edit='+row_key);
+		$('#edit_key').val(row_key);
+		$('#edit_type').val(row_type);
+		$('#edit_instrument').val(row_instrument);
+		$('#edit_name').val(row_name);
+		$('#edit_desc').val(row_desc);
+		$('#edit_text').val(row_text);
+		$('#edit_orig_hash').val(orig_hash);
+		$('#update_boilerplate').attr('action', "?type="+row_type);
+		$('#edit_text').keyup();
+	});
+	
+	// show preview
+	$('#edit_text').keyup(function(){
+		var content = $(this).val();
+		$('#show_preview').html(content);
+	});
+	$('#edit_text').blur(function(){
+		$(this).keyup();
+	});
+	
+	$('#filter_rows').keyup(function(){
+		// quarter-second timeout reduces JS lag if searching huge page
+		$('#loading_filter_rows').show();
+		$.doTimeout('search', 250, function(){
+			var search_term = $('#filter_rows').val();
+			var rows = $('.list_row');
+			if (search_term == '') { 
+				rows.removeHighlight().show(); 
+				$('#clear_filter').hide();
+			} else {
+				// thanks to Johann Burkard for the excellent Highlight plugin.
+				// Remove highlight spans, and remove any other elements that have had the highlight class added
+				rows.removeHighlight();
+				rows.find('.highlight').removeClass('highlight');
+				rows.highlight(search_term); 
+				// Hide all stems; then show stems where highlights were found (at any level).
+				rows.hide();
+				rows.find('.highlight').parents('.list_row').show();
+				$('#clear_filter').show();
+			}
+			$('#loading_filter_rows').hide();
+
+			// save this filter to a cookie, named soft_filter_PAGEID.
+			// Cookie lifetime = 1 day.
+			var date = new Date();
+			date.setTime(date.getTime()+(24*60*60*1000));
+			date = date.toGMTString();
+			document.cookie = "soft_filter_<? echo pageid(); ?>="+search_term+
+				"; expires="+date+"; path=/";
+
+		});
+	});
+	
+	<? if (isset($_COOKIE['soft_filter_'.pageid()])) { ?>
+		$('#filter_rows').val('<? echo mysql_real_escape_string($_COOKIE['soft_filter_'.pageid()]); ?>').keyup();
+	<? } ?>
+
+	$('#clear_filter').click(function(){ $('#filter_rows').val('').keyup(); });
+
+	<?php if ($edit > 0) { ?>
+		$('.list_row').filter('[row_key=<?php echo $edit; ?>]').click();
+	<?php } ?>
+	
+});
+
+
+</script>
+
+
+<style type="text/css">
+
+.collapse_tab {
+	cursor: pointer;
+	position: relative;
+}
+.collapse_content {
+	display: none;
+	width: 100%;
+}
+
+.highlight { background-color: yellow }
+.color_teal { color: #008A8C; }
+
+#filter_rows { margin: 0px; padding: 0px; }
+#loading_filter_rows { display: none; }
+
+.list_row { cursor: pointer; }
+.list_row_hover { background-color: #ddd; }
+td { font-size: 14px; }
+
+.display_name { color: black; }
+.display_desc { max-width: 300px; }
+.searchable_text { display: none; }
+
+#window_edit table { margin-left: 20px; }
+#window_edit td { border-bottom-style: none; }
+
+#edit_desc { height: 40px; }
+#edit_text { 
+	height: 120px;
+	}
+#show_preview { background-color: #efefef; padding: 10px; }
+
+</style>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->  <h1 style='padding-left:0px;'>EDIT BOILERPLATE</h1>
+  
+  <p>Filter types:
+		<?php while ($row = mysql_fetch_assoc($rsTypes)) { ?>
+      <a href="?type=<?php echo $row['type']; ?>">
+				<?php echo $row['type']; ?></a>&nbsp;
+		<?php } ?>
+  </p>
+  
+  <div class=''>
+  	<div class='collapse_tab'><a>Filter instruments</a></div>
+    <div class='collapse_content'>
+      <p> 
+				<?php while ($row = mysql_fetch_assoc($rsInstruments)) { ?>
+          <a href="?instrument_id=<?php echo $row['instrument_id']; ?>"><?php echo $row['instrument_id']; ?></a><br />
+        <?php } ?>
+      </p>
+    </div>
+  </div>
+	
+  <p>Filter rows <input type='text' id='filter_rows' class='initial' />
+  	<span id='loading_filter_rows'><em>Loading...</em></span>
+  	<a id='clear_filter' style='display:none;'>⌫</a>
+  </p>
+  <?php if ($sql_filters <> '') { ?><p><a href="?">clear filter</a></p><?php } ?>
+	
+  <div style='width: 2000px;'>
+  <table>
+  	<tr class='tablehead_knockout'>
+    	<th>Type</th>
+    	<th>Instrument</th>
+    	<th>Name</th>
+    	<th>Description</th>
+    	<th>Length</th>
+    	<th>Text</th>
+    </tr>
+    <?php while ($row = mysql_fetch_assoc($rsBoilerplate)) {  
+			$row['orig_hash'] = hash('md5', $row['la_boilerplatekey'].$row['type'].$row['instrument_id'].
+				$row['name'].$row['la_boilerplate_desc'].$row['la_boilerplate_text']);
+			$row['key'] = $row['la_boilerplatekey'];
+			$row['desc'] = str_replace('"', '&quot;', $row['la_boilerplate_desc']);
+			$row['text'] = str_replace('"', '&quot;', $row['la_boilerplate_text']); 
+			$disp_text = $row['text'];
+			$disp_text = preg_replace("/(\s)\s/", "$1", $disp_text);
+			$disp_text = str_replace('<', '&lt;', $disp_text);
+			$disp_text = str_replace('\n', '<br>', $disp_text);
+			$searchable_text = $disp_text;
+			$words = str_word_count($disp_text); 
+			$max = 100;
+			if (strlen($disp_text) > $max) { $disp_text = substr($disp_text, 0, $max)."..."; }
+			?>
+    <tr class='list_row' 
+    	row_key="<?php echo $row['key']; ?>" 
+      orig_text="<?php echo $row['text']; ?>"
+      orig_hash="<?php echo $row['orig_hash']; ?>">
+    	<td class='display_type'><?php echo $row['type']; ?></td>
+    	<td class='display_instrument'><?php echo $row['instrument_id']; ?></td>
+    	<td class='display_name'><?php echo $row['name']; ?></td>
+    	<td class='display_desc'><?php echo $row['desc']; ?></td>
+    	<td><?php echo $words; ?></td>
+      <td class='display_text'><?php echo $disp_text; ?>
+      	<div class='searchable_text'><?php echo $searchable_text; ?></div></td>
+    </tr>
+    <?php } ?>
+    <tr>
+      <td colspan='3'>
+        <a href='?create_row'>+ new row</a>
+      </td>
+    </tr>
+  </table>
+  </div>
+  
+  <div id="window_edit" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-header">
+    	<h3 class='float_left'>#<span id="title_key">KEY</span>: <span id="title_name">row_name_thing</span></h3>
+    	<div class='float_right'><a id="title_permalink" href="">permalink</a></div>
+      <br class='clearfloat' />
+    </div>
+  	<table>
+    <form id="update_boilerplate" action="?<?php echo $_SERVER['QUERY_STRING']; ?>" method="post">
+    	<tr>
+      	<td>Type</td>
+        <td><input type='text' id='edit_type' name='type' value='' /></td>
+      </tr>
+    	<tr>
+      	<td>Instrument</td>
+        <td><input type='text' id='edit_instrument' name='instrument' value='' /></td>
+      </tr>
+    	<tr>
+      	<td>Name</td>
+        <td><input type='text' id='edit_name' name='name' value='' /></td>
+      </tr>
+    	<tr>
+      	<td>Description</td>
+        <td><textarea id='edit_desc' name='desc'></textarea></td>
+      </tr>
+    	<tr>
+      	<td>Text</td>
+        <td><textarea id='edit_text' name='text' style='width:400px;'></textarea></td>
+      </tr>
+      <tr>
+      	<td colspan='2'>
+          <div>
+            <div class='collapse_tab'><p><a class='color_teal'>show preview</a></p></div>
+            <div class='collapse_content' id='show_preview'></div>
+          </div>
+        </td>
+      </tr>
+    	<tr>
+      	<td></td>
+        <td align='right'>
+        	<input type='hidden' id='edit_orig_hash' name='orig_hash' value='' />
+        	<input type='hidden' id='edit_key' name='key' value='' />
+        	<input type='submit' name='submit' value='UPDATE' />
+        </td>
+      </tr>
+    </form>
+    </table>
+  </div>
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

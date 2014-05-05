@@ -1,0 +1,317 @@
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelrja1.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LRJA</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../DTSassets/xpath.js" type="text/javascript"></script>
+<script src="../DTSassets/SpryData.js" type="text/javascript"></script>
+<link href="../DTSassets/SpryMasterDetail.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript">
+<!--
+var ds1 = new Spry.Data.XMLDataSet("../assessment_LRJA/_xml/lrjadilemma.xml", "lrjadilemmas/lrjatopic", {sortOnLoad: "@name", sortOrderOnLoad: "ascending"});
+ds1.setColumnType("lrjadilemma", "html");
+//-->
+</script>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	background-image: url(/images/skin/LRJAcontainer1.jpg);
+	border: 1px solid #52561F;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LRJAheader1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 596px;
+	height: 19px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #sidebar1 {
+	float: right; /* since this element is floated, a width must be given */
+	width: 157px;
+	margin: 0px;
+	padding: 0px;
+}
+
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 158px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/LRJAfooter1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="sidebar1">
+    <!-- InstanceBeginEditable name="graphic" --><img src="../images/corner/monarchmilkweed.jpg" alt="milkweed" width="157" height="117" />
+<!-- InstanceEndEditable -->
+    <!-- end #sidebar1 -->
+    <br />
+    <br />
+    <br />
+  <!-- InstanceBeginEditable name="sidebar2" -->
+  <div align="center">
+    <table>
+      <tr>
+        <td><a href="assessldma.php"><img src="../images/logos/LDMA.gif" width="82" height="32" alt="ldma" /></a></td>
+        </tr>
+      <tr>
+        <td><a href="assesslima.php"><img src="../images/logos/LIMA.gif" width="82" height="32" alt="lsua" /></a></td>
+        </tr>
+      <tr>
+        <td><a href="assessllra.php"><img src="../images/logos/LLRA.gif" width="82" height="32" alt="lera" /></a></td>
+        </tr>
+      <tr>
+        <td><a href="assesslsua.php"><img src="../images/logos/LSUA.gif" width="82" height="32" alt="lrja" /></a></td>
+        </tr>
+      <tr>
+        <td><a href="assesslrja.php"><img src="../images/logos/LRJA.gif" width="82" height="32" alt="llra" /></a></td>
+        </tr>
+      <tr>
+        <td><a href="assesslera.php"><img src="../images/logos/LERA.gif" width="82" height="32" alt="lima" /></a></td>
+        </tr>
+    </table>
+  </div>
+  <div align="center">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+</div>
+  <!-- InstanceEndEditable --><br />
+  <!-- InstanceBeginEditable name="sidebar3" -->
+  <p>&nbsp;</p><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>ABOUT THE LECTICAL REFLECTIVE JUDGMENT ASSESSMENT*</h1>
+  <p>The LRJA is an assessment of the way people think about knowledge, truth, and inquiry. It is based on an idea elaborated by John Dewey and investigated by Perry and Kitchener &amp; King. Well developed reflective judgment skills support  learning, critical thinking, and  decision-making. Higher levels of reflective judgment are a good predictor of academic success.</p>
+<h3>General information</h3>
+<p class="pspaced"><em>For adolescents (12+) and adults</em></p>
+  <p class="pspaced">The LRJA presents an &quot;ill-structured&quot; dilemma—one that involves a big, thorny problem with no clear soution—then asks the test-taker (through a series of standard probes) to discuss the nature of the problem, important considerations, and how to go about gathering information, analyzing it, and making a decision. They are then asked to discuss  their thinking about the nature of knowledge and truth. </p>
+  <p class="pspaced">There are several existing (and tested) LRJA dilemmas, which  makes it possible to provide a new dilemma each time an individual takes the assessment. This feature is especially useful if you wish to test the effectiveness of a course or training intervention. Moreover, we can customize dilemmas for particular groups. For example, we have developed special versions of the LRJA  for use in legal, medical, and educational contexts. </p>
+  <p class="pspaced">The LRJA is supplemented with a set of survey-like questions. These are designed to examine personal preferences, which helps us to produce more useful reports.  </p>
+  <h3>Dilemmas</h3>
+  <p>Individuals who take the LRJA are asked to choose from this list of dilemmas (minus any they have already used). Click on   the tabs in the list bel<span class="pspaced">ow  to explore available dilemmas. You can specify which dilemma you would like your client, student, or research partcipant to take by providing the student with it's name and instructing him or her to select that name when choosing a dilemma.</span><br />
+    <br />
+  </p>
+  <p></p>
+  <div class="MasterDetail">
+            <div spry:region="ds1" class="MasterContainer">
+              <div class="MasterColumn" spry:repeat="ds1" spry:setrow="ds1" spry:hover="MasterColumnHover" spry:select="MasterColumnSelected">{@name}</div>
+            </div>
+            <div spry:detailregion="ds1" class="DetailContainer">
+              <div class="DetailColumn">{lrjadilemma}</div>
+            </div>
+            <br style="clear:both" />
+          </div>
+<p></p>
+<h3>Check it out</h3>
+<p class="pspaced">You can examine the LRJA by logging on to the DTS site and choosing <a href="../landing.php">select an assessment</a>, under the &quot;take an assessment&quot; item in the main menu on the left. You will need to enter information into the starred fields before you will be allowed to move from one page of the assessment to the next. Feel free to cut and paste blocks of random text into the essay fields.</p>
+<h3 class="pspaced">Reliability and validity</h3>
+<p class="pspaced">The LRJA, like all Lectical Assessments, reliably distinguishes 8–10 adult developmental phases, where each phase represents 1/4 of a developmental level. All Lectical Assessments have very similar levels of reliability, because they are scored with the same developmental assessment system, the <a href="../PDF/LAS.pdf">LAS</a>.</p>
+<p class="pspaced">Lectical assessments address two broad forms of validity: <strong><em>construct</em></strong> validity and <strong><em>ecological</em></strong> validity. First, like all Lectical Assessments, the LRJA is scored with the LAS, which is (1) based on a strong theory of development called <a href="http://www.gse.harvard.edu/~ddl/publication.htm">Dynamic Skill Theory</a>, and (2) has been submitted to a number of rigorous tests of its ability to capture the developmental construct described in that theory. These tests have shown that the LAS does a very good job capturing this dimension. To view the evidence, see the refereed papers under the articles tab on the <a href="../_about/articles.php">articles</a> page and articles by our colleagues on the reflective judgment <a href="referencesdm.html">references</a> page. </p>
+<p class="pspaced">Second, the ecological validity of the LRJA is apparent in the relevance of (1)  its content—it features real-world dilemmas that stretch the best minds; (2) the skills required to complete it—skills for inquiry, information gathering, critical analysis of information, perspective-taking, argumentation, written communication, and decision-making; and (3) the scores and feedback provided in its reports.</p>
+<p class="pspaced">To learn more about <a href="http://theodawson.net/?tag=statistical-reliability">reliability</a> and <a href="http://theodawson.net/?tag=validity">validity</a>, see Dr. Dawson's <a href="http://theodawson.net/">blog</a>.</p>
+<h3 class="pspaced">Reports</h3>
+<p class="pspaced">Lectical assessments are distinguished by the accuracy of LAS scores and the quality of our feedback. Before we launch a Lectical Assessment, we carefully review the relevant research literature, then study how the skills and concepts targeted by the assessment develop over time, using a research methodology called <a href="../_about/devmaieutics.php">developmental maieutics</a>. The approach allows us to describe what  targeted skills and concepts &quot;look like&quot; in each developmental phase, and to craft feedback and learning suggestions that are specific to each phase of performance. </p>
+<p class="pspaced">In addition to general feedback related to the phase of a given performance, each LRJA report includes personal feedback, including comments on strengths and areas for growth,  quality of argumentation, information gathering, critical analysis,  perspective-taking, and recommendations for learning and development.</p>
+<p class="pspaced">Reports are generally delivered within 5–7 business days. We send an email notification each time an assessment is finalized. </p>
+<p class="pspaced"><a href="http://devtestservice.org/bulkcustomers/guestselectreport.php?bulkcustomerkey=1000000090">View  sample reports.</a></p>
+<h3 class="pspaced">Resellers</h3>
+<p class="pspaced">If you are interested in using the LDMA in your business or practice, please <a href="../contactus.php">contact us</a> for more information.</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+  <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+<p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

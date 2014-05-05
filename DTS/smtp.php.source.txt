@@ -1,0 +1,20 @@
+<?
+// Please specify your Mail Server - Example: mail.yourdomain.com.
+ini_set("SMTP","mail.lectica.org");
+
+// Please specify an SMTP Number 25 and 8889 are valid SMTP Ports.
+ini_set("smtp_port","25");
+
+// Please specify the return address to use
+ini_set('sendmail_from', 'inquiries@lectica.org');
+
+// Set parameters of the email
+$to = "inquiries@lectica.org";
+$subject = "Test mail";
+$message = "Hello! This is a simple email message.";
+$from = "inquiries@lectica.org";
+$headers = "From: $from";
+
+// Mail function that sends the email.
+mail($to,$subject,$message,$headers);
+?>

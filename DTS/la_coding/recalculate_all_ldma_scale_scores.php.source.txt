@@ -1,0 +1,81 @@
+<? 
+include_once ("../includes/dts_functions.php");
+include_once ("coding_functions.php");
+
+bench();
+
+$start_key = 0;
+$end_key = 9999999;
+
+// for each table
+$tables = array('la_codes', 'la_codes_2', 'la_codes_3', 'la_codes_4');
+foreach ($tables as $table) {
+	echo "<br>Recalculating records in table {$table}...<br>";
+
+	// for each lakey in this table (lakey is unique for these tables)
+	$key = $start_key;
+	while ($key <= $end_key) {
+
+		if ($table == 'la_codes_4') {
+
+			// La_codes_4: look for the next laCODESkey
+			$sql = sprintf("SELECT c.lakey, c.lacodeskey 
+				FROM {$table} c
+					JOIN la_data d ON c.lakey = d.lakey
+				WHERE c.lacodeskey > %s AND d.instrument_id LIKE %s 
+				ORDER BY lacodeskey LIMIT 1",
+					SQLstr($key, 'int'),
+					"'LDMA%'");
+			$rsRecord = mysql_query($sql) or die("ERROR looking up next lacodeskey.");
+			// if there are no more records in this table, break and continue to the next table.
+			if (mysql_num_rows($rsRecord) == 0) { break; }
+			$row = mysql_fetch_assoc($rsRecord);
+			$key = $row['lacodeskey'];
+			echo "Recalculating for lacodeskey {$key}...<br>";
+
+			calculate_ldma_scale_scores($table, $row['lakey'], $row['lacodeskey']);
+
+		} else {
+			echo "Looking for any lakey greater than {$key}... ";
+			// La_codes through la_codes_3: look for the next lakey
+			$sql = sprintf("SELECT c.lakey 
+				FROM {$table} c
+					JOIN la_data d ON c.lakey = d.lakey
+				WHERE c.lakey > %s AND d.instrument_id LIKE %s 
+				ORDER BY lakey LIMIT 1",
+					SQLstr($key, 'int'),
+					"'LDMA%'");
+			$rsRecord = mysql_query($sql) or die("ERROR looking up next lakey.");
+			// if there are no more records in this table, break and continue to the next table
+			if (mysql_num_rows($rsRecord) == 0) { break; }
+			$row = mysql_fetch_assoc($rsRecord);
+			$key = $row['lakey'];
+			echo "Recalculating for lakey {$key}...<br>";
+
+			calculate_ldma_scale_scores($table, $row['lakey']);
+
+		}
+
+		// External function calculates scale scores for this record
+
+
+	} // END LOOP: for each lakey
+
+} // END LOOP: for each codes table
+
+echo "<br>";
+
+// Recalculate all per-management-level, per-test-time averages
+// (excludes any cases where less than 10 people are part of the average)
+for ($m = 1; $m <= 8; $m ++) {
+	for ($t = 1; $t <= 8; $t ++) {
+		echo "Recalculating average for manlevelgeneralkey {$m}, test time {$t}...<br>";
+		calculate_ldma_scale_averages_for_man_level($m, $t);
+	}
+}
+
+echo "<br>";
+
+bench("All LDMA scale score recalculations"); 
+
+?>

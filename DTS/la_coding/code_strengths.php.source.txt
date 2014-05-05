@@ -1,0 +1,606 @@
+<?php 
+require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" );
+include_once ("../includes/dts_functions.php");
+
+mysql_select_db($database_Assessment, $Assessment);
+
+// restrict access if not logged in
+if (!WA_Auth_RulePasses("Logged in as coder")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+$userkey = "";
+if (isset($_SESSION['log_userkey'])) {  $userkey = $_SESSION['log_userkey'];  }
+
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_name = str_replace("_", " ", $_SESSION['instrument_id']);
+$instrument_id_base = str_replace("_JOURNAL", "", $_SESSION['instrument_id']);
+
+$lakey = 0;
+if (isset($_GET['lakey'])) {  $lakey = $_GET['lakey'];  }
+
+// Figure out which coder you are, and which coding table you should be writing to
+$coder = 0;
+if (isset($_GET['coder'])) { $coder = SQLstr($_GET['coder'], "int"); }
+if (isset($_GET['scorer_no'])) { $coder = 1; }
+
+$table = "la_codes_".$coder;
+$table = str_replace("_1", "", $table);
+
+$sql_lacodeskey = "";
+if (isset($_GET['lacodeskey'])) { 
+	$sql_lacodeskey = sprintf(" AND lacodeskey = %s ", SQLstr($_GET['lacodeskey'])); 
+}  
+
+
+
+
+//	             //////////////////////////////////////////////////////////////
+//  SQL UPDATE COMMAND
+//	             //////////////////////////////////////////////////////////////
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+	
+	//	Remove newlines from the comments and suggestions fields, replace them with   ***   .
+	$codercomment = str_replace(array("\r\n", "\n", "\r", "\t"), "   ---   ", $_POST['codercomment']);
+	$code_recommend = str_replace(array("\r\n", "\n", "\r", "\t"), "   ---   ", $_POST['code_recommend']);
+	
+  $updateSQL = sprintf("UPDATE {$table} SET codercomment=%s, code_recommend=%s, 
+			strength01=%s, strength02=%s, strength03=%s, growth01=%s, growth02=%s, recommend01=%s, recommend02=%s 
+		WHERE lakey=%s {$sql_lacodeskey}",
+		 SQLstr($codercomment, "text"),
+		 SQLstr($code_recommend, "text"), 
+		 SQLstr($_POST['strength01'], "int"),
+		 SQLstr($_POST['strength02'], "int"),
+		 SQLstr($_POST['strength03'], "int"),
+		 SQLstr($_POST['growth01'], "int"),
+		 SQLstr($_POST['growth02'], "int"),
+		 SQLstr($_POST['recommend01'], "int"),
+		 SQLstr($_POST['recommend02'], "int"),
+		 SQLstr($lakey, "int"));
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+	
+	// Check through s / w / r values to ensure no duplicates were chosen by mistake.
+	$duplicates = 0;
+	if ($_POST['strength01'] == $_POST['strength02'] OR 
+			$_POST['strength01'] == $_POST['strength03'] OR 
+			$_POST['strength02'] == $_POST['strength03'] OR 
+			$_POST['growth01'] == $_POST['growth02'] OR 
+			$_POST['recommend01'] == $_POST['recommend02']) {
+		$duplicates = 1;			
+	}
+	
+	// Coders should never reach this strengths page at all. Scorers are sent on to their processing page. 
+	
+	$updateGoTo = "";
+	if ($duplicates == 1) {
+		$updateGoTo = "code_strengths.php?duplicates=1";
+	}
+	else if (isset($_GET['scorer_no'])) {
+		$updateGoTo = "../la_scoring/scoring_processing.php";		
+	} else {	// for coders, send them to the final page
+		$updateGoTo = "code_argumentation.php";	
+	}
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));	
+	exit();
+}
+
+
+
+
+
+
+
+//              //////////////////////////////////////////////////////////////
+//	RECORDSETS
+//	            //////////////////////////////////////////////////////////////
+
+
+//	Recordset: All the essay, dilemma, probe, and menu-choice data.
+$sql_rsEssays = sprintf("SELECT di.dilemmakey, di.dilemma_name, di.dilemma, 
+d.userkey, 
+d.probe01, d.probe02, d.probe03, d.probe04, d.probe05, d.probe06, d.probe07, 
+p1.probe_name AS probe_name01, p2.probe_name AS probe_name02, p3.probe_name AS probe_name03, p4.probe_name AS probe_name04, p5.probe_name AS probe_name05, p6.probe_name AS probe_name06, p7.probe_name AS probe_name07, 
+m1.menu_item AS menu01, m2.menu_item AS menu02, m3.menu_item AS menu03, m4.menu_item AS menu04, m5.menu_item AS menu05, m6.menu_item AS menu06, m7.menu_item AS menu07
+FROM la_data d 
+LEFT JOIN la_dilemmas di ON di.dilemmakey = d.dilemmakey
+LEFT JOIN la_probes p1 ON p1.instrument_id = %s AND p1.probe_number = '01' 
+LEFT JOIN la_probes p2 ON p2.instrument_id = %s AND p2.probe_number = '02' 
+LEFT JOIN la_probes p3 ON p3.instrument_id = %s AND p3.probe_number = '03' 
+LEFT JOIN la_probes p4 ON p4.instrument_id = %s AND p4.probe_number = '04' 
+LEFT JOIN la_probes p5 ON p5.instrument_id = %s AND p5.probe_number = '05' 
+LEFT JOIN la_probes p6 ON p6.instrument_id = %s AND p6.probe_number = '06' 
+LEFT JOIN la_probes p7 ON p7.instrument_id = %s AND p7.probe_number = '07' 
+LEFT JOIN la_menus m1 ON d.choicekey01 = m1.menukey 
+LEFT JOIN la_menus m2 ON d.choicekey02 = m2.menukey 
+LEFT JOIN la_menus m3 ON d.choicekey03 = m3.menukey 
+LEFT JOIN la_menus m4 ON d.choicekey04 = m4.menukey 
+LEFT JOIN la_menus m5 ON d.choicekey05 = m5.menukey 
+LEFT JOIN la_menus m6 ON d.choicekey06 = m6.menukey 
+LEFT JOIN la_menus m7 ON d.choicekey07 = m7.menukey 
+WHERE d.lakey = %s", 
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($lakey, "int"));
+$rsEssays = mysql_query($sql_rsEssays, $Assessment) or die(mysql_error());
+$row_rsEssays = mysql_fetch_assoc($rsEssays);
+$totalRows_rsEssays = mysql_num_rows($rsEssays);
+
+$tt_userkey = $row_rsEssays['userkey'];
+
+
+// Recordset: la_codes or la_codes_2 depending on who's viewing
+$sql_rsLaCodes = sprintf("SELECT d.coded_1, d.coded_2, d.coded_3, 
+		codercomment, code_recommend, strength01, strength02, strength03, growth01, growth02, recommend01, recommend02 
+	FROM {$table} c JOIN la_data d ON c.lakey = d.lakey
+	WHERE c.lakey = %s {$sql_lacodeskey}", 
+		SQLstr($lakey, "int"));
+$rsLaCodes = mysql_query($sql_rsLaCodes, $Assessment) or die("rsLaCodes: ".mysql_error());
+$row_rsLaCodes = mysql_fetch_assoc($rsLaCodes);
+if (mysql_num_rows($rsLaCodes) < 1) { 
+	error_log("ERROR - code_strengths.php couldn't find a codes entry for this lakey #".$lakey);
+	die("It looks like a codes entry hasn't been created yet for this record #".$lakey."!");
+}
+
+
+$sql_rsLaScores = sprintf("SELECT lasnumber_1 FROM la_scores WHERE lakey = %s", SQLstr($lakey, "int"));
+$rsLaScores = mysql_query($sql_rsLaScores, $Assessment) or die("rsLaScores: ".mysql_error());
+$row_rsLaScores = mysql_fetch_assoc($rsLaScores);
+$totalRows_rsLaScores = mysql_num_rows($rsLaScores);
+$lasnumber_1_rounded = round($row_rsLaScores['lasnumber_1'],1);
+
+
+/* Recordsets for current strengths, potential strengths, and recommendations
+	 Pull all strengths from each respective table IF instrument_id matches and 
+	 if the performance's LAS score is within the range.
+*/
+
+$sql_rsCurStr = sprintf("SELECT s.* 
+FROM la_codes_strengths_current s 
+WHERE instrument_id = %s AND las_number_low <= '$lasnumber_1_rounded' 
+	AND las_number_high >= '$lasnumber_1_rounded' 
+ORDER BY current_strength_theme ASC", 
+		SQLstr($instrument_id_base, "text"));
+$rsCurStr = mysql_query($sql_rsCurStr, $Assessment) or die("rsCurStr: ".mysql_error());
+$row_rsCurStr = mysql_fetch_assoc($rsCurStr);
+$totalRows_rsCurStr = mysql_num_rows($rsCurStr);
+
+$sql_rsPotStr = sprintf("SELECT * FROM la_codes_strengths_potential WHERE instrument_id = %s AND las_number_low <= '$lasnumber_1_rounded' AND las_number_high >= '$lasnumber_1_rounded' ORDER BY potential_strength_theme ASC", 
+		SQLstr($instrument_id_base, "text"));
+$rsPotStr = mysql_query($sql_rsPotStr, $Assessment) or die("rsPotStr: ".mysql_error());
+$row_rsPotStr = mysql_fetch_assoc($rsPotStr);
+$totalRows_rsPotStr = mysql_num_rows($rsPotStr);
+
+$sql_rsRecomm = sprintf("SELECT * FROM la_codes_recommendations WHERE instrument_id = %s AND las_number_low <= '$lasnumber_1_rounded' AND las_number_high >= '$lasnumber_1_rounded' ORDER BY recommend_theme ASC", 
+		SQLstr($instrument_id_base, "text"));
+$rsRecomm = mysql_query($sql_rsRecomm, $Assessment) or die("rsRecomm: ".mysql_error());
+$row_rsRecomm = mysql_fetch_assoc($rsRecomm);
+$totalRows_rsRecomm = mysql_num_rows($rsRecomm);
+
+
+$sql_rsStrengthsOld = sprintf("SELECT d.lakey, c.strength01, strength02, strength03, 
+growth01, growth02, recommend01, recommend02
+FROM la_data d JOIN la_codes c ON d.lakey = c.lakey WHERE d.userkey = %s AND d.lakey <> %s ", 
+		SQLstr($tt_userkey, "int"),
+		SQLstr($lakey, "int"));
+$rsStrengthsOld = mysql_query($sql_rsStrengthsOld) or die("rsStrengthsOld: ".mysql_error());
+// topher($sql_rsStrengthsOld);
+// KEYS for previous strengths, potential strengths, and recommendations are stored in 3 strings with spaces in between. Then when constructing the select menus, options that match any of the relevant keys are disabled.
+$prev_cur = " ";
+$prev_pot = " ";
+$prev_rec = " ";
+while ($row_rsStrengthsOld = mysql_fetch_assoc($rsStrengthsOld)) { 
+	$prev_cur .= $row_rsStrengthsOld['strength01']." ".
+							 $row_rsStrengthsOld['strength02']." ".
+							 $row_rsStrengthsOld['strength03']." ";
+	$prev_pot .= $row_rsStrengthsOld['growth01']." ".
+							 $row_rsStrengthsOld['growth02']." ";
+	$prev_rec .= $row_rsStrengthsOld['recommend01']." ".
+							 $row_rsStrengthsOld['recommend02']." ";
+}
+
+// topher($prev_cur); topher();
+
+
+
+
+?>
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Coding Strengths and Recommendations</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><?php include 'code_quickmenu.php'; ?><br />
+	<a href="code_strengths_view.php?<?php echo $_SERVER['QUERY_STRING']; ?>">list of  strengths &amp; recommendations</a>
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>STRENGTHS AND RECOMMENDATIONS - <?php echo $lakey; ?> (SCORE <?php echo $lasnumber_1_rounded; ?>)</h1>
+    <div class='box'><p>Please do not select S&Rs that include the word "collaboration" unless the test-taker actually used the word.</p></div>
+    <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      <?php if ($row_rsEssays['dilemmakey'] <> "") { ?>
+      <div class="CollapsiblePanelTab">
+      	The dilemma text (<?php echo $row_rsEssays['dilemma_name']; ?>)
+      </div>
+      <div class="CollapsiblePanelContent">
+      	<p><?php echo $row_rsEssays['dilemma']; ?></p>
+      </div>
+      <?php } ?>
+    </div>
+  
+		<div id="CollapsiblePanel1" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">TEST-TAKER RESPONSES</div>
+      <div class="CollapsiblePanelContent">
+      	
+				<?php 
+				$i = 1;
+				while ($row_rsEssays['probe_name0'.$i] <> "") { ?>
+          <p><strong><?php echo $row_rsEssays['probe_name0'.$i]; 
+					if ($row_rsEssays['menu0'.$i] <> "") 
+					{ echo ": ".$row_rsEssays['menu0'.$i]; } ?></strong></p>
+        <p><?php echo $row_rsEssays['probe0'.$i]; ?></p>
+        <?php $i ++;
+				} // end WHILE loop for each essay ?>
+        
+      </div>
+    </div>
+    <!-- The two above collapsible panels are fine to stay on this page - just copied wholesale from the prior page. -->
+    <form id="form1" name="form1" method="POST" action="<?php echo $editFormAction; ?>">
+      
+      <?php if (!($row_rsLaScores['lasnumber_1'] > 10 AND $row_rsLaScores['lasnumber_1'] < 14 ))
+			{
+				?>
+      <p><span class="red">Warning:</span> The LAS score for this peformance hasn't been calculated or no meaningful score information was found for the purpose of providing possible strengths / recommendations.</p>
+<?php 
+			}?>
+      
+      <?php if (isset($_GET['duplicates']))
+			{
+				?>
+      <p><span class="red">It looks like you've entered in the same value for 2 strengths, weaknesses, or recommendations somewhere on this page. Please double-check your entries then submit again.</span></p>
+<?php 
+			}?>
+      
+        <table width="680" border="0" class="tablenoborders">
+        <tr>
+          <td scope="col">&nbsp;</td>
+          <td scope="col"></td>
+          <td scope="col"><div align="right">
+            <input name="SUBMIT2" type="submit" value="SUBMIT" />
+          </div></td>
+        </tr>
+        <tr>
+          <td scope="col">&nbsp;</td>
+          <td scope="col"></td>
+          <td scope="col"></td>
+        </tr>
+        <tr>
+        <td colspan="3" class="tablehead_knockout" scope="col">Current strengths</td>
+        </tr>
+      <tr>
+        <td>area of strength 1 <span class="red">*</span></td>
+        <td>area of strength 2 <span class="red">*</span></td>
+        <td>area of strength 3 <span class="red">*</span></td>
+      </tr>
+      <tr>
+        <td>
+          <span id="spryselect1">
+          <select name="strength01" class="pulldownwidth200" id="strength01">
+            <option value="" <?php if ($row_rsLaCodes['strength01'] == "") 
+						{echo "selected=\"selected\"";} ?>>- select one -</option><?php
+						do { ?>
+              <option value="<?php echo $row_rsCurStr['currentstrengthkey']?>" <?php 
+              if ($row_rsLaCodes['strength01'] == $row_rsCurStr['currentstrengthkey']) 
+              { echo " selected='selected'"; }
+							// disable this strength selection if it's already been chosen in prev record
+							if (strpos(" ".$prev_cur, " ".$row_rsCurStr['currentstrengthkey']." ")) 
+              { echo " disabled='disabled'"; } ?>><?php 
+              echo $row_rsCurStr['current_strength_theme'].": ".
+                $row_rsCurStr['current_strength']; ?></option><?php
+						} while ($row_rsCurStr = mysql_fetch_assoc($rsCurStr));
+						if (mysql_num_rows($rsCurStr) > 0) {
+								mysql_data_seek($rsCurStr, 0);
+							$row_rsCurStr = mysql_fetch_assoc($rsCurStr);
+						} ?>
+        	</select>
+          <span class="selectRequiredMsg">Please select an item.</span></span>
+        </td>
+        <td><span id="spryselect2">
+          <select name="strength02" class="pulldownwidth200" id="strength02">
+            <option value="" <?php if ($row_rsLaCodes['strength02'] == "") 
+						{ echo "selected='selected'"; } ?>>- select one -</option><?php
+						do { ?>
+              <option value="<?php echo $row_rsCurStr['currentstrengthkey']?>" <?php 
+              if ($row_rsLaCodes['strength02'] == $row_rsCurStr['currentstrengthkey']) 
+              { echo "selected='selected'"; } 
+							// disable this strength selection if it's already been chosen in prev record
+							if (strpos(" ".$prev_cur, " ".$row_rsCurStr['currentstrengthkey']." ")) 
+              { echo " disabled='disabled'"; } ?>><?php 
+              echo $row_rsCurStr['current_strength_theme'].": ".
+                $row_rsCurStr['current_strength']?></option><?php
+						} while ($row_rsCurStr = mysql_fetch_assoc($rsCurStr));
+						if (mysql_num_rows($rsCurStr) > 0) {
+								mysql_data_seek($rsCurStr, 0);
+							$row_rsCurStr = mysql_fetch_assoc($rsCurStr);
+						} ?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        <td><span id="spryselect3">
+          <select name="strength03" class="pulldownwidth200" id="strength03">
+            <option value="" <?php if ($row_rsLaCodes['strength03'] == "") 
+						{ echo "selected='selected'"; } ?>>- select one -</option><?php
+						do { ?>
+              <option value="<?php echo $row_rsCurStr['currentstrengthkey']?>"<?php 
+              if ($row_rsLaCodes['strength03'] == $row_rsCurStr['currentstrengthkey']) 
+              { echo "selected='selected'"; } 
+							// disable this strength selection if it's already been chosen in prev record
+							if (strpos(" ".$prev_cur, " ".$row_rsCurStr['currentstrengthkey']." ")) 
+              { echo " disabled='disabled'"; } ?>><?php 
+              echo $row_rsCurStr['current_strength_theme'].": ".
+                $row_rsCurStr['current_strength']?></option><?php
+						} while ($row_rsCurStr = mysql_fetch_assoc($rsCurStr));
+						if (mysql_num_rows($rsCurStr) > 0) {
+								mysql_data_seek($rsCurStr, 0);
+							$row_rsCurStr = mysql_fetch_assoc($rsCurStr);
+						} ?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td colspan="3" class="tablehead_knockout" scope="col">Potential strengths</td>
+        </tr>
+      <tr>
+        <td>potential strength 1 <span class="red">*</span></td>
+        <td>potential strength 2 <span class="red">*</span></td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td><span id="spryselect4">
+          <select name="growth01" class="pulldownwidth200" id="growth01">
+            <option value="" <?php if ($row_rsLaCodes['growth01'] == "") 
+						{echo "selected='selected'";} ?>>- select one -</option><?php
+						do { ?>
+            <option value="<?php echo $row_rsPotStr['potentialstrengthkey']?>"<?php 
+						if ($row_rsLaCodes['growth01'] == $row_rsPotStr['potentialstrengthkey']) 
+						{ echo "selected='selected'"; } 
+							// disable this strength selection if it's already been chosen in prev record
+							if (strpos(" ".$prev_pot, " ".$row_rsPotStr['potentialstrengthkey']." ")) 
+              { echo " disabled='disabled'"; } ?>><?php 
+						echo $row_rsPotStr['potential_strength_theme'].": ".
+							$row_rsPotStr['potential_strength']?></option><?php
+						} while ($row_rsPotStr = mysql_fetch_assoc($rsPotStr));
+						if(mysql_num_rows($rsPotStr) > 0) {
+								mysql_data_seek($rsPotStr, 0);
+							$row_rsPotStr = mysql_fetch_assoc($rsPotStr);
+						} ?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        <td><span id="spryselect5">
+          <select name="growth02" class="pulldownwidth200" id="growth02">
+            <option value="" <?php if ($row_rsLaCodes['growth02'] == "") 
+						{ echo "selected='selected'"; } ?>>- select one -</option><?php
+						do { ?>
+              <option value="<?php echo $row_rsPotStr['potentialstrengthkey']?>"<?php 
+              if ($row_rsLaCodes['growth02'] == $row_rsPotStr['potentialstrengthkey']) 
+              { echo "selected='selected'"; } 
+							// disable this strength selection if it's already been chosen in prev record
+							if (strpos(" ".$prev_pot, " ".$row_rsPotStr['potentialstrengthkey']." ")) 
+              { echo " disabled='disabled'"; } ?>><?php 
+              echo $row_rsPotStr['potential_strength_theme'].": ".
+                $row_rsPotStr['potential_strength']?></option><?php
+						} while ($row_rsPotStr = mysql_fetch_assoc($rsPotStr));
+						if (mysql_num_rows($rsPotStr) > 0) {
+								mysql_data_seek($rsPotStr, 0);
+							$row_rsPotStr = mysql_fetch_assoc($rsPotStr);
+						} ?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td colspan="3" class="tablehead_knockout" scope="col">Recommendations</td>
+        </tr>
+      <tr>
+        <td>recommendation on a strength <span class="red">*</span></td>
+        <td>recommendation on a potential strength <span class="red">*</span></td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td><span id="spryselect6">
+          <select name="recommend01" class="pulldownwidth200" id="recommend01">
+            <option value="" <?php if ($row_rsLaCodes['recommend01'] == "") 
+						{ echo "selected='selected'"; } ?>>- select one -</option><?php
+						do { // Some recommendations are meant only to be on a growth area, not a cur strength area.
+						if ($row_rsRecomm['position1phrasing'] <> "") { ?>
+							<option value="<?php echo $row_rsRecomm['recommendkey']?>"<?php 
+							if ($row_rsLaCodes['recommend01'] == $row_rsRecomm['recommendkey']) 
+							{ echo "selected='selected'"; } 
+							// disable this strength selection if it's already been chosen in prev record
+							if (strpos(" ".$prev_rec, " ".$row_rsRecomm['recommendkey']." ")) 
+							{ echo " disabled='disabled'"; } ?>><?php 
+							echo $row_rsRecomm['recommend_theme'].": ".$row_rsRecomm['recommend']; ?></option><?php
+						} } while ($row_rsRecomm = mysql_fetch_assoc($rsRecomm));
+						if (mysql_num_rows($rsRecomm) > 0) {
+								mysql_data_seek($rsRecomm, 0);
+							$row_rsRecomm = mysql_fetch_assoc($rsRecomm);
+						} ?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        <td><span id="spryselect7">
+          <select name="recommend02" class="pulldownwidth200" id="recommend02">
+            <option value="" <?php if ($row_rsLaCodes['recommend02'] == "") 
+						{ echo "selected='selected'"; } ?>>- select one -</option><?php
+						do { 
+						if ($row_rsRecomm['position2phrasing'] <> "") { ?>
+            	<option value="<?php echo $row_rsRecomm['recommendkey']?>" <?php 
+							if ($row_rsLaCodes['recommend02'] == $row_rsRecomm['recommendkey']) 
+							{ echo "selected='selected'"; } 
+							// disable this strength selection if it's already been chosen in prev record
+							if (strpos(" ".$prev_rec, " ".$row_rsRecomm['recommendkey']." ")) 
+							{ echo " disabled='disabled'"; } ?>><?php 
+							echo $row_rsRecomm['recommend_theme'].": ".$row_rsRecomm['recommend']; ?></option><?php
+						} } while ($row_rsRecomm = mysql_fetch_assoc($rsRecomm));
+						$rows = mysql_num_rows($rsRecomm);
+						if($rows > 0) {
+								mysql_data_seek($rsRecomm, 0);
+							$row_rsRecomm = mysql_fetch_assoc($rsRecomm);
+						} ?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        <td>&nbsp;</td>
+      </tr>
+      </table>
+      <table width="680" border="0" class="tablenoborders">
+        <tr>
+        <td scope="col">Suggestions for strengths / recommendations: (Press ENTER to separate different suggestions.)</td>
+        <td scope="col"><textarea name="code_recommend" cols="45" rows="5" class="textarea080_450" id="code_recommend"><?php echo $row_rsLaCodes['code_recommend']; ?></textarea></td>
+      </tr>
+      <tr>
+        <td scope="col"><p>Coder comments about the performance:<br />
+        </p>
+          <p></p></td>
+        <td scope="col"><textarea name="codercomment" cols="45" rows="5" class="textarea080_450" id="codercomment"><?php echo $row_rsLaCodes['codercomment']; ?></textarea></td>
+      </tr>
+      <tr>
+    <td scope="col">&nbsp;</td>
+    <td scope="col"><div align="right">
+      <input name="SUBMIT" type="submit" value="SUBMIT" />
+    </div></td>
+  </tr>
+</table>
+<input type="hidden" name="MM_update" value="form1" />
+    </form>
+
+
+  <script type="text/javascript">
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"]});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"]});
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {validateOn:["blur", "change"]});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"]});
+var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {validateOn:["blur", "change"]});
+var spryselect6 = new Spry.Widget.ValidationSelect("spryselect6", {validateOn:["blur", "change"]});
+  </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+
+
+<?php
+?>

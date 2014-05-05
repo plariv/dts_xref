@@ -1,0 +1,485 @@
+<?php 
+require_once '../includes/dts_functions.php';
+
+if (!isset($_SESSION['log_userkey'])) {	WA_Auth_RestrictAccess("../security/logIn.php"); }
+$userkey = $_SESSION['log_userkey'];
+
+$f_userkey = ""; // 
+$f_instrument_id = ""; // Instrument_id is OPTIONAL and will by default be left blank.
+$d = date('w')+1; 
+$f_date_start = date('Y-m-d', strtotime('-'.$d.' days'));
+$f_date_end = date('Y-m-d', strtotime('+'.(6-$d).' day'));
+// Prep userkey filter
+if (isset($_GET['f_userkey'])) { $f_userkey = $_GET['f_userkey']; }
+if (!WA_Auth_RulePasses("Logged in as admin")) { $f_userkey = $userkey; }
+// Prep instrument filter
+if (isset($_GET['instrument_id'])) { 
+	$f_instrument_id = $_GET['instrument_id']; 
+	$_SESSION['instrument_id'] = $f_instrument_id;
+} 
+// Prep date range filter
+if (isset($_GET['f_date_start'])) { $f_date_start = $_GET['f_date_start']; }
+if (isset($_GET['f_date_end'])) { $f_date_end = $_GET['f_date_end']; }
+
+bench();
+
+// List of instruments to filter
+$rsfInstruments = mysql_query("SELECT instrument_id FROM la_data WHERE coded_1 = 1
+	GROUP BY instrument_id ORDER BY instrument_id") or die("ERROR list of instruments.");
+
+
+// bench();
+
+// List coders for filter menu
+$sql_fCoders = sprintf("SELECT r.userkey, r.firstname, r.lastname
+	FROM registrants r
+		JOIN la_data d ON d.coderkey_1 = r.userkey 
+			OR d.coderkey_2 = r.userkey 
+			OR d.coderkey_3 = r.userkey 
+			OR d.coderkey_4 = r.userkey
+	WHERE r.user_level > 15
+	GROUP BY r.userkey
+	ORDER BY r.firstname ");
+$rsFCoders = mysql_query($sql_fCoders) or die("ERROR fetching coder filter: ".mysql_error());
+
+// bench("Coder filter");
+
+// Query 1: list of coders relevant to this serarch. 1 row per coder.
+$sql_coders = sprintf("SELECT r.userkey, r.firstname, r.lastname, 
+		COUNT(DISTINCT d.lakey) AS n_total,
+		SUM(IF(cp.rate > 0, 1, 0)) AS n_coded,
+		SUM(IF(cp.rate IS NULL, 1, 0)) AS n_problems,
+		ROUND(AVG(d.word_count)) AS avg_words, SUM(cp.rate) AS pay,
+		# (only useful in the broken-down version of the query, below)
+		d.instrument_id, cp.words_low, cp.words_high, cp.rate 
+	FROM registrants r
+		JOIN la_data d ON (r.userkey = d.coderkey_1 AND d.coded_1 = 1 AND d.date_coded_1 BETWEEN %s AND %s)
+			OR (r.userkey = d.coderkey_2 AND d.coded_2 = 1 AND d.date_coded_2 BETWEEN %s AND %s)
+			OR (r.userkey = d.coderkey_3 AND d.coded_3 = 1 AND d.date_coded_3 BETWEEN %s AND %s)
+			OR (r.userkey = d.coderkey_4 AND d.coded_4 = 1 AND d.date_coded_4 BETWEEN %s AND %s)
+		LEFT JOIN coder_payrates cp ON d.word_count BETWEEN cp.words_low AND cp.words_high
+	WHERE 1=1 %s %s
+	GROUP BY r.userkey
+	ORDER BY r.firstname, d.instrument_id, cp.rate ",
+		SQLstr($f_date_start, 'date'), SQLstr($f_date_end, 'date'), 
+		SQLstr($f_date_start, 'date'), SQLstr($f_date_end, 'date'), 
+		SQLstr($f_date_start, 'date'), SQLstr($f_date_end, 'date'), 
+		SQLstr($f_date_start, 'date'), SQLstr($f_date_end, 'date'), 
+		($f_instrument_id <> "" ? "AND d.instrument_id = ".SQLstr($f_instrument_id, 'text') : ""),
+		($f_userkey > 0 				? "AND r.userkey = ".SQLstr($f_userkey, 'int') 							: ""));
+// topher($sql_coders);
+$rsCoders = mysql_query($sql_coders) or die("ERROR fetching coder list: ".mysql_error());
+
+// Traverse the results list - information about each coder overall. 1 row per coder.
+for ($i = 0; $row = mysql_fetch_assoc($rsCoders); $i ++) { 
+	$coder_info[$i]['userkey'] = $row['userkey'];
+	$coder_info[$i]['name'] = $row['firstname'];
+	$coder_info[$i]['n_coded'] = $row['n_coded'];
+	$coder_info[$i]['n_problems'] = $row['n_problems'];
+	$coder_info[$i]['avg_words'] = $row['avg_words'];
+	$coder_info[$i]['pay'] = ($row['pay'] > 0 ? $row['pay'] : '0');
+}
+
+
+// bench("Coder result query per-coder");
+
+
+// Now run the same query again - broken down to show counts at each pay rate.
+$sql_codersB = str_replace("GROUP BY r.userkey", 
+													 "GROUP BY r.userkey, d.instrument_id, cp.rate", $sql_coders);
+$rsCodersB = mysql_query($sql_codersB) or die("ERROR fetching coder list.");
+//
+$i = 0; $userkey = -1; $instrument = "none";
+while ($row = mysql_fetch_assoc($rsCodersB)) { 
+	// is this a different userkey?
+	if ($row['userkey'] <> $userkey) { 
+		if ($userkey == -1) { $userkey = $row['userkey']; } // don't increment, for first coder
+		else { $userkey = $row['userkey']; $i ++; }
+		$coder_info[$i]['breakdown'] = ""; // initialize index for this coder's breakdown
+		$instrument = "none";
+	}
+	if ($row['instrument_id'] <> $instrument) {
+		$instrument = $row['instrument_id'];
+		$coder_info[$i]['breakdown'] .= "<tr><td colspan='4'> <strong>".$instrument."</strong> </td></tr>";
+	}
+	
+	$coder_info[$i]['breakdown'] .= "<tr>
+		<td></td>
+		<td align='right'>".$row['words_low']."-".$row['words_high']."</td>
+		<td align='right'>$".$row['rate']."</td>
+		<td align='left'>× ".$row['n_total']."</td>
+		</tr>";
+}
+
+// bench("Coder result query broken down");
+
+// Download coder table, rather than view it, if downloadSummary was flagged
+
+if (isset($_GET['downloadSummary'])) {
+	
+	$downloadSum = array();
+	$col_titles = array("userkey", "name", 
+										 "n_coded", "n_problems", "avg_words", "pay");
+	
+	$max_x = count($col_titles)-1;
+	$max_y = count($coder_info[0])-1;
+	
+	for ($x = 0; $x <= $max_x; $x ++) { 
+		// topher("Checking column ".($x+1));
+		$col = $col_titles[$x];
+		$downloadSum[0][$x] = str_replace("_", " ", $col); 
+		for ($y = 0; $y <= $max_y; $y ++) { 
+			$downloadSum[$y+1][$x] = $coder_info[$y][$col];
+		}
+	}
+	
+	$filename = "coderCounts_".$instrument_id."_from_".$f_date_start."_to_".$f_date_end;
+	$delim=",";
+	$delim_replace=";";
+	$output = "";
+	
+	for ($y = 0; $y <= $max_y; $y ++) { 
+		$fixcomma = array();
+		for ($x = 0; $x <= $max_x; $x ++) {	
+			$cell = " ";
+			if (isset($downloadSum[$y][$x])) { $cell = $downloadSum[$y][$x]." "; }
+			array_push($fixcomma, str_replace($delim, $delim_replace, $cell)); 
+		}
+		$line = join($delim, $fixcomma);	// meld this row of results into 1 string, with commas
+		$line = str_replace("\r\n", " ",$line);
+		$line = str_replace("\r", " ",$line);
+		$line = str_replace("\n", " ",$line);
+		$line = "$line\n";
+		$output .= $line;
+	}
+	
+	$export_encoding = "utf-8";
+	$export_encoding = ($export_encoding=="")?"":("; charset=".$export_encoding);
+	header("Content-Type: application/xls".$export_encoding);
+	header("Pragma: public");
+	header("Content-Disposition: attachment; filename=".$filename.".csv");
+	header("Content-Type: application/force-download");
+	header("Cache-Control: post-check=0, pre-check=0", false);
+	
+	echo $output;
+	die();
+}
+
+
+?>
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Coder totals</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+<link href="../includes/js_res/jquery.ui.smoothness.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript">
+$(document).ready(function() {
+
+	$('#breakdown_panel').overlay({
+		top: 200,
+		speed: 'fast'
+	});
+	
+	$('.breakdown_view').click(function(){
+		var breakdown = $(this).parent().find('div.breakdown').html();
+		$('#breakdown_panel').html(breakdown);
+		$('#mask').show();
+		$('#breakdown_panel').overlay().load();
+	});
+	
+	$('#mask').click(function(){
+		$('#breakdown_panel').overlay().close();
+		$(this).hide();
+	});
+	
+	$('.date').datepicker({ 
+		dateFormat: 'yy-mm-dd', 
+		numberOfMonths: 1,
+		showOtherMonths: true,
+		selectOtherMonths: true
+	});
+	
+	$('.hotspot').tooltip({
+		position: 'center right', 
+		offset: [-130, -50],
+		effect: 'fade', 
+		fadeInSpeed: 100,
+		fadeOutSpeed: 100,
+		delay:300,
+		layout: '<span/>',
+		events: {
+			def: 'mouseover, mouseleave'
+		}
+	}); 
+	
+});	
+</script>
+
+
+
+<style type="text/css">
+
+.tooltip {
+	display:none;
+	font-size:10px;
+	/* color:#000; */
+	padding-top: 8px;
+	padding-right: 14px;
+	padding-bottom: 8px;
+	padding-left: 14px;
+	-moz-box-shadow: 2px 2px 8px #666;
+	-webkit-box-shadow: 2px 2px 8px #666;
+	box-shadow: 2px 2px 8px #666;
+	z-index: 999;
+	background-color: #F3F3F3;
+	width: 200px;
+	line-height: 17px;
+	font-style: normal;
+	font-weight: normal;
+	color: #676767;
+}
+
+.hotspot {
+	cursor:pointer;
+	color: #474A47;
+}
+
+.breakdown_view { cursor: pointer; }
+
+tr.faded td {
+	background-color: #CCC;
+}
+
+.overlay {
+	/* must be initially hidden */
+	display:none;
+	/* place overlay on top of other elements */
+	z-index:10000;
+	padding: 20px;
+	/* styling */
+	background-color: #dedede;
+	/* background-image: url(../assets_images/skin/starfield.jpg); */
+	width: 300px;
+	max-height: 400px;
+	overflow: auto;
+	border: 1px solid #666;
+	/* CSS3 styling for latest browsers */
+	-moz-box-shadow:0 0 90px 5px #000;
+	-webkit-box-shadow: 0 0 90px #000;
+}
+
+.maskOn {
+	position: fixed;
+	display: block; 
+	background-color: #ccc;
+	opacity: 0.1; 
+	top: 0px; 
+	left: 0px; 
+	z-index: 9998; 
+	/* background-color: rgb(235, 236, 255); */ 
+	width: 100%; 
+	height: 100%; 
+}
+
+</style>
+
+
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --> <!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    
+  <h1>VIEW CODER TOTALS</h1>
+  
+  <h3>Filter</h3>
+  <table border="0">
+  	<form id="form1" name="form1" method="get" action="">
+  	<tr>
+    	<td align="right"><a class="hotspot">instrument</a>
+      	<span class="tooltip">Optional. 
+        	Leave this blank to view totals for all instruments.</span></td>
+    	<td>
+      	<select name="instrument_id" class="menu_175">
+        	<option value="">- all -</option>
+        	<?php while ($row = mysql_fetch_assoc($rsfInstruments)) { ?>
+          	<option value="<?php echo $row['instrument_id']; ?>" <?php 
+							if ($f_instrument_id == $row['instrument_id']) 
+							{ echo "selected='selected'"; } ?>>
+            	<?php echo $row['instrument_id']; ?>
+            </option>
+          <?php } ?>
+        </select>
+      </td>
+    </tr>
+    <tr>
+    	<td align="right">coder</td>
+      <td>
+        <select name="f_userkey" class="menu_175" id="coder">
+        	<option value="">- all -</option>
+					<?php while ($row = mysql_fetch_assoc($rsFCoders)) { ?>
+          	<option value="<?php echo $row['userkey']; ?>" <?php 
+							if ($f_userkey == $row['userkey']) { echo "selected='selected'"; } ?>>
+            	<?php echo $row['firstname']." ".$row['lastname']; ?>
+            </option>
+          <?php } ?>
+        </select>
+      </td>
+    </tr>
+  	<tr>
+    	<td><a class="hotspot">date range</a>
+      	<span class="tooltip">This will search for any records coded <strong>on or after</strong> 
+        the starting date, and <strong>before</strong> the ending date.</span></td>
+      <td>
+      	from <input type="text" class="date" name="f_date_start" size="14" 
+        	value="<?php echo $f_date_start; ?>" />
+      	to <input type="text" class="date" name="f_date_end" size="14"
+        	value="<?php echo $f_date_end; ?>" /></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td align="right"><input type="submit" name="SUBMIT" id="SUBMIT" value="FILTER" /></td>
+    </tr>
+    </form>
+  </table>
+  
+  
+  <h3>Totals | <a href="?downloadSummary=yes&instrument_id=<?php 
+		echo $f_instrument_id; ?>&f_userkey=<?php echo $f_userkey; ?>&f_date_start=<?php 
+		echo $f_date_start; ?>&f_date_end=<?php echo $f_date_end; ?>">download</a>
+  </h3>
+  <table>
+  	<tr class="tablehead_knockout">
+      <td>Coder</td>
+      <td># coded</td>
+    	<td># problems</td>
+      <td>Avg words</td>
+      <td>Earned</td>
+      <td>Breakdown</td>
+    </tr>
+    <?php 
+		$shaded = false;
+		for ($i = 0; isset($coder_info[$i]); $i ++) { 
+			$shaded = !$shaded; ?>
+      <tr <?php if ($shaded) { ?>class="faded"<?php } ?>>
+        <td><?php echo $coder_info[$i]['name']; ?></td>
+        <td align="right"><?php echo $coder_info[$i]['n_coded']; ?></td>
+        <td align="right"><?php echo $coder_info[$i]['n_problems']; ?></td>
+        <td align="right"><?php echo $coder_info[$i]['avg_words']; ?></td>
+        <td align="right">$<?php echo $coder_info[$i]['pay']; ?></td>
+        <td align="center">
+        	<a class="breakdown_view">view</a>
+        	<div class="breakdown" style="display: none">
+          	<h3>Breakdown for <?php echo $coder_info[$i]['name']; ?></h3>
+            <p>from <?php echo $f_date_start; ?> to <?php echo $f_date_end; ?></p>
+          	<table>
+            	<tr class="tablehead_knockout">
+              	<td>Instrument</td>
+              	<td>Words</td>
+                <td>Rate</td>
+                <td>Count</td>
+              </tr>
+            	<?php echo $coder_info[$i]['breakdown']; ?>
+            </table>
+          </div>
+        </td>
+      </tr>
+			<?php 
+		} ?>
+  </table>
+  
+  
+  <div id="breakdown_panel" class="overlay"> </div>
+  
+  <div id="mask" class="maskOn" style="display:none"> </div>
+    
+    
+    <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

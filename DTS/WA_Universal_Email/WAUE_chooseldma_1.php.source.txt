@@ -1,0 +1,42 @@
+ <?php
+  $MailAttachments = "";
+  $MailBCC         = "service@lectica.org";
+  $MailCC          = "{$row_rsLDMA2['email']}";
+  $MailTo          = "";
+  $MailBodyFormat  = "";
+  $MailBody        = "Your LDMA is ready for viewing at http://devtestservice.org . Thank you for using Lectical Assessments";
+  $MailImportance  = "";
+  $MailFrom        = "Lectical Assessments |WA|service@lectica.org";
+  $MailSubject     = "{$row_rsLDMA2['firstname1']} {$row_rsLDMA2['lastname1']}'s LDMA";
+  $_SERVER["QUERY_STRING"] = "";
+
+  //Global Variables
+
+  $WA_MailObject = WAUE_Definition("mail.lectica.org","25","service@lectica.org","","","");
+
+  if ($RecipientEmail)     {
+    $WA_MailObject = WAUE_AddRecipient($WA_MailObject,$RecipientEmail);
+  }
+  else      {
+    //To Entries
+  }
+
+  //Attachment Entries
+
+  //BCC Entries
+
+  //CC Entries
+
+  //Body Format
+  $WA_MailObject = WAUE_BodyFormat($WA_MailObject,0);
+
+  //Set Importance
+  $WA_MailObject = WAUE_SetImportance($WA_MailObject,"3");
+
+  //Start Mail Body
+  //End Mail Body
+
+  $WA_MailObject = WAUE_SendMail($WA_MailObject,$MailAttachments,$MailBCC,$MailCC,$MailTo,$MailImportance,$MailFrom,$MailSubject,$MailBody);
+
+  $WA_MailObject = null;
+?>

@@ -1,0 +1,2 @@
+<a href='groups_list.php'>list groups</a> &nbsp; 
+<a href='assignments_list.php'>list assignments</a>

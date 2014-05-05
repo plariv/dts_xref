@@ -1,0 +1,208 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$maxRows_rsProjects = 15;
+$pageNum_rsProjects = 0;
+if (isset($_GET['pageNum_rsProjects'])) {
+  $pageNum_rsProjects = $_GET['pageNum_rsProjects'];
+}
+$startRow_rsProjects = $pageNum_rsProjects * $maxRows_rsProjects;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProjects = "SELECT * FROM projectproject WHERE research = 1 AND project_description <> '' ";
+$query_limit_rsProjects = sprintf("%s LIMIT %d, %d", $query_rsProjects, $startRow_rsProjects, $maxRows_rsProjects);
+$rsProjects = mysql_query($query_limit_rsProjects, $Assessment) or die(mysql_error());
+$row_rsProjects = mysql_fetch_assoc($rsProjects);
+
+if (isset($_GET['totalRows_rsProjects'])) {
+  $totalRows_rsProjects = $_GET['totalRows_rsProjects'];
+} else {
+  $all_rsProjects = mysql_query($query_rsProjects);
+  $totalRows_rsProjects = mysql_num_rows($all_rsProjects);
+}
+$totalPages_rsProjects = ceil($totalRows_rsProjects/$maxRows_rsProjects)-1;
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Working with DTS</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+.container .inner_container .column1 h1 {
+	padding-bottom: 20px;
+}
+</style>
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+    <h1>WORKING WITH LECTICA<sup>®</sup></h1>
+    <div class="box" style='font-size:110%; padding:20px;'>If you are interested in using our  any of our assessments as a researcher, educator, consultant, coach, or counselor, please <a href="../contactus.php">contact us</a>. We do not sell assessments directly to the public, but anyone who registered on the site is welcome to use our free surveys or instruments, the STC, NTS, SMS, DOS, DCS, and CPS.</div>
+    <p>At DTS, we specialize in creating and delivering richly informative developmental assessments.  All of our assessments are designed to be embedded in <a href="../PDF/2012_0929_virtuous_cycles.pdf"><em>virtuous cycles of learning</em></a>—a series of goal–action–feedback loops that support the optimal development of knowledge and skills over time.  In  <em>virtuous cycles</em>, assessments provide rich personal feedback that helps learners (along with their teachers or mentors) select their next goal. </p>
+    <p>Educators call assessments that provide rich feedback <em>formative</em> <em>assessments</em>, and these are usually viewed as different from <em>summative</em> assessments, which are used to evaluate capability or provide scores for research purposes. Assessments that can be used for both purposes are rare, primarily due to the poor statistical reliability of most formative assessments. All of our developmental assessments are more than <a href="../about/las_reliability_validity.php">reliable</a> enough to be used in both summative and formative contexts. See our <a href="../about/articles.php">literature</a> page for specific articles about our assessments and the methods we use to create them.</p>
+    <p>DTS participates regularly in academic research. Recent projects include:</p>
+    <?php do { ?>
+      <ul>
+        <li><?php echo $row_rsProjects['project_description']; ?></li>
+      </ul>
+<?php } while ($row_rsProjects = mysql_fetch_assoc($rsProjects)); ?>
+<p>&nbsp;</p>
+    <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+  <!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" --> 
+<!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsProjects);
+?>

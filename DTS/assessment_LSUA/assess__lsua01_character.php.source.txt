@@ -1,0 +1,878 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_insert"])) && ($_POST["MM_insert"] == "form1")) {
+  $insertSQL = sprintf("INSERT INTO charactersurvey (characterkey, userkey, lsuakey, challenge1, integrity1, persistence1, learner1, emotional1, challenge2, learner2, integrity2, learner3, challenge3, persistence2, integrity3, persistence3, learner4, emotional2, challenge4, emotional3, integrity4, persistence4, emotional4, learner5, integrity5, challenge5, emotional5, persistence5) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                       GetSQLValueString($_POST['characterkey'], "int"),
+                       GetSQLValueString($_POST['userkey'], "int"),
+                       GetSQLValueString($_POST['lsuakey'], "int"),
+                       GetSQLValueString($_POST['challenge1'], "int"),
+                       GetSQLValueString($_POST['integrity1'], "int"),
+                       GetSQLValueString($_POST['persistence1'], "int"),
+                       GetSQLValueString($_POST['learner1'], "int"),
+                       GetSQLValueString($_POST['emotional1'], "int"),
+                       GetSQLValueString($_POST['challenge2'], "int"),
+                       GetSQLValueString($_POST['learner2'], "int"),
+                       GetSQLValueString($_POST['integrity2'], "int"),
+                       GetSQLValueString($_POST['learner3'], "int"),
+                       GetSQLValueString($_POST['challenge3'], "int"),
+                       GetSQLValueString($_POST['persistence2'], "int"),
+                       GetSQLValueString($_POST['integrity3'], "int"),
+                       GetSQLValueString($_POST['persistence3'], "int"),
+                       GetSQLValueString($_POST['learner4'], "int"),
+                       GetSQLValueString($_POST['emotional2'], "int"),
+                       GetSQLValueString($_POST['challenge4'], "int"),
+                       GetSQLValueString($_POST['emotional3'], "int"),
+                       GetSQLValueString($_POST['integrity4'], "int"),
+                       GetSQLValueString($_POST['persistence4'], "int"),
+                       GetSQLValueString($_POST['emotional4'], "int"),
+                       GetSQLValueString($_POST['learner5'], "int"),
+                       GetSQLValueString($_POST['integrity5'], "int"),
+                       GetSQLValueString($_POST['challenge5'], "int"),
+                       GetSQLValueString($_POST['emotional5'], "int"),
+                        GetSQLValueString($_POST['persistence5'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($insertSQL, $Assessment) or die(mysql_error());
+  $insert_ID = mysql_insert_id();
+
+  $insertGoTo = "assess__lsua01_charactercomments.php?characterkey=$insert_ID";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+
+    $insertGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $insertGoTo));
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRating = "SELECT * FROM characterratings";
+$rsRating = mysql_query($query_rsRating, $Assessment) or die(mysql_error());
+$row_rsRating = mysql_fetch_assoc($rsRating);
+$totalRows_rsRating = mysql_num_rows($rsRating);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelsua2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Character survey</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LSUAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>CHARACTER SURVEY (page 12 of 13)</h1>
+  <h3>What are you like?</h3>
+  <p>This survey examines aspects of your character—as you see it. To obtain meaningful results, please respond to all items as honestly as possible, choosing the &quot;best&quot; response.</p>
+<p><span><strong>Note:</strong></span> If you return to this page after hitting the &quot;submit&quot; button, please check to make sure you have entered responses for all of the required (<span class="red">*</span>) items.  </p>
+<form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+  <table>
+    <tr valign="baseline">
+      <td colspan="2" class="tablehead">In general...</td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft"><div align="left">I'm happiest when I'm working on a challenging problem.<span class="red">*</span><br />
+        </div></td>
+      <td><span id="spryselect12">
+        <select name="challenge1" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft"><div align="left">My word really is my bond.<span class="red">*</span><br />
+        </div></td>
+      <td><span id="spryselect2">
+        <select name="integrity1" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft"><div align="left">I think of failure as  useful feedback.<span class="red">*</span><br />
+        </div></td>
+      <td><span id="spryselect3">
+        <select name="persistence1" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft"><div align="left">When make a mistake, my first instinct is to try to find out what I can learn from it.<span class="red">*</span><br />
+        </div></td>
+      <td><span id="spryselect4">
+        <select name="learner1" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft"><div align="left">I find it helpful to monitor the emotions of others.<span class="red">*</span><br />
+        </div></td>
+      <td><span id="spryselect5">
+        <select name="emotional1" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">I like the challenge of keeping several projects going at the same time.<span class="red">*</span><br /></td>
+      <td><span id="spryselect6">
+        <select name="challenge2" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">I love learning just for the sake of learning.<span class="red">*</span><br /></td>
+      <td><span id="spryselect1">
+        <select name="learner2" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">It is very important to me to keep my commitments to others.<span class="red">*</span><br /></td>
+      <td><span id="spryselect13">
+        <select name="integrity2" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">Sometimes I wonder if I have too many interests.<span class="red">*</span><br /></td>
+      <td><span id="spryselect14">
+        <select name="learner3" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">When I encounter a difficult problem, I usually feel a sense of positive anticipation.<span class="red">*</span><br /></td>
+      <td><span id="spryselect15">
+        <select name="challenge3" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">I find it difficult to give up on a goal.<span class="red">*</span><br /></td>
+      <td><span id="spryselect16">
+        <select name="persistence2" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">People who know me well also know that I can be trusted.<span class="red">*</span><br /></td>
+      <td><span id="spryselect17">
+        <select name="integrity3" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">I can remain focused on projects that take years to complete.<span class="red">*</span><br /></td>
+      <td><span id="spryselect18">
+        <select name="persistence3" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">I am  likely to lose interest in something when there isn't anything more to learn about it.<span class="red">*</span><br /></td>
+      <td><span id="spryselect19">
+        <select name="learner4" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">I often experience more than one emotion at the same time.<span class="red">*</span><br /></td>
+      <td><span id="spryselect20">
+        <select name="emotional2" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">There is nothing I love more than a challenge.<span class="red">*</span></td>
+      <td><span id="spryselect7">
+        <select name="challenge4" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">I often find it useful to explore the origins of my emotions.<span class="red">*</span></td>
+      <td><span id="spryselect8">
+        <select name="emotional3" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">Fairness is more important to me than personal gain.<span class="red">*</span></td>
+      <td><span id="spryselect9">
+        <select name="integrity4" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">Setbacks don't discourage me for very long.<span class="red">*</span></td>
+      <td><span id="spryselect10">
+        <select name="persistence4" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">My emotions often provide me with  useful information.<span class="red">*</span></td>
+      <td><span id="spryselect11">
+        <select name="emotional4" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">It's important to me that I strive to realize my full potential.<span class="red">*</span></td>
+      <td><span id="spryselect21">
+        <select name="learner5" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">I find it extremely difficult to disappoint anyone who is depending on me.<span class="red">*</span></td>
+      <td><span id="spryselect22">
+        <select name="integrity5" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">I enjoy having lots of responsibility.<span class="red">*</span></td>
+      <td><span id="spryselect23">
+        <select name="challenge5" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">I don't allow myself to be rude to others, even when I'm very upset.<span class="red">*</span></td>
+      <td><span id="spryselect24">
+        <select name="emotional5" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td class="questionTextLeft">Once I set an important goal, I'm rarely distracted.<span class="red">*</span></td>
+      <td><span id="spryselect25">
+        <select name="persistence5" class="pulldownwidth200">
+          <option value="">-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRating['characterratingkey']?>"><?php echo $row_rsRating['characterratingname']?></option>
+          <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+    <tr valign="baseline">
+      <td>&nbsp;</td>
+      <td><div align="right">
+        <input type="submit" value="SUBMIT AND GO TO LAST PAGE" />
+        </div></td>
+      </tr>
+    </table>
+  <input type="hidden" name="userkey" value="<?php echo $_SESSION['log_userkey']; ?>" />
+  <input type="hidden" name="lsuakey" value="<?php echo $_GET['lsuakey']; ?>" />
+  <input type="hidden" name="characterkey" value="" />
+  <input type="hidden" name="MM_insert" value="form1" />
+</form>
+  <p>&nbsp;</p>
+  <script type="text/javascript">
+<!--
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"]});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"]});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"]});
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {validateOn:["blur", "change"]});
+var spryselect6 = new Spry.Widget.ValidationSelect("spryselect6", {validateOn:["blur", "change"]});
+var spryselect12 = new Spry.Widget.ValidationSelect("spryselect12", {validateOn:["blur", "change"]});
+var spryselect13 = new Spry.Widget.ValidationSelect("spryselect13", {validateOn:["blur", "change"]});
+var spryselect14 = new Spry.Widget.ValidationSelect("spryselect14", {validateOn:["blur", "change"]});
+var spryselect15 = new Spry.Widget.ValidationSelect("spryselect15", {validateOn:["blur", "change"]});
+var spryselect16 = new Spry.Widget.ValidationSelect("spryselect16", {validateOn:["blur", "change"]});
+var spryselect17 = new Spry.Widget.ValidationSelect("spryselect17", {validateOn:["blur", "change"]});
+var spryselect18 = new Spry.Widget.ValidationSelect("spryselect18", {validateOn:["blur", "change"]});
+var spryselect19 = new Spry.Widget.ValidationSelect("spryselect19", {validateOn:["blur", "change"]});
+var spryselect20 = new Spry.Widget.ValidationSelect("spryselect20", {validateOn:["blur", "change"]});
+var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {validateOn:["blur", "change"]});
+var spryselect8 = new Spry.Widget.ValidationSelect("spryselect8", {validateOn:["blur", "change"]});
+var spryselect9 = new Spry.Widget.ValidationSelect("spryselect9", {validateOn:["blur", "change"]});
+var spryselect10 = new Spry.Widget.ValidationSelect("spryselect10", {validateOn:["blur", "change"]});
+var spryselect11 = new Spry.Widget.ValidationSelect("spryselect11", {validateOn:["blur", "change"]});
+var spryselect21 = new Spry.Widget.ValidationSelect("spryselect21", {validateOn:["blur", "change"]});
+var spryselect22 = new Spry.Widget.ValidationSelect("spryselect22", {validateOn:["blur", "change"]});
+var spryselect23 = new Spry.Widget.ValidationSelect("spryselect23", {validateOn:["blur", "change"]});
+var spryselect24 = new Spry.Widget.ValidationSelect("spryselect24", {validateOn:["blur", "change"]});
+var spryselect25 = new Spry.Widget.ValidationSelect("spryselect25", {validateOn:["blur", "change"]});
+//-->
+</script>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRating);
+
+mysql_free_result($rsRegistrants);
+?>

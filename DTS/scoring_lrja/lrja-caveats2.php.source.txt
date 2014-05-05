@@ -1,0 +1,417 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Load the KT_back class
+require_once('../includes/nxt/KT_back.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+// Start trigger
+$formValidation = new tNG_FormValidation();
+$formValidation->addField("lasname", true, "text", "", "", "", "");
+$formValidation->addField("caveat", true, "text", "", "", "", "");
+$formValidation->addField("caveat", true, "text", "", "", "", "");
+$tNGs->prepareValidation($formValidation);
+// End trigger
+
+// Make an insert transaction instance
+$ins_LRJAcaveat = new tNG_multipleInsert($conn_Assessment);
+$tNGs->addTransaction($ins_LRJAcaveat);
+// Register triggers
+$ins_LRJAcaveat->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Insert1");
+$ins_LRJAcaveat->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$ins_LRJAcaveat->registerTrigger("END", "Trigger_Default_Redirect", 99, "../includes/nxt/back.php");
+// Add columns
+$ins_LRJAcaveat->setTable("LRJAcaveat");
+$ins_LRJAcaveat->addColumn("lasname", "STRING_TYPE", "POST", "lasname");
+$ins_LRJAcaveat->addColumn("caveat", "STRING_TYPE", "POST", "caveat");
+$ins_LRJAcaveat->addColumn("caveat", "STRING_TYPE", "POST", "caveat");
+$ins_LRJAcaveat->setPrimaryKey("caveatkey", "NUMERIC_TYPE");
+
+// Make an update transaction instance
+$upd_LRJAcaveat = new tNG_multipleUpdate($conn_Assessment);
+$tNGs->addTransaction($upd_LRJAcaveat);
+// Register triggers
+$upd_LRJAcaveat->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Update1");
+$upd_LRJAcaveat->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$upd_LRJAcaveat->registerTrigger("END", "Trigger_Default_Redirect", 99, "../includes/nxt/back.php");
+// Add columns
+$upd_LRJAcaveat->setTable("LRJAcaveat");
+$upd_LRJAcaveat->addColumn("lasname", "STRING_TYPE", "POST", "lasname");
+$upd_LRJAcaveat->addColumn("caveatname", "STRING_TYPE", "POST", "caveat");
+$upd_LRJAcaveat->addColumn("caveat", "STRING_TYPE", "POST", "caveat");
+$upd_LRJAcaveat->setPrimaryKey("caveatkey", "NUMERIC_TYPE", "GET", "caveatkey");
+
+// Make an instance of the transaction object
+$del_LRJAcaveat = new tNG_multipleDelete($conn_Assessment);
+$tNGs->addTransaction($del_LRJAcaveat);
+// Register triggers
+$del_LRJAcaveat->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Delete1");
+$del_LRJAcaveat->registerTrigger("END", "Trigger_Default_Redirect", 99, "../includes/nxt/back.php");
+// Add columns
+$del_LRJAcaveat->setTable("LRJAcaveat");
+$del_LRJAcaveat->setPrimaryKey("caveatkey", "NUMERIC_TYPE", "GET", "caveatkey");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsLRJAcaveat = $tNGs->getRecordset("LRJAcaveat");
+$row_rsLRJAcaveat = mysql_fetch_assoc($rsLRJAcaveat);
+$totalRows_rsLRJAcaveat = mysql_num_rows($rsLRJAcaveat);
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelrjascore2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Add or edit a caveat</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #A9BBA0;
+	background-image: url(/images/skin/LRJAbackground.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #52561F;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LRJAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #809874;
+	background-image: url(/images/skin/LRJAmenu.jpg);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #809874;
+	background-image: url(/images/skin/LRJAmenu.jpg);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container .indent46 a:link {
+	color: #929292;
+}
+.twoColFixRtHdr #container .indent46 a:visited {
+	color: #929292;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:hover {
+	color: #474A47;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.navigation {}
+-->
+</style>
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="#" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <a href="/scoring/chooseassessment.php">choose assessment</a> | <a href="/scoring/chooselrja.php">choose lrja</a> | <a href="/scoring/bulkcustomerselect.php">sortable</a> | <a href="/scoring_lrja/lrjascoring_update_1.php">rescore contested</a> | <a href="/scoring_lrja/lrjascoring2nd_a.php">second score</a> | <a href="/scoring_lrja/lrja-complexity1.php">complexity</a> | <a href="/scoring_lrja/lrja-evaluation1.php">evaluate</a> | <a href="/scoring_lrja/lrja-certainty1.php">certainty</a> | <a href="/scoring_lrja/lrja-inquiry1.php">inquiry</a> | <a href="/scoring_lrja/lrja-relativism1.php">absolute truth</a> | <a href="/scoring_lrja/lrjatruth1.php">truth</a> | <a href="/scoring_lrja/lrja-growth.php">growth comments</a> |  <a href="/scoring_lrja/lrja-strengthcom.php">present strengths</a> | <a href="/scoring_lrja/lrja-growthcom.php">potential strengths</a> | <a href="/scoring_lrja/lrja-recommendcom.php">recommendations</a></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" --><?php echo $tNGs->displayValidationRules();?>
+      <script src="../includes/nxt/scripts/form.js" type="text/javascript"></script>
+      <script src="../includes/nxt/scripts/form.js.php" type="text/javascript"></script>
+      <script type="text/javascript">
+$NXT_FORM_SETTINGS = {
+  duplicate_buttons: false,
+  show_as_grid: true,
+  merge_down_value: true
+}
+      </script>
+      <td valign="top"><h1>ENTER CAVEAT&nbsp;</h1>
+        <p>
+          <?php
+	echo $tNGs->getErrorMsg();
+?>
+        </p>
+        <div class="KT_tng">
+          <div class="KT_tngform">
+            <form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+              <?php $cnt1 = 0; ?>
+              <?php do { ?>
+                <?php $cnt1++; ?>
+                <?php 
+// Show IF Conditional region1 
+if (@$totalRows_rsLRJAcaveat > 1) {
+?>
+                  <p><?php echo NXT_getResource("Record_FH"); ?> <?php echo $cnt1; ?></p>
+                <?php } 
+// endif Conditional region1
+?>
+                <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+                  <tr>
+                    <td class="KT_th"><label for="lasname_<?php echo $cnt1; ?>">LAS name</label></td>
+                    <td><input type="text" name="lasname_<?php echo $cnt1; ?>" id="lasname_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLRJAcaveat['lasname']); ?>" size="10" />
+                        <?php echo $tNGs->displayFieldHint("lasname");?> <?php echo $tNGs->displayFieldError("LRJAcaveat", "lasname", $cnt1); ?> </td>
+                  </tr>
+                  <tr>
+                    <td class="KT_th"><label for="caveat_<?php echo $cnt1; ?>">Caveat name</label></td>
+                    <td><input type="text" name="caveat_<?php echo $cnt1; ?>" id="caveat_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLRJAcaveat['caveat']); ?>" size="60" />
+                        <?php echo $tNGs->displayFieldHint("caveat");?> <?php echo $tNGs->displayFieldError("LRJAcaveat", "caveat", $cnt1); ?> </td>
+                  </tr>
+                  <tr>
+                    <td class="KT_th"><label for="caveat_<?php echo $cnt1; ?>">Caveat</label></td>
+                    <td><textarea name="caveat_<?php echo $cnt1; ?>" class="textarea140_500" id="caveat_<?php echo $cnt1; ?>"><?php echo KT_escapeAttribute($row_rsLRJAcaveat['caveat']); ?></textarea>
+                        <?php echo $tNGs->displayFieldHint("caveat");?> <?php echo $tNGs->displayFieldError("LRJAcaveat", "caveat", $cnt1); ?> </td>
+                  </tr>
+                </table>
+                <input type="hidden" name="kt_pk_LRJAcaveat_<?php echo $cnt1; ?>" class="id_field" value="<?php echo KT_escapeAttribute($row_rsLRJAcaveat['kt_pk_lrjacaveat']); ?>" />
+                
+                <?php } while ($row_rsLRJAcaveat = mysql_fetch_assoc($rsLRJAcaveat)); ?>
+              <div class="KT_bottombuttons">
+                <div>
+                  <?php 
+      // Show IF Conditional region1
+      if (@$_GET['caveatkey'] == "") {
+      ?>
+                    <input type="submit" name="KT_Insert1" id="KT_Insert1" value="<?php echo NXT_getResource("Insert_FB"); ?>" />
+                  <?php 
+      // else Conditional region1
+      } else { ?>
+                    <div class="KT_operations">
+                      <input type="submit" name="KT_Insert1" value="<?php echo NXT_getResource("Insert as new_FB"); ?>" onclick="nxt_form_insertasnew(this, 'caveatkey')" />
+                    </div>
+                    <input type="submit" name="KT_Update1" value="<?php echo NXT_getResource("Update_FB"); ?>" />
+                    <input type="submit" name="KT_Delete1" value="<?php echo NXT_getResource("Delete_FB"); ?>" onclick="return confirm('<?php echo NXT_getResource("Are you sure?"); ?>');" />
+                    <?php }
+      // endif Conditional region1
+      ?>
+                  <input type="button" name="KT_Cancel1" value="<?php echo NXT_getResource("Cancel_FB"); ?>" onclick="return UNI_navigateCancel(event, '../includes/nxt/back.php')" />
+                </div>
+              </div>
+            </form>
+          </div>
+          <br class="clearfixplain" />
+        </div>
+      <p>&nbsp;</p></td>
+      <!-- InstanceEndEditable -->
+<!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

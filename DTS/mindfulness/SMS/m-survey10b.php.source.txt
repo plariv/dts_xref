@@ -1,0 +1,410 @@
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../../security/logIn.php");
+}
+
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+
+// fetch registrants info so that user's demogs information is filled into the SMS record.
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, bulkuserkey, birth_year, edukey, sexkey, ethnicity1key, ethnicity1other, ethnicity2key, ethnicity2other, languagekey, languageother, englishqualitykey FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+
+
+
+
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_insert"])) && ($_POST["MM_insert"] == "form1")) {
+  
+	/**** Assuming that the user will come to this page with a URL variable for mindfulkey. */
+		
+		$updateSQL = sprintf("UPDATE mindfulness 
+		SET timekey = %s, teacherno = %s, classid = %s, typeofpractice = %s, othertype = %s, timepracticekey = %s,
+		sexkey = %s, age = %s, edukey = %s, ethnicitykey = %s, ethnicityother = %s, englishkey = %s 
+		WHERE mindfulkey = %s",
+										GetSQLValueString($_POST['timekey'], "int"),
+										GetSQLValueString($_POST['teacherno'], "int"),
+										GetSQLValueString($_POST['classid'], "text"),
+										GetSQLValueString($_POST['typeofpractice'], "int"),
+										GetSQLValueString($_POST['othertype'], "text"),
+										GetSQLValueString($_POST['practicetime'], "int"),
+										
+										GetSQLValueString($row_rsRegistrants['sexkey'], "int"),
+										GetSQLValueString((date('Y') - $row_rsRegistrants['birth_year']), "int"),
+										GetSQLValueString($row_rsRegistrants['edukey'], "int"),
+										GetSQLValueString($row_rsRegistrants['ethnicity1key'], "int"),
+										GetSQLValueString($row_rsRegistrants['ethnicity1other'], "int"),
+										GetSQLValueString($row_rsRegistrants['englishqualitykey'], "int"),
+											 
+										GetSQLValueString($_GET['mindfulkey'], "int"));
+										
+	mysql_select_db($database_Assessment, $Assessment);
+	$Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());							
+	
+	
+  $insertGoTo = "m-survey10c.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+    $insertGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $insertGoTo));
+}
+
+
+
+
+
+// Information about this survey time
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindful = sprintf("SELECT mindfulkey, userkey, timekey, teacherno, classid, typeofpractice, othertype, timepracticekey FROM mindfulness WHERE mindfulkey = %s", 
+	GetSQLValueString($_GET['mindfulkey'], "int"));
+$rsMindful = mysql_query($query_rsMindful, $Assessment) or die(mysql_error());
+$row_rsMindful = mysql_fetch_assoc($rsMindful);
+$totalRows_rsMindful = mysql_num_rows($rsMindful);
+
+
+
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulType = "SELECT * FROM MindfulType ORDER BY MindfulType ASC";
+$rsMindfulType = mysql_query($query_rsMindfulType, $Assessment) or die(mysql_error());
+$row_rsMindfulType = mysql_fetch_assoc($rsMindfulType);
+$totalRows_rsMindfulType = mysql_num_rows($rsMindfulType);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings4 = "SELECT * FROM Ratings4";
+$rsRatings4 = mysql_query($query_rsRatings4, $Assessment) or die(mysql_error());
+$row_rsRatings4 = mysql_fetch_assoc($rsRatings4);
+$totalRows_rsRatings4 = mysql_num_rows($rsRatings4);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEnglish = "SELECT * FROM EnglishQuality";
+$rsEnglish = mysql_query($query_rsEnglish, $Assessment) or die(mysql_error());
+$row_rsEnglish = mysql_fetch_assoc($rsEnglish);
+$totalRows_rsEnglish = mysql_num_rows($rsEnglish);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingsDegree = "SELECT * FROM RatingsDegree";
+$rsRatingsDegree = mysql_query($query_rsRatingsDegree, $Assessment) or die(mysql_error());
+$row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree);
+$totalRows_rsRatingsDegree = mysql_num_rows($rsRatingsDegree);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsHowlong = "SELECT * FROM `Time`";
+$rsHowlong = mysql_query($query_rsHowlong, $Assessment) or die(mysql_error());
+$row_rsHowlong = mysql_fetch_assoc($rsHowlong);
+$totalRows_rsHowlong = mysql_num_rows($rsHowlong);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPracticetime = "SELECT * FROM Timepractice";
+$rsPracticetime = mysql_query($query_rsPracticetime, $Assessment) or die(mysql_error());
+$row_rsPracticetime = mysql_fetch_assoc($rsPracticetime);
+$totalRows_rsPracticetime = mysql_num_rows($rsPracticetime);
+
+
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mindfulness1.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Mindfulness survey: Survey page 2</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+-->
+</style>
+<link href="../../WA_DataAssist/styles/Refined_Pacifica.css" rel="stylesheet" type="text/css" />
+<script src="../../DTSassets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../../DTSassets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../../DTSassets/SpryValidationTextarea.js" type="text/javascript"></script>
+<link href="../../DTSassets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../../DTSassets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../../DTSassets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+	background-color: #93B3C8;
+}
+.oneColFixCtrHdr #container {
+	width: 780px;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #7799B8;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+	background-image: url(/images/mindful/m-background.gif);
+}
+.oneColFixCtrHdr #header {
+	background-color: #DDDDDD;
+	background-image: url(/images/mindful/m-header.gif);
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+	height: 104px;
+}
+.oneColFixCtrHdr #menu {
+	background-color: #8AB3C4;
+	padding-top: 0;
+	padding-right: 40px;
+	padding-bottom: 0;
+	height: 20px;
+	background-image: url(/images/skin/SMSmenu.jpg);
+}
+.oneColFixCtrHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0;
+	vertical-align: text-bottom;
+}
+.oneColFixCtrHdr #mainContent {
+	padding-top: 30;
+	padding-right: 45px;
+	padding-bottom: 0;
+	padding-left: 45px;
+}
+.oneColFixCtrHdr #footer {
+	padding: 0 10px;
+}
+.oneColFixCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+-->
+</style>
+<link href="/css/styles3.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssets/SpryMenuBarHorizontalmind.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="oneColFixCtrHdr">
+
+<div id="container">
+  <div id="header">
+    <h1>&nbsp;</h1>
+  <!-- end #header --></div>
+  <div id="menu">
+       <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/landing.php">home</a></li>
+<li><a href="/mindfulness/SMS/m-articles.html">articles</a></li>
+        <li><a href="/mindfulness/SMS/m-intro.html">intro</a></li>
+        <li><a href="/mindfulness/SMS/m-start.php">survey</a></li>
+        <li><a href="/mindfulness/SMS/m-suggestions.php">ideas</a></li>
+        <li><a href="/mindfulness/SMS/m-teacherinfo.php" class="MenuBarItemSubmenu">teachers</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/bc_viewsms.php">view SMS results</a></li>
+            <li><a href="/mindfulness/SMJ/teacher_viewjournalentries.php">view SMS journal</a></li>
+            <li><a href="/bulkcustomers/bulkpolicies.php">policies &amp; schedules</a></li>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+        <li><a href="#" class="MenuBarItemSubmenu">research</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+    </ul>
+    <!-- end #menu --></div>
+  <div id="mainContent">
+    <!-- InstanceBeginEditable name="Main" -->
+  <h1 class="indent10">SMS (page 2 of 5)</h1>
+  <h2><span class="emphasisSMS">Important:</span> If you are taking this assessment as part of a class assignment, your teacher may have provided a Class ID.  Please make sure you enter it <span class="red">EXACTLY</span> as instructed.</h2>
+  <!--**** I don't think we need this warning anymore.<p class="indent10"><span class="pspaced"><strong class="ldma">Note:</strong> If you return to this page after hitting the &quot;submit&quot; button, please check to make sure you have entered responses for all of the required (<span class="star">*</span>) items. </span>  </p>-->
+  <h3><img src="../../images/mindful/DiscoLineLit.jpg" width="668" height="3" alt="line" />
+  </h3>
+     <form action="<?php echo $editFormAction; ?>" method="POST" name="form1" id="form1">
+      <table width="100%" align="center">
+        <tr valign="baseline">
+          <td width="45%">Class ID (if your teacher has provided one)</td>
+<td width="55%"><span id="sprytextfield2">
+            <input name="classid" type="text" value="<?php echo $row_rsMindful['classid']; ?>" size="47" />
+          <span class="textfieldMaxCharsMsg">Exceeded maximum number of characters.</span></span></td>
+        </tr>
+        <tr valign="baseline">
+          <td>How long have you been engaged in mindfulness practice<span class="star">*</span></td>
+<td><span id="spryselect7">
+            <select name="timekey" id="timekey">
+              <option value="" <?php if (!(strcmp("", $row_rsMindful['timekey']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsHowlong['timekey']?>"<?php if (!(strcmp($row_rsHowlong['timekey'], $row_rsMindful['timekey']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsHowlong['time']?></option>
+              <?php
+} while ($row_rsHowlong = mysql_fetch_assoc($rsHowlong));
+  $rows = mysql_num_rows($rsHowlong);
+  if($rows > 0) {
+      mysql_data_seek($rsHowlong, 0);
+	  $row_rsHowlong = mysql_fetch_assoc($rsHowlong);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr valign="baseline">
+          <td>What kind of  practice in the list on the right most closely describes your primary mindfulness practice? (If you do not have a mindfulness practice, select &quot;none&quot;.)<span class="star">*</span></td>
+<td><span id="spryselect8">
+            <select name="typeofpractice" id="typeofpractice">
+              <option value="" <?php if (!(strcmp("", $row_rsMindful['typeofpractice']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsMindfulType['MindfulTypeKey']?>"<?php if (!(strcmp($row_rsMindfulType['MindfulTypeKey'], $row_rsMindful['typeofpractice']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsMindfulType['MindfulType']?></option>
+              <?php
+} while ($row_rsMindfulType = mysql_fetch_assoc($rsMindfulType));
+  $rows = mysql_num_rows($rsMindfulType);
+  if($rows > 0) {
+      mysql_data_seek($rsMindfulType, 0);
+	  $row_rsMindfulType = mysql_fetch_assoc($rsMindfulType);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr valign="baseline">
+          <td>If you selected &quot;other&quot;, please explain. </td>
+<td><span id="sprytextarea1">
+            <textarea name="othertype" cols="45" rows="2"><?php echo $row_rsMindful['othertype']; ?></textarea>
+          <span class="textareaMaxCharsMsg">Exceeded maximum number of characters.</span></span></td>
+        </tr>
+        <tr valign="baseline">
+          <td>On average, how long do you engage in your mindfulness practice each day?<span class="star">*</span></td>
+          
+        <?php 
+$query_rsMindful = sprintf("SELECT mindfulkey, userkey, timekey, teacherno, classid, typeofpractice, othertype, timepracticekey FROM mindfulness WHERE mindfulkey = %s", 
+	GetSQLValueString($_GET['mindfulkey'], "int"));
+$rsMindful = mysql_query($query_rsMindful, $Assessment) or die(mysql_error());
+$row_rsMindful = mysql_fetch_assoc($rsMindful); ?>  
+          
+          
+          
+<td><span id="spryselect9">
+            <select name="practicetime" id="practicetime">
+              <option value="" <?php if (!(strcmp("", $row_rsMindful['timepracticekey']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsPracticetime['timepracticekey']?>"<?php if (!(strcmp($row_rsPracticetime['timepracticekey'], $row_rsMindful['timepracticekey']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsPracticetime['timepractice']?></option>
+              <?php
+} while ($row_rsPracticetime = mysql_fetch_assoc($rsPracticetime));
+  $rows = mysql_num_rows($rsPracticetime);
+  if($rows > 0) {
+      mysql_data_seek($rsPracticetime, 0);
+	  $row_rsPracticetime = mysql_fetch_assoc($rsPracticetime);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr valign="baseline">
+          <td>&nbsp;</td>
+          <td><div align="right">
+            <input type="submit" value="submit and go to next page" />
+          </div></td>
+        </tr>
+      </table>
+      <input type="hidden" name="userkey" value="<?php echo $_SESSION['log_userkey']; ?>" />
+      <input type="hidden" name="MM_insert" value="form1" />
+      <input name="mindfulkey" type="hidden" id="mindfulkey" value="<?php echo((isset($_POST["mindfulkey"]))?$_POST["mindfulkey"]:"") ?>" />
+      <input name="instrument_id" type="hidden" id="instrument_id" value="SMS2010" />
+      <input name="teacherno" type="hidden" value="<?php echo $row_rsRegistrants['bulkuserkey']; ?>" />
+    </form>
+    <p>&nbsp;</p>
+<br />
+<script type="text/javascript">
+<!--
+var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {validateOn:["blur", "change"]});
+var spryselect8 = new Spry.Widget.ValidationSelect("spryselect8", {validateOn:["blur", "change"]});
+var spryselect9 = new Spry.Widget.ValidationSelect("spryselect9", {validateOn:["blur", "change"]});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {isRequired:false, validateOn:["blur", "change"], maxChars:300});
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {isRequired:false, validateOn:["blur", "change"], maxChars:300});
+//-->
+</script>
+<!-- InstanceEndEditable -->
+	<!-- end #mainContent --></div>
+  <div id="footer">
+    <p align="center">©2010-2011 Sharon Solloway. All rights reserved.</p>
+  <!-- end #footer --></div>
+<!-- end #container --></div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsEnglish);
+
+mysql_free_result($rsRatings4);
+
+mysql_free_result($rsHowlong);
+
+mysql_free_result($rsPracticetime);
+
+mysql_free_result($rsRatingsDegree);
+
+mysql_free_result($rsMindful);
+
+mysql_free_result($rsRegistrants);
+
+mysql_free_result($rsMindfulType);
+?>

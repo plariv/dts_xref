@@ -1,0 +1,874 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Load the KT_back class
+require_once('../includes/nxt/KT_back.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+?>
+<?php
+if ((isset($_POST["MM_insert"])) && ($_POST["MM_insert"] == "form1")) {
+  $insertSQL = sprintf("INSERT INTO SOIscores (soiscoringkey, soikey, scorerkey, scorername, delightsegment, delightlas, anxioussegment, anxiouslas, angrysegment, angrylas, tornsegment, tornlas, convictionsegment, convictionlas, importantsegment, importantlas, successsegment, successlas, sadsegment, sadlas, movesegment, movedlas, losssegment, losslas, changesegment, changelas, controlsegment, controllas, guiltsegment, guiltlas, conflictsegment, conflictlas, lasname, notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                       GetSQLValueString($_POST['soiscoringkey'], "int"),
+                       GetSQLValueString($_POST['soikey'], "int"),
+                       GetSQLValueString($_POST['scorerkey'], "int"),
+                       GetSQLValueString($_POST['scorername'], "text"),
+                       GetSQLValueString($_POST['delightsegment'], "text"),
+                       GetSQLValueString($_POST['delightlas'], "text"),
+                       GetSQLValueString($_POST['anxioussegment'], "text"),
+                       GetSQLValueString($_POST['anxiouslas'], "text"),
+                       GetSQLValueString($_POST['angrysegment'], "text"),
+                       GetSQLValueString($_POST['angrylas'], "text"),
+                       GetSQLValueString($_POST['tornsegment'], "text"),
+                       GetSQLValueString($_POST['tornlas'], "text"),
+                       GetSQLValueString($_POST['convictionsegment'], "text"),
+                       GetSQLValueString($_POST['convictionlas'], "text"),
+                       GetSQLValueString($_POST['importantsegment'], "text"),
+                       GetSQLValueString($_POST['importantlas'], "text"),
+                       GetSQLValueString($_POST['successsegment'], "text"),
+                       GetSQLValueString($_POST['successlas'], "text"),
+                       GetSQLValueString($_POST['sadsegment'], "text"),
+                       GetSQLValueString($_POST['sadlas'], "text"),
+                       GetSQLValueString($_POST['movesegment'], "text"),
+                       GetSQLValueString($_POST['movedlas'], "text"),
+                       GetSQLValueString($_POST['losssegment'], "text"),
+                       GetSQLValueString($_POST['losslas'], "text"),
+                       GetSQLValueString($_POST['changesegment'], "text"),
+                       GetSQLValueString($_POST['changelas'], "text"),
+                       GetSQLValueString($_POST['controlsegment'], "text"),
+                       GetSQLValueString($_POST['controllas'], "text"),
+                       GetSQLValueString($_POST['guiltsegment'], "text"),
+                       GetSQLValueString($_POST['guiltlas'], "text"),
+                       GetSQLValueString($_POST['conflictsegment'], "text"),
+                       GetSQLValueString($_POST['conflictlas'], "text"),
+                       GetSQLValueString($_POST['lasname'], "text"),
+                       GetSQLValueString($_POST['notes'], "text"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($insertSQL, $Assessment) or die(mysql_error());
+
+  $insertGoTo = "../scoring/soi_confirmation.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+    $insertGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $insertGoTo));
+}
+
+$colname_rsSOI = "-1";
+if (isset($_GET['soikey'])) {
+  $colname_rsSOI = (get_magic_quotes_gpc()) ? $_GET['soikey'] : addslashes($_GET['soikey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsSOI = sprintf("SELECT SOI.soikey, SOI.scored, SOI.delight, SOI.anxious, SOI.angry, SOI.torn, SOI.conviction, SOI.important, SOI.success, SOI.sad, moved, SOI.loss, SOI.`change`, SOI.control, SOI.guilt, SOI.conflict FROM SOI WHERE soikey = %s", GetSQLValueString($colname_rsSOI, "int"));
+$rsSOI = mysql_query($query_rsSOI, $Assessment) or die(mysql_error());
+$row_rsSOI = mysql_fetch_assoc($rsSOI);
+$totalRows_rsSOI = mysql_num_rows($rsSOI);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS = mysql_query($query_rsLAS, $Assessment) or die(mysql_error());
+$row_rsLAS = mysql_fetch_assoc($rsLAS);
+$totalRows_rsLAS = mysql_num_rows($rsLAS);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS1 = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS1 = mysql_query($query_rsLAS1, $Assessment) or die(mysql_error());
+$row_rsLAS1 = mysql_fetch_assoc($rsLAS1);
+$totalRows_rsLAS1 = mysql_num_rows($rsLAS1);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS2 = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS2 = mysql_query($query_rsLAS2, $Assessment) or die(mysql_error());
+$row_rsLAS2 = mysql_fetch_assoc($rsLAS2);
+$totalRows_rsLAS2 = mysql_num_rows($rsLAS2);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS3 = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS3 = mysql_query($query_rsLAS3, $Assessment) or die(mysql_error());
+$row_rsLAS3 = mysql_fetch_assoc($rsLAS3);
+$totalRows_rsLAS3 = mysql_num_rows($rsLAS3);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS4 = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS4 = mysql_query($query_rsLAS4, $Assessment) or die(mysql_error());
+$row_rsLAS4 = mysql_fetch_assoc($rsLAS4);
+$totalRows_rsLAS4 = mysql_num_rows($rsLAS4);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS5 = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS5 = mysql_query($query_rsLAS5, $Assessment) or die(mysql_error());
+$row_rsLAS5 = mysql_fetch_assoc($rsLAS5);
+$totalRows_rsLAS5 = mysql_num_rows($rsLAS5);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS6 = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS6 = mysql_query($query_rsLAS6, $Assessment) or die(mysql_error());
+$row_rsLAS6 = mysql_fetch_assoc($rsLAS6);
+$totalRows_rsLAS6 = mysql_num_rows($rsLAS6);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS7 = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS7 = mysql_query($query_rsLAS7, $Assessment) or die(mysql_error());
+$row_rsLAS7 = mysql_fetch_assoc($rsLAS7);
+$totalRows_rsLAS7 = mysql_num_rows($rsLAS7);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS8 = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS8 = mysql_query($query_rsLAS8, $Assessment) or die(mysql_error());
+$row_rsLAS8 = mysql_fetch_assoc($rsLAS8);
+$totalRows_rsLAS8 = mysql_num_rows($rsLAS8);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS9 = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS9 = mysql_query($query_rsLAS9, $Assessment) or die(mysql_error());
+$row_rsLAS9 = mysql_fetch_assoc($rsLAS9);
+$totalRows_rsLAS9 = mysql_num_rows($rsLAS9);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS10 = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS10 = mysql_query($query_rsLAS10, $Assessment) or die(mysql_error());
+$row_rsLAS10 = mysql_fetch_assoc($rsLAS10);
+$totalRows_rsLAS10 = mysql_num_rows($rsLAS10);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS11 = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS11 = mysql_query($query_rsLAS11, $Assessment) or die(mysql_error());
+$row_rsLAS11 = mysql_fetch_assoc($rsLAS11);
+$totalRows_rsLAS11 = mysql_num_rows($rsLAS11);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS12 = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS12 = mysql_query($query_rsLAS12, $Assessment) or die(mysql_error());
+$row_rsLAS12 = mysql_fetch_assoc($rsLAS12);
+$totalRows_rsLAS12 = mysql_num_rows($rsLAS12);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAS13 = "SELECT laskey, lasname FROM Las ORDER BY laskey ASC";
+$rsLAS13 = mysql_query($query_rsLAS13, $Assessment) or die(mysql_error());
+$row_rsLAS13 = mysql_fetch_assoc($rsLAS13);
+$totalRows_rsLAS13 = mysql_num_rows($rsLAS13);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template2php.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: </title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" --><!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #9D9F9C;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #F6F6F6;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/DTSheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 26px;
+	background-image: url(/images/skin/menu.png);
+	color: #E2E2E2;
+	margin-top: 0px;
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	height: 19px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a {
+	color: #EAEAEA;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu1 a:active {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 a:visited {
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div id="menu1">
+  <p><a href="/landing.php">home</a>&nbsp;&nbsp;&nbsp;<a href="/security/registration.php">register</a>&nbsp;&nbsp;&nbsp;<a href="/security/logIn.php">log in</a>&nbsp;&nbsp;&nbsp;<a href="/contactus.php">contact us</a>&nbsp;&nbsp;&nbsp;<a href="/security/logout.php">log out</a>&nbsp;&nbsp;
+  <!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->
+  <span class="logintext">
+  <?php if (isset($_SESSION['log_firstname'])) {  ?>
+  You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></span></p>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>SCORE SOI NUMBER  <?php echo $row_rsSOI['soikey']; ?></h1>
+    <form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+      <table width="90%" class="tableindent">
+        <tr valign="baseline">
+          <td valign="top"><strong>DELIGHT</strong></td>
+          <td><?php echo $row_rsSOI['delight']; ?></td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top">Delight segment</td>
+          <td><textarea name="delightsegment" cols="75" rows="5"></textarea></td>
+        </tr>
+        <tr valign="baseline">
+          <td>Delight phase</td>
+          <td><select name="delightlas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS['lasname']?>"><?php echo $row_rsLAS['lasname']?></option>
+            <?php
+} while ($row_rsLAS = mysql_fetch_assoc($rsLAS));
+  $rows = mysql_num_rows($rsLAS);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS, 0);
+	  $row_rsLAS = mysql_fetch_assoc($rsLAS);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td colspan="2" valign="top" class="limabackground">&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top"><strong>ANXIOUS</strong></td>
+          <td><?php echo $row_rsSOI['anxious']; ?></td>
+        </tr>
+        <td valign="top">Anxious segment</td>
+          <td><textarea name="anxioussegment" cols="75" rows="5"></textarea></td>
+          </tr>
+        <tr valign="baseline">
+          <td>Anxious phase</td>
+          <td><select name="anxiouslas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS['lasname']?>"><?php echo $row_rsLAS['lasname']?></option>
+            <?php
+} while ($row_rsLAS = mysql_fetch_assoc($rsLAS));
+  $rows = mysql_num_rows($rsLAS);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS, 0);
+	  $row_rsLAS = mysql_fetch_assoc($rsLAS);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td colspan="2" valign="top" class="limabackground">&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top"><strong>ANGRY</strong></td>
+          <td><?php echo $row_rsSOI['angry']; ?></td>
+        </tr>
+        <td valign="top">Angry segment</td>
+          <td><textarea name="angrysegment" cols="75" rows="5"></textarea></td>
+          </tr>
+        <tr valign="baseline">
+          <td>Angry phase</td>
+          <td><select name="angrylas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS1['lasname']?>"><?php echo $row_rsLAS1['lasname']?></option>
+            <?php
+} while ($row_rsLAS1 = mysql_fetch_assoc($rsLAS1));
+  $rows = mysql_num_rows($rsLAS1);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS1, 0);
+	  $row_rsLAS1 = mysql_fetch_assoc($rsLAS1);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td colspan="2" valign="top" class="limabackground">&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top"><strong>TORN</strong></td>
+          <td><?php echo $row_rsSOI['torn']; ?></td>
+        </tr>
+        <td>Torn segment</td>
+          <td><textarea name="tornsegment" cols="75" rows="5"></textarea></td>
+          </tr>
+        <tr valign="baseline">
+          <td>Torn phase</td>
+          <td><select name="tornlas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS2['lasname']?>"><?php echo $row_rsLAS2['lasname']?></option>
+            <?php
+} while ($row_rsLAS2 = mysql_fetch_assoc($rsLAS2));
+  $rows = mysql_num_rows($rsLAS2);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS2, 0);
+	  $row_rsLAS2 = mysql_fetch_assoc($rsLAS2);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td colspan="2" valign="top" class="limabackground">&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top"><strong>CONVICTION</strong></td>
+          <td><?php echo $row_rsSOI['conviction']; ?></td>
+        </tr>
+        <td valign="top">Conviction segment</td>
+          <td><textarea name="convictionsegment" cols="75" rows="5"></textarea></td>
+          </tr>
+        <tr valign="baseline">
+          <td>Conviction phase</td>
+          <td><select name="convictionlas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS3['lasname']?>"><?php echo $row_rsLAS3['lasname']?></option>
+            <?php
+} while ($row_rsLAS3 = mysql_fetch_assoc($rsLAS3));
+  $rows = mysql_num_rows($rsLAS3);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS3, 0);
+	  $row_rsLAS3 = mysql_fetch_assoc($rsLAS3);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td colspan="2" valign="top" class="limabackground">&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top"><strong>IMPORTANT</strong></td>
+          <td><?php echo $row_rsSOI['important']; ?></td>
+        </tr>
+        <td valign="top">Important segment</td>
+          <td><textarea name="importantsegment" cols="75" rows="5"></textarea></td>
+          </tr>
+        <tr valign="baseline">
+          <td>Important phase</td>
+          <td><select name="importantlas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS4['lasname']?>"><?php echo $row_rsLAS4['lasname']?></option>
+            <?php
+} while ($row_rsLAS4 = mysql_fetch_assoc($rsLAS4));
+  $rows = mysql_num_rows($rsLAS4);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS4, 0);
+	  $row_rsLAS4 = mysql_fetch_assoc($rsLAS4);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td colspan="2" valign="top" class="limabackground">&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top"><strong>SUCCESS</strong></td>
+          <td><?php echo $row_rsSOI['success']; ?></td>
+        </tr>
+        <td valign="top">Success segment</td>
+          <td><textarea name="successsegment" cols="75" rows="5"></textarea></td>
+          </tr>
+        <tr valign="baseline">
+          <td>Success phase</td>
+          <td><select name="successlas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS5['lasname']?>"><?php echo $row_rsLAS5['lasname']?></option>
+            <?php
+} while ($row_rsLAS5 = mysql_fetch_assoc($rsLAS5));
+  $rows = mysql_num_rows($rsLAS5);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS5, 0);
+	  $row_rsLAS5 = mysql_fetch_assoc($rsLAS5);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td colspan="2" valign="top" class="limabackground">&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top"><strong>SADNESS</strong></td>
+          <td><?php echo $row_rsSOI['sad']; ?></td>
+        </tr>
+        <td valign="top">Sadness segment</td>
+          <td><textarea name="sadsegment" cols="75" rows="5"></textarea></td>
+          </tr>
+        <tr valign="baseline">
+          <td>Sadness phase</td>
+          <td><select name="sadlas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS6['lasname']?>"><?php echo $row_rsLAS6['lasname']?></option>
+            <?php
+} while ($row_rsLAS6 = mysql_fetch_assoc($rsLAS6));
+  $rows = mysql_num_rows($rsLAS6);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS6, 0);
+	  $row_rsLAS6 = mysql_fetch_assoc($rsLAS6);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td colspan="2" valign="top" class="limabackground">&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top"><strong>MOVED</strong></td>
+          <td><?php echo $row_rsSOI['moved']; ?></td>
+        </tr>
+        <td valign="top">Moved segment</td>
+          <td><textarea name="movesegment" cols="75" rows="5"></textarea></td>
+          </tr>
+        <tr valign="baseline">
+          <td>Moved phase</td>
+          <td><select name="movedlas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS7['lasname']?>"><?php echo $row_rsLAS7['lasname']?></option>
+            <?php
+} while ($row_rsLAS7 = mysql_fetch_assoc($rsLAS7));
+  $rows = mysql_num_rows($rsLAS7);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS7, 0);
+	  $row_rsLAS7 = mysql_fetch_assoc($rsLAS7);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td colspan="2" valign="top" class="limabackground">&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top"><strong>LOSS</strong></td>
+          <td><?php echo $row_rsSOI['loss']; ?></td>
+        </tr>
+        <td valign="top">Loss segment</td>
+          <td><textarea name="losssegment" cols="75" rows="5"></textarea></td>
+          </tr>
+        <tr valign="baseline">
+          <td>Loss phase</td>
+          <td><select name="losslas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS8['lasname']?>"><?php echo $row_rsLAS8['lasname']?></option>
+            <?php
+} while ($row_rsLAS8 = mysql_fetch_assoc($rsLAS8));
+  $rows = mysql_num_rows($rsLAS8);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS8, 0);
+	  $row_rsLAS8 = mysql_fetch_assoc($rsLAS8);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td colspan="2" valign="top" class="limabackground">&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top"><strong>CHANGE</strong></td>
+          <td><?php echo $row_rsSOI['change']; ?></td>
+        </tr>
+        <td valign="top">Change segment</td>
+          <td><textarea name="changesegment" cols="75" rows="5"></textarea></td>
+          </tr>
+        <tr valign="baseline">
+          <td>Change phase</td>
+          <td><select name="changelas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS9['lasname']?>"><?php echo $row_rsLAS9['lasname']?></option>
+            <?php
+} while ($row_rsLAS9 = mysql_fetch_assoc($rsLAS9));
+  $rows = mysql_num_rows($rsLAS9);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS9, 0);
+	  $row_rsLAS9 = mysql_fetch_assoc($rsLAS9);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td colspan="2" valign="top" class="limabackground">&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top"><strong>CONTROL</strong></td>
+          <td><?php echo $row_rsSOI['control']; ?></td>
+        </tr>
+        <td valign="top">Control segment</td>
+          <td><textarea name="controlsegment" cols="75" rows="5"></textarea></td>
+          </tr>
+        <tr valign="baseline">
+          <td>Control phase</td>
+          <td><select name="controllas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS10['lasname']?>"><?php echo $row_rsLAS10['lasname']?></option>
+            <?php
+} while ($row_rsLAS10 = mysql_fetch_assoc($rsLAS10));
+  $rows = mysql_num_rows($rsLAS10);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS10, 0);
+	  $row_rsLAS10 = mysql_fetch_assoc($rsLAS10);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td colspan="2" valign="top" class="limabackground">&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top"><strong>GUILT</strong></td>
+          <td><?php echo $row_rsSOI['guilt']; ?></td>
+        </tr>
+        <td valign="top">Guilt segment</td>
+          <td><textarea name="guiltsegment" cols="75" rows="5"></textarea></td>
+          </tr>
+        <tr valign="baseline">
+          <td>Guilt phase</td>
+          <td><select name="guiltlas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS11['lasname']?>"><?php echo $row_rsLAS11['lasname']?></option>
+            <?php
+} while ($row_rsLAS11 = mysql_fetch_assoc($rsLAS11));
+  $rows = mysql_num_rows($rsLAS11);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS11, 0);
+	  $row_rsLAS11 = mysql_fetch_assoc($rsLAS11);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td colspan="2" valign="top" class="limabackground">&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td valign="top"><strong>CONFLICT</strong></td>
+          <td><?php echo $row_rsSOI['conflict']; ?></td>
+        </tr>
+        <td>Conflict segment</td>
+          <td><textarea name="conflictsegment" cols="75" rows="5"></textarea></td>
+          </tr>
+        <tr valign="baseline">
+          <td>Conflict phase</td>
+          <td><select name="conflictlas">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS12['lasname']?>"><?php echo $row_rsLAS12['lasname']?></option>
+            <?php
+} while ($row_rsLAS12 = mysql_fetch_assoc($rsLAS12));
+  $rows = mysql_num_rows($rsLAS12);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS12, 0);
+	  $row_rsLAS12 = mysql_fetch_assoc($rsLAS12);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr valign="baseline">
+          <td>Mode</td>
+          <td><select name="lasname">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLAS13['lasname']?>"><?php echo $row_rsLAS13['lasname']?></option>
+            <?php
+} while ($row_rsLAS13 = mysql_fetch_assoc($rsLAS13));
+  $rows = mysql_num_rows($rsLAS13);
+  if($rows > 0) {
+      mysql_data_seek($rsLAS13, 0);
+	  $row_rsLAS13 = mysql_fetch_assoc($rsLAS13);
+  }
+?>
+            </select></td>
+        </tr>
+        <tr valign="baseline">
+          <td>Notes</td>
+          <td><textarea name="notes" cols="75" rows="5"></textarea></td>
+        </tr>
+        <tr valign="baseline">
+          <td>&nbsp;</td>
+          <td><div align="right">
+            <input type="submit" value="submit" />
+            </div></td>
+        </tr>
+      </table>
+      <input type="hidden" name="soiscoringkey" value="" />
+      <input type="hidden" name="soikey" value="<?php echo $_GET['soikey']; ?>" />
+      <input type="hidden" name="scorerkey" value="<?php echo $_SESSION['log_userkey']; ?>" />
+      <input type="hidden" name="scorername" value="<?php echo $_SESSION['kt_login_user']; ?>" />
+      <input type="hidden" name="MM_insert" value="form1" />
+    </form>
+  <p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsSOI);
+
+mysql_free_result($rsLAS);
+
+mysql_free_result($rsLAS1);
+
+mysql_free_result($rsLAS2);
+
+mysql_free_result($rsLAS3);
+
+mysql_free_result($rsLAS4);
+
+mysql_free_result($rsLAS5);
+
+mysql_free_result($rsLAS6);
+
+mysql_free_result($rsLAS7);
+
+mysql_free_result($rsLAS8);
+
+mysql_free_result($rsLAS9);
+
+mysql_free_result($rsLAS10);
+
+mysql_free_result($rsLAS11);
+
+mysql_free_result($rsLAS12);
+
+mysql_free_result($rsLAS13);
+
+mysql_free_result($rsRegistrants);
+?>

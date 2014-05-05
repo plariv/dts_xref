@@ -1,0 +1,503 @@
+<?php 
+include_once ("../includes/dts_functions.php");
+include_once ("assess_custom_functions.php");
+
+
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+
+
+
+
+
+
+
+// Initializing frequently used variables
+
+$instrument_id_name = str_replace("_", " ", $_SESSION['instrument_id']);
+$instrument_id_base = str_replace("_JOURNAL", "", $_SESSION['instrument_id']);
+
+$lakey = "-1";
+if (isset($_GET['lakey'])) {
+  $lakey = $_GET['lakey'];
+}
+
+// Needs to be initialized empty to avoid minor PHP errors.
+$status = "";
+
+
+
+
+
+
+// Decide on the minimum character requirement.
+$minwords = 150;	// default = 1000 characters. That's like 150 words ish.
+$maxwords = 550;
+
+if ($instrument_id_base == "LDMA") {
+	// For the LDMA, determine the character requirement by management level.
+	$query_rsManLevelNumber = sprintf("SELECT dem.manlevelkey, dem.man_level_number FROM la_data d JOIN demogs_man_level dem ON d.manlevelkey = dem.manlevelkey WHERE d.lakey = %s ", 
+			SQLstr($lakey, "int"));
+	$rsManLevelNumber = mysql_query($query_rsManLevelNumber, $Assessment) or die(mysql_error());
+	$row_rsManLevelNumber = mysql_fetch_assoc($rsManLevelNumber);
+	if ($row_rsManLevelNumber['man_level_number'] > 0) { 
+		if ($row_rsManLevelNumber['man_level_number'] <= 4) { $minwords = 100; } 
+	}
+	else { $minwords = 150; }
+}
+
+if 			($instrument_id_base == "LMBE") { $minwords = 200; }
+else if ($instrument_id_base == "FOLA") { $minwords = 250; }
+
+
+
+
+
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE la_data SET probe07=%s, choicekey07=%s, referencelist=%s WHERE lakey=%s",
+                       SQLstr($_POST['probe07'], "text"),
+                       SQLstr(isset($_POST['choicekey07']) ? $_POST['choicekey07'] : NULL, "int"),
+											 SQLstr($_POST['referencelist'], "text"),
+                       SQLstr($_POST['lakey'], "int"));
+
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  
+	// The POST command will not send you to the next page if the button "SAVE YOUR WORK" was clicked; 
+	//only if the other button "SAVE AND GO TO NEXT PAGE" was clicked.
+	if (!isset($_POST['save_changes'])) {
+		
+		// If your essays is under the minimum character length requirement...
+		if (str_word_count($_POST['probe07']) < $minwords) {
+			// refresh this page - with a message explaining to the user why they can't go on.
+			$status = "under min words";
+		} else if (str_word_count($_POST['probe07']) > $maxwords+5) { 
+			// if you're over the maximum character limit...
+			// refresh this page - with a message explaining to the user why they can't go on.
+			$status = "over max words";
+		} else {
+	
+			$updateGoTo = "assess_complete.php";
+			if (isset($_SERVER['QUERY_STRING'])) {
+				$updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+				$updateGoTo .= $_SERVER['QUERY_STRING'];
+			}
+			header(sprintf("Location: %s", $updateGoTo));
+			exit();
+	
+		} 
+	}
+}
+
+
+
+//essays
+
+
+$query_rsPrevEssays = sprintf("SELECT d.probe01, d.probe02, d.probe03, d.probe04, d.probe05, d.probe06, d.probe07, 
+p1.probe_name AS probe_name01, p2.probe_name AS probe_name02, p3.probe_name AS probe_name03, p4.probe_name AS probe_name04, p5.probe_name AS probe_name05, p6.probe_name AS probe_name06, p7.probe_name AS probe_name07, 
+m1.menu_item AS menu01, m2.menu_item AS menu02, m3.menu_item AS menu03, m4.menu_item AS menu04, m5.menu_item AS menu05, m6.menu_item AS menu06, m7.menu_item AS menu07
+FROM la_data d 
+LEFT JOIN la_probes p1 ON p1.instrument_id = %s AND p1.probe_number = '01' 
+LEFT JOIN la_probes p2 ON p2.instrument_id = %s AND p2.probe_number = '02' 
+LEFT JOIN la_probes p3 ON p3.instrument_id = %s AND p3.probe_number = '03' 
+LEFT JOIN la_probes p4 ON p4.instrument_id = %s AND p4.probe_number = '04' 
+LEFT JOIN la_probes p5 ON p5.instrument_id = %s AND p5.probe_number = '05' 
+LEFT JOIN la_probes p6 ON p6.instrument_id = %s AND p6.probe_number = '06' 
+LEFT JOIN la_probes p7 ON p7.instrument_id = %s AND p7.probe_number = '07' 
+LEFT JOIN la_menus m1 ON d.choicekey01 = m1.menukey 
+LEFT JOIN la_menus m2 ON d.choicekey02 = m2.menukey 
+LEFT JOIN la_menus m3 ON d.choicekey03 = m3.menukey 
+LEFT JOIN la_menus m4 ON d.choicekey04 = m4.menukey 
+LEFT JOIN la_menus m5 ON d.choicekey05 = m5.menukey 
+LEFT JOIN la_menus m6 ON d.choicekey06 = m6.menukey 
+LEFT JOIN la_menus m7 ON d.choicekey07 = m7.menukey 
+WHERE d.lakey = %s", 
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($lakey, "int"));
+$rsPrevEssays = mysql_query($query_rsPrevEssays, $Assessment) or die(mysql_error());
+$row_rsPrevEssays = mysql_fetch_assoc($rsPrevEssays);
+$totalRows_rsPrevEssays = mysql_num_rows($rsPrevEssays);
+
+
+
+$query_rsCurrentEssay = sprintf("SELECT la_data.lakey, la_data.projectkey, la_data.probe01, la_data.probe02, la_data.probe03, la_data.probe04, la_data.probe05, la_data.probe06, la_data.probe07, la_data.choicekey07, la_data.referencelist, la_data.instrument_id FROM la_data WHERE la_data.lakey = %s", SQLstr($lakey, "int"));
+$rsCurrentEssay = mysql_query($query_rsCurrentEssay, $Assessment) or die(mysql_error());
+$row_rsCurrentEssay = mysql_fetch_assoc($rsCurrentEssay);
+$totalRows_rsCurrentEssay = mysql_num_rows($rsCurrentEssay);
+
+
+//probes
+
+$query_rsProbe07 = sprintf("SELECT * FROM la_probes WHERE instrument_id = %s AND probe_number = 07", SQLstr($instrument_id_base, "text"));
+$rsProbe07 = mysql_query($query_rsProbe07, $Assessment) or die(mysql_error());
+$row_rsProbe07 = mysql_fetch_assoc($rsProbe07);
+$totalRows_rsProbe07 = mysql_num_rows($rsProbe07);
+
+// Fetch menu options for test taker to select, for the LSUA or LLRA.
+// You can't select a menu option that you've already selected on another question.
+if ($instrument_id_base == "LSUA" OR $instrument_id_base == "LLRA") {
+	$query_rsLaMenus = sprintf("SELECT menukey, menu_item FROM la_menus 
+	WHERE instrument_id = %s AND active = 1
+	AND NOT EXISTS ( 
+		SELECT * FROM la_data WHERE lakey = %s AND 
+		( choicekey01 = menukey OR choicekey02 = menukey
+		 OR choicekey03 = menukey OR choicekey04 = menukey OR choicekey05 = menukey
+		 OR choicekey06 = menukey )
+	) ORDER BY menu_item ", 
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($lakey, "int"));
+	$rsLaMenus = mysql_query($query_rsLaMenus, $Assessment) or die(mysql_error());
+	$row_rsLaMenus = mysql_fetch_assoc($rsLaMenus);
+	$totalRows_rsLaMenus = mysql_num_rows($rsLaMenus);
+}
+
+
+//dilemma
+
+$query_rsDilemma = sprintf("SELECT la_dilemmas.dilemmakey, la_dilemmas.dilemma_name, la_dilemmas.dilemma, la_data.lakey, la_dilemmas.dilemmakey FROM la_dilemmas, la_data WHERE la_data.lakey = %s AND la_data.dilemmakey = la_dilemmas.dilemmakey", SQLstr($lakey, "int"));
+$rsDilemma = mysql_query($query_rsDilemma, $Assessment) or die(mysql_error());
+$row_rsDilemma = mysql_fetch_assoc($rsDilemma);
+$totalRows_rsDilemma = mysql_num_rows($rsDilemma);
+
+
+
+
+// any boilerplate (instructions etc.)
+$rsLaBoilerplate = mysql_query("SELECT b.* 
+	FROM la_boilerplate b WHERE type = 'assess' ", $Assessment) 
+	or die("rsLaBoilerplate: ".mysql_error());
+$boilerplate = array();
+while ($row_rsLaBoilerplate = mysql_fetch_assoc($rsLaBoilerplate)) {
+	$boilerplate[$row_rsLaBoilerplate['name']] = $row_rsLaBoilerplate['la_boilerplate_text'];
+}
+
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Question 7 - <?php echo $row_rsProbe06['probe_name']; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../includes/jquery.js"></script>
+
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryTabbedPanelsVertical.css" rel="stylesheet" type="text/css" />
+<script src="../SpryAssetsAssess/xpath.js" type="text/javascript"></script>
+<script src="../SpryAssetsAssess/SpryData.js" type="text/javascript"></script>
+<script src="../SpryAssetsAssess/SpryValidationCheckbox.js" type="text/javascript"></script>
+<script src="../SpryAssetsAssess/SpryValidationTextarea.js" type="text/javascript"></script>
+<script src="../SpryAssetsAssess/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<script src="../SpryAssetsAssess/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../SpryAssetsAssess/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssetsAssess/SpryValidationCheckbox.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssetsAssess/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssetsAssess/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript">
+
+$(document).ready(function() {
+	
+	$('#probe07').change(function() {
+		
+		// get value
+		var input_text = $('#probe07').val();
+		
+		// count words
+		// Credits for this wonderful word count script go to:
+		// http://javascriptsource.com/forms/word-count.html
+		var char_count = input_text.length;
+		var fullStr = input_text + " ";
+		var initial_whitespace_rExp = /^[^A-Za-z0-9]+/gi;
+		var left_trimmedStr = fullStr.replace(initial_whitespace_rExp, "");
+		var non_alphanumerics_rExp = rExp = /[^A-Za-z0-9]+/gi;
+		var cleanedStr = left_trimmedStr.replace(non_alphanumerics_rExp, " ");
+		var splitString = cleanedStr.split(" ");
+		var word_count = splitString.length -1;
+		if (fullStr.length < 2) { word_count = 0; }
+		
+		// show message if words are over limit (hide otherwise)
+		var message = '';
+		$('#word_count').removeClass();
+		if (word_count > <?php echo $maxwords; ?>) {
+			message = ' You have too many words. Please remove some text.';
+			$('#word_count').addClass('red');
+		}
+		
+		// output word count / message
+		$('#word_count').text('' + word_count + message);
+		// alert(word_count + message);
+		
+	});
+	
+	$('#probe07').click(function() {
+		$('#probe07').change();
+	});
+	
+	$('#probe07').keypress(function() {
+		$('#probe07').change();
+	});
+	
+	$('#probe07').change();
+	
+});
+
+
+
+
+</script>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>ESSAY 7 (OF 7): <?php echo $row_rsProbe07['probe_title']; ?></h1>
+    
+  <div id="CollapsiblePanel99" class="CollapsiblePanel">
+    <div class="CollapsiblePanelTab"><img src="../images/skin/menu_arrow.gif" alt="arrow" />  
+      INFORMATION ABOUT THE ESSAY SECTION OF THE <?php echo $instrument_id_name; ?></div>
+    <div><?php 
+			$text = "";
+      if ($instrument_id_base == "LMBE") { // Instruction text for the LMBE
+        $text = $boilerplate['assess_essay_instructions_lmbe'];
+      } else { // Instructions text for other instruments
+        $text = $boilerplate['assess_essay_instructions']; 
+      } 
+			$text = str_replace("[MINWORDS]", $minwords, $text); 
+			$text = str_replace("[MAXWORDS]", $maxwords, $text); 
+			echo $text; 
+			?>
+    </div>
+  </div>
+	<script type="text/javascript">
+		var CollapsiblePanel99 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel99");
+	</script>
+  
+  
+    
+  <?php if ($instrument_id_base == "LMBE") { 
+    // for the LMBE, show the scenario information - don't show a dilemma.
+    LMBEdiv();
+		
+  } else { 
+		// if instrument is NOT lmbe, then consider the dilemmas to show. ?>  
+  
+  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+    <?php if ($totalRows_rsDilemma > 0) { ?>
+    <div class="CollapsiblePanelTab">
+    	<img src="../images/skin/menu_arrow.gif" alt="arrow" /> VIEW YOUR DILEMMA</div>
+    <div>
+        <p><?php echo $row_rsDilemma['dilemma']; ?></p>
+        <p>&nbsp;</p>
+    </div>
+    <?php } ?>
+  </div>
+  
+  <?php } // end if: dilemmas were only shown if instrument is not LMBE ?>
+  
+<div id="CollapsiblePanel" class="CollapsiblePanel">
+  <div class="CollapsiblePanelTab"> <img src="../images/skin/menu_arrow.gif" alt="arrow" /> VIEW YOUR PREVIOUS ESSAYS</div>
+  <div>
+        
+				<?php 
+				$numPrevEssays = 6;
+				$i = 0;
+				while ($i < $numPrevEssays) { 
+					$i ++; ?>
+          <p><strong><?php echo $row_rsPrevEssays['probe_name0'.$i]; 
+					if ($row_rsPrevEssays['menu0'.$i] <> "") 
+					{ echo ": ".$row_rsPrevEssays['menu0'.$i]; } ?></strong></p>
+        <p><?php echo $row_rsPrevEssays['probe0'.$i]; ?></p>
+        <?php } // end WHILE loop for each essay ?>
+        
+  </div>
+</div>
+<br />
+<form action="<?php echo $editFormAction; ?>" id="form1" name="form1" method="POST">
+  <table>
+      
+      <?php if ($row_rsProbe07['select_instruction'] <> "") { ?>
+      <tr>
+  	    <td><?php echo $row_rsProbe07['select_instruction']; ?></td>
+  	    <td><span id="spryselect2">
+        <select name="choicekey07" class="pulldownwidth200" id="choicekey07">
+          <option value="" <?php if (!(strcmp("", $row_rsCurrentEssay['choicekey07']))) 
+									{ echo "selected=\"selected\""; } ?>>-select one-</option>
+          <?php 
+								// List valid dilemmas
+								do {   ?>
+          <option value="<?php echo $row_rsLaMenus['menukey']?>"<?php if (!(strcmp($row_rsLaMenus['menukey'], $row_rsCurrentEssay['choicekey07']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaMenus['menu_item']?></option>
+          <?php } while ($row_rsLaMenus = mysql_fetch_assoc($rsLaMenus));
+						$rows = mysql_num_rows($rsLaMenus);
+						if($rows > 0) {
+								mysql_data_seek($rsLaMenus, 0);
+							$row_rsLaMenus = mysql_fetch_assoc($rsLaMenus);
+						} ?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span><span class="selectInvalidMsg">You have already used this dilemma. Please select another one.</span></span></td>
+	    </tr>
+      <?php } ?>
+      
+      <tr>
+        <td width="158"><?php echo $row_rsProbe07['probe_description']; ?></td>
+        <td><span id="sprytextarea1">
+          <textarea name="probe07" class="textarea440_500" id="probe07"><?php 
+						echo str_replace("<br>", "\n", $row_rsCurrentEssay['probe07']); ?></textarea>
+				</span><br />
+        <span id="word_count"></span></td>
+      </tr>
+      
+      <?php if ($instrument_id_base == "LMBE") { ?>
+      	<tr>
+      	  <td>References</td>
+      	  <td><span id="spryRefsList">
+          <textarea name="referencelist" class="textarea140_500" id="referencelist"><?php 
+						echo str_replace("<br>", "\n", $row_rsCurrentEssay['referencelist']); ?></textarea>
+          <span class="textareaMaxCharsMsg">Exceeded maximum number of characters.</span><span class="textareaRequiredMsg">References are required. See the instructions for an explanation.</span></span>
+      <script type="text/javascript"><!--
+				var spryRefsList = new Spry.Widget.ValidationTextarea("spryRefsList", {validateOn:["blur", "change"], maxChars:3000});
+				-->
+			</script>
+      </td></tr>
+      <?php } else { ?>
+      	<input name="referencelist" type="hidden" id="referencelist" value="" />
+      <?php } ?>
+      
+  </table>
+  
+  
+  	<?php 
+		if ($status == "under min words") { ?>
+    <p class="red">The minimum number of words has not been met. Your progress is saved when you click on either "SAVE" button, but you cannot go on to the next page until you have fully explained your answer. We find that answers that are shorter than <?php echo $minwords; ?> words often do not contain adequate explanations.</p><?php 
+		}
+		if ($status == "over max words") { ?>
+    <p class="red">The maximum words allowed is <?php echo $maxwords; ?>. Please remove some text.</p><?php 
+		} ?>
+    
+    <div id="submitButtons" align="right">
+      <input name="lakey" type="hidden" id="lakey" value="<?php echo $_GET['lakey']; ?>" />
+      <p><span class="fltlft"><?php contactUsForHelp(); ?></span>&nbsp;<input type="submit" name="save_changes" id="save_changes" value="SAVE YOUR WORK" />&nbsp;
+      <!-- LAST SAVED STATUS text - starts out blank. JavaScript inserts text in here saying the last time that the text was autosaved. -->
+      <span id="last_saved"></span>&nbsp;
+      <input type="submit" name="button" id="button" value="SAVE AND GO TO NEXT PAGE" /></p>
+    </div>
+    <p>&nbsp;</p>
+    <input type="hidden" name="MM_update" value="form1" />
+  </form>
+  
+  <?php autoSave("probe07"); ?>
+  
+  <script type="text/javascript">
+<!--
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {validateOn:["blur", "change"], isRequired:false});
+var CollapsiblePanel = new Spry.Widget.CollapsiblePanel("CollapsiblePanel");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+
+<?php if ($row_rsProbe07['select_instruction'] <> "") { ?>
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"], invalidValue:"-1"});
+<?php } ?>
+//-->
+  </script>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+
+?>

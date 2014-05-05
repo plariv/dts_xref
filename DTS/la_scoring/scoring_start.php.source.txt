@@ -1,0 +1,89 @@
+<?php
+include_once ("../includes/dts_functions.php");
+
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+$userkey = $_SESSION['log_userkey'];
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+$instrument_id = $_SESSION['instrument_id'];
+$lakey = 0; if (isset($_GET['lakey'])) { $lakey = $_GET['lakey']; }
+$scorer_no = $_GET['scorer_no'];
+
+
+
+
+
+// check if a scoring record already exists.
+$query_rsLaScoreData = sprintf("SELECT d.lakey, d.instrument_id, d.scored_1, d.scored_2, d.scored_3, 
+	d.scorerkey_1, d.scorerkey_2, d.scorerkey_3 
+	FROM la_data d JOIN la_scores s ON d.lakey = s.lakey
+	WHERE d.lakey = %s", SQLstr($lakey, "int"));
+$rsLaScoreData = mysql_query($query_rsLaScoreData, $Assessment) or die(mysql_error());
+$row_rsLaScoreData = mysql_fetch_assoc($rsLaScoreData);
+// If no la_scores record exists for this lakey, create one.
+if ($row_rsLaScoreData['lakey'] == "") {
+	// topher();
+	$insertSQL = sprintf("INSERT INTO la_scores 
+		(lakey, instrument_id, scorerkey_1, timestamp) 
+		VALUES (%s, %s, %s, NOW())",
+				 SQLstr($lakey, "int"),
+				 SQLstr($row_rsLaScoreData['instrument_id'], "text"),
+				 SQLstr($userkey, "int"));
+	$Result1 = mysql_query($insertSQL, $Assessment) or die(mysql_error());
+}
+
+// IF scoring has not been started for this record and role, add some initial data.
+if ($query_rsLaScoreData['scorerkey_'.$scorer_no] == "") { 
+	// Update la_data to indicate that scoring has been started for this record.
+	$updateSQL = sprintf("UPDATE la_data d
+		SET d.scored_{$scorer_no}=0, d.scorerkey_{$scorer_no}=%s 
+		WHERE d.lakey=%s",
+			SQLstr($userkey, 'int'),
+			SQLstr($lakey, 'int'));
+	$Result2 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+}
+
+
+
+// Update la_data to indicate that scoring has been started for this record.
+$updateSQL = sprintf("UPDATE la_data d
+	SET d.scoring_started=1	WHERE d.lakey=%s",
+		SQLstr($lakey, 'int'));
+$Result3 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+
+
+// Create a (blank) coding record, if none alreday exists.
+// Coding record is needed to store special_comment on the confidence page.
+$query_rsLaCodes = sprintf("SELECT c.lakey, d.coding_started, 
+	d.coded_1, d.coded_2, d.coded_3, d.coderkey_1, d.coderkey_2, d.coderkey_3  
+	FROM la_codes c JOIN la_data d ON c.lakey = d.lakey WHERE c.lakey = %s", 
+		SQLstr($lakey, 'int'));
+$rsLaCodes = mysql_query($query_rsLaCodes, $Assessment) or die(mysql_error());
+$row_rsLaCodes = mysql_fetch_assoc($rsLaCodes);
+//	if there's no la_codes record for this lakey, create one.
+if ($row_rsLaCodes['lakey'] <> $lakey) {
+	$insertSQL = sprintf("INSERT INTO la_codes 
+		( lakey, instrument_id, date_created ) VALUES ( %s, %s, NOW() )",
+			 SQLstr($lakey, 'int'),
+			 SQLstr($instrument_id, 'text'));
+	$Result1 = mysql_query($insertSQL) or die(mysql_error());
+}
+
+
+
+// URL variables passed are lakey and scorer_no, I think that's all.
+$insertGoTo = "score.php";
+if (isset($_SERVER['QUERY_STRING'])) {
+	$insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+	$insertGoTo .= $_SERVER['QUERY_STRING'];
+}
+
+header(sprintf("Location: %s", $insertGoTo));
+
+
+?>

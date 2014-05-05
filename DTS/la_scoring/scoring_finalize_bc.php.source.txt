@@ -1,0 +1,216 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php  require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+
+
+// Standard PHP header to prepare for record sets
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+
+// 
+// RECORD SETS 
+// 
+
+$colname_rsData = "-1";
+if (isset($_GET['lakey'])) {
+  $colname_rsData = (get_magic_quotes_gpc()) ? $_GET['lakey'] : addslashes($_GET['lakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsData = sprintf("SELECT la_data.lakey, la_data.instrument_id, la_data.scored_1, la_data.scorerkey_1 FROM la_data WHERE la_data.lakey = %s", GetSQLValueString($colname_rsData, "int"));
+$rsData = mysql_query($query_rsData, $Assessment) or die(mysql_error());
+$row_rsData = mysql_fetch_assoc($rsData);
+$totalRows_rsData = mysql_num_rows($rsData);
+
+$colname_rsEmail_Client = "-1";
+if (isset($_GET['lakey'])) {
+  $colname_rsEmail_Client = (get_magic_quotes_gpc()) ? $_GET['lakey'] : addslashes($_GET['lakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEmail_Client = sprintf("SELECT la_data.lakey, la_data.userkey, registrants.userkey, registrants.email, registrants.firstname, registrants.lastname FROM la_data, registrants WHERE registrants.userkey = la_data.userkey AND la_data.lakey = %s", GetSQLValueString($colname_rsEmail_Client, "int"));
+$rsEmail_Client = mysql_query($query_rsEmail_Client, $Assessment) or die(mysql_error());
+$row_rsEmail_Client = mysql_fetch_assoc($rsEmail_Client);
+$totalRows_rsEmail_Client = mysql_num_rows($rsEmail_Client);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEmail2service = "SELECT * FROM emailaddresses WHERE emailkey = 4";
+$rsEmail2service = mysql_query($query_rsEmail2service, $Assessment) or die(mysql_error());
+$row_rsEmail2service = mysql_fetch_assoc($rsEmail2service);
+$totalRows_rsEmail2service = mysql_num_rows($rsEmail2service);
+
+$colname_rsBulkCustomer = "-1";
+if (isset($_GET['lakey'])) {
+  $colname_rsBulkCustomer = (get_magic_quotes_gpc()) ? $_GET['lakey'] : addslashes($_GET['lakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsBulkCustomer = sprintf("SELECT la_data.lakey, la_data.resellerkey, bulkcustomerinfo.bulkcustomerkey, bulkcustomerinfo.email, bulkcustomerinfo.firstname, bulkcustomerinfo.lastname FROM la_data, bulkcustomerinfo WHERE bulkcustomerinfo.bulkcustomerkey = la_data.resellerkey AND la_data.lakey = %s", GetSQLValueString($colname_rsBulkCustomer, "int"));
+$rsBulkCustomer = mysql_query($query_rsBulkCustomer, $Assessment) or die(mysql_error());
+$row_rsBulkCustomer = mysql_fetch_assoc($rsBulkCustomer);
+$totalRows_rsBulkCustomer = mysql_num_rows($rsBulkCustomer);
+
+	//
+	// Linecraft PHP Form mail v.1.2.0
+	//
+	$mail_form="form1";
+	// $exception_fields was used to keep certain POST elements out of the email message; no longer needed.
+	// $exception_fields=array("scored_1","MM_update","scorerkey_1");
+	$to=$row_rsBulkCustomer['email'];
+	$from=$row_rsEmail2service['email'];
+	$cc="";
+	$bcc=$row_rsEmail2service['email'];
+	$host="";
+	$username="";
+	$password="";
+	$subject="{$row_rsEmail_Client['firstname']} {$row_rsEmail_Client['lastname']}'s {$row_rsData['instrument_id']} has been finalized";
+	$message_header="";
+	$message_footer="";
+	$message_body="";
+	$format_html="\r\nContent-type: text/plain; charset=utf-8";
+	$html="";
+	$success_page="scoring_performance_select.php";
+	$error_page="";
+	$o_t="";
+	$c_t="";
+	$br="\n";
+	//If HTML
+	if($html=="1"){
+		$o_t="<b>";
+		$c_t="</b>";
+		$br="<br>";
+		$format_html="\r\nContent-type: text/html; charset=utf-8";
+	}
+	
+	$message_body = $message_body."View {$row_rsEmail_Client['firstname']} {$row_rsEmail_Client['lastname']}'s report at http://devtestservice.org/bulkcustomers/bulkselectreport.php".$br;
+	$message_body = $message_body.$o_t."email service".$c_t.": ".$row_rsEmail2service['email'].$br;
+	$message_body = $message_body.$o_t."instrument id".$c_t.": ".$row_rsData['instrument_id'].$br;
+	$message_body = $message_body.$o_t."lakey".$c_t.": ".$_GET['lakey'].$br;
+
+	/**** Since we've removed the form, $_POST is invalid. I'll experiment with entering in the values manually following the pattern as best I can. Check the output email to ensure it's correct.
+	foreach($_POST as $fieldName => $value){
+		if(!in_array($fieldName,$exception_fields)){
+			$fieldName=str_replace("_"," ",$fieldName);
+			$message_body=$message_body.$o_t.$fieldName.$c_t.": ".$value.$br;
+		}
+	}*/
+	
+	$message=$message_header.$br.$message_body.$br.$message_footer;
+	@include_once "Mail.php";
+	@include_once("Mail/mime.php");
+	if(!class_exists('Mail') || !class_exists('Mail_mime')){
+		$headers="From:".$from.$format_html;
+		$headers.=($cc!="")?("\r\nCc: " . $cc):"";
+		$headers.=($bcc!="")?("\r\nBcc: " . $bcc):"";
+		if(mail($to, stripslashes($subject), stripslashes($message),$headers)){
+			if($success_page!=""){
+				header("Location:".$success_page);
+			}
+		}else{
+			if($error_page!=""){
+				header("Location:".$error_page);
+			}
+		}
+	}else{
+		if($cc!=""){$to.=", ".$cc;}
+		if($bcc!=""){$to.=", ".$bcc;}
+		if($host!="" && $username!="" && $password!=""){
+			$contructor = Mail::factory('smtp',array ('host' => $host,'auth' => true,'username' => $username,'password' => $password));
+		}else{
+			$contructor = Mail::factory('mail');
+		}
+		$headers = array ('From' => $from,'To' => $to,'Subject' => $subject);
+		if($cc!=""){$headers['Cc']=$cc;}
+		if($html=="1"){
+			$mime = new Mail_mime("\n");
+			$mime->setHTMLBody($message);
+			$message = $mime->get();
+			$headers = $mime->headers($headers);
+		}
+		$mail = $contructor->send($to, $headers, $message);
+
+		if (PEAR::isError($mail)){
+			if($error_page!=""){
+				header("Location:".$error_page);
+			}
+		}else{
+			if($success_page!=""){
+				header("Location:".$success_page);
+			}			
+		}
+	}
+
+
+	// 
+	// SQL UPDATE
+	// 
+
+	// When finalized for BULK CUSTOMER ONLY, finalized = 2. Email will not be released to the test taker, just to the bulk customer.
+  $updateSQL = sprintf("UPDATE la_data SET finalized=%s, date_finalized=%s WHERE lakey=%s",
+                       GetSQLValueString("2", "text"),
+											 GetSQLValueString(date("Y-m-d"), "date"), 
+                       GetSQLValueString($_GET['lakey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+
+  $updateGoTo = "scoring_performance_select.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));
+
+
+mysql_free_result($rsData);
+mysql_free_result($rsEmail_Client);
+mysql_free_result($rsEmail2service);
+mysql_free_result($rsBulkCustomer);
+
+?>
+<!-- **** What do you think of having this default text? -->
+<title>DTS: Finalizing...</title>
+
+Finalizing the record and sending email to the bulk customer...<br />
+If you see this page for longer than a couple seconds, something has gone wrong. Please notify the website maintainers.

@@ -1,0 +1,20 @@
+<?php include_once ("../includes/dts_functions.php");
+bench();
+
+$query_rsReleaseDates = "SELECT a.*
+	
+	FROM la_assignments a 
+	LEFT JOIN students_assignments sa ON a.assignmentkey = sa.assignmentkey
+	LEFT JOIN registrants r ON sa.userkey = r.userkey
+	LEFT JOIN registrants rb ON r.bulkuserkey = rb.userkey 
+	LEFT JOIN emails e ON a.assignmentkey = e.assignmentkey AND e.status = 3
+	
+	WHERE a.date_release IS NOT NULL  ";
+	
+	$query_rsReleaseDates .= querySortSearch($query_rsReleaseDates, "a.assignmentkey", "", 2);
+	$rsReleaseDates = mysql_query($query_rsReleaseDates, $Assessment) or die("rsReleaseDates: ".mysql_error());
+	
+	
+bench("releasedates");
+
+?>

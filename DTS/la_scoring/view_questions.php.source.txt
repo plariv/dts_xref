@@ -1,0 +1,189 @@
+<?php 
+require_once('../Connections/Assessment.php'); 
+include_once '../includes/general_custom_functions.php';
+require_once( "../WA_SecurityAssist/Helper_PHP.php" );
+
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+
+
+$instrument_id_name = str_replace("_", " ", $_SESSION['instrument_id']);
+$instrument_id_base = str_replace("_JOURNAL", "", $_SESSION['instrument_id']);
+
+
+
+
+$query_rsFola = sprintf("SELECT *
+FROM course_dates
+WHERE coursekey = 101 ");
+$rsFola = mysql_query($query_rsFola, $Assessment) or die(mysql_error());
+$row_rsFola = mysql_fetch_assoc($rsFola);
+$totalRows_rsFola = mysql_num_rows($rsFola);
+
+// figure out which module is the current one
+$date_start = "";
+$date_end = "";
+
+$m = 1; $m_pad = str_pad($m, 2, '0', STR_PAD_LEFT);
+while (date('Y-m-d') > $row_rsFola['assignment'.$m_pad.'_date'] AND $m < 20) { 
+	$m ++; $m_pad = str_pad($m, 2, '0', STR_PAD_LEFT);
+}
+
+if (!isset($row_rsFola['assignment'.$m_pad.'_date'])) { 
+	die("ERROR - can't find any modules for this date, so I don't know what comments to search for.");
+}
+
+$date_end = $row_rsFola['assignment'.$m_pad.'_date'];
+$date_start = date('Y-m-d', strtotime($date_end.' -2 weeks'));
+
+// topher($date_start." -> ".$date_end); topher();
+
+
+$query_rsLaData = sprintf("SELECT r.firstname, r.lastname, d.questions, d.test_taker_comments
+FROM la_data d 
+JOIN registrants r ON d.userkey = r.userkey 
+WHERE d.instrument_id = 'FOLA' 
+	AND d.date_completed BETWEEN %s AND %s ",
+		SQLstr($date_start, "date"), 
+		SQLstr($date_end, "date"));
+$rsLaData = mysql_query($query_rsLaData, $Assessment) or die(mysql_error());
+$totalRows_rsLaData = mysql_num_rows($rsLaData);
+
+// topher($query_rsLaData); 
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Complete the <?php echo ($instrument_id_base == "FOLA" ? "reaction paper" : $instrument_id_name); ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../DTSassets/SpryValidationCheckbox.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextarea.js" type="text/javascript"></script>
+<link href="../DTSassets/SpryMasterDetail.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript">
+<!--
+ //-->
+</script>
+<link href="../DTSassets/SpryValidationCheckbox.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+      
+  
+  <h1>VIEW QUESTIONS FOR MODULE 0<?php echo $m; ?></h1>
+  <table width="700" border="0">
+    <tr class="tablehead_knockout">
+      <td align="center">student</td>
+      <td align="center">questions</td>
+      <td align="center">comments</td>
+    </tr>
+    
+    <?php 
+		
+		while ($row_rsLaData = mysql_fetch_assoc($rsLaData)) { ?>
+      <tr>
+        <td><?php echo $row_rsLaData['firstname']." ".$row_rsLaData['lastname']; ?></td>
+        <td><?php echo $row_rsLaData['questions']; ?></td>
+        <td><?php echo $row_rsLaData['test_taker_comments']; ?></td>
+      </tr>
+      <?php 
+		} ?>
+    
+    <tr>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    
+  </table>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLaData);
+
+?>

@@ -1,0 +1,90 @@
+<?php
+
+function WA_Auth_GetComparisonsForRule($ruleName){
+	$comparisons = array();
+	
+	/**** The last element in these arrays indicates the user_level which the user must _beat_ (must be greater than) in order for the rule to pass. For example, a researcher will only gain access under the following level-9 rule if they are userlevel 10 or greater. */
+	
+	switch ($ruleName){
+		case "Logged in as admin":
+			$comparisons[0] = array(TRUE, "".((isset($_SESSION['log_user_level']))?$_SESSION['log_user_level']:"")  ."", 5, "24");
+			break;
+		case "Logged in as senior":
+			$comparisons[0] = array(TRUE, "".((isset($_SESSION['log_user_level']))?$_SESSION['log_user_level']:"")  ."", 5, "23");
+			break;
+		case "Logged in as analyst":
+			$comparisons[0] = array(TRUE, "".((isset($_SESSION['log_user_level']))?$_SESSION['log_user_level']:"")  ."", 5, "21");
+			break;
+		case "Logged in as employee":
+			$comparisons[0] = array(TRUE, "".((isset($_SESSION['log_user_level']))?$_SESSION['log_user_level']:"")  ."", 5, "19");
+			break;
+		case "Logged in as coder":
+			$comparisons[0] = array(TRUE, "".((isset($_SESSION['log_user_level']))?$_SESSION['log_user_level']:"")  ."", 5, "17");
+			break;
+		case "Logged in as intern":
+			$comparisons[0] = array(TRUE, "".((isset($_SESSION['log_user_level']))?$_SESSION['log_user_level']:"")  ."", 5, "16");
+			break;
+		case "Logged in as teacher coder":
+			$comparisons[0] = array(TRUE, "".((isset($_SESSION['log_user_level']))?$_SESSION['log_user_level']:"")  ."", 5, "12");
+			break;
+		case "Logged in as institution":
+			$comparisons[0] = array(TRUE, "".((isset($_SESSION['log_user_level']))?$_SESSION['log_user_level']:"")  ."", 5, "10");
+			break;
+		case "Logged in as researcher":
+			$comparisons[0] = array(TRUE, "".((isset($_SESSION['log_user_level']))?$_SESSION['log_user_level']:"")  ."", 5, "9");
+			break;
+		case "Logged in as bulk customer":
+			$comparisons[0] = array(TRUE, "".((isset($_SESSION['log_user_level']))?$_SESSION['log_user_level']:"")  ."", 5, "7");
+			break;
+		case "Logged in as teacher":
+			$comparisons[0] = array(TRUE, "".((isset($_SESSION['log_user_level']))?$_SESSION['log_user_level']:"")  ."", 5, "6");
+			break;
+		case "Logged in as assistant":
+			$comparisons[0] = array(TRUE, "".((isset($_SESSION['log_user_level']))?$_SESSION['log_user_level']:"")  ."", 5, "4");
+			break;
+		case "Logged in to registrants":
+			$comparisons[0] = array(TRUE, "".((isset($_SESSION['log_userkey']))?$_SESSION['log_userkey']:"")  ."", 2, "");
+			break;
+	}
+	return $comparisons;	
+}
+
+
+function WA_Auth_GetGroup($groupName){
+	$group = Array();
+	
+		switch ($groupName){
+    	case "DTS all":
+			$group = array("Admin","Developer","Senior employee","Scorer","Coder","Employee","Junior employee","Intern","Volunteer");
+			break;
+    	case "DTS employees":
+			$group = array("Admin","Developer","Senior employee","Scorer","Coder","Employee","Junior employee");
+			break;
+	    case "DTS junior":
+			$group = array("Employee","Junior employee");
+			break;
+		    case "DTS senior":
+			$group = array("Admin","Developer","Senior employee","Scorer","Coder");
+			break;
+	    case "DTS intern":
+			$group = array("Intern","Volunteer");
+			break;
+		case "Bulk administrators":
+			$group = array("Business","School district","School","Government agency");
+		case "Bulk users":
+			$group = array("Consultant","Researcher","Instructor","Research assistant","Teaching assistant");
+			break;
+		case "Bulk users senior":
+			$group = array("Bulk customer","Researcher","Instructor");
+			break;
+			case "Bulk users junior":
+			$group = array("Research assistant","Teaching assistant");
+			break;
+		case "Test taker":
+			$group = array("Research participant","Student","Employee","Client","Self");
+			break;
+	}
+	return $group;
+}
+
+?>

@@ -1,0 +1,955 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLRJA = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsLRJA = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJA = sprintf("SELECT lrja.lrjakey, lrja.`date`, lrja.managerstatus, lrja.thinkof, lrja.differentconclusions, lrja.idealprocess, lrja.certainty, lrja.truth, lrja.identifytruth, lrja.absolutetruth, lrjascores.lrjakey, lrjascores.lasname, lrjascores.essay1las, lrjascores.essay2las, lrjascores.essay3las, lrjascores.essay4las, lrjascores.essay5las, lrjascores.essay6las, lrjascores.essay7las,  lrjascores.essay7las, lrjascores.codercomment FROM lrja, lrjascores WHERE lrja.lrjakey = %s AND lrjascores.lrjakey = %s", GetSQLValueString($colname_rsLRJA, "int"),GetSQLValueString($colname_rsLRJA, "int"));
+$rsLRJA = mysql_query($query_rsLRJA, $Assessment) or die(mysql_error());
+$row_rsLRJA = mysql_fetch_assoc($rsLRJA);
+$totalRows_rsLRJA = mysql_num_rows($rsLRJA);
+
+$colname_rsStrengths = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsStrengths = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrengths = sprintf("SELECT lrjascores.lrjakey, lrjascores.essay1las, lrjascores.essay2las, lrjascores.essay3las, lrjascores.essay4las, lrjascores.essay5las, lrjascores.essay6las, lrjascores.essay7las, lrjascores.lasname, lrjacodecertainty.lasname, lrjacodecertainty.rjcodecertainty, lrjacodecomplexity.rjcodecomplexity, lrjacodecomplexity.lasname, lrjacodeevaluate.lasname, lrjacodeevaluate.rjcodeevaluate, lrjacodeinquiry.lasname, lrjacodeinquiry.rjcodeinquiry, lrjacoderelative.lasname, lrjacoderelative.rjcoderelative, lrjacodetruth.lasname, lrjacodetruth.rjcodetruth FROM lrjascores, lrjacodecertainty, lrjacodecomplexity, lrjacodeevaluate, lrjacodeinquiry, lrjacoderelative, lrjacodetruth WHERE lrjascores.lrjakey= %s AND lrjacodecertainty.lasname=lrjascores.essay5las and lrjacodecomplexity.lasname=lrjascores.essay2las and lrjacodeevaluate.lasname=lrjascores.essay4las and lrjacodeinquiry.lasname=lrjascores.essay3las and lrjacoderelative.lasname=lrjascores.essay7las and lrjacodetruth.lasname=lrjascores.essay6las", GetSQLValueString($colname_rsStrengths, "int"));
+$rsStrengths = mysql_query($query_rsStrengths, $Assessment) or die(mysql_error());
+$row_rsStrengths = mysql_fetch_assoc($rsStrengths);
+$totalRows_rsStrengths = mysql_num_rows($rsStrengths);
+
+$colname_rsManlasart = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsManlasart = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlasart = sprintf("SELECT manlasartkey, manlasvert, manlaspie, lasname FROM manlasart WHERE lasname = %s", GetSQLValueString($colname_rsManlasart, "text"));
+$rsManlasart = mysql_query($query_rsManlasart, $Assessment) or die(mysql_error());
+$row_rsManlasart = mysql_fetch_assoc($rsManlasart);
+$totalRows_rsManlasart = mysql_num_rows($rsManlasart);
+
+$colname_rsManlevelart = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsManlevelart = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlevelart = sprintf("SELECT manlevelart.manlevelkey, manlevelart.manlevel3graphs, manlevelart.manlevelgraphs, lrja.managerstatus, lrja.lrjakey FROM manlevelart, lrja WHERE lrja.managerstatus=manlevelart.manlevelkey AND lrja.lrjakey = %s", GetSQLValueString($colname_rsManlevelart, "int"));
+$rsManlevelart = mysql_query($query_rsManlevelart, $Assessment) or die(mysql_error());
+$row_rsManlevelart = mysql_fetch_assoc($rsManlevelart);
+$totalRows_rsManlevelart = mysql_num_rows($rsManlevelart);
+
+$colname_rsLRJAintroman = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLRJAintroman = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAintroman = sprintf("SELECT * FROM lrjaintroman WHERE lasname = %s", GetSQLValueString($colname_rsLRJAintroman, "text"));
+$rsLRJAintroman = mysql_query($query_rsLRJAintroman, $Assessment) or die(mysql_error());
+$row_rsLRJAintroman = mysql_fetch_assoc($rsLRJAintroman);
+$totalRows_rsLRJAintroman = mysql_num_rows($rsLRJAintroman);
+
+$colname_rsLRJAlasgendescrip = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLRJAlasgendescrip = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAlasgendescrip = sprintf("SELECT lrjalasgendescrip.rjlasgendescripkey, lrjalasgendescrip.lasname, lrjalasgendescrip.rjlasgendescrip, lrjalasgendescrip.rjlasperspec, lrjalasgendescrip.rjlaslearn, lrjalasgendescrip.rjlasinquiry FROM lrjalasgendescrip WHERE lrjalasgendescrip.lasname = %s", GetSQLValueString($colname_rsLRJAlasgendescrip, "text"));
+$rsLRJAlasgendescrip = mysql_query($query_rsLRJAlasgendescrip, $Assessment) or die(mysql_error());
+$row_rsLRJAlasgendescrip = mysql_fetch_assoc($rsLRJAlasgendescrip);
+$totalRows_rsLRJAlasgendescrip = mysql_num_rows($rsLRJAlasgendescrip);
+
+$colname_rsManlevelcomment = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsManlevelcomment = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlevelcomment = sprintf("SELECT manlevelcomment.manlevelkey, manlevelcomment.manlevelname, manlevelcomment.manlevelcomment, lrja.managerstatus, lrja.lrjakey FROM manlevelcomment, lrja WHERE lrja.managerstatus=manlevelcomment.manlevelkey AND lrja.lrjakey=%s", GetSQLValueString($colname_rsManlevelcomment, "int"));
+$rsManlevelcomment = mysql_query($query_rsManlevelcomment, $Assessment) or die(mysql_error());
+$row_rsManlevelcomment = mysql_fetch_assoc($rsManlevelcomment);
+$totalRows_rsManlevelcomment = mysql_num_rows($rsManlevelcomment);
+
+$colname_rsManleveljuxtapose = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsManleveljuxtapose = $_GET['lasname'];
+}
+$colname2_rsManleveljuxtapose = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname2_rsManleveljuxtapose = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManleveljuxtapose = sprintf("SELECT manleveljuxtapose.lasname, manleveljuxtapose.manlevelkey, manleveljuxtapose.manleveljuxtapose, lrja.managerstatus, lrja.lrjakey FROM manleveljuxtapose, lrja WHERE manleveljuxtapose.lasname = %s AND manleveljuxtapose.manlevelkey=lrja.managerstatus and lrja.lrjakey=%s", GetSQLValueString($colname_rsManleveljuxtapose, "text"),GetSQLValueString($colname2_rsManleveljuxtapose, "int"));
+$rsManleveljuxtapose = mysql_query($query_rsManleveljuxtapose, $Assessment) or die(mysql_error());
+$row_rsManleveljuxtapose = mysql_fetch_assoc($rsManleveljuxtapose);
+$totalRows_rsManleveljuxtapose = mysql_num_rows($rsManleveljuxtapose);
+
+$colname_rsLRJAgrowth = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLRJAgrowth = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAgrowth = sprintf("SELECT * FROM lrjagrowth WHERE lasname = %s", GetSQLValueString($colname_rsLRJAgrowth, "text"));
+$rsLRJAgrowth = mysql_query($query_rsLRJAgrowth, $Assessment) or die(mysql_error());
+$row_rsLRJAgrowth = mysql_fetch_assoc($rsLRJAgrowth);
+$totalRows_rsLRJAgrowth = mysql_num_rows($rsLRJAgrowth);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAsurvey = "SELECT lrjakey, sensefirsttime, uncertaintycertain, workhard, instructorquality, varietyofsources, learninnate, expertsannoying, scientiststruth, challengeoverconfident, combinesources, simpler, precisemeasurement, bigideas, fewsources, losefaithchange, trueagree, noevaluatebeliefs, sciencebest, sentencemanymeaning, scienceoriginalthinking, notruth, uptoyou, memorizingyes, multipleapproaches, likedisagreement, learntolearn, manyperspectivesbest, mostcanagreesome, somethingsfaith, everyoneowntruth, newconceptonown, sentencecontext, simplesolutions, truthunchanging, seekadvice, sticktofacts, neverrightanswer, questionexperts, notfunifeasy FROM lrja";
+$rsLRJAsurvey = mysql_query($query_rsLRJAsurvey, $Assessment) or die(mysql_error());
+$row_rsLRJAsurvey = mysql_fetch_assoc($rsLRJAsurvey);
+$totalRows_rsLRJAsurvey = mysql_num_rows($rsLRJAsurvey);
+
+$colname_rsRegistrant = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsRegistrant = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrant = sprintf("SELECT registrants.firstname, registrants.lastname, registrants.userkey, lrja.lrjakey, lrja.userkey FROM registrants, lrja WHERE lrja.lrjakey = %s AND lrja.userkey = registrants.userkey", GetSQLValueString($colname_rsRegistrant, "int"));
+$rsRegistrant = mysql_query($query_rsRegistrant, $Assessment) or die(mysql_error());
+$row_rsRegistrant = mysql_fetch_assoc($rsRegistrant);
+$totalRows_rsRegistrant = mysql_num_rows($rsRegistrant);
+
+$colname_rsCoherence = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsCoherence = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherence = sprintf("SELECT lrjascores.lrjakey, lrjascores.coherence, coherenceinfer.quality, coherenceinfer.lasname, coherenceinfer.implication, lrjascores.lasname, coherenceinfer.coherenceinfer FROM lrjascores, coherenceinfer WHERE lrjascores.coherence = coherenceinfer.quality AND lrjascores.lrjakey = %s and coherenceinfer.lasname  = lrjascores.lasname", GetSQLValueString($colname_rsCoherence, "int"));
+$rsCoherence = mysql_query($query_rsCoherence, $Assessment) or die(mysql_error());
+$row_rsCoherence = mysql_fetch_assoc($rsCoherence);
+$totalRows_rsCoherence = mysql_num_rows($rsCoherence);
+
+$colname_rsCoherenceOverall = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsCoherenceOverall = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceOverall = sprintf("SELECT lrjascores.lrjakey, lrjascores.coherenceoverallkey, lrjascores.lasname, coherenceoverallinfer.lasname, coherenceoverallinfer.coherencekey, coherenceoverallinfer.implication, coherenceoverallinfer.cohereoverinfer FROM lrjascores, coherenceoverallinfer WHERE lrjascores.coherenceoverallkey = coherenceoverallinfer.coherencekey AND lrjascores.lrjakey = %s and coherenceoverallinfer.lasname = lrjascores.lasname", GetSQLValueString($colname_rsCoherenceOverall, "int"));
+$rsCoherenceOverall = mysql_query($query_rsCoherenceOverall, $Assessment) or die(mysql_error());
+$row_rsCoherenceOverall = mysql_fetch_assoc($rsCoherenceOverall);
+$totalRows_rsCoherenceOverall = mysql_num_rows($rsCoherenceOverall);
+
+$colname_rsCoherenceOnpoint = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsCoherenceOnpoint = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceOnpoint = sprintf("SELECT coherenceonpoint.onpointkey, coherenceonpoint.onpoint, lrjascores.coherenceonpointkey, lrjascores.lrjakey FROM coherenceonpoint, lrjascores WHERE lrjascores.coherenceonpointkey = coherenceonpoint.onpointkey AND lrjascores.lrjakey = %s", GetSQLValueString($colname_rsCoherenceOnpoint, "int"));
+$rsCoherenceOnpoint = mysql_query($query_rsCoherenceOnpoint, $Assessment) or die(mysql_error());
+$row_rsCoherenceOnpoint = mysql_fetch_assoc($rsCoherenceOnpoint);
+$totalRows_rsCoherenceOnpoint = mysql_num_rows($rsCoherenceOnpoint);
+
+$colname_rsRelevanceArg = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsRelevanceArg = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRelevanceArg = sprintf("SELECT coherencerelevancearg.coherencekey, coherencerelevancearg.coherencerelevancearg, lrjascores.coherencerelevanceargkey, lrjascores.lrjakey FROM coherencerelevancearg, lrjascores WHERE lrjascores.coherencerelevanceargkey = coherencerelevancearg.coherencekey AND lrjascores.lrjakey = %s", GetSQLValueString($colname_rsRelevanceArg, "int"));
+$rsRelevanceArg = mysql_query($query_rsRelevanceArg, $Assessment) or die(mysql_error());
+$row_rsRelevanceArg = mysql_fetch_assoc($rsRelevanceArg);
+$totalRows_rsRelevanceArg = mysql_num_rows($rsRelevanceArg);
+
+$colname_rsRelevanceExamp = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsRelevanceExamp = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRelevanceExamp = sprintf("SELECT coherencerelevanceexamp.coherenceno, coherencerelevanceexamp.coherencerelevexamp, lrjascores.coherencerelevanceexampkey, lrjascores.lrjakey, coherencerelevanceexamp.coherenceno, coherencerelevanceexamp.coherencerelevexamp FROM coherencerelevanceexamp, lrjascores WHERE lrjascores.coherencerelevanceexampkey = coherencerelevanceexamp.coherenceno AND lrjascores.lrjakey = %s", GetSQLValueString($colname_rsRelevanceExamp, "int"));
+$rsRelevanceExamp = mysql_query($query_rsRelevanceExamp, $Assessment) or die(mysql_error());
+$row_rsRelevanceExamp = mysql_fetch_assoc($rsRelevanceExamp);
+$totalRows_rsRelevanceExamp = mysql_num_rows($rsRelevanceExamp);
+
+$colname_rsCoherenceFragment = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsCoherenceFragment = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceFragment = sprintf("SELECT coherencefragment.coherencekey, coherencefragment.coherencefragment, lrjascores.coherencefragmentkey, lrjascores.lrjakey FROM coherencefragment, lrjascores WHERE lrjascores.coherencefragmentkey = coherencefragment.coherencekey AND lrjascores.lrjakey = %s", GetSQLValueString($colname_rsCoherenceFragment, "int"));
+$rsCoherenceFragment = mysql_query($query_rsCoherenceFragment, $Assessment) or die(mysql_error());
+$row_rsCoherenceFragment = mysql_fetch_assoc($rsCoherenceFragment);
+$totalRows_rsCoherenceFragment = mysql_num_rows($rsCoherenceFragment);
+
+$colname_rsCoherenceFraming = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsCoherenceFraming = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceFraming = sprintf("SELECT coherenceframing.coherencekey, coherenceframing.coherenceframing, lrjascores.coherenceframingkey, lrjascores.lrjakey FROM coherenceframing, lrjascores WHERE lrjascores.coherenceframingkey = coherenceframing.coherencekey AND lrjascores.lrjakey = %s", GetSQLValueString($colname_rsCoherenceFraming, "int"));
+$rsCoherenceFraming = mysql_query($query_rsCoherenceFraming, $Assessment) or die(mysql_error());
+$row_rsCoherenceFraming = mysql_fetch_assoc($rsCoherenceFraming);
+$totalRows_rsCoherenceFraming = mysql_num_rows($rsCoherenceFraming);
+
+$colname_rsCoherenceEnglish = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsCoherenceEnglish = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceEnglish = sprintf("SELECT lrjascores.lrjakey, lrjascores.coherenceenglishkey, lrjascores.lasname, coherenceenglishinfer.coherencekey, coherenceenglishinfer.lasname, coherenceenglishinfer.coherenceenglishinfer, coherenceenglishinfer.implication FROM lrjascores, coherenceenglishinfer WHERE lrjascores.coherenceenglishkey = coherenceenglishinfer.coherencekey AND lrjascores.lrjakey = %s and lrjascores.lasname = coherenceenglishinfer.lasname", GetSQLValueString($colname_rsCoherenceEnglish, "int"));
+$rsCoherenceEnglish = mysql_query($query_rsCoherenceEnglish, $Assessment) or die(mysql_error());
+$row_rsCoherenceEnglish = mysql_fetch_assoc($rsCoherenceEnglish);
+$totalRows_rsCoherenceEnglish = mysql_num_rows($rsCoherenceEnglish);
+
+$colname_rsCoherencePersuade = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsCoherencePersuade = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherencePersuade = sprintf("SELECT coherencepersuade.persuasivekey, coherencepersuade.persuasiveness, lrjascores.lrjakey, lrjascores.coherencepersuadekey FROM coherencepersuade, lrjascores WHERE lrjascores.coherencepersuadekey = coherencepersuade.persuasivekey AND lrjascores.lrjakey = %s", GetSQLValueString($colname_rsCoherencePersuade, "int"));
+$rsCoherencePersuade = mysql_query($query_rsCoherencePersuade, $Assessment) or die(mysql_error());
+$row_rsCoherencePersuade = mysql_fetch_assoc($rsCoherencePersuade);
+$totalRows_rsCoherencePersuade = mysql_num_rows($rsCoherencePersuade);
+
+$colname_rsLRJAresources1 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLRJAresources1 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAresources1 = sprintf("SELECT * FROM lrjaresources WHERE las = %s AND resourcename = 'resource 1'", GetSQLValueString($colname_rsLRJAresources1, "text"));
+$rsLRJAresources1 = mysql_query($query_rsLRJAresources1, $Assessment) or die(mysql_error());
+$row_rsLRJAresources1 = mysql_fetch_assoc($rsLRJAresources1);
+$totalRows_rsLRJAresources1 = mysql_num_rows($rsLRJAresources1);
+
+$colname_rsLRJAresources2 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLRJAresources2 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAresources2 = sprintf("SELECT * FROM lrjaresources WHERE las = %s AND resourcename = 'resource 2'", GetSQLValueString($colname_rsLRJAresources2, "text"));
+$rsLRJAresources2 = mysql_query($query_rsLRJAresources2, $Assessment) or die(mysql_error());
+$row_rsLRJAresources2 = mysql_fetch_assoc($rsLRJAresources2);
+$totalRows_rsLRJAresources2 = mysql_num_rows($rsLRJAresources2);
+
+$colname_rsLRJAresources3 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLRJAresources3 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAresources3 = sprintf("SELECT * FROM lrjaresources WHERE las = %s AND resourcename = 'resource 3'", GetSQLValueString($colname_rsLRJAresources3, "text"));
+$rsLRJAresources3 = mysql_query($query_rsLRJAresources3, $Assessment) or die(mysql_error());
+$row_rsLRJAresources3 = mysql_fetch_assoc($rsLRJAresources3);
+$totalRows_rsLRJAresources3 = mysql_num_rows($rsLRJAresources3);
+
+$colname_rsLRJAresources4 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLRJAresources4 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAresources4 = sprintf("SELECT * FROM lrjaresources WHERE las = %s AND resourcename = 'resource 4'", GetSQLValueString($colname_rsLRJAresources4, "text"));
+$rsLRJAresources4 = mysql_query($query_rsLRJAresources4, $Assessment) or die(mysql_error());
+$row_rsLRJAresources4 = mysql_fetch_assoc($rsLRJAresources4);
+$totalRows_rsLRJAresources4 = mysql_num_rows($rsLRJAresources4);
+
+$colname_rsLRJAresources5 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLRJAresources5 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAresources5 = sprintf("SELECT * FROM lrjaresources WHERE las = %s AND resourcename = 'resource 5'", GetSQLValueString($colname_rsLRJAresources5, "text"));
+$rsLRJAresources5 = mysql_query($query_rsLRJAresources5, $Assessment) or die(mysql_error());
+$row_rsLRJAresources5 = mysql_fetch_assoc($rsLRJAresources5);
+$totalRows_rsLRJAresources5 = mysql_num_rows($rsLRJAresources5);
+
+$colname_rsLasByAge = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLasByAge = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasByAge = sprintf("SELECT lasname, lasbyageart, lasbyageart2 FROM lasbyage WHERE lasname = %s", GetSQLValueString($colname_rsLasByAge, "text"));
+$rsLasByAge = mysql_query($query_rsLasByAge, $Assessment) or die(mysql_error());
+$row_rsLasByAge = mysql_fetch_assoc($rsLasByAge);
+$totalRows_rsLasByAge = mysql_num_rows($rsLasByAge);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+$colname_rsScoreComment = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsScoreComment = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsScoreComment = sprintf("SELECT lrjascores.lrjakey, lrjascores.lasnumber_1, lasnumber.lasnumber, lasnumber.lasexplanation FROM lrjascores, lasnumber WHERE lrjascores.lrjakey = %s AND lasnumber.lasnumber = lrjascores.lasnumber_1", GetSQLValueString($colname_rsScoreComment, "int"));
+$rsScoreComment = mysql_query($query_rsScoreComment, $Assessment) or die(mysql_error());
+$row_rsScoreComment = mysql_fetch_assoc($rsScoreComment);
+$totalRows_rsScoreComment = mysql_num_rows($rsScoreComment);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAprobe1 = "SELECT * FROM lrjaprobes WHERE lrjaprobeskey = 1";
+$rsLRJAprobe1 = mysql_query($query_rsLRJAprobe1, $Assessment) or die(mysql_error());
+$row_rsLRJAprobe1 = mysql_fetch_assoc($rsLRJAprobe1);
+$totalRows_rsLRJAprobe1 = mysql_num_rows($rsLRJAprobe1);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAprobe2 = "SELECT * FROM lrjaprobes WHERE lrjaprobeskey = 2";
+$rsLRJAprobe2 = mysql_query($query_rsLRJAprobe2, $Assessment) or die(mysql_error());
+$row_rsLRJAprobe2 = mysql_fetch_assoc($rsLRJAprobe2);
+$totalRows_rsLRJAprobe2 = mysql_num_rows($rsLRJAprobe2);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAprobe3 = "SELECT * FROM lrjaprobes WHERE lrjaprobeskey = 3";
+$rsLRJAprobe3 = mysql_query($query_rsLRJAprobe3, $Assessment) or die(mysql_error());
+$row_rsLRJAprobe3 = mysql_fetch_assoc($rsLRJAprobe3);
+$totalRows_rsLRJAprobe3 = mysql_num_rows($rsLRJAprobe3);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAprobe4 = "SELECT * FROM lrjaprobes WHERE lrjaprobeskey = 4";
+$rsLRJAprobe4 = mysql_query($query_rsLRJAprobe4, $Assessment) or die(mysql_error());
+$row_rsLRJAprobe4 = mysql_fetch_assoc($rsLRJAprobe4);
+$totalRows_rsLRJAprobe4 = mysql_num_rows($rsLRJAprobe4);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAprobe5 = "SELECT * FROM lrjaprobes WHERE lrjaprobeskey = 5";
+$rsLRJAprobe5 = mysql_query($query_rsLRJAprobe5, $Assessment) or die(mysql_error());
+$row_rsLRJAprobe5 = mysql_fetch_assoc($rsLRJAprobe5);
+$totalRows_rsLRJAprobe5 = mysql_num_rows($rsLRJAprobe5);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAprobe6 = "SELECT * FROM lrjaprobes WHERE lrjaprobeskey = 6";
+$rsLRJAprobe6 = mysql_query($query_rsLRJAprobe6, $Assessment) or die(mysql_error());
+$row_rsLRJAprobe6 = mysql_fetch_assoc($rsLRJAprobe6);
+$totalRows_rsLRJAprobe6 = mysql_num_rows($rsLRJAprobe6);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAprobe7 = "SELECT * FROM lrjaprobes WHERE lrjaprobeskey = 7";
+$rsLRJAprobe7 = mysql_query($query_rsLRJAprobe7, $Assessment) or die(mysql_error());
+$row_rsLRJAprobe7 = mysql_fetch_assoc($rsLRJAprobe7);
+$totalRows_rsLRJAprobe7 = mysql_num_rows($rsLRJAprobe7);
+
+$colname_rsDilemma = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsDilemma = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDilemma = sprintf("SELECT lrjadilemma.lrjadilemma, lrjadilemma.lrjadilemmakey, lrja.lrjadilemmakey, lrja.lrjakey FROM lrjadilemma, lrja WHERE lrjadilemma.lrjadilemmakey = lrja.lrjadilemmakey AND lrja.lrjakey = %s", GetSQLValueString($colname_rsDilemma, "int"));
+$rsDilemma = mysql_query($query_rsDilemma, $Assessment) or die(mysql_error());
+$row_rsDilemma = mysql_fetch_assoc($rsDilemma);
+$totalRows_rsDilemma = mysql_num_rows($rsDilemma);
+
+$colname_rsRelativism = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsRelativism = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRelativism = sprintf("SELECT lrjarelativismlevel.relativekey, lrjarelativismlevel.`description`, lrjascores.relativism, lrjascores.lrjakey  FROM lrjarelativismlevel, lrjascores WHERE lrjascores.relativism = lrjarelativismlevel.relativekey AND lrjascores.lrjakey = %s", GetSQLValueString($colname_rsRelativism, "int"));
+$rsRelativism = mysql_query($query_rsRelativism, $Assessment) or die(mysql_error());
+$row_rsRelativism = mysql_fetch_assoc($rsRelativism);
+$totalRows_rsRelativism = mysql_num_rows($rsRelativism);
+
+$colname_rsAbsolutism = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsAbsolutism = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsAbsolutism = sprintf("SELECT lrjaabsolutismlevel.absolutekey, lrjaabsolutismlevel.`description`, lrjascores.absolutism, lrjascores.lrjakey FROM lrjaabsolutismlevel, lrjascores WHERE lrjascores.absolutism = lrjaabsolutismlevel.absolutekey AND lrjascores.lrjakey = %s", GetSQLValueString($colname_rsAbsolutism, "int"));
+$rsAbsolutism = mysql_query($query_rsAbsolutism, $Assessment) or die(mysql_error());
+$row_rsAbsolutism = mysql_fetch_assoc($rsAbsolutism);
+$totalRows_rsAbsolutism = mysql_num_rows($rsAbsolutism);
+
+$colname_rsRecommendboilerplate4 = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsRecommendboilerplate4 = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecommendboilerplate4 = sprintf("SELECT lrja_recommendboilerplate.recommendbpkey, lrja_recommendboilerplate.recommendbp, lrjascores.lrjakey, lrjascores.coded FROM lrja_recommendboilerplate, lrjascores WHERE lrjascores.lrjakey = %s AND lrjascores.coded = 0 and lrja_recommendboilerplate.recommendbpkey = 4", GetSQLValueString($colname_rsRecommendboilerplate4, "int"));
+$rsRecommendboilerplate4 = mysql_query($query_rsRecommendboilerplate4, $Assessment) or die(mysql_error());
+$row_rsRecommendboilerplate4 = mysql_fetch_assoc($rsRecommendboilerplate4);
+$totalRows_rsRecommendboilerplate4 = mysql_num_rows($rsRecommendboilerplate4);
+
+$colname_rsCoherenceVocabulary = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsCoherenceVocabulary = (get_magic_quotes_gpc()) ? $_GET['lrjakey'] : addslashes($_GET['lrjakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceVocabulary = sprintf("SELECT coherencevocabulary.vocabularykey, coherencevocabulary.vocabularycomment, lrjascores.coherencevocabularykey FROM coherencevocabulary, lrjascores WHERE lrjascores.coherencevocabularykey = coherencevocabulary.vocabularykey AND lrjascores.lrjakey = %s", GetSQLValueString($colname_rsCoherenceVocabulary, "int"));
+$rsCoherenceVocabulary = mysql_query($query_rsCoherenceVocabulary, $Assessment) or die(mysql_error());
+$row_rsCoherenceVocabulary = mysql_fetch_assoc($rsCoherenceVocabulary);
+$totalRows_rsCoherenceVocabulary = mysql_num_rows($rsCoherenceVocabulary);
+
+$colname_rsCoherenceProbe = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsCoherenceProbe = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceProbe = sprintf("SELECT lrjascores.coherenceonpointkey, lrjascores.lrjakey, coherenceprobe.coherenceprobekey, coherenceprobe.coherenceprobe, lrjascores.coherenceprobekey FROM lrjascores, coherenceprobe WHERE lrjascores.coherenceprobekey =  coherenceprobe.coherenceprobekey AND lrjascores.lrjakey = %s", GetSQLValueString($colname_rsCoherenceProbe, "int"));
+$rsCoherenceProbe = mysql_query($query_rsCoherenceProbe, $Assessment) or die(mysql_error());
+$row_rsCoherenceProbe = mysql_fetch_assoc($rsCoherenceProbe);
+$totalRows_rsCoherenceProbe = mysql_num_rows($rsCoherenceProbe);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceVocabularyIntro = "SELECT coherencevocabulary.vocabularykey, coherencevocabulary.vocabularyintro, lrjascores.coherencevocabularykey FROM coherencevocabulary, lrjascores WHERE coherencevocabulary.vocabularykey = 1 AND lrjascores.coherencevocabularykey > 0";
+$rsCoherenceVocabularyIntro = mysql_query($query_rsCoherenceVocabularyIntro, $Assessment) or die(mysql_error());
+$row_rsCoherenceVocabularyIntro = mysql_fetch_assoc($rsCoherenceVocabularyIntro);
+$totalRows_rsCoherenceVocabularyIntro = mysql_num_rows($rsCoherenceVocabularyIntro);
+
+$colname_rsStrength1 = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsStrength1 = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength1 = sprintf("SELECT lrjascores.lrjakey, lrjascores.strength1, lrjastrengths.lasname, lrjascores.lasname, lrjastrengths.position1phrasing, lrjastrengths.strengthkey FROM lrjascores, lrjastrengths WHERE lrjascores.lrjakey = %s AND lrjascores.strength1 = lrjastrengths.strengthkey", GetSQLValueString($colname_rsStrength1, "int"));
+$rsStrength1 = mysql_query($query_rsStrength1, $Assessment) or die(mysql_error());
+$row_rsStrength1 = mysql_fetch_assoc($rsStrength1);
+$totalRows_rsStrength1 = mysql_num_rows($rsStrength1);
+
+$colname_rsStrength2 = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsStrength2 = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength2 = sprintf("SELECT lrjascores.lrjakey, lrjascores.strength2, lrjastrengths.lasname, lrjascores.lasname, lrjastrengths.position2phrasing, lrjastrengths.strengthkey FROM lrjascores, lrjastrengths WHERE lrjascores.lrjakey = %s AND lrjascores.strength2 = lrjastrengths.strengthkey", GetSQLValueString($colname_rsStrength2, "int"));
+$rsStrength2 = mysql_query($query_rsStrength2, $Assessment) or die(mysql_error());
+$row_rsStrength2 = mysql_fetch_assoc($rsStrength2);
+$totalRows_rsStrength2 = mysql_num_rows($rsStrength2);
+
+$colname_rsStrength3 = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsStrength3 = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength3 = sprintf("SELECT lrjascores.lrjakey, lrjascores.strength3, lrjastrengths.lasname, lrjascores.lasname, lrjastrengths.position3phrasing, lrjastrengths.strengthkey FROM lrjascores, lrjastrengths WHERE lrjascores.lrjakey = %s AND lrjascores.strength3 = lrjastrengths.strengthkey", GetSQLValueString($colname_rsStrength3, "int"));
+$rsStrength3 = mysql_query($query_rsStrength3, $Assessment) or die(mysql_error());
+$row_rsStrength3 = mysql_fetch_assoc($rsStrength3);
+$totalRows_rsStrength3 = mysql_num_rows($rsStrength3);
+
+$colname_rsCaveat1 = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsCaveat1 = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCaveat1 = sprintf("SELECT lrjascores.lrjakey, lrjascores.growth1, lrjacaveat.lasname, lrjascores.lasname, lrjacaveat.position1phrasing, lrjacaveat.caveatkey FROM lrjascores, lrjacaveat WHERE lrjascores.lrjakey = %s AND lrjascores.growth1 = lrjacaveat.caveatkey", GetSQLValueString($colname_rsCaveat1, "int"));
+$rsCaveat1 = mysql_query($query_rsCaveat1, $Assessment) or die(mysql_error());
+$row_rsCaveat1 = mysql_fetch_assoc($rsCaveat1);
+$totalRows_rsCaveat1 = mysql_num_rows($rsCaveat1);
+
+$colname_rsCaveat2 = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsCaveat2 = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCaveat2 = sprintf("SELECT lrjascores.lrjakey, lrjascores.growth2, lrjacaveat.lasname, lrjascores.lasname, lrjacaveat.position2phrasing, lrjacaveat.caveatkey FROM lrjascores, lrjacaveat WHERE lrjascores.lrjakey = %s AND lrjascores.growth2 = lrjacaveat.caveatkey", GetSQLValueString($colname_rsCaveat2, "int"));
+$rsCaveat2 = mysql_query($query_rsCaveat2, $Assessment) or die(mysql_error());
+$row_rsCaveat2 = mysql_fetch_assoc($rsCaveat2);
+$totalRows_rsCaveat2 = mysql_num_rows($rsCaveat2);
+
+$colname_rsLASnumberart = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsLASnumberart = $_GET['lrjakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLASnumberart = sprintf("SELECT lasnumberart.lasartkey, lasnumberart.lasnumber, lasnumberart.manlasart, lasnumberart.starart, lasnumberart.compareart, lrjascores.lrjakey, lrjascores.lasnumber_1 FROM lasnumberart, lrjascores WHERE lrjascores.lrjakey = %s AND lrjascores.lasnumber_1 = lasnumberart.lasnumber", GetSQLValueString($colname_rsLASnumberart, "int"));
+$rsLASnumberart = mysql_query($query_rsLASnumberart, $Assessment) or die(mysql_error());
+$row_rsLASnumberart = mysql_fetch_assoc($rsLASnumberart);
+$totalRows_rsLASnumberart = mysql_num_rows($rsLASnumberart);
+
+$colname_rsRecommendStrength = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsRecommendStrength = (get_magic_quotes_gpc()) ? $_GET['lrjakey'] : addslashes($_GET['lrjakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecommendStrength = sprintf("SELECT lrjascores.lrjakey, lrjascores.lasname, lrjarecommend.recommendkey, lrjarecommend.recommend_strength, lrjarecommend.lasname, lrjascores.recommendstrengthkey FROM lrjascores, lrjarecommend WHERE lrjascores.lrjakey = %s AND lrjascores.recommendstrengthkey = lrjarecommend.recommendkey", GetSQLValueString($colname_rsRecommendStrength, "int"));
+$rsRecommendStrength = mysql_query($query_rsRecommendStrength, $Assessment) or die(mysql_error());
+$row_rsRecommendStrength = mysql_fetch_assoc($rsRecommendStrength);
+$totalRows_rsRecommendStrength = mysql_num_rows($rsRecommendStrength);
+
+$colname_rsRecommendGrowth = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsRecommendGrowth = (get_magic_quotes_gpc()) ? $_GET['lrjakey'] : addslashes($_GET['lrjakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecommendGrowth = sprintf("SELECT lrjascores.lrjakey, lrjascores.lasname, lrjarecommend.recommendkey, lrjarecommend.recommend_growth, lrjarecommend.lasname, lrjascores.recommendstrengthkey FROM lrjascores, lrjarecommend WHERE lrjascores.lrjakey = %s AND lrjascores.recommendgrowthkey = lrjarecommend.recommendkey", GetSQLValueString($colname_rsRecommendGrowth, "int"));
+$rsRecommendGrowth = mysql_query($query_rsRecommendGrowth, $Assessment) or die(mysql_error());
+$row_rsRecommendGrowth = mysql_fetch_assoc($rsRecommendGrowth);
+$totalRows_rsRecommendGrowth = mysql_num_rows($rsRecommendGrowth);
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelrja2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LRJA report</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssetsAssessments/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssetsAssessments/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.style11 {
+	font-size: 10px;
+	line-height: normal;
+}
+-->
+</style>
+<style type="text/css">
+<!--
+#mantable {width: 255px;
+	float: left;
+	height: 170px;
+	margin: 0px;
+}
+-->
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #A9BBA0;
+	padding-top: 4;
+	padding-right: 27;
+	padding-bottom: 0;
+	padding-left: 17;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #52561F;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LRJAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <p>&nbsp;</p>
+    <p><strong>Date of assessment</strong>: <?php echo $row_rsLRJA['date']; ?></p>
+    <div id="TabbedPanels1" class="TabbedPanels">
+      <ul class="TabbedPanelsTabGroup">
+              <li class="TabbedPanelsTab">Results</li>
+              <li class="TabbedPanelsTab">Reasoning </li>
+              <li class="TabbedPanelsTab">Suggestions</li>
+              <li class="TabbedPanelsTab">Comparison</li>
+<li class="TabbedPanelsTab">Your essays</li>
+            </ul>
+            <div class="TabbedPanelsContentGroup">
+              <div class="TabbedPanelsContent">
+                <h2>Results for <?php echo $row_rsRegistrant['firstname']; ?> <?php echo $row_rsRegistrant['lastname']; ?></h2>
+                <p>Your lectical phase score is <?php echo $row_rsLRJA['lasname']; ?></p>
+                <p><?php echo $row_rsScoreComment['lasexplanation']; ?></p>
+                <h3>Your probable perspectives on several dimensions of reflective judgment</h3>
+                <p><em>Perspective on complexity:</em> <?php echo $row_rsStrengths['rjcodecomplexity']; ?></p>
+                <p><em>Perspective on conducting inquiry:</em> <?php echo $row_rsStrengths['rjcodeinquiry']; ?></p>
+                <p><em>Perspectve on evaluating information:</em> <?php echo $row_rsStrengths['rjcodeevaluate']; ?></p>
+                <p><em>Perspective on certainty:</em> <?php echo $row_rsStrengths['rjcodecertainty']; ?></p>
+                <p><em>Perspective on truth:</em> <?php echo $row_rsStrengths['rjcodetruth']; ?></p>
+                <p><em>Perspective on abolute truth:</em> <?php echo $row_rsStrengths['rjcoderelative']; ?></p>
+                <h3>Present and potential strengths</h3>
+                <p><?php echo $row_rsRecommendboilerplate4['recommendbp']; ?><?php echo $row_rsRelativism['description']; ?><?php echo $row_rsAbsolutism['description']; ?><?php echo $row_rsStrength1['position1phrasing']; ?><?php echo $row_rsStrength2['position2phrasing']; ?><?php echo $row_rsStrength3['position3phrasing']; ?><?php echo $row_rsCaveat1['position1phrasing']; ?><?php echo $row_rsCaveat2['position2phrasing']; ?><?php echo $row_rsRecommendStrength['recommend_strength']; ?> <?php echo $row_rsRecommendGrowth['recommend_growth']; ?></p>
+<h3>Personal comments on the quality of your arguments</h3>
+                <p><?php echo $row_rsCoherenceFraming['coherenceframing']; ?> <?php echo $row_rsRelevanceExamp['coherencerelevexamp']; ?> <?php echo $row_rsCoherenceProbe['coherenceprobe']; ?> <?php echo $row_rsCoherenceOnpoint['onpoint']; ?> <?php echo $row_rsCoherencePersuade['persuasiveness']; ?> <?php echo $row_rsCoherenceFragment['coherencefragment']; ?> <?php echo $row_rsRelevanceArg['coherencerelevancearg']; ?> <?php echo $row_rsCoherenceOverall['implication']; ?> <?php echo $row_rsCoherenceOverall['cohereoverinfer']; ?><?php echo $row_rsCoherenceVocabularyIntro['vocabularyintro']; ?><?php echo $row_rsCoherenceVocabulary['vocabularycomment']; ?><?php echo $row_rsCoherenceEnglish['coherenceenglishinfer']; ?> <?php echo $row_rsCoherenceEnglish['implication']; ?></p>
+                <h3>A note on our recommendations</h3>
+                <p>Development from one level to the next cannot occur until there is adequate elaboration of concepts and skills within  one's current level. Moreover, the adequacy of one's skills and concepts at a new level is contingent upon the breadth and depth of elaboration at the previous level. Unless you are on the verge of transitioning into a new level, most of our comments are intended to promote optimal elaboration of skills and concepts at your current level. </p>
+<p>&nbsp;</p>
+                <p class="boxLRJA"><strong>Limits of assessment: </strong>There is a limit to what you can write in an assessment essay. Occasionally, something is missing just because you did not think about it the day you wrote your responses. We may label the omission as an area of weakness. If you find yourself disagreeing with any of our observations, seek a second opinion from a mentor or counselor who knows you well.</p>
+                <p>&nbsp;</p>
+              </div>
+<div class="TabbedPanelsContent">
+                  <h2>Reasoning in this phase</h2>
+                  <p><?php echo $row_rsLRJAlasgendescrip['rjlasgendescrip']; ?></p>
+<p><?php echo $row_rsLRJAlasgendescrip['rjlasperspec']; ?></p>
+          <p><?php echo $row_rsLRJAlasgendescrip['rjlaslearn']; ?></p>
+          <p><?php echo $row_rsLRJAlasgendescrip['rjlasinquiry']; ?></p>
+          <h3 align="left"><span>Implicit versus explicit knowledge</span></h3>
+          <p align="left"><span>Some of our knowlege is readily avaialble to us. We are conscious of it and can share it with others. Psychologists refer to this kind of knowledge as <em>explicit</em>. Explicit knowledge is fairly easy to share on an assessment like this one. However, people often know more about a particular subject than they can communicate in an assessment like this one. This is because much of what we learn through experience does not automatically become part of our explicit knowledge. It's in a form that's difficult to share. We call this kind of knowledge <em>tacit</em> or <em>implicit</em>. You can also think of it as intuitive knowledge. Tacit knowledge is not a bad thing. It helps us make quick choices in familiar situations; we'd be in big trouble if we had to think through every single situation in our lives before we made a decision! But tacit knowledge has its limits.</span></p>
+<p><strong>First</strong>, because we aren't able to bring it into focus, we can't share tacit knowledge with others. This is the case in businesses in which the person at the top is an &quot;intuitive&quot; leader. Because his or her leadership skills are tacit, they can't be shared. In situations like this, it is not uncommon for an institution to last only as long as its leader. </p>
+                  <p><strong>Second</strong>, it is limited by our experience, which means it isn't terribly useful for dealing with novelty. Because tacit knowledge is experienced-based, it is most useful in situations that are like those we have confronted in the past. Unfortunately, the modern world is constantly providing us with new challenges. To meet these challenges, we  need conscious methods for evaluating  knowledge and experience.</p>
+                  <p><strong>Third</strong>, sometimes our tacit knowledge is sub-optimal. For example, people who learn the skills required to survive on the rough side of town or in an abusive relationship often fare poorly when they try to function outside of those contexts, because their  tacit knowledge isn't useful in their new surroundings. Before they can learn more adaptive skills, they usually need to bring their tacit knowledge into consciousness. </p>
+                  <p><span><strong>Fourth</strong>, relying on tacit knowledge limits our development. When we habitually rely on our tacit knowledge, learning not only slows down, it's quality is compromised. Optimal learning requires that we reflect consciously upon our own experiences and actively seek other perspectives to</span> fill in the gaps. </p>
+                  <p><strong>Finally</strong>, relying upon tacit knowledge limits our ability to collaborate with others.</p>
+                  <p>&nbsp;</p>
+                  <p class="boxLRJA"><strong>Note:</strong> We did not base your score on the particular conceptual content of your performance. We base our scores on what cognitive developmental researchers call the &quot;hierarchical&quot; (level of hierarchical integration) and &quot;horizontal&quot; (degree of elaboration within a level) complexity of  performances. The first two digits in your score denote the hierarchical integration; the second two digits denote the degree of elaboration. To read a short description of our scoring system, the Lectical Assessment System (LAS), <a href="../PDF/LAAS.pdf">click here</a>.</p>
+                  <p>&nbsp;</p>
+              </div>
+<div class="TabbedPanelsContent">
+                  <h2>Suggestions</h2>
+                  <p>As Malcolm Gladwell argues in the book, <em>Outliers</em>, it takes about 10,000 hours of  study (10 years) to become an expert in any complex field—no matter how talented you are. We would add that no matter how much of an expert you become—on yourself, in your area of professional expertise, or in the interpersonal sphere—there is always room for growth. </p>
+<p>Our learning suggestions are targeted one to two phases beyond your current phase of performance. The resources in this list should make you stretch just enough to challenge your current thinking. If a resource is too easy, you should probably move on. If it is too difficult, start with something a little less challenging.</p>
+                  <h3>Areas for growth include...</h3>
+                  <ul>
+                    <li>
+                      <?php echo $row_rsLRJAgrowth['rjgrowthcomplexity']; ?> </li>
+                    <li>
+                      <?php echo $row_rsLRJAgrowth['rjgrowthinquiry']; ?> </li>
+                    <li>
+                      <?php echo $row_rsLRJAgrowth['rjgrowthevaluate']; ?> </li>
+                    <li>
+                      <?php echo $row_rsLRJAgrowth['rjgrowthtruth']; ?> </li>
+                    <li>
+                      <?php echo $row_rsLRJAgrowth['growthrelative']; ?> </li>
+                  </ul>
+                  <h3>Learning suggestions</h3>
+                  <p>As you work with the resources suggested on this page, keep in mind that deep learning requires practice. You are far more likely to incorporate new knowledge into your skill repertoire if you take every opportunity to (1) put it to work, and (2) reflect upon outcomes. Putting knowledge to work means applying it in real-world contexts. Try out new skills in low-stakes situations first, then gradually begin to apply them in higher-stakes situations until you've mastered them. Reflecting on outcomes means evaluating  the results of  your efforts. This works best if you keep a record—such as a journal—and share your experiences with other members of your community of practice. If you are in a leadership position, you may want to think about how your organizational culture supports or prevents this kind of discourse.<?php echo $row_rsLRJAresources1['resource']; ?><?php echo $row_rsLRJAresources2['resource']; ?><?php echo $row_rsLRJAresources3['resource']; ?><?php echo $row_rsLRJAresources4['resource']; ?><?php echo $row_rsLRJAresources5['resource']; ?></p>
+<p>&nbsp;</p>
+                <p class="boxLRJA"> You may find it useful to revisit your report from time to time. As we update our knowledge about learning at each phase, we add to our learning suggestions. This means that, from time to time, you may discover new resources here, even if you don't take another assessment. </p>
+              </div>
+<div class="TabbedPanelsContent">
+  <h2>Your score relative to the general distribution of scores in the adult population</h2>
+  <p>The figure below shows the approximate distribution of American adults' skill levels—in areas of expertise. There is no single source for the numbers that inform this figure. They reflect the research literature, our own data, and consultations with other developmentalists. We are least clear about the ends of the distribution—especially the top end—but despite this we feel confident that the general picture is accurate. Most American adults perform in level 10 or the first phase of level 11. A much smaller percentage performs above phase 11:1.</p>
+  <p>The figure shows a symmetrical bell curve, in which the average score adults receive in an area of expertise is  in the middle of the curve. Most people (68% of them, or 34% + 34%)  perform within one segment of the average score. Each of the second segments (to the right and left of the two middle segments) represent 14% of the population, and each of the segments on the far right and left represent 2% of the adult population. Percentages are shown on the horizontal axis. The location of your score (phase <?php echo $_GET['lasname']; ?>) is indicated by a vertical line with translucent bars on each side. Those bars represent the range in which your &quot;true&quot; score is most likely to fall.</p>
+  <p>&nbsp;</p>
+  <p><img src="<?php echo $row_rsLasByAge['lasbyageart2']; ?>" alt="Graph of level by age" width="674" height="240" hspace="0" align="top" /></p>
+  <p>&nbsp;</p>
+</div>
+<div class="TabbedPanelsContent">
+<h2>Your essays</h2>
+                  <h3>Dilemma</h3>
+                  <p><?php echo $row_rsDilemma['lrjadilemma']; ?></p>
+          <h3>Essay 1 </h3>
+                  <p><em><?php echo $row_rsLRJAprobe1['lrjaprobe']; ?></em></p>
+                  <p><?php echo $row_rsLRJA['thinkof']; ?></p>
+          <h3>Essay 2</h3>
+                  <p><em><?php echo $row_rsLRJAprobe2['lrjaprobe']; ?></em></p>
+                  <p><?php echo $row_rsLRJA['differentconclusions']; ?></p>
+          <h3>Essay 3</h3>
+                  <p><em><?php echo $row_rsLRJAprobe3['lrjaprobe']; ?></em></p>
+                  <p><?php echo $row_rsLRJA['idealprocess']; ?></p>
+          <h3>Essay 4</h3>
+                  <p><em><?php echo $row_rsLRJAprobe4['lrjaprobe']; ?></em></p>
+                  <p><?php echo $row_rsLRJA['certainty']; ?></p>
+          <h3>Essay 5</h3>
+                  <p><em><?php echo $row_rsLRJAprobe5['lrjaprobe']; ?></em></p>
+                  <p><?php echo $row_rsLRJA['truth']; ?></p>
+          <h3>Essay 6</h3>
+                  <p><em><?php echo $row_rsLRJAprobe6['lrjaprobe']; ?></em></p>
+                  <p><?php echo $row_rsLRJA['identifytruth']; ?></p>
+          <h3>Essay 7</h3>
+                  <p><em><?php echo $row_rsLRJAprobe7['lrjaprobe']; ?></em></p>
+                  <p><?php echo $row_rsLRJA['absolutetruth']; ?></p>
+                <p>&nbsp;</p>
+            </div>
+            </div>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+          </div>
+          <script type="text/javascript">
+<!--
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+//-->
+            </script>
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrant);
+
+mysql_free_result($rsCoherence);
+
+mysql_free_result($rsCoherenceOverall);
+
+mysql_free_result($rsCoherenceEnglish);
+
+mysql_free_result($rsCoherencePersuade);
+
+mysql_free_result($rsLRJAresources1);
+
+mysql_free_result($rsLRJAresources2);
+
+mysql_free_result($rsLRJAresources3);
+
+mysql_free_result($rsLRJAresources4);
+
+mysql_free_result($rsLRJAresources5);
+
+mysql_free_result($rsLasByAge);
+
+mysql_free_result($rsRegistrants);
+
+mysql_free_result($rsScoreComment);
+
+mysql_free_result($rsLRJAprobe1);
+
+mysql_free_result($rsLRJAprobe2);
+
+mysql_free_result($rsLRJAprobe3);
+
+mysql_free_result($rsLRJAprobe4);
+
+mysql_free_result($rsLRJAprobe5);
+
+mysql_free_result($rsLRJAprobe6);
+
+mysql_free_result($rsLRJAprobe7);
+
+mysql_free_result($rsDilemma);
+
+mysql_free_result($rsRelativism);
+
+mysql_free_result($rsAbsolutism);
+
+mysql_free_result($rsRecommendboilerplate4);
+
+mysql_free_result($rsCoherenceVocabulary);
+
+mysql_free_result($rsCoherenceProbe);
+
+mysql_free_result($rsCoherenceVocabularyIntro);
+
+mysql_free_result($rsStrength1);
+
+mysql_free_result($rsStrength2);
+
+mysql_free_result($rsStrength3);
+
+mysql_free_result($rsCaveat1);
+
+mysql_free_result($rsCaveat2);
+
+mysql_free_result($rsLASnumberart);
+
+mysql_free_result($rsRecommendGrowth);
+
+mysql_free_result($rsRecommendStrength);
+
+mysql_free_result($rsCoherenceOnpoint);
+
+mysql_free_result($rsRelevanceExamp);
+
+mysql_free_result($rsRelevanceArg);
+
+mysql_free_result($rsCoherenceFragment);
+
+mysql_free_result($rsCoherenceFraming);
+
+mysql_free_result($rsLRJA);
+
+mysql_free_result($rsStrengths);
+
+mysql_free_result($rsManlasart);
+
+mysql_free_result($rsManlevelart);
+
+mysql_free_result($rsLRJAintroman);
+
+mysql_free_result($rsLRJAlasgendescrip);
+
+mysql_free_result($rsManlevelcomment);
+
+mysql_free_result($rsManleveljuxtapose);
+
+mysql_free_result($rsLRJAgrowth);
+
+mysql_free_result($rsLRJAsurvey);
+
+mysql_free_result($Rsrjcoderelative);
+?>

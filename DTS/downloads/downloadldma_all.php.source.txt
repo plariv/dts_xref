@@ -1,0 +1,77 @@
+<?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLDMA = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLDMA = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMA = sprintf("SELECT LDMA.ldmakey, LDMA.userkey, LDMA.user_name, LDMA.testtime, LDMA.`date`, LDMA.bulkcustomerkey, LDMAscores.ldmakey, LDMAscores.lasname, LDMAscores.lasnumber_1, Registrants.userkey, Registrants.firstname, Registrants.lastname, LDMAscores.essay1las_1, LDMAscores.essay2las_1, LDMAscores.essay3las_1, LDMAscores.essay4las_1, LDMAscores.essay5las_1, LDMA.`decimal`, LDMA.age, LDMA.edulevel, LDMA.sex FROM LDMA, LDMAscores, Registrants WHERE LDMA.bulkcustomerkey = %s AND Registrants.userkey = LDMA.userkey AND LDMA.ldmakey = LDMAscores.ldmakey", GetSQLValueString($colname_rsLDMA, "int"));
+$rsLDMA = mysql_query($query_rsLDMA, $Assessment) or die(mysql_error());
+$row_rsLDMA = mysql_fetch_assoc($rsLDMA);
+$totalRows_rsLDMA = mysql_num_rows($rsLDMA);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>LDMA results</title>
+</head>
+<body>
+<?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=LDMA.csv\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+ldmakey, date, decimal,testtime, usernumber, user_name, firstname, lastname, phase, mean, essay1las_1, essay2las_1, essay3las_1 , essay4las_1, essay5las_1, age, edu, sex,
+<?php do { ?>
+<?php echo $row_rsLDMA['ldmakey']; ?>,<?php echo $row_rsLDMA['date']; ?>,<?php echo $row_rsLDMA['decimal']; ?>,<?php echo $row_rsLDMA['testtime']; ?>,<?php echo $row_rsLDMA['userkey']; ?>,<?php echo $row_rsLDMA['user_name']; ?>,<?php echo $row_rsLDMA['firstname']; ?>,<?php echo $row_rsLDMA['lastname']; ?>,<?php echo $row_rsLDMA['lasname']; ?>,<?php echo $row_rsLDMA['lasnumber_1']; ?>,<?php echo $row_rsLDMA['essay1las_1']; ?>,<?php echo $row_rsLDMA['essay2las_1']; ?>,<?php echo $row_rsLDMA['essay3las_1']; ?>,<?php echo $row_rsLDMA['essay4las_1']; ?>,<?php echo $row_rsLDMA['essay5las_1']; ?>,<?php echo $row_rsLDMA['age']; ?>,<?php echo $row_rsLDMA['edulevel']; ?>,<?php echo $row_rsLDMA['sex']; ?>,
+<?php } while ($row_rsLDMA = mysql_fetch_assoc($rsLDMA)); ?>
+<?
+exit();
+?>
+
+</body>
+</html>
+<?php
+mysql_free_result($rsLDMA);
+?>

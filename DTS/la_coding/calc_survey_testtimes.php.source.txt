@@ -1,0 +1,43 @@
+<?php require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" );
+include_once '../includes/dts_functions.php'; 
+
+die("This is a script that makes changes in the database. Please read through it to understand what it does, before running it.");
+
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+$count = 0;
+
+$last_test_time = array(); // [instrument][userkey];
+
+while (1) { 
+	$sql_find = "SELECT lasurveykey, userkey, instrument_id FROM la_survey_data WHERE test_time IS NULL 
+		ORDER BY date_completed ASC LIMIT 1";
+	$rsFind = mysql_query($sql_find) or die(mysql_error());
+	$row = mysql_fetch_assoc($rsFind);
+	$num_rows = mysql_num_rows($rsFind);
+	if ($num_rows == 0) { die("Calculated test times for {$count} records."); }
+	
+	$lasurveykey = $row['lasurveykey'];
+	$instrument = $row['instrument_id'];
+	$userkey = $row['userkey'];
+	
+	$test_time = 1;
+	if (isset($last_test_time[$instrument][$userkey]) AND $userkey > 0) { 
+		$test_time = $last_test_time[$instrument][$userkey] + 1;
+	}
+	
+	$sql_save = sprintf("UPDATE la_survey_data SET test_time = %s WHERE lasurveykey = %s",
+		SQLstr($test_time, 'int'),
+		SQLstr($lasurveykey, 'int'));
+	echo $sql_save."<br>";
+	$result = mysql_query($sql_save) or die(mysql_error());
+	
+	$last_test_time[$instrument][$userkey] = $test_time;
+	
+	$count ++;
+}
+
+?>

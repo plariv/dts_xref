@@ -1,0 +1,1 @@
+<a href="../SMS/bc_viewsms.php">SMS survey results</a> | <a href="../SMJ/teacher_viewjournalentries.php">SMS journal entries</a><!-- | <a href="../includes/menu/viewcharacter.php">character</a> | <a href="../includes/menu/viewoptimism.php">optimism</a>-->

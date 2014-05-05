@@ -1,0 +1,524 @@
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Policies, schedules, and procedures</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" --><!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+
+/* ~~ Element/tag selectors ~~ */
+/* ~~ this container surrounds all other divs giving them their percentage-based width ~~ */
+.container {
+	padding: 0px;
+	width: 100%;
+	max-width: 2000px;/* a max-width may be desirable to keep this layout from getting too wide on a large monitor. This keeps line length more readable. IE6 does not respect this declaration. */
+	min-width: 780px;/* a min-width may be desirable to keep this layout from getting too narrow. This keeps line length more readable in the side columns. IE6 does not respect this declaration. */
+	background: #FFF;
+	margin: 0 auto; /* the auto value on the sides, coupled with the width, centers the layout. It is not needed if you set the .container's width to 100%. */
+}
+.container p {
+	padding-left: 15px;
+}
+
+.inner_container {
+	padding: 0px;
+	margin-right: 5%;
+	margin-left: 5%;
+	float: left:
+}
+
+/* ~~ the header is not given a width. It will extend the full width of your layout. It contains an image placeholder that should be replaced with your own linked logo ~~ */
+
+.header1_container {
+	background-color: #93CCCB;
+	float: left;
+	width: 100%;
+	height: 85px;
+	position: relative;/* this gives IE6 hasLayout to properly clear */
+	clear: both; /* this clear property forces the .container to understand where the columns end and contain them */
+}
+.header1_column1 {
+	float: left;
+	width: 30%;
+	height: 60px;
+	background-image: url(/_images/logos/lectica_logo_solo.png);
+	background-repeat: no-repeat;
+	margin-left: 5%;
+	margin-top: 15px;
+}
+.header1_column2 {
+	float: right;
+	height: 100%;
+	padding-right: 5%;
+}
+.header2 {
+	background: #FFF;
+	float: left;
+	width: 100%;
+	margin-bottom: 20px;
+	position: relative;/* this gives IE6 hasLayout to properly clear */
+	clear: both; /* this clear property forces the .container to understand where the columns end and contain them */
+}
+.header1a {
+	float: left;
+	width: 100%;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #CCC;
+	background-color: #000;
+	padding-left: 5%;
+	padding-right: 5%;
+	padding-top: 6px;
+	padding-bottom: 6px;
+	position: relative;/* this gives IE6 hasLayout to properly clear */
+	clear: both; /* this clear property forces the .container to understand where the columns end and contain them */
+}
+.container .header1_column2 p {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	padding-top: 29px;
+	color: #676767;
+	font-size: 170%;
+}
+.container .header1_sidebar1 p {
+	padding-top: 29px;
+	color: #C2E6E8;
+}
+.container .header1_column2 a {
+	text-decoration: none;
+	color: #008A8C;
+	font-weight: 300;
+}
+.container .header1_column2 a:hover {
+	text-decoration: none;
+	color: #C33C2C;
+}
+.container .header1a a {
+	text-decoration: none;
+	color: #929292;
+}
+.container .header1a a:hover {
+	text-decoration: none;
+	color: #CCCCCC;
+}
+.container .header1a h3 {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 400;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	color: #929292;
+	font-size: 140%;
+}
+.container .inner_container .sidebar1 {
+	padding-left: 10px;
+}
+/* ~~ These are the columns for the layout. ~~ 
+
+1) Padding is only placed on the top and/or bottom of the divs. The elements within these divs have padding on their sides. This saves you from any "box model math". Keep in mind, if you add any side padding or border to the div itself, it will be added to the width you define to create the *total* width. You may also choose to remove the padding on the element in the div and place a second div within it with no width and the padding necessary for your design.
+
+2) No margin has been given to the columns since they are all floated. If you must add margin, avoid placing it on the side you're floating toward (for example: a right margin on a div set to float right). Many times, padding can be used instead. For divs where this rule must be broken, you should add a "display:inline" declaration to the div's rule to tame a bug where some versions of Internet Explorer double the margin.
+
+3) Since classes can be used multiple times in a document (and an element can also have multiple classes applied), the columns have been assigned class names instead of IDs. For example, two sidebar divs could be stacked if necessary. These can very easily be changed to IDs if that's your preference, as long as you'll only be using them once per document.
+
+4) If you prefer your nav on the right instead of the left, simply float these columns the opposite direction (all right instead of all left) and they'll render in reverse order. There's no need to move the divs around in the HTML source.
+
+*/
+.column1 {
+	float: left;
+	width: 79%;
+	margin-bottom: 10px;
+	margin-top: 10px;
+	border-right-width: 1px;
+	border-right-style: solid;
+	border-right-color: #CCC;
+}
+.column1 p {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 140%;
+	line-height: 28px;
+	padding-right: 40px;
+	padding-left: 0px;
+	padding-bottom: 0%;
+	padding-top: 0%;
+	margin-bottom: 2%;
+	margin-top: 1%;
+}
+.column1 h1,h2,h3,h4,h5,h6 {
+	padding-bottom: 0%;
+	padding-top: 0%;
+	margin-bottom: 1%;
+	margin-top: 3%;
+}
+.column1 h1 {
+	font-size: 260%;
+	line-height: 30px;
+	padding-right: 30px;
+}
+.column1 h2 {
+	font-size: 200%;
+	line-height: 28px;
+}
+.column1 h3 {
+	font-size: 170%;
+	line-height: 28px;
+}
+.column1 h4 {
+	font-size: 150%;
+	line-height: 28px;
+}
+.column1 ul {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 100%;
+	padding-bottom: 0%;
+	padding-top: 0%;
+	margin-bottom: 2%;
+	margin-top: 1%;
+}
+.column1 ol {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 100%;
+	padding-bottom: 0%;
+	padding-top: 0%;
+	margin-bottom: 2%;
+	margin-top: 1%;
+}
+.column1 li {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 140%;
+	padding-right: 40px;
+	padding-left: 0px;
+}
+.column1 td {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 130%;	
+	line-height: 20px;
+}
+.column1 th {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 130%;	
+	line-height: 20px;
+}
+.column1 .box {
+	width: 87%;	
+	padding: 10px;	
+}
+.column1 .box p {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 400;
+	font-size: 100%;
+	padding: 0px;
+	margin: 0px;
+	line-height: 24px;
+}
+.column2 {
+	width: 1%;
+	float: left;
+	margin-bottom: 10px;
+}
+.sidebar1 {
+	float: left;
+	width: 19%;
+	margin-bottom: 10px;
+}
+.sidebar1 p {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300;
+	font-size: 120%;
+	line-height: 24px;
+	padding-right: 10px;
+	padding-left: 10px;
+	margin-top: 5px;
+	margin-bottom: 4px;
+	margin-right: 0px;
+	margin-left: 0px;
+	font-size: 150%;
+}
+.sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.sidebar1 p a {
+	color: #606060;
+	text-decoration: none;
+	font-weight: 300;
+}
+.sidebar1 p a:active {
+	color: #008A8C;
+}
+.sidebar1 p a:visited {
+	color: #606060;
+}
+.sidebar1 p a:hover {
+	color: #008A8C;
+	font-weight: 400;
+}
+.sidebar1 .CollapsiblePanelTab {
+	font-size: 150%;
+	color: #3B3B3B;
+}
+.sidebar1 .CollapsiblePanelTabHover, .CollapsiblePanelOpen .CollapsiblePanelTabHover {
+	color: #C33C2C;
+}
+
+
+/* ~~ This grouped selector gives the lists in the .content area space ~~ */
+.content ul, .content ol { 
+	padding: 0 15px 15px 40px; /* this padding mirrors the right padding in the headings and paragraph rule above. Padding was placed on the bottom for space between other elements on the lists and on the left to create the indention. These may be adjusted as you wish. */
+}
+
+/* ~~ The navigation list styles (can be removed if you choose to use a premade flyout menu like Spry) ~~ */
+
+/* ~~The footer ~~ */
+.footer1 {
+	margin: 0px;
+	padding: 0px;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #CCC;
+	border-top-width: 1px;
+	border-top-style: solid;
+	border-top-color: #CCC;
+	position: relative;/* this gives IE6 hasLayout to properly clear */
+	clear: both; /* this clear property forces the .container to understand where the columns end and contain them */
+}
+.footer2_column1 {
+	background-color: #93CCCB;
+	float: left;
+	width: 25%;
+	margin: 0px;
+	height: 220px;
+	position: relative;/* this gives IE6 hasLayout to properly clear */
+	clear: both; /* this clear property forces the .container to understand where the columns end and contain them */
+}
+.footer2_column2 {
+	background-color: #93CCCB;
+	width: 25%;
+	float: left;
+	height: 220px;
+}
+.footer2_sidebar1 {
+	background-color: #93CCCB;
+	float: left;
+	width: 25%;
+	height: 220px;
+}
+.footer2_column4 {
+	background-color: #93CCCB;
+	float: left;
+	width: 25%;
+	height: 220px;
+}
+.footer3_container {
+	background-color: #93CCCB;
+	float: left;
+	width: 100%;
+	position: relative;/* this gives IE6 hasLayout to properly clear */
+	clear: both; /* this clear property forces the .container to understand where the columns end and contain them */
+}
+.footer3_column1 {
+	float: left;
+	margin-left: 5%;
+	padding-bottom: 10px;
+}
+.footer3_column2 {
+	float: right;
+	padding-bottom: 10px;
+	margin-right: 5%;
+}
+.footer3_container .footer3_column1 a {
+	text-decoration: none;
+	color: #008A8C;
+	font-weight: 300;
+}
+.footer3_container .footer3_column1 a:hover {
+	text-decoration: none;
+	color: #C33C2C;
+}
+.footer3_container .footer3_column1 p {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300
+	color: #FFF;
+	font-size: 160%;
+	padding-top: 6px;
+}
+.footer3_container .footer3_column2 p {
+	font-family: "Lato", "Helvetica Neue", helvetica, arial, "san serif";
+	font-weight: 300
+	color: #FFF;
+	font-size: 120%;
+	padding-top: 6px;
+	color: #FFF;
+	font-weight: 300;
+}
+
+-->
+</style><!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+  		<div class="header1_column1"><!-- end .header1_column1 --></div>
+			<div class="header1_column2">
+    			<p><a href="http://www.discotest.org">DiscoTests</a>
+    			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    			<a href="/_about/articles.php">Research</a>
+    			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    			<a href="/contactus.php">Contracting</a></p>
+			</div><!-- end .header1_column2 -->
+		</div>
+
+		<br class="clearfloat" />
+
+		<div class="header1a">
+  			<h3><a href="http://lectica.org">HOME</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+  			<a href="../landing.php">SELECT</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="http://lectica.org/visitors/about.php">ABOUT</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <a href="/contactus.php">CONTACT US</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="/security/logIn.php">LOG IN</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="/security/logout.php">LOG OUT</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a href="../security/registration.php">REGISTER</a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp;
+ &nbsp;&nbsp;&nbsp;
+			<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  			You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+  		</div><!-- end .header1a -->
+	
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+		<div class="column1">
+   <!-- InstanceBeginEditable name="main" -->
+  <h1>POLICIES, SCHEDULES, AND PROCEDURES</h1>
+  <h3>Taking our assessments</h3>
+  <p>We offer two kinds of assessments on the DTS site, Lectical Assessments, which are designed to capture the complexity and integration of your thinking in particular knowledge areas, and survey assessments, which are designed to capture biases, attitudes, beliefs, and dispositions. We strongly recommend that you use Lectical Assessments with the support of a mentor/teacher/counselor/coach who has a solid understanding of learning and development. Unlike  Lectical Assessments, which are best used with support, our surveys and their feedback can be used more casually, as part of a  playful exploration of your personal biases, attitudes, beliefs, and dispositions. We encourage you to hold the results of surveys lightly, using them as a starting place for personal exploration and discussion.</p>
+  <p>In addition to offering assessments, we  host instruments that are being used in research. These may or may not be accompanied by feedback. We appreciate your participation in these projects, which allow us to learn more about how people develop skills, dispositions, and knowledge over time.</p>
+  <h3>Working hours</h3>
+  <p>The offices of DTS are open between 8:00 AM and 7:00 PM Eastern Standard Time, Monday through Friday, excluding holidays.</p>
+  <h3>Phone &amp; Skype policy</h3>
+  <p>DTS employees phone or skype by appointment only. We prefer making appointments by email.</p>
+  <h3>Scoring &amp; commenting assessments</h3>
+  <p>It takes an average of 7-10 business days to score, comment, and finalize a Lectical Assessment. We will advise you in advance if the process is likely to take longer. If you occasionally require a shorter delivery time, let us know and we will do our best to provide a shorter turnaround. If you will be needing a shorter turnaround on a regular basis, we will have to make special arrangements.</p>
+  <h3>Scoring break</h3>
+  <p>We take a scoring break from July 15th - August 15th each year. This gives us  time to use what we have learned over the course of the year to update assessments and reports.</p>
+  <p>Feel free to <a href="../contactus.php">contact us</a> for further information.</p>
+  <p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+    <!-- end .column1 --></div>
+  <div class="column2">
+    <!-- end .column2 --></div>
+  <div class="sidebar1">
+      <!-- end #sidebar1 -->
+    <div id="CollapsiblePanel1" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">ABOUT US</div>
+      <div class="CollapsiblePanelContent">
+        <p><a href="http://www.lectica.org/visitors/about.php">About</a></p>
+        <p><a href="/landing.php">Select</a></p>
+        <p><a href="/_about/mission.php">Mission</a></p>
+        <p><a href="/_about/articles.php">Literature</a></p>
+        <p><a href="/_about/legal.php">Legal</a></p>
+        <p><a href="http://discotest.org/index_discotest.html">DiscoTest™</a>        </p>
+        <p><a href="/_about/work_with_us.php">Jobs and internships</a></p>
+        <p><a href="/_about/bios.php?type=client">Our clients</a></p>
+        <p><a href="/_about/bios.php?type=board">Executive Board</a></p>
+        <p><a href="/_about/bios.php?type=advisor">Advisory Board</a></p>
+        <p><a href="http://theodawson.net/?page_id=2">FAQ</a></p>
+        <p>&nbsp;</p>
+      </div>
+    </div>
+    <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      <div class="CollapsiblePanelContent">
+        <p><a href="http://www.lectica.org/visitors/about_lectatests.php">General information</a></p>
+        <p><a href="/about/showcase_ldma.php">LDMA: Decision making</a></p>
+        <p><a href="/about/assesslera.php">LERA: Ethical reasoning</a></p>
+        <p><a href="/about/assessllra.php">LLRA: Leadership reasoning</a></p>
+        <p><a href="/about/assesslrja.php">LRJA: Reflective judgment</a></p>
+        <p><a href="/about/assesslsua.php">LSUA: Self understanding</a></p>
+        <p><a href="/about/assesslima.php">LIMA: Integral model</a></p>
+        <p><a href="/assessments/takingassessments.php">How to take a Lectical assessment</a></p>
+<p>&nbsp;</p>
+      </div>
+    </div>
+    
+    <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">ADMIN</div>
+      <div class="CollapsiblePanelContent">
+        <p><a href="/_about/working_with_dts.php">Working with us</a></p>
+        <p><a href="customers/customerpolicies.php">Policies &amp; schedules</a></p>
+        <p><a href="checkout/payment.php">Make a payment</a></p>
+      </div>
+    </div>
+    <p>&nbsp;</p>
+  <!-- InstanceBeginEditable name="sidebar2" -->
+  <div align="center"><br />
+  </div>
+  <!-- InstanceEndEditable --><br />
+  <!-- InstanceBeginEditable name="sidebar3" --><!-- InstanceEndEditable --></div>
+<!-- end .sidebar1 --></div>
+<!-- end .inner_container --></div>
+
+
+  <div class="footer3_container">
+  <div class="footer3_column1">
+    <p><a href="https://lectica.org.php">About us</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="/_about/articles.php">Research</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="/contactus.php">Contracting</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="/security/logIn.php">Log in</a></p>    
+    <!-- end .footer3_column1 --></div>
+  <div class="footer3_column2">
+<p align="right">©2010-2012, Lectica, Inc. All rights reserved.</p>
+<!-- end .footer3_column2 --></div>
+  <!-- end .footer3_container --></div>
+ 
+<!-- end .container --></div>
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

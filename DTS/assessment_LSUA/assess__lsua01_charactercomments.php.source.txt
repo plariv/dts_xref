@@ -1,0 +1,433 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE charactersurvey SET characterkey=%s, charactercomment=%s, persistencescore=%s, persistenceaverage=%s, learnerscore=%s, learneraverage=%s, integrityscore=%s, integrityaverage=%s, emotionscore=%s, emotionaverage=%s, challengescore=%s, challengeaverage=%s WHERE lsuakey=%s",
+                       GetSQLValueString($_POST['characterkey'], "int"),
+                       GetSQLValueString($_POST['charactercomment'], "text"),
+                       GetSQLValueString($_POST['persistencescore'], "int"),
+                       GetSQLValueString($_POST['persistenceaverage'], "double"),
+                       GetSQLValueString($_POST['learnerscore'], "int"),
+                       GetSQLValueString($_POST['learneraverage'], "double"),
+                       GetSQLValueString($_POST['integrityscore'], "int"),
+                       GetSQLValueString($_POST['integrityaverage'], "double"),
+                       GetSQLValueString($_POST['emotionscore'], "int"),
+                       GetSQLValueString($_POST['emotionaverage'], "double"),
+                       GetSQLValueString($_POST['challengescore'], "int"),
+                       GetSQLValueString($_POST['challengeaverage'], "double"),
+                       GetSQLValueString($_POST['lsuakey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "../la_assess/assess_thanks.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));
+}
+
+$colname_rsCharacter = "-1";
+if (isset($_GET['characterkey'])) {
+  $colname_rsCharacter = $_GET['characterkey'];
+}
+$colname2_rsCharacter = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname2_rsCharacter = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCharacter = sprintf("SELECT characterkey, lsuakey, challenge1, integrity1, persistence1, learner1, emotional1, challenge2, learner2, integrity2, learner3, challenge3, persistence2, integrity3, persistence3, learner4, emotional2, challenge4, emotional3, integrity4, persistence4, emotional4, learner5, integrity5, challenge5, emotional5, persistence5, charactercomment, persistencescore, persistenceaverage, learnerscore, learneraverage, integrityscore, integrityaverage, emotionscore, emotionaverage, challengescore, challengeaverage  FROM charactersurvey WHERE characterkey = %s AND lsuakey = %s", GetSQLValueString($colname_rsCharacter, "int"),GetSQLValueString($colname2_rsCharacter, "int"));
+$rsCharacter = mysql_query($query_rsCharacter, $Assessment) or die(mysql_error());
+$row_rsCharacter = mysql_fetch_assoc($rsCharacter);
+$totalRows_rsCharacter = mysql_num_rows($rsCharacter);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+// calculate total
+$total_persistence = 0;
+$total_persistence += $row_rsCharacter['persistence1'];
+$total_persistence += $row_rsCharacter['persistence2'];
+$total_persistence += $row_rsCharacter['persistence3'];
+$total_persistence += $row_rsCharacter['persistence4'];
+$total_persistence += $row_rsCharacter['persistence5'];
+
+// calc average
+$total_num_persistence = 5;
+
+$persistence_average = $total_persistence / ($total_num_persistence);
+
+$_SESSION["persistencescore"] = $total_persistence;
+$_SESSION["total_num_persistence"] = $total_num_persistence;
+$_SESSION["persistenceaverage"] = $persistence_average;
+
+
+// calculate total
+$total_learner = 0;
+$total_learner += $row_rsCharacter['learner1'];
+$total_learner += $row_rsCharacter['learner2'];
+$total_learner += $row_rsCharacter['learner3'];
+$total_learner += $row_rsCharacter['learner4'];
+$total_learner += $row_rsCharacter['learner5'];
+
+// calc average
+$total_num_learner = 5;
+
+$learner_average = $total_learner / ($total_num_learner);
+
+$_SESSION["learnerscore"] = $total_learner;
+$_SESSION["total_num_learner"] = $total_num_learner;
+$_SESSION["learneraverage"] = $learner_average;
+
+// calculate total
+$total_integrity = 0;
+$total_integrity += $row_rsCharacter['integrity1'];
+$total_integrity += $row_rsCharacter['integrity2'];
+$total_integrity += $row_rsCharacter['integrity3'];
+$total_integrity += $row_rsCharacter['integrity4'];
+$total_integrity += $row_rsCharacter['integrity5'];
+
+// calc average
+$total_num_integrity = 5;
+
+$integrity_average = $total_integrity / ($total_num_integrity);
+
+$_SESSION["integrityscore"] = $total_integrity;
+$_SESSION["total_num_integrity"] = $total_num_integrity;
+$_SESSION["integrityaverage"] = $integrity_average;
+
+// calculate total
+$total_emotion = 0;
+$total_emotion += $row_rsCharacter['emotional1'];
+$total_emotion += $row_rsCharacter['emotional2'];
+$total_emotion += $row_rsCharacter['emotional3'];
+$total_emotion += $row_rsCharacter['emotional4'];
+$total_emotion += $row_rsCharacter['emotional5'];
+
+// calc average
+$total_num_emotion = 5;
+
+$emotion_average = $total_emotion / ($total_num_emotion);
+
+$_SESSION["emotionscore"] = $total_emotion;
+$_SESSION["total_num_emotion"] = $total_num_emotion;
+$_SESSION["emotionaverage"] = $emotion_average;
+
+// calculate total
+$total_challenge = 0;
+$total_challenge += $row_rsCharacter['challenge1'];
+$total_challenge += $row_rsCharacter['challenge2'];
+$total_challenge += $row_rsCharacter['challenge3'];
+$total_challenge += $row_rsCharacter['challenge4'];
+$total_challenge += $row_rsCharacter['challenge5'];
+
+// calc average
+$total_num_challenge = 5;
+
+$challenge_average = $total_challenge / ($total_num_challenge);
+
+$_SESSION["challengescore"] = $total_challenge;
+$_SESSION["total_num_challenge"] = $total_num_challenge;
+$_SESSION["challengeaverage"] = $challenge_average;
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelsua2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Character comments</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryValidationTextarea.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LSUAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>CHARACTER SURVEY (page 13 of 13)</h1>
+  <p><span class="lsua"><strong class="lsua">Note:</strong></span> If yo<span class="pspaced">u return to this page after hitting the &quot;submit&quot; button, please check to make sure you have entered responses for all of the requi</span>red items. </p>
+<h3>From your perspective, what is character?</h3>
+  <p>In this field, please describe what the word &quot;character&quot; means to you.  </p>
+  <form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+    <table>
+      <tr valign="baseline">
+        <td colspan="2" align="right" valign="top" nowrap="nowrap"><span id="sprytextarea1">
+          <textarea name="charactercomment" cols="70" rows="8"><?php echo $row_rsCharacter['charactercomment']; ?></textarea>
+          <span class="textareaRequiredMsg">A value is required.</span><span class="textareaMaxCharsMsg">Exceeded maximum number of characters.</span></span></td>
+        </tr>
+      <tr valign="baseline">
+        <td >&nbsp;</td>
+        <td><div align="right">
+          <input type="submit" value="SUBMIT AND FINISH!" />
+          </div></td>
+        </tr>
+      </table>
+    <input type="hidden" name="characterkey" value="<?php echo $_GET['characterkey']; ?>" />
+    <input type="hidden" name="persistenceaverage" value="<?php echo $_SESSION['persistenceaverage']; ?>" />
+    <input type="hidden" name="persistencescore" value="<?php echo $_SESSION['persistencescore']; ?>" />
+    <input type="hidden" name="learneraverage" value="<?php echo $_SESSION['learneraverage']; ?>" />
+    <input type="hidden" name="learnerscore" value="<?php echo $_SESSION['learnerscore']; ?>" />
+    <input type="hidden" name="integrityaverage" value="<?php echo $_SESSION['integrityaverage']; ?>" />
+    <input type="hidden" name="integrityscore" value="<?php echo $_SESSION['integrityscore']; ?>" />
+    <input type="hidden" name="emotionaverage" value="<?php echo $_SESSION['emotionaverage']; ?>" />
+    <input type="hidden" name="emotionscore" value="<?php echo $_SESSION['emotionscore']; ?>" />
+    <input type="hidden" name="challengeaverage" value="<?php echo $_SESSION['challengeaverage']; ?>" />
+    <input type="hidden" name="challengescore" value="<?php echo $_SESSION['challengescore']; ?>" />
+    <input type="hidden" name="MM_update" value="form1" />
+    <input type="hidden" name="lsuakey" value="<?php echo $row_rsCharacter['lsuakey']; ?>" />
+  </form>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsCharacter);
+
+mysql_free_result($rsRegistrants);
+?>

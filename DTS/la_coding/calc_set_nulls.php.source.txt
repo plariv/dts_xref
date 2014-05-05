@@ -1,0 +1,82 @@
+<?php require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" );
+include_once '../includes/dts_functions.php'; 
+
+die("This is a script that makes changes in the database. Please read through it to understand what it does, before running it.");
+
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+// Columns where a 0 value doesn't make sense
+$columns = array(
+	array("registrants", "ethnicity1key"),
+	array("registrants", "manlevelkey"),
+	array("la_data", "assignmentkey"),
+	array("la_data", "dilemmakey"),
+	array("la_data", "englishqualitykey"),
+	array("la_data", "employeenumberkey"),
+	array("la_data", "superviseekey"),
+	array("la_data", "longestprojectkey"),
+	array("la_codes", "code451"),
+	array("la_codes", "code452"),
+	array("la_codes", "code453"),
+	array("la_codes", "code454"),
+	array("la_codes", "code455"),
+	array("la_codes", "code456"),
+	array("la_codes", "code457"),
+	array("la_codes", "code458"),
+	array("la_codes", "code459"),
+	array("la_codes", "code460"),
+	array("la_codes", "code461"),
+	array("la_codes", "code462"),
+	array("la_codes", "code463"),
+	array("la_codes", "code464"),
+	array("la_codes", "code465"),
+	array("la_codes", "code466"),
+	array("la_codes", "code467"),
+	array("la_codes", "code468"),
+	array("la_codes", "code469"),
+	array("la_codes", "code470"),
+	array("la_codes", "code471"),
+	array("la_codes", "code472"),
+	array("la_codes", "code473"),
+	array("la_codes", "code474"),
+	array("la_codes", "code475"),
+	array("la_codes", "code476"),
+	array("la_codes", "code477"),
+	array("la_codes", "code478"),
+	array("la_codes", "code479"),
+	array("la_codes", "code480"),
+	array("la_codes", "code481"),
+	array("la_codes", "code482"),
+	array("la_codes", "code483"),
+	array("la_codes", "code484"),
+	array("la_codes", "code485"),
+	array("la_codes", "code486"),
+	array("la_codes", "code487"),
+	array("la_codes", "code488"),
+	array("la_codes", "code489"),
+	array("la_codes", "code490"),
+	array("la_codes", "code491"),
+	array("la_codes", "code492"),
+	array("la_codes", "code493"),
+	array("la_codes", "code494"),
+	array("la_codes", "code495"),
+	array("la_codes", "code496"),
+	array("la_codes", "code497"),
+	array("la_codes", "code498"),
+	array("la_codes", "code499"),
+	array("la_codes", "code500")
+);
+
+foreach ($columns as $c) {
+	$table = $c[0];
+	$column = $c[1];
+	
+	$sql_update = "UPDATE {$table} SET {$column} = NULL WHERE {$column} = 0";
+	$result = mysql_query($sql_update) or die(mysql_error());
+	echo $sql_update." - changed ".mysql_affected_rows()." rows<br />";
+} 
+
+?>

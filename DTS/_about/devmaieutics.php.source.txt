@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Developmental maieutics</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+.inner_container .column1 ol li {
+	list-style-type: upper-alpha;
+}
+</style>
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+<h1>DEVELOPMENTAL MAIEUTICS</h1>
+                <p>The best assessments are grounded in a deep understanding of how relevant concepts and skills develop over time. For example, if a curriculum is intended to develop decision-making skills, assessments should evaluate developmental progress in acquiring those skills. To do this well, it is essential to meet 3 objectives:</p>
+                <ul>
+                  <li>identifying the range of skills required for good decision-making various life or job roles; </li>
+                  <li>tracing the developmental pathways through which decision-making skills optimally develop; and </li>
+                  <li>identifying effective strategies for promoting the development of these skills. </li>
+                </ul>
+                <p align="center"><img src="../_images/methods/maieutic_spiral.png" alt="maieutic spiral" class="margin-t20-b20" style="max-width:780px; width:100%; "/></p>
+              <p>We have designed an iterative methodology that is employed to build the knowledge base required to meet these objectives. We call this methodology&mdash;represented in the spirals shown above&mdash;<em>developmental maieutics</em>. It involves several steps:</p>
+              <ol>
+                  <li>Establishing a collaborative relationship with clients (researchers, end users, and content experts).</li>
+                  <li>Leveraging the expertise of clients to identify assessment goals and target constructs. </li>
+                <li>Working closely with  clients and  domain experts to design a pool of items and collect initial student data.</li>
+                <li>Scoring performances with the Lectical Assessment System,  and entering the first phase of the learning-sequence-construction process, which involves identifying and codifying themes (broad thematic areas, eg., <em>evidence, the physics of energy</em>), constructs (sub-themes, eg., <em>evaluating evidence, energy transformation</em>), and judgment strands (sub-constructs, e.g., <em>credibility</em>, <em>persuasion as argumentation, kinetic energy</em>) and describing student judgments at each developmental phase on each strand.</li>
+                <li>Organizing the results of D into scoring rubrics for three levels of coder expertise: (1) <em>low inference</em> (for novices), in which coding is done at the judgment strand level, (2) <em>medium inference</em> (for junior coders), in which coding is done at the construct level, and (3) <em>high inference</em> (for senior coders), in which coding is done at the theme level. Also, as analysts develop rubrics, curriculum experts  can begin developing complementary curricular materials and report content.</li>
+                <li>Releasing Teasers to teachers and researchers.</li>
+                <li>Iterating continuously based on  classroom data and feedback from users.</li>
+              </ol>
+              <p>With adequate funding, a fully developed set (2-4 alternate forms of the same assessment) of Teasers, complete with curricular materials, learning resources, and reports, can be developed in about 3 years. During the development phase, before Teasers are ready to be released to the teachers of the world, they are frequently used in curriculum evaluations conducted by researchers and schools.</p>
+              <p>To learn more about skill levels, see the <a href="hierarchical_complexity.php">hierarchical complexity</a> and <a href="skill_levels.php">skill level</a> pages.</p>
+              <p>&nbsp;</p>
+              <p>&nbsp;</p>
+        <!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+  <div align="center"><br />
+  </div>
+  <!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" --><!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

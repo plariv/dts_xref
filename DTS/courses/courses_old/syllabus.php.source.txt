@@ -1,0 +1,542 @@
+<?php 
+require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" );
+include_once "../includes/dts_functions.php";
+mysql_select_db($database_Assessment, $Assessment);
+
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+
+
+$userkey = -1;
+if (isset($_SESSION['log_userkey'])) { $userkey = $_SESSION['log_userkey']; }
+$instrument_id = "FOLA";
+$_SESSION['instrument_id'] = "FOLA";
+$coursekey = -1;
+if (isset($_GET['coursekey'])) { $coursekey = $_GET['coursekey']; }
+
+$panelTableWidth = 450;
+
+
+
+$query_rsCourse = sprintf("SELECT c.*, cd.*, cr.coursedatekey AS registered_for, cr.userkey 
+	FROM courses_old c 
+		LEFT JOIN course_dates_old cd ON c.coursekey = cd.coursekey 
+		LEFT JOIN course_registration_old cr ON (cd.coursedatekey = cr.coursedatekey AND cr.userkey = %s) 
+	WHERE c.coursekey = %s", 
+		SQLstr($_SESSION['log_userkey'], "int"),
+		SQLstr($coursekey, "int"));
+$rsCourse = mysql_query($query_rsCourse) or die(mysql_error());
+$row_rsCourse = mysql_fetch_assoc($rsCourse);
+
+
+// Fetch any possible recorded sessions for this course. The appropriate video is found based on the words in its path (filename), and is linked to based on its videokey.
+// This query will only return video results where the user is registered for that coursekey.
+$query_rsVideos = sprintf("SELECT v.*
+	FROM videorecordings v 
+		JOIN courses_old c ON v.access_coursekey = c.coursekey
+		JOIN course_dates_old cd ON c.coursekey = cd.coursekey 
+		JOIN registrants r ON r.userkey = %s
+		LEFT JOIN course_registration_old cr ON (cd.coursedatekey = cr.coursedatekey 
+			AND cr.userkey = r.userkey AND cr.payment_received >= 1) 
+	WHERE v.access_coursekey = %s AND (cr.userkey = r.userkey OR r.user_level >= 24) ", 
+		SQLstr($_SESSION['log_userkey'], "int"),
+		SQLstr($coursekey, "int"));
+$rsVideos = mysql_query($query_rsVideos) or die(mysql_error());
+$totalRows_rsVideos = mysql_num_rows($rsVideos);
+
+
+// prepare calendar of deadlines
+// types of dates: class lecture, class discussion, assignment due date
+$date = array(); // $date[index $i][text, date, link, color]
+$d = 0; // index tracker for dates to add to calendar
+$color_lecture = "#603864";
+$color_disc = "#525b3b";
+$color_due = "#BD1F06";
+
+// class lectures
+for ($i = zeropad(1, 2); $i < 16; $i = zeropad($i+1, 2)) { 
+	if (isset($row_rsCourse["lecture{$i}_date"]) AND $row_rsCourse["lecture{$i}_date"] <> "") {
+		$this_date = $row_rsCourse["lecture{$i}_date"];
+		// $this_title = str_replace(array("\"", "'"), "", $row_rsCourse["class{$i}_title"]);
+		$date[$d]['text'] = "Lecture {$i}";
+		$date[$d]['date'] = $this_date;
+		$date[$d]['color'] = $color_lecture;
+		$d ++;
+	}
+}
+// class discussions
+for ($i = zeropad(1, 2); $i < 16; $i = zeropad($i+1, 2)) { 
+	if (isset($row_rsCourse["discussion{$i}_date"]) AND $row_rsCourse["discussion{$i}_date"] <> "") {
+		$this_date = $row_rsCourse["discussion{$i}_date"];
+		// $this_title = str_replace(array("\"", "'"), "", $row_rsCourse["class{$i}_title"]);
+		$date[$d]['text'] = "Disc {$i}";
+		$date[$d]['date'] = $this_date;
+		$date[$d]['color'] = $color_disc;
+		$d ++;
+	}
+}
+// class discussions
+for ($i = zeropad(1, 2); $i < 16; $i = zeropad($i+1, 2)) { 
+	if (isset($row_rsCourse["assignment{$i}_date"]) AND $row_rsCourse["assignment{$i}_date"] <> "") {
+		$this_date = $row_rsCourse["assignment{$i}_date"];
+		$date[$d]['text'] = "Assn {$i} due";
+		$date[$d]['date'] = $this_date;
+		$date[$d]['color'] = $color_due;
+		$d ++;
+	}
+}
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Syllabus</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/fullcalendar/fullcalendar.min.js" type="text/javascript"></script>
+<link href="../includes/fullcalendar/fullcalendar.css" rel="stylesheet" type="text/css" />
+
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryTabbedPanelsVertical.css" rel="stylesheet" type="text/css" />
+
+
+
+<style type="text/css">
+.twoColFixRtHdr #container #mainContent ol { padding-left: 35px; }
+</style>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+  <a href="about_course.php?coursekey=<?php echo $row_rsCourse['coursekey']; ?>">about</a> | 
+	<?php if ($row_rsCourse['registered_for'] == "") { ?>
+    <a href="course_registration.php?coursedatekey=<?php 
+		echo $row_rsCourse['coursedatekey']; ?>">register for the course</a>
+  <?php } else { // if there is a registration under your name (see Course[registered_for]) ?>
+    <a href="registration_status.php?coursedatekey=<?php 
+    echo $row_rsCourse['registered_for']; ?>">my registration status</a>
+	<?php } ?> 
+  <?php if ($row_rsCourse['userkey'] == $userkey AND 
+						date('Y-m-d') >= $row_rsCourse['course_start_date'] AND 
+						date('Y-m-d') <= $row_rsCourse['course_end_date']) {
+					?> | <a href="../set_session_var_instrument.php?link_id=la_assess/assess_intro.php&amp;sessionVarName=instrument_id&amp;sessionVarValue=FOLA">reaction paper</a><?php 			
+				} ?>
+<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    
+    <h1><?php echo $row_rsCourse['course_name_caps']; ?></h1>
+    <p><?php 
+				if (isset($_GET['printerv']) AND $_GET['printerv'] == "yes") { 
+					$panelTableWidth = 600;
+					?><a href="syllabus.php?<?php echo $_SERVER['QUERY_STRING']; ?>&printerv=no">
+          view page by sections</a>
+      <?php } else { 
+					?><a href="syllabus.php?<?php echo $_SERVER['QUERY_STRING']; ?>&printerv=yes">
+          view printer-friendly page</a>
+      <?php } ?>&nbsp;</p>
+    
+    <?php if (!isset($row_rsCourse['course_name_caps']) OR 
+										 $row_rsCourse['course_name_caps'] == "") { ?>
+    	<div class="box">
+    	  <strong>The DTS course you are looking for doesn't exist in our system. </strong> The link may be broken, or we may not have the syllabus ready to display yet. Please <a href="../contactus.php">contact us</a> if you have any questions.</div>      
+    <?php } ?>
+    
+    
+        
+    <div id="TabbedPanels1" class="VTabbedPanels">
+    
+      <?php /* If you block out the <ul> which serves as the TabbedPanel table of contents, the entire TabbedPanels widget breaks gracefully and the page unfolds in nice printer-friendly format. */
+			if (!isset($_GET['printerv']) OR $_GET['printerv'] == "no") { ?>
+      <ul class="TabbedPanelsTabGroup">
+        <li class="TabbedPanelsTab">General information</li>
+        <li class="TabbedPanelsTab">Course description</li>
+        <?php if ($userkey == 4623 OR $userkey == 1000000539 OR $userkey == 1000002783) { ?>
+        <li class="TabbedPanelsTab">Calendar</li>
+        <?php } // ?>
+        
+        <?php // Add a header for each course part that exists. 
+				$i = 1;
+				while (isset($row_rsCourse['part'.$i.'_description']) AND 
+										 $row_rsCourse['part'.$i.'_description'] <> "") {
+					?><li class="TabbedPanelsTab">Part <?php echo $i; ?></li><?php 
+					$i ++;
+				} ?>
+        
+        <?php // Add a header for each class (aka MODULE, segment) that exists in the table.
+				$i = 1;
+				$i_pad = "01";
+				while (isset($row_rsCourse['class'.$i_pad.'_title']) AND 
+										 $row_rsCourse['class'.$i_pad.'_title'] <> "") {
+					?>
+        <li class="TabbedPanelsTab"><?php echo $row_rsCourse['class'.$i_pad.'_tab_label'] ?></li>
+					<?php
+					$i ++;
+					$i_pad = str_pad($i, 2, "0", STR_PAD_LEFT);
+				} ?>
+        
+      </ul>
+      <?php } ?>
+      
+      <!-------------------------------------------------------->
+      
+      <div class="TabbedPanelsContentGroup">
+        <div class="TabbedPanelsContent">					<!-- Div: General course info -->
+        
+        <table width="<?php echo $panelTableWidth; ?>" border="0">
+          <tr><td>
+        
+        <h2>General information</h2>
+            
+        <p> </p>
+        
+        <table  border="0" class="top_margin_20">
+          <tr>
+            <td width="100">Instructors</td>
+            <td class="margin_top_20"><?php echo $row_rsCourse['instructors']; ?></td>
+          </tr>
+          <tr>
+            <td>Dates</td>
+            <td class="margin_top_20">
+							<?php echo date('m/d/Y', strtotime($row_rsCourse['course_start_date'])); ?> to 
+							<?php echo date('m/d/Y', strtotime($row_rsCourse['course_end_date'])); ?></td>
+          </tr>
+          <tr>
+            <td>Time</td>
+            <td class="margin_top_20"><?php echo $row_rsCourse['class_time']; ?> (<?php echo $row_rsCourse['class_duration']; ?>)</td>
+          </tr>
+          <tr>
+            <td>Level 1 fees</td>
+            <td class="margin_top_20">$<?php echo $row_rsCourse['level1_fee']; ?>
+							<?php if ($row_rsCourse['level1_student_fee'] > 0) { ?>
+              (students: $<?php echo $row_rsCourse['level1_student_fee']; ?>)
+              <?php } ?>
+            </td>
+          </tr>
+          <?php if ($row_rsCourse['level2_fee'] <> "") { ?>
+          <tr>
+            <td>Level 2 fees</td>
+            <td class="margin_top_20">$<?php echo $row_rsCourse['level2_fee']; ?> 
+							<?php if ($row_rsCourse['level2_student_fee'] > 0) { ?>
+              (students: $<?php echo $row_rsCourse['level2_student_fee']; ?>)
+              <?php } ?>
+            </td>
+          </tr>
+          <?php } ?>
+        </table>
+        <?php echo $row_rsCourse['course_introduction']; ?>
+        <p>&nbsp;</p>
+        
+        </td></tr></table>
+      </div>
+      
+      <div class="TabbedPanelsContent">														<!-- Div: Course description -->
+        
+        <table width="<?php echo $panelTableWidth; ?>" border="0"><tr><td>
+        
+				<h2>Course description</h2>
+				<?php echo $row_rsCourse['course_description_long']; ?>
+        
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        
+        </td></tr></table>
+        
+      </div>
+      
+      
+      <?php if ($userkey == 4623 OR $userkey == 1000000539 OR $userkey == 1000002783) { ?>
+      <div class="TabbedPanelsContent">
+      	
+        <h2>Course dates and deadlines</h2>
+        
+        <div id="calendar"></div>
+        
+        <script type="text/javascript">
+					//$(document).ready(function() {
+						
+						$('#calendar').fullCalendar({
+							header: {
+								left: 'prev,next today',
+								center: 'title',
+								right: ''
+							},
+							default: 'month',
+							editable: false,
+							events: [
+								{
+									title: '',
+									start: <?php echo strtotime('2011-01-01'); ?>
+								}<?php
+								
+								for ($i = 0; isset($date[$i]); $i ++) { ?>,
+									{
+										title: "<?php echo $date[$i]['text']; ?>",
+										start: "<?php echo $date[$i]['date']; ?>",
+										// url: "<?php // echo $date[$i]['link']; ?>",
+										color: "<?php echo $date[$i]['color']; ?>"
+									} <?php
+								} ?>
+							]
+						});
+						
+					//});
+				</script>
+      
+      </div>
+      <?php } // ?>
+      
+        
+        <?php // Add a DIV for each part_description. 
+				$i = 1;
+				while (isset($row_rsCourse['part'.$i.'_description']) AND 
+										 $row_rsCourse['part'.$i.'_description'] <> "") { ?>
+                     
+					<div class="TabbedPanelsContent">															<!-- Div: Course Part -->
+          	<table width="<?php echo $panelTableWidth; ?>" border="0"><tr><td>
+            
+						<?php echo $row_rsCourse['part'.$i.'_description']; ?>
+            
+            <?php echo $row_rsCourse['part'.$i.'_teaching_points']; ?>
+            
+            </td></tr></table>
+					</div>
+					<?php 
+					
+					$i ++;
+				} ?>
+        
+        
+        <?php // Add a header for each class (aka MODULE, segment) that exists in the table.
+				$i = 1;
+				$i_pad = "01";
+				// 												FOR EACH MODULE, loop
+				while (isset($row_rsCourse['class'.$i_pad.'_title']) AND 
+										 $row_rsCourse['class'.$i_pad.'_title'] <> "") { ?>
+                     
+					<div class="TabbedPanelsContent">												<!-- Div: Class description -->
+						<table width="<?php echo $panelTableWidth; ?>" border="0"><tr><td>
+            
+			<?php 
+			// Print the course title
+			echo $row_rsCourse['class'.$i_pad.'_title'];
+			
+			// if there exists a video recording for this course, put the link to it right after the title.
+			// check if there is a recorded video for this module 
+			while ($row_rsVideos = mysql_fetch_assoc($rsVideos)) {
+				$title = $row_rsVideos['title'];
+				
+				// if the present file is for this module
+				if (strpos($title, "Module ".$i_pad)) {	
+				
+					$classtype = ""; 
+					if (strpos(" ".$title, "Lecture")) { $classtype = "lecture"; } 
+					if (strpos(" ".$title, "Discussion")) { $classtype = "discussion"; }
+					$key = $row_rsVideos['videokey'];
+					$link = $row_rsVideos['link'];
+					$path = $row_rsVideos['path'];
+					$assets = $row_rsVideos['assets'];
+					
+					// if this is an outside link, rather than hosted on our site
+					if ($link <> "") { 
+						?><p>View recording: <a href="<?php echo $link; ?>" target="_blank">
+						<?php echo $classtype; ?></a></p><?php
+					} 
+					// if this is a hosted video on our site
+					if ($path <> "") {
+						?><p>View recording: <a href="show_recording.php?video=<?php echo $key; ?>">
+						<?php echo $classtype; ?></a></p><?php
+					} 
+					// if there are attached files uploaded for this module
+					// Now we need to support *external links* as attached files, too.
+					if ($assets <> "") {
+						$assets = explode("|||", $assets);
+						do {
+							$asset = current($assets); $assetName = "";
+							// Is the name specified in parentheses?
+							if (strpos(" ".$asset, "(")) {
+								$assetName = preg_replace("/.+\((.+)\)/", "$1", $asset);
+								$asset = preg_replace("/(.+)\(.+\)/", "$1", $asset);
+							}
+							// Otherwise, create the name out of the end of the (standard) filename.
+							if ($assetName == "") { 
+								$assetName = $asset;
+								if (strpos($assetName, "module".$i_pad)) { 
+									$truncate = strpos($assetName, "module".$i_pad)+8;
+									$assetName = substr($assetName, $truncate);
+								}
+								$assetName = str_replace("_", " ", $assetName);
+							}
+							$path = "http://devtestservice.org/courses/course_files/recordings/";
+							if (strpos(" ".$asset, "://")) { $path = ""; } // for external links, don't look in our dir.
+							$desc = ""; ?>
+              <p>Attached file:  
+              	<a href="<?php echo $path.$asset; ?>" target="_blank"><?php echo $assetName; ?></a> 
+								<?php echo $desc; ?>
+              </p><?php 
+						} while (next($assets));
+					}
+					
+					
+				}// ENDIF: if there are files for this module
+			} 
+			if ($totalRows_rsVideos > 0) { mysql_data_seek($rsVideos, 0); }
+			 ?>
+            
+            <?php if ($row_rsCourse['class'.$i_pad.'_image01'] <> "") { ?>
+            	<div class="fltrt">
+              <?php echo $row_rsCourse['class'.$i_pad.'_image01']; ?></div>
+            <?php } ?>
+            
+			<?php echo $row_rsCourse['class'.$i_pad.'_description']; ?>
+            <?php echo $row_rsCourse['class'.$i_pad.'_discussion']; ?>
+            
+            <?php echo $row_rsCourse['class'.$i_pad.'_guiding_questions']; ?>
+            <?php echo $row_rsCourse['class'.$i_pad.'_learning_goals']; ?>
+			
+			<?php // has been removed? // echo $row_rsCourse['class'.$i_pad.'_teaching_points']; ?>
+            
+            <?php echo $row_rsCourse['class'.$i_pad.'_reading_list_level1']; ?>
+			<?php echo $row_rsCourse['class'.$i_pad.'_reading_list_level2']; ?>
+			<?php echo $row_rsCourse['class'.$i_pad.'_reading_list_extra']; ?>
+            
+      <?php // 		ASSIGNMENTS
+			
+			$due_date = date('Y-m-d', strtotime($row_rsCourse['discussion'.$i_pad.'_date'].' -1 day'));
+			
+			echo str_replace("[DATE]", $due_date, $row_rsCourse['class'.$i_pad.'_assignment_level1']);
+			// List the questions that are part of this assignment
+			?><ol>
+      	<?php $j = 1;
+				while (isset($row_rsCourse['class'.$i_pad.'_assignment_level1_probe'.$j]) AND
+										$row_rsCourse['class'.$i_pad.'_assignment_level1_probe'.$j] <> "") { ?>
+        	<li><?php echo $row_rsCourse['class'.$i_pad.'_assignment_level1_probe'.$j]; ?></li>
+          <?php $j ++;
+				} ?>
+      </ol><?php
+			 
+			echo str_replace("[DATE]", $due_date, $row_rsCourse['class'.$i_pad.'_assignment_level2']); 
+			// List the questions that are part of this assignment
+			?><ol>
+      	<?php $j = 1;
+				while (isset($row_rsCourse['class'.$i_pad.'_assignment_level2_probe'.$j]) AND
+										$row_rsCourse['class'.$i_pad.'_assignment_level2_probe'.$j] <> "") { ?>
+        	<li><?php echo $row_rsCourse['class'.$i_pad.'_assignment_level2_probe'.$j]; ?></li>
+          <?php $j ++;
+				} ?>
+        
+			 
+				<?php echo $row_rsCourse['class'.$i_pad.'_image02']; ?>
+        <?php echo $row_rsCourse['class'.$i_pad.'_image03']; ?>
+            
+            
+            <p>&nbsp;</p>
+            <p>&nbsp;</p>
+            
+            </td></tr></table>
+					</div>
+					<?php
+					
+					$i ++;
+					$i_pad = str_pad($i, 2, "0", STR_PAD_LEFT);
+				} ?>
+        
+        
+      </div>
+    </div>
+    <p>&nbsp;</p>
+	
+    
+	<p>&nbsp;</p>
+  <script type="text/javascript">
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+  </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsCourse);
+?>

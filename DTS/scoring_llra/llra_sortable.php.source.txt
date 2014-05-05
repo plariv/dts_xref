@@ -1,0 +1,569 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Load the required classes
+require_once('../includes/tfi/TFI.php');
+require_once('../includes/tso/TSO.php');
+require_once('../includes/nav/NAV.php');
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+// Filter
+$tfi_listrsLLRA1 = new TFI_TableFilter($conn_Assessment, "tfi_listrsLLRA1");
+$tfi_listrsLLRA1->addColumn("llrakey", "NUMERIC_TYPE", "llrakey", "=");
+$tfi_listrsLLRA1->addColumn("date", "DATE_TYPE", "date", "=");
+$tfi_listrsLLRA1->addColumn("datefinalized", "STRING_TYPE", "datefinalized", "%");
+$tfi_listrsLLRA1->addColumn("userkey", "NUMERIC_TYPE", "userkey", "=");
+$tfi_listrsLLRA1->addColumn("FirstName", "STRING_TYPE", "FirstName", "%");
+$tfi_listrsLLRA1->addColumn("LastName", "STRING_TYPE", "LastName", "%");
+$tfi_listrsLLRA1->addColumn("testtime", "NUMERIC_TYPE", "testtime", "=");
+$tfi_listrsLLRA1->addColumn("lasname", "STRING_TYPE", "lasname", "%");
+$tfi_listrsLLRA1->addColumn("lasnumber_1", "NUMERIC_TYPE", "lasnumber_1", "=");
+$tfi_listrsLLRA1->addColumn("lasnumber_2", "NUMERIC_TYPE", "lasnumber_2", "=");
+$tfi_listrsLLRA1->Execute();
+
+// Sorter
+$tso_listrsLLRA1 = new TSO_TableSorter("rsLLRA", "tso_listrsLLRA1");
+$tso_listrsLLRA1->addColumn("llrakey");
+$tso_listrsLLRA1->addColumn("date");
+$tso_listrsLLRA1->addColumn("datefinalized");
+$tso_listrsLLRA1->addColumn("userkey");
+$tso_listrsLLRA1->addColumn("FirstName");
+$tso_listrsLLRA1->addColumn("LastName");
+$tso_listrsLLRA1->addColumn("testtime");
+$tso_listrsLLRA1->addColumn("lasname");
+$tso_listrsLLRA1->addColumn("lasnumber_1");
+$tso_listrsLLRA1->addColumn("lasnumber_2");
+$tso_listrsLLRA1->setDefault("llrakey DESC");
+$tso_listrsLLRA1->Execute();
+
+// Navigation
+$nav_listrsLLRA1 = new NAV_Regular("nav_listrsLLRA1", "rsLLRA", "../", $_SERVER['php_self'], 20);
+
+$colname_reProject = "-1";
+if (isset($_GET['projectkey'])) {
+  $colname_reProject = $_GET['projectkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_reProject = sprintf("SELECT projectkey, organization FROM projectproject WHERE projectkey = %s", GetSQLValueString($colname_reProject, "int"));
+$reProject = mysql_query($query_reProject, $Assessment) or die(mysql_error());
+$row_reProject = mysql_fetch_assoc($reProject);
+$totalRows_reProject = mysql_num_rows($reProject);
+
+//NeXTenesio3 Special List Recordset
+$maxRows_rsLLRA = $_SESSION['max_rows_nav_listrsllra1'];
+$pageNum_rsLLRA = 0;
+if (isset($_GET['pagenum_rsllra'])) {
+  $pageNum_rsLLRA = $_GET['pagenum_rsllra'];
+}
+$startRow_rsLLRA = $pageNum_rsLLRA * $maxRows_rsLLRA;
+
+$colname_rsLLRA = "-1";
+if (isset($_GET['projectkey'])) {
+  $colname_rsLLRA = $_GET['projectkey'];
+}
+// Defining List Recordset variable
+$NXTFilter_rsLLRA = "1=1";
+if (isset($_SESSION['filter_tfi_listrsllra1'])) {
+  $NXTFilter_rsLLRA = $_SESSION['filter_tfi_listrsllra1'];
+}
+// Defining List Recordset variable
+$NXTSort_rsLLRA = "llrakey desc";
+if (isset($_SESSION['sorter_tso_listrsllra1'])) {
+  $NXTSort_rsLLRA = $_SESSION['sorter_tso_listrsllra1'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+
+$query_rsLLRA = sprintf("SELECT llra.llrakey, llra.`date`, llra.datefinalized, llra.userkey, registrants.firstname, registrants.lastname, llra.projectkey, llra.testtime, llrascores.lasname, llrascores.lasnumber_1, llrascores.lasnumber_2, llra.bulkcustomerkey FROM llra, llrascores, registrants WHERE llra.llrakey = llrascores.llrakey AND registrants.userkey = llra.userkey and llra.projectkey = %s and  {$nxtfilter_rsllra}  order by  {$nxtsort_rsllra} ", GetSQLValueString($colname_rsLLRA, "int"));
+$query_limit_rsLLRA = sprintf("%s limit %d, %d", $query_rsLLRA, $startRow_rsLLRA, $maxRows_rsLLRA);
+$rsLLRA = mysql_query($query_limit_rsLLRA, $Assessment) or die(mysql_error());
+$row_rsLLRA = mysql_fetch_assoc($rsLLRA);
+
+if (isset($_GET['totalrows_rsllra'])) {
+  $totalRows_rsLLRA = $_GET['totalrows_rsllra'];
+} else {
+  $all_rsLLRA = mysql_query($query_rsLLRA);
+  $totalRows_rsLLRA = mysql_num_rows($all_rsLLRA);
+}
+$totalPages_rsLLRA = ceil($totalRows_rsLLRA/$maxRows_rsLLRA)-1;
+//End NeXTenesio3 Special List Recordset
+
+$nav_listrsLLRA1->checkBoundries();
+
+?>
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatellrascore1.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>LLRA sortable</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<script src="../includes/nxt/scripts/list.js" type="text/javascript"></script>
+<script src="../includes/nxt/scripts/list.js.php" type="text/javascript"></script>
+<script type="text/javascript">
+$NXT_LIST_SETTINGS = {
+  duplicate_buttons: true,
+  duplicate_navigation: true,
+  row_effects: true,
+  show_as_buttons: false,
+  record_counter: true
+}
+</script>
+<style type="text/css">
+  /* Dynamic List row settings */
+  .KT_col_llrakey {width:70px; overflow:hidden;}
+  .KT_col_date {width:182px; overflow:hidden;}
+  .KT_col_datefinalized {width:84px; overflow:hidden;}
+  .KT_col_userkey {width:91px; overflow:hidden;}
+  .KT_col_FirstName {width:98px; overflow:hidden;}
+  .KT_col_LastName {width:112px; overflow:hidden;}
+  .KT_col_testtime {width:77px; overflow:hidden;}
+  .KT_col_lasname {width:49px; overflow:hidden;}
+  .KT_col_lasnumber_1 {width:63px; overflow:hidden;}
+  .KT_col_lasnumber_2 {width:63px; overflow:hidden;}
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #824A76;
+	background-image: url(/images/skin/LLRAbackground.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 1300px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(../images/skin/LLRAheaderWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #824A76;
+	background-image: url(/images/skin/LLRAmenu2.jpg);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #A78166;
+	background-image: url(/images/skin/LLRAmenu2.jpg);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 1246px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 2;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footerWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:link {
+	color: #929292;
+}
+.twoColFixRtHdr #container .indent46 a:visited {
+	color: #929292;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:hover {
+	color: #474A47;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="/" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="../" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="../admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <a href="/scoring/chooseassessment.php">choose assessment</a> | <a href="/scoring/choosellra.php">choose llra</a> | <a href="/scoring/bulkcustomerselect.php">sortable</a><a href="/scoring_llra/llra_sortable.php"></a> |<a href="/scoring_llra/llra_personalcom.php">personal comments</a> | <a href="llra_qualities1.php">qualities</a> | <a href="/scoring_llra/llra_general1.php">general comments</a> | <a href="/scoring_llra/llra_cognition.php">cognition</a> | <a href="/scoring_llra/llra_communication.php">communication</a> | <a href="/scoring_llra/llra_emotion.php">emotion</a> | <a href="/scoring_llra/llra_ethics.php">ethics</a> | <a href="/scoring_llra/llra_personality.php">personality</a> | <a href="llra_socialskills.php">social skills</a> | <a href="/scoring_llra/llra_style.php">style</a> | <a href="/scoring_llra/llra_growth1.php">growth areas</a> | <a href="llra_resources1.php">resources</a> | <a href="/scoring_llra/llra_strengthcom.php">strengths</a> | <a href="/scoring_llra/llra_growthcom.php">caveats</a> | <a href="/scoring_llra/llra_recommendations.php">recommendation</a></div>
+<div id="mainContent"><!-- InstanceBeginEditable name="main" -->
+  <div class="KT_tng" id="listrsLLRA1">
+      <h1>Assessments for <?php echo $row_reProject['organization']; ?>
+        <?php
+  $nav_listrsLLRA1->Prepare();
+  require("../includes/nav/NAV_Text_Statistics.inc.php");
+?>
+      </h1>
+      <div class="KT_tnglist">
+        <form action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>" method="post" id="form1">
+          <div class="KT_options"> <a href="<?php echo $nav_listrsLLRA1->getShowAllLink(); ?>"><?php echo NXT_getResource("Show"); ?>
+            <?php 
+  // Show IF Conditional region1
+  if (@$_GET['show_all_nav_listrsllra1'] == 1) {
+?>
+              <?php echo $_SESSION['default_max_rows_nav_listrsllra1']; ?>
+              <?php 
+  // else Conditional region1
+  } else { ?>
+              <?php echo NXT_getResource("all"); ?>
+              <?php } 
+  // endif Conditional region1
+?>
+<?php echo NXT_getResource("records"); ?></a> &nbsp;
+            &nbsp;
+            <?php 
+  // Show IF Conditional region2
+  if (@$_SESSION['has_filter_tfi_listrsllra1'] == 1) {
+?>
+              <a href="<?php echo $tfi_listrsLLRA1->getResetFilterLink(); ?>"><?php echo NXT_getResource("Reset filter"); ?></a>
+              <?php 
+  // else Conditional region2
+  } else { ?>
+              <a href="<?php echo $tfi_listrsLLRA1->getShowFilterLink(); ?>"><?php echo NXT_getResource("Show filter"); ?></a>
+              <?php } 
+  // endif Conditional region2
+?>
+          </div>
+          <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+            <thead>
+              <tr class="KT_row_order">
+                <th> <input type="checkbox" name="KT_selAll" id="KT_selAll"/>
+                </th>
+                <th id="llrakey" class="KT_sorter KT_col_llrakey <?php echo $tso_listrsLLRA1->getSortIcon('llrakey'); ?>"> <a href="<?php echo $tso_listrsLLRA1->getSortLink('llrakey'); ?>">LLRA</a></th>
+                <th id="date" class="KT_sorter KT_col_date <?php echo $tso_listrsLLRA1->getSortIcon('date'); ?>"> <a href="<?php echo $tso_listrsLLRA1->getSortLink('date'); ?>">Date</a></th>
+                <th id="datefinalized" class="KT_sorter KT_col_datefinalized <?php echo $tso_listrsLLRA1->getSortIcon('datefinalized'); ?>"> <a href="<?php echo $tso_listrsLLRA1->getSortLink('datefinalized'); ?>">Finalized</a></th>
+                <th id="userkey" class="KT_sorter KT_col_userkey <?php echo $tso_listrsLLRA1->getSortIcon('userkey'); ?>"> <a href="<?php echo $tso_listrsLLRA1->getSortLink('userkey'); ?>">User No</a></th>
+                <th id="FirstName" class="KT_sorter KT_col_FirstName <?php echo $tso_listrsLLRA1->getSortIcon('FirstName'); ?>"> <a href="<?php echo $tso_listrsLLRA1->getSortLink('FirstName'); ?>">First name</a></th>
+                <th id="LastName" class="KT_sorter KT_col_LastName <?php echo $tso_listrsLLRA1->getSortIcon('LastName'); ?>"> <a href="<?php echo $tso_listrsLLRA1->getSortLink('LastName'); ?>">Last name</a></th>
+                <th id="testtime" class="KT_sorter KT_col_testtime <?php echo $tso_listrsLLRA1->getSortIcon('testtime'); ?>"> <a href="<?php echo $tso_listrsLLRA1->getSortLink('testtime'); ?>">Test time</a></th>
+                <th id="lasname" class="KT_sorter KT_col_lasname <?php echo $tso_listrsLLRA1->getSortIcon('lasname'); ?>"> <a href="<?php echo $tso_listrsLLRA1->getSortLink('lasname'); ?>">Phase</a></th>
+                <th id="lasnumber_1" class="KT_sorter KT_col_lasnumber_1 <?php echo $tso_listrsLLRA1->getSortIcon('lasnumber_1'); ?>"> <a href="<?php echo $tso_listrsLLRA1->getSortLink('lasnumber_1'); ?>">Score 1</a></th>
+                <th id="lasnumber_2" class="KT_sorter KT_col_lasnumber_2 <?php echo $tso_listrsLLRA1->getSortIcon('lasnumber_2'); ?>"> <a href="<?php echo $tso_listrsLLRA1->getSortLink('lasnumber_2'); ?>">Score 2</a></th>
+                <th>&nbsp;</th>
+              </tr>
+              <?php 
+  // Show IF Conditional region3
+  if (@$_SESSION['has_filter_tfi_listrsllra1'] == 1) {
+?>
+                <tr class="KT_row_filter">
+                  <td>&nbsp;</td>
+                  <td><input type="text" name="tfi_listrsLLRA1_llrakey" id="tfi_listrsLLRA1_llrakey" value="<?php echo KT_escapeAttribute(@$_SESSION['tfi_listrsllra1_llrakey']); ?>" size="10" maxlength="100" /></td>
+                  <td><input type="text" name="tfi_listrsLLRA1_date" id="tfi_listrsLLRA1_date" value="<?php echo @$_SESSION['tfi_listrsllra1_date']; ?>" size="10" maxlength="22" /></td>
+                  <td><input type="text" name="tfi_listrsLLRA1_datefinalized" id="tfi_listrsLLRA1_datefinalized" value="<?php echo KT_escapeAttribute(@$_SESSION['tfi_listrsllra1_datefinalized']); ?>" size="12" maxlength="10" /></td>
+                  <td><input type="text" name="tfi_listrsLLRA1_userkey" id="tfi_listrsLLRA1_userkey" value="<?php echo KT_escapeAttribute(@$_SESSION['tfi_listrsllra1_userkey']); ?>" size="13" maxlength="13" /></td>
+                  <td><input type="text" name="tfi_listrsLLRA1_FirstName" id="tfi_listrsLLRA1_FirstName" value="<?php echo KT_escapeAttribute(@$_SESSION['tfi_listrsllra1_firstname']); ?>" size="14" maxlength="14" /></td>
+                  <td><input type="text" name="tfi_listrsLLRA1_LastName" id="tfi_listrsLLRA1_LastName" value="<?php echo KT_escapeAttribute(@$_SESSION['tfi_listrsllra1_lastname']); ?>" size="16" maxlength="16" /></td>
+                  <td><input type="text" name="tfi_listrsLLRA1_testtime" id="tfi_listrsLLRA1_testtime" value="<?php echo KT_escapeAttribute(@$_SESSION['tfi_listrsllra1_testtime']); ?>" size="11" maxlength="2" /></td>
+                  <td><input type="text" name="tfi_listrsLLRA1_lasname" id="tfi_listrsLLRA1_lasname" value="<?php echo KT_escapeAttribute(@$_SESSION['tfi_listrsllra1_lasname']); ?>" size="7" maxlength="5" /></td>
+                  <td><input type="text" name="tfi_listrsLLRA1_lasnumber_1" id="tfi_listrsLLRA1_lasnumber_1" value="<?php echo KT_escapeAttribute(@$_SESSION['tfi_listrsllra1_lasnumber_1']); ?>" size="9" maxlength="5" /></td>
+                  <td><input type="text" name="tfi_listrsLLRA1_lasnumber_2" id="tfi_listrsLLRA1_lasnumber_2" value="<?php echo KT_escapeAttribute(@$_SESSION['tfi_listrsllra1_lasnumber_2']); ?>" size="9" maxlength="5" /></td>
+                  <td><input type="submit" name="tfi_listrsLLRA1" value="<?php echo NXT_getResource("Filter"); ?>" /></td>
+                </tr>
+                <?php } 
+  // endif Conditional region3
+?>
+            </thead>
+            <tbody>
+              <?php if ($totalRows_rsLLRA == 0) { // Show if recordset empty ?>
+                <tr>
+                  <td colspan="12"><?php echo NXT_getResource("The table is empty or the filter you've selected is too restrictive."); ?></td>
+                </tr>
+                <?php } // Show if recordset empty ?>
+              <?php if ($totalRows_rsLLRA > 0) { // Show if recordset not empty ?>
+                <?php do { ?>
+                  <tr class="<?php echo @$cnt1++%2==0 ? "" : "KT_even"; ?>">
+                    <td><input type="checkbox" name="kt_pk_LLRA" class="id_checkbox" value="<?php echo $row_rsLLRA['llrakey']; ?>" />
+                      <input type="hidden" name="llrakey" class="id_field" value="<?php echo $row_rsLLRA['llrakey']; ?>" /></td>
+                    <td><div class="KT_col_llrakey"><?php echo KT_FormatForList($row_rsLLRA['lerakey'], 10); ?></div></td>
+                    <td><div class="KT_col_date"><?php echo KT_formatDate($row_rsLLRA['date']); ?></div></td>
+                    <td><div class="KT_col_datefinalized"><?php echo KT_FormatForList($row_rsLLRA['datefinalized'], 12); ?></div></td>
+                    <td><div class="KT_col_userkey"><?php echo KT_FormatForList($row_rsLLRA['userkey'], 13); ?></div></td>
+                    <td><div class="KT_col_FirstName"><?php echo KT_FormatForList($row_rsLLRA['firstname'], 14); ?></div></td>
+                    <td><div class="KT_col_LastName"><?php echo KT_FormatForList($row_rsLLRA['lastname'], 16); ?></div></td>
+                    <td><div class="KT_col_testtime"><?php echo KT_FormatForList($row_rsLLRA['testtime'], 11); ?></div></td>
+                    <td><div class="KT_col_lasname"><?php echo KT_FormatForList($row_rsLLRA['lasname'], 7); ?></div></td>
+                    <td><div class="KT_col_lasnumber_1"><?php echo KT_FormatForList($row_rsLLRA['lasnumber_1'], 9); ?></div></td>
+                    <td><div class="KT_col_lasnumber_2"><?php echo KT_FormatForList($row_rsLLRA['lasnumber_2'], 9); ?></div></td>
+                    <td><a class="KT_edit_link" href="llrareport.php?llrakey=&amp;llrakey=<?php echo $row_rsLLRA['llrakey']; ?>&amp;KT_back=1"><?php echo NXT_getResource("edit_one"); ?></a> <a class="KT_delete_link" href="#delete"><?php echo NXT_getResource("delete_one"); ?></a></td>
+                  </tr>
+                  <?php } while ($row_rsLLRA = mysql_fetch_assoc($rsLLRA)); ?>
+                <?php } // Show if recordset not empty ?>
+            </tbody>
+          </table>
+          <div class="KT_bottomnav">
+            <div>
+              <?php
+            $nav_listrsLLRA1->Prepare();
+            require("../includes/nav/NAV_Text_Navigation.inc.php");
+          ?>
+            </div>
+          </div>
+          <div class="KT_bottombuttons">
+            <div class="KT_operations"> <a class="KT_edit_op_link" href="#" onClick="nxt_list_edit_link_form(this); return false;"><?php echo NXT_getResource("edit_all"); ?></a> <a class="KT_delete_op_link" href="#" onClick="nxt_list_delete_link_form(this); return false;"><?php echo NXT_getResource("delete_all"); ?></a></div>
+            <span>&nbsp;</span>
+            <select name="no_new" id="no_new">
+              <option value="1">1</option>
+              <option value="3">3</option>
+              <option value="6">6</option>
+            </select>
+            <a class="KT_additem_op_link" href="llrareport.php?llrakey=&amp;KT_back=1" onClick="return nxt_list_additem(this)"><?php echo NXT_getResource("add new"); ?></a></div>
+        </form>
+      </div>
+      <br class="clearfixplain" />
+    </div>
+    <p>&nbsp;</p>
+    </p>
+<!-- InstanceEndEditable -->
+<!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLLRA);
+
+mysql_free_result($reProject);
+?>

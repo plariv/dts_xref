@@ -1,0 +1,377 @@
+<?php 
+include_once "../includes/dts_functions.php";
+include_once '../la_reports/report_custom_functions.php';
+
+$instrument_id = "";
+if (isset($_GET['instrument_id'])) {
+	$instrument_id = $_GET['instrument_id']; 
+	$_SESSION['instrument_id'] = $_GET['instrument_id'];
+}
+if (isset($_SESSION['instrument_id'])) { 
+	$instrument_id = $_SESSION['instrument_id']; 
+}
+$instrument_id = str_replace("_JOURNAL", "", $instrument_id);
+$id = strtolower($instrument_id); // shorthand for boilerplate calls
+
+$currentPage = $_SERVER['PHP_SELF'];
+$panelTableWidth = 570;
+
+
+
+$rsInstruments = mysql_query("SELECT instrument_id FROM la_boilerplate 
+	WHERE type = 'showcase' AND la_boilerplate_text <> ''
+	GROUP BY instrument_id ORDER BY instrument_id") or die("rsInstruments: ".mysql_error());
+
+// Boilerplate table allows us to pull template text into various parts of the report.
+// It's more efficient, now, to download the whole table and put each boilerplate item into a slot in an array, which I call using the boilerplate column "name".
+$rsLaBoilerplate = mysql_query("SELECT b.* FROM la_boilerplate b 
+	WHERE type = 'showcase' OR type = 'faq' ", $Assessment) or die("rsLaBoilerplate: ".mysql_error());
+$boilerplate = array();
+while ($row_rsLaBoilerplate = mysql_fetch_assoc($rsLaBoilerplate)) {
+	$boilerplate[$row_rsLaBoilerplate['name']] = $row_rsLaBoilerplate['la_boilerplate_text'];
+}
+
+
+// Determine color for this instrument
+$color_h2 = "BD1F06";
+$sql_instrumentColor = sprintf("SELECT * FROM la_instruments WHERE instrument_id = %s ",
+	SQLstr($instrument_id, 'text'));
+$rsInstrumentColor = mysql_query($sql_instrumentColor);
+$row_color = mysql_fetch_assoc($rsInstrumentColor);
+if ($row_color['color'] <> "") { $color_h2 = $row_color['color']; }
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: <?php echo $boilerplate['showcase_'.$id.'_title']; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<style type="text/css">
+
+.twoColFixRtHdr #container #mainContent ol { 
+	padding-left: 15px; }
+.twoColFixRtHdr #container #mainContent h2 {
+	margin-top: 0px;
+	color: #<?php echo $color_h2; ?>;
+}
+.twoColFixRtHdr #container #mainContent p a {
+	text-decoration: underline;
+}
+
+/* tooltip styling. by default the element to be styled is .tooltip  */
+.tooltip {
+	display:none;
+	background:#FFF;
+	font-size:90%;
+	line-height:140%;
+	min-width: 200px;
+	max-width: 300px;
+	background: #FFC;
+	padding-right: 20px;
+	padding-left: 20px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-left: 10px;
+	-moz-box-shadow: 2px 2px 5px #888;
+	-webkit-box-shadow: 2px 2px 5px #888;
+	box-shadow: 2px 2px 5px #888;
+	z-index: 999;
+}
+
+.hotspot {
+	cursor: pointer; cursor: hand	
+	height:100%; 
+	width:100%; 
+	position:relative;
+}
+
+</style>
+
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryTabbedPanelsVertical.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript">
+
+// JQUERY to manage hidden elements on the page
+$(document).ready(function() {
+	
+	$('.hotspot').tooltip({
+		position: 'bottom center', 
+		effect: 'fade', 
+		fadeInSpeed: 100,
+		fadeOutSpeed: 100,
+		delay:300,
+		layout: '<span/>',
+		events: {
+			def: 'mouseover, mouseleave'
+		}
+	}); 
+	
+	$('.hotspot').mouseover(function() {
+		this.style.backgroundColor = "#d0d0d0";	
+	});
+	
+	$('.hotspot').mouseout(function() {
+		this.style.backgroundColor = "";
+	});
+	
+	// Add instrument-specific class to each <a> link
+	$('a').addClass('a-<?php echo strtolower($instrument_id); ?>');
+	
+});
+
+
+</script>
+
+<style type="text/css">
+
+#TabbedPanels1 table #TabbedPanels2 .TabbedPanelsTabGroup .TabbedPanelsTabSelected {
+	background-color: #BD1F06;
+	border-bottom: solid 1px #999;
+	color: #FFF;
+}
+</style>
+
+
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->	
+	<?php 
+		if (mysql_num_rows($rsInstruments) > 0) { ?>About the <?php } 
+		$instruments = "";
+		while ($row = mysql_fetch_assoc($rsInstruments)) { 
+			$instruments .= " <a href='showcase.php?instrument_id=".$row['instrument_id']."'>
+      	".$row['instrument_id']."</a> | ";
+		}
+		// take off the final | pipe
+		$instruments = substr($instruments, 0, strlen($instruments)-3);
+		echo $instruments; 
+	?>
+<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  
+
+    
+    <?php if ($instrument_id == "") { ?>
+    	<p>Click on an instrument from the menu <a href="takingassessments.php">above</a> to learn about it.</p>
+    <?php } else { ?>
+    
+    <h1><?php echo strtoupper($boilerplate['showcase_'.$id.'_title']); ?></h1>
+    
+    <p><?php 
+      if (isset($_GET['printerv']) AND $_GET['printerv'] == "yes") { 
+        ?><a href="<?php echo $currentPage; ?>?printerv=no">
+        view page by sections</a>
+    <?php } else { 
+        ?><a href="<?php echo $currentPage; ?>?printerv=yes">
+        view printer-friendly page</a>
+    <?php } ?></p>
+    
+    <?php } ?>
+    
+    <div id="TabbedPanels1" class="VTabbedPanels">
+    
+    	<?php if ($instrument_id <> "") { ?>
+    
+      <?php /* If you block out the <ul> which serves as the TabbedPanel table of contents, the entire TabbedPanels widget breaks gracefully and the page unfolds in nice printer-friendly format. */
+			if (!isset($_GET['printerv']) OR $_GET['printerv'] == "no") { ?>
+      <ul class="TabbedPanelsTabGroup">
+      	<?php 
+					$tabs = array(
+						'showcase_'.$id.'_overview' => "overview",
+						'showcase_'.$id.'_uses' => "putting the ".$instrument_id." to work",
+						'showcase_'.$id.'_taking' => "taking the ".$instrument_id,
+						'showcase_'.$id.'_indivreport' => "individual report",
+						'showcase_'.$id.'_clientreport' => "summary report",
+						'showcase_'.$id.'_clienttools' => "client tools",
+						'showcase_'.$id.'_levelstasks' => "the complexity crisis",
+						'showcase_'.$id.'_psychometrics' => "psychometrics",
+						'all' => "FAQ",
+						'showcase_'.$id.'_learnmore' => "learn more"); 
+					
+					do {
+						// If this panel content exists for this instrument, then create a tab for it.
+						if (key($tabs) == "all" OR isset($boilerplate[key($tabs)]) ) {
+							?><li class="TabbedPanelsTab"><?php echo current($tabs); ?></li><?php 
+						}
+					} while (next($tabs) !== false);
+					
+					?>
+      </ul>
+      <?php } ?>
+      
+      <!-------------------------------------------------------->
+      
+    	<div class="TabbedPanelsContentGroup">
+      <?php if (isset($boilerplate['showcase_'.$id.'_overview'])) { ?>
+      <div class="TabbedPanelsContent">													<!-- Div: Overview  -->
+				<?php echo $boilerplate['showcase_'.$id.'_overview']; ?>
+      </div>
+      <?php } ?>
+      
+      <?php if (isset($boilerplate['showcase_'.$id.'_uses'])) { ?>
+      <div class="TabbedPanelsContent">													<!-- Div: Putting to work  -->
+				<?php echo $boilerplate['showcase_'.$id.'_uses']; ?>
+      </div>
+      <?php } ?>
+      
+      <?php if (isset($boilerplate['showcase_'.$id.'_taking'])) { ?>
+      <div class="TabbedPanelsContent">													<!-- Div: Taking  -->
+				<?php echo $boilerplate['showcase_'.$id.'_taking']; ?>
+      </div>
+      <?php } ?>
+      
+      <?php if (isset($boilerplate['showcase_'.$id.'_indivreport'])) { ?>
+      <div class="TabbedPanelsContent">													<!-- Div: Individual report  -->
+				<?php echo $boilerplate['showcase_'.$id.'_indivreport']; ?>
+      </div>
+      <?php } ?>
+      
+      <?php if (isset($boilerplate['showcase_'.$id.'_clientreport'])) { ?>
+      <div class="TabbedPanelsContent">													<!-- Div: Summary report  -->
+				<?php echo $boilerplate['showcase_'.$id.'_clientreport']; ?>
+      </div>
+      <?php } ?>
+			
+      <?php if (isset($boilerplate['showcase_'.$id.'_clienttools'])) { ?>
+      <div class="TabbedPanelsContent">													<!-- Div: Client tools  -->
+				<?php echo $boilerplate['showcase_'.$id.'_clienttools']; ?>
+      </div>
+      <?php } ?>
+      
+      <?php if (isset($boilerplate['showcase_'.$id.'_levelstasks'])) { ?>
+      <div class="TabbedPanelsContent">													<!-- Div: Levels & tasks  -->
+				<?php echo $boilerplate['showcase_'.$id.'_levelstasks']; ?>
+      </div>
+      <?php } ?>
+      
+      <?php if (isset($boilerplate['showcase_'.$id.'_psychometrics'])) { ?>
+      <div class="TabbedPanelsContent">													<!-- Div: Psychometrics  -->
+				<?php echo $boilerplate['showcase_'.$id.'_psychometrics']; ?>
+      </div>
+      <?php } ?>
+      
+      <div class="TabbedPanelsContent">													<!-- Div: FAQ  -->
+        <?php echo $boilerplate['faq_what_is_a_developmental_assessment']; ?>
+        <?php echo $boilerplate['faq_what_does_lectical_mean']; ?>
+        <?php echo $boilerplate['faq_what_is_a_la']; ?>
+        <?php echo $boilerplate['faq_how_does_a_la_work']; ?>
+        <?php echo $boilerplate['faq_what_information_does_a_la_provide']; ?>
+        <?php echo $boilerplate['faq_what_assessments_are_available']; ?>
+        <?php echo $boilerplate['faq_can_dts_build_custom_assessments']; ?>
+      </div>
+      
+      <?php if (isset($boilerplate['showcase_'.$id.'_learnmore'])) { ?>
+      <div class="TabbedPanelsContent">													<!-- Div: Learn more  -->
+				<?php echo $boilerplate['showcase_'.$id.'_learnmore']; ?>
+      </div>
+      <?php } ?>      
+      
+    	</div>
+      <?php } // ENDIF: only show the tabs if an instrument was selected ?>
+    </div>
+  
+  <br class="clearfloat" />
+    
+    <p>&nbsp;</p>
+	<p>&nbsp;</p>
+	<p>&nbsp;</p>
+	<p>&nbsp;</p>
+	<p>&nbsp;</p>
+	<p>&nbsp;</p>
+
+  <script type="text/javascript">
+	
+	<?php if ($instrument_id <> "") { ?>
+		var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+	<?php } ?>
+		
+  </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+?>

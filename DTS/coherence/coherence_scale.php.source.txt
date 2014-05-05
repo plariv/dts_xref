@@ -1,0 +1,416 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherence = "SELECT argumentationkey, persuasiveness, relevance_scenario, probe, clarity, fragment, conciseness, framing, jargon, on_point FROM la_argumentation";
+$rsCoherence = mysql_query($query_rsCoherence, $Assessment) or die(mysql_error());
+$row_rsCoherence = mysql_fetch_assoc($rsCoherence);
+$totalRows_rsCoherence = mysql_num_rows($rsCoherence);
+
+$colname_rsLAcoherenceFraming = "-1";
+if (isset($_GET['lakey'])) {
+  $colname_rsLAcoherenceFraming = (get_magic_quotes_gpc()) ? $_GET['lakey'] : addslashes($_GET['lakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAcoherenceFraming = sprintf("SELECT la_codes.lakey, la_codes.instrument_id, la_codes.argumentation_framing, la_codes.argumentation_relevance_scenario, la_codes.argumentation_on_point, la_codes.argumentation_conciseness, la_codes.argumentation_jargon, la_codes.argumentation_fragment, la_codes.argumentation_clarity, la_codes.argumentation_persuasiveness, la_codes.argumentation_english, la_data.lakey, la_data.userkey, registrants.userkey, registrants.firstname, registrants.lastname, coherence_scale.coherencescalekey, coherence_scale.five_image FROM la_codes, la_data, registrants, coherence_scale WHERE la_data.lakey = la_codes.lakey AND la_data.userkey = registrants.userkey AND la_codes.lakey = %s AND la_codes.argumentation_framing = coherence_scale.coherencescalekey", GetSQLValueString($colname_rsLAcoherenceFraming, "int"));
+$rsLAcoherenceFraming = mysql_query($query_rsLAcoherenceFraming, $Assessment) or die(mysql_error());
+$row_rsLAcoherenceFraming = mysql_fetch_assoc($rsLAcoherenceFraming);
+$totalRows_rsLAcoherenceFraming = mysql_num_rows($rsLAcoherenceFraming);
+
+$colname_rsLAcoherenceRelevance = "-1";
+if (isset($_GET['lakey'])) {
+  $colname_rsLAcoherenceRelevance = (get_magic_quotes_gpc()) ? $_GET['lakey'] : addslashes($_GET['lakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAcoherenceRelevance = sprintf("SELECT la_codes.lakey, la_codes.instrument_id, la_codes.argumentation_framing, la_codes.argumentation_relevance_scenario, la_codes.argumentation_on_point, la_codes.argumentation_conciseness, la_codes.argumentation_jargon, la_codes.argumentation_fragment, la_codes.argumentation_clarity, la_codes.argumentation_persuasiveness, la_codes.argumentation_english, la_data.lakey, la_data.userkey, registrants.userkey, registrants.firstname, registrants.lastname, coherence_scale.coherencescalekey, coherence_scale.five_image FROM la_codes, la_data, registrants, coherence_scale WHERE la_data.lakey = la_codes.lakey AND la_data.userkey = registrants.userkey AND la_codes.lakey = %s AND la_codes.argumentation_relevance_scenario = coherence_scale.coherencescalekey", GetSQLValueString($colname_rsLAcoherenceRelevance, "int"));
+$rsLAcoherenceRelevance = mysql_query($query_rsLAcoherenceRelevance, $Assessment) or die(mysql_error());
+$row_rsLAcoherenceRelevance = mysql_fetch_assoc($rsLAcoherenceRelevance);
+$totalRows_rsLAcoherenceRelevance = mysql_num_rows($rsLAcoherenceRelevance);
+
+$colname_rsLAcoherenceOnpoint = "-1";
+if (isset($_GET['lakey'])) {
+  $colname_rsLAcoherenceOnpoint = (get_magic_quotes_gpc()) ? $_GET['lakey'] : addslashes($_GET['lakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAcoherenceOnpoint = sprintf("SELECT la_codes.lakey, la_codes.instrument_id, la_codes.argumentation_framing, la_codes.argumentation_relevance_scenario, la_codes.argumentation_on_point, la_codes.argumentation_conciseness, la_codes.argumentation_jargon, la_codes.argumentation_fragment, la_codes.argumentation_clarity, la_codes.argumentation_persuasiveness, la_codes.argumentation_english, la_data.lakey, la_data.userkey, registrants.userkey, registrants.firstname, registrants.lastname, coherence_scale.coherencescalekey, coherence_scale.five_image FROM la_codes, la_data, registrants, coherence_scale WHERE la_data.lakey = la_codes.lakey AND la_data.userkey = registrants.userkey AND la_codes.lakey = %s AND la_codes.argumentation_on_point = coherence_scale.coherencescalekey", GetSQLValueString($colname_rsLAcoherenceOnpoint, "int"));
+$rsLAcoherenceOnpoint = mysql_query($query_rsLAcoherenceOnpoint, $Assessment) or die(mysql_error());
+$row_rsLAcoherenceOnpoint = mysql_fetch_assoc($rsLAcoherenceOnpoint);
+$totalRows_rsLAcoherenceOnpoint = mysql_num_rows($rsLAcoherenceOnpoint);
+
+$colname_rsLAcoherenceConcise = "-1";
+if (isset($_GET['lakey'])) {
+  $colname_rsLAcoherenceConcise = (get_magic_quotes_gpc()) ? $_GET['lakey'] : addslashes($_GET['lakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAcoherenceConcise = sprintf("SELECT la_codes.lakey, la_codes.instrument_id, la_codes.argumentation_framing, la_codes.argumentation_relevance_scenario, la_codes.argumentation_on_point, la_codes.argumentation_conciseness, la_codes.argumentation_jargon, la_codes.argumentation_fragment, la_codes.argumentation_clarity, la_codes.argumentation_persuasiveness, la_codes.argumentation_english, la_data.lakey, la_data.userkey, registrants.userkey, registrants.firstname, registrants.lastname, coherence_scale.coherencescalekey, coherence_scale.five_image FROM la_codes, la_data, registrants, coherence_scale WHERE la_data.lakey = la_codes.lakey AND la_data.userkey = registrants.userkey AND la_codes.lakey = %s AND la_codes.argumentation_conciseness = coherence_scale.coherencescalekey", GetSQLValueString($colname_rsLAcoherenceConcise, "int"));
+$rsLAcoherenceConcise = mysql_query($query_rsLAcoherenceConcise, $Assessment) or die(mysql_error());
+$row_rsLAcoherenceConcise = mysql_fetch_assoc($rsLAcoherenceConcise);
+$totalRows_rsLAcoherenceConcise = mysql_num_rows($rsLAcoherenceConcise);
+
+$colname_rsLAcoherenceJargon = "-1";
+if (isset($_GET['lakey'])) {
+  $colname_rsLAcoherenceJargon = (get_magic_quotes_gpc()) ? $_GET['lakey'] : addslashes($_GET['lakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAcoherenceJargon = sprintf("SELECT la_codes.lakey, la_codes.instrument_id, la_codes.argumentation_framing, la_codes.argumentation_relevance_scenario, la_codes.argumentation_on_point, la_codes.argumentation_conciseness, la_codes.argumentation_jargon, la_codes.argumentation_fragment, la_codes.argumentation_clarity, la_codes.argumentation_persuasiveness, la_codes.argumentation_english, la_data.lakey, la_data.userkey, registrants.userkey, registrants.firstname, registrants.lastname, coherence_scale.coherencescalekey, coherence_scale.five_image FROM la_codes, la_data, registrants, coherence_scale WHERE la_data.lakey = la_codes.lakey AND la_data.userkey = registrants.userkey AND la_codes.lakey = %s AND la_codes.argumentation_jargon = coherence_scale.coherencescalekey", GetSQLValueString($colname_rsLAcoherenceJargon, "int"));
+$rsLAcoherenceJargon = mysql_query($query_rsLAcoherenceJargon, $Assessment) or die(mysql_error());
+$row_rsLAcoherenceJargon = mysql_fetch_assoc($rsLAcoherenceJargon);
+$totalRows_rsLAcoherenceJargon = mysql_num_rows($rsLAcoherenceJargon);
+
+$colname_rsLAcoherenceFragment = "-1";
+if (isset($_GET['lakey'])) {
+  $colname_rsLAcoherenceFragment = (get_magic_quotes_gpc()) ? $_GET['lakey'] : addslashes($_GET['lakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAcoherenceFragment = sprintf("SELECT la_codes.lakey, la_codes.instrument_id, la_codes.argumentation_framing, la_codes.argumentation_relevance_scenario, la_codes.argumentation_on_point, la_codes.argumentation_conciseness, la_codes.argumentation_jargon, la_codes.argumentation_fragment, la_codes.argumentation_clarity, la_codes.argumentation_persuasiveness, la_codes.argumentation_english, la_data.lakey, la_data.userkey, registrants.userkey, registrants.firstname, registrants.lastname, coherence_scale.coherencescalekey, coherence_scale.five_image FROM la_codes, la_data, registrants, coherence_scale WHERE la_data.lakey = la_codes.lakey AND la_data.userkey = registrants.userkey AND la_codes.lakey = %s AND la_codes.argumentation_fragment = coherence_scale.coherencescalekey", GetSQLValueString($colname_rsLAcoherenceFragment, "int"));
+$rsLAcoherenceFragment = mysql_query($query_rsLAcoherenceFragment, $Assessment) or die(mysql_error());
+$row_rsLAcoherenceFragment = mysql_fetch_assoc($rsLAcoherenceFragment);
+$totalRows_rsLAcoherenceFragment = mysql_num_rows($rsLAcoherenceFragment);
+
+$colname_rsLAcoherenceClarity = "-1";
+if (isset($_GET['lakey'])) {
+  $colname_rsLAcoherenceClarity = (get_magic_quotes_gpc()) ? $_GET['lakey'] : addslashes($_GET['lakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAcoherenceClarity = sprintf("SELECT la_codes.lakey, la_codes.instrument_id, la_codes.argumentation_framing, la_codes.argumentation_relevance_scenario, la_codes.argumentation_on_point, la_codes.argumentation_conciseness, la_codes.argumentation_jargon, la_codes.argumentation_fragment, la_codes.argumentation_clarity, la_codes.argumentation_persuasiveness, la_codes.argumentation_english, la_data.lakey, la_data.userkey, registrants.userkey, registrants.firstname, registrants.lastname, coherence_scale.coherencescalekey, coherence_scale.five_image FROM la_codes, la_data, registrants, coherence_scale WHERE la_data.lakey = la_codes.lakey AND la_data.userkey = registrants.userkey AND la_codes.lakey = %s AND la_codes.argumentation_clarity = coherence_scale.coherencescalekey", GetSQLValueString($colname_rsLAcoherenceClarity, "int"));
+$rsLAcoherenceClarity = mysql_query($query_rsLAcoherenceClarity, $Assessment) or die(mysql_error());
+$row_rsLAcoherenceClarity = mysql_fetch_assoc($rsLAcoherenceClarity);
+$totalRows_rsLAcoherenceClarity = mysql_num_rows($rsLAcoherenceClarity);
+
+$colname_rsLAcoherencePersuasive = "-1";
+if (isset($_GET['lakey'])) {
+  $colname_rsLAcoherencePersuasive = (get_magic_quotes_gpc()) ? $_GET['lakey'] : addslashes($_GET['lakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLAcoherencePersuasive = sprintf("SELECT la_codes.lakey, la_codes.instrument_id, la_codes.argumentation_framing, la_codes.argumentation_relevance_scenario, la_codes.argumentation_on_point, la_codes.argumentation_conciseness, la_codes.argumentation_jargon, la_codes.argumentation_fragment, la_codes.argumentation_clarity, la_codes.argumentation_persuasiveness, la_codes.argumentation_english, la_data.lakey, la_data.userkey, registrants.userkey, registrants.firstname, registrants.lastname, coherence_scale.coherencescalekey, coherence_scale.five_image FROM la_codes, la_data, registrants, coherence_scale WHERE la_data.lakey = la_codes.lakey AND la_data.userkey = registrants.userkey AND la_codes.lakey = %s AND la_codes.argumentation_persuasiveness = coherence_scale.coherencescalekey", GetSQLValueString($colname_rsLAcoherencePersuasive, "int"));
+$rsLAcoherencePersuasive = mysql_query($query_rsLAcoherencePersuasive, $Assessment) or die(mysql_error());
+$row_rsLAcoherencePersuasive = mysql_fetch_assoc($rsLAcoherencePersuasive);
+$totalRows_rsLAcoherencePersuasive = mysql_num_rows($rsLAcoherencePersuasive);
+?>
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template2php.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Coherence scale</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+.twoColFixRtHdr #container #mainContent table .underline_plain td div strong {
+	font-size: 24px;
+	color: #ACACAC;
+}
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #9D9F9C;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #F6F6F6;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/DTSheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 26px;
+	background-image: url(/images/skin/menu.png);
+	color: #E2E2E2;
+	margin-top: 0px;
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	height: 19px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a {
+	color: #EAEAEA;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu1 a:active {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 a:visited {
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div id="menu1">
+  <p><a href="/landing.php">home</a>&nbsp;&nbsp;&nbsp;<a href="/security/registration.php">register</a>&nbsp;&nbsp;&nbsp;<a href="/security/logIn.php">log in</a>&nbsp;&nbsp;&nbsp;<a href="/contactus.php">contact us</a>&nbsp;&nbsp;&nbsp;<a href="/security/logout.php">log out</a>&nbsp;&nbsp;
+  <!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->
+  <span class="logintext">
+  <?php if (isset($_SESSION['log_firstname'])) {  ?>
+  You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></span></p>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>COHERENCE SCALES</h1>
+    <p>This page may not view properly in Explorer. We suggest that you use Safari or Firefox.</p>
+    <p>&nbsp;</p>
+    <p>
+      <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,28,0" width="320" height="240">
+        <param name="movie" value="../DynamicWebCharts/open-flash-chart.swf?data=../DynamicWebCharts/Data/coherence_scale_dataparser1.php?<?php echo (isset($_SERVER['QUERY_STRING'])?"GET=".str_replace("&","§",$_SERVER['QUERY_STRING']):'');?>" />
+        <param name="quality" value="high" />
+        <embed src="../DynamicWebCharts/open-flash-chart.swf?data=../DynamicWebCharts/Data/coherence_scale_dataparser1.php?<?php echo (isset($_SERVER['QUERY_STRING'])?"GET=".str_replace("&","§",$_SERVER['QUERY_STRING']):'');?>" quality="high" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" type="application/x-shockwave-flash" width="320" height="240"></embed>
+      </object>
+    &nbsp;&nbsp;&nbsp;
+    <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,28,0" width="320" height="240">
+      <param name="movie" value="../DynamicWebCharts/open-flash-chart.swf?data=../DynamicWebCharts/Data/coherence_scale_dataparser2.php?<?php echo (isset($_SERVER['QUERY_STRING'])?"GET=".str_replace("&","§",$_SERVER['QUERY_STRING']):'');?>" />
+      <param name="quality" value="high" />
+      <embed src="../DynamicWebCharts/open-flash-chart.swf?data=../DynamicWebCharts/Data/coherence_scale_dataparser2.php?<?php echo (isset($_SERVER['QUERY_STRING'])?"GET=".str_replace("&","§",$_SERVER['QUERY_STRING']):'');?>" quality="high" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash" type="application/x-shockwave-flash" width="320" height="240"></embed>
+    </object>
+    </p>
+    <p>&nbsp;</p>
+    <table>
+      <tr class="underline_plain">
+        <td width="140">&nbsp;</td>
+        <td width="80"><div align="center"><strong>*</strong></div></td>
+        <td width="80"><div align="center"><strong>**</strong></div></td>
+        <td width="80"><div align="center"><strong>***</strong></div></td>
+        <td width="80"><div align="center"><strong>****</strong></div></td>
+        <td width="80"><div align="center"><strong>*****</strong></div></td>
+      </tr>
+      <tr>
+        <td colspan="6"><img src="../images/skin/DiscoLineGray.jpg" width="680" height="3" alt="line" /></td>
+      </tr>
+      <tr>
+        <td width="140">Framing  arguments</td>
+        <td colspan="5"><img src="<?php echo $row_rsLAcoherenceFraming['five_image']; ?>" alt="" name="framing" height="16" id="framing" /></td>
+      </tr>
+      <tr>
+        <td width="140">Presenting relevant ideas</td>
+        <td colspan="5"><img src="<?php echo $row_rsLAcoherenceRelevance['five_image']; ?>" alt="" name="relevance" id="relevance" /></td>
+      </tr>
+      <tr>
+        <td width="140">Staying on point</td>
+        <td colspan="5"><img src="<?php echo $row_rsLAcoherenceOnpoint['five_image']; ?>" alt="" name="on_point" id="on_point" /></td>
+      </tr>
+      <tr>
+        <td width="140">Being appropriately concise</td>
+        <td colspan="5"><img src="<?php echo $row_rsLAcoherenceConcise['five_image']; ?>" alt="" name="concise" id="concise" /></td>
+      </tr>
+      <tr>
+        <td width="140">Avoiding undefined jargon</td>
+        <td colspan="5"><img src="<?php echo $row_rsLAcoherenceJargon['five_image']; ?>" alt="" name="jargon" id="jargon" /></td>
+      </tr>
+      <tr>
+        <td width="140">Connecting ideas logically</td>
+        <td colspan="5"><img src="<?php echo $row_rsLAcoherenceFragment['five_image']; ?>" alt="" name="fragment" id="fragment" /></td>
+      </tr>
+      <tr>
+        <td width="140">Communicating clearly</td>
+        <td colspan="5"><img src="<?php echo $row_rsLAcoherenceClarity['five_image']; ?>" alt="" name="clarity" id="clarity" /></td>
+      </tr>
+      <tr>
+        <td width="140">Providing  justifications</td>
+        <td colspan="5"><img src="<?php echo $row_rsLAcoherencePersuasive['five_image']; ?>" alt="" name="persuasive" id="persuasive" /></td>
+      </tr>
+    </table>
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsCoherence);
+
+mysql_free_result($rsLAcoherenceFraming);
+
+mysql_free_result($rsLAcoherenceRelevance);
+
+mysql_free_result($rsLAcoherenceOnpoint);
+
+mysql_free_result($rsLAcoherenceConcise);
+
+mysql_free_result($rsLAcoherenceJargon);
+
+mysql_free_result($rsLAcoherenceFragment);
+
+mysql_free_result($rsLAcoherenceClarity);
+
+mysql_free_result($rsLAcoherencePersuasive);
+
+mysql_free_result($rsRegistrant);
+?>

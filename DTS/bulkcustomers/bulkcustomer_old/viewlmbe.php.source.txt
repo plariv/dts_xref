@@ -1,0 +1,483 @@
+<?php 
+function tfm_cleanOrderBy($theValue, $defaultSort) {
+	if (preg_match("/^[\w,]{1,50}\s+(asc|desc)\s*$/i",$theValue, $matches)) {
+		return $matches[0];
+	}
+	return $defaultSort;
+}
+?>
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+
+
+$tfm_orderby =(!isset($_GET["tfm_orderby"]))?"lmbekey":$_GET["tfm_orderby"];
+$tfm_order =(!isset($_GET["tfm_order"]))?"DESC":$_GET["tfm_order"];
+$sql_orderby = $tfm_orderby." ".$tfm_order;
+$sql_orderby = tfm_cleanOrderBy($sql_orderby, "lmbekey");
+?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+$colname_rsUser = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsUser = (get_magic_quotes_gpc()) ? $_SESSION['log_userkey'] : addslashes($_SESSION['log_userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsUser = sprintf("SELECT userkey, user_level, firstname, lastname FROM registrants WHERE userkey = %s and user_level > 1", GetSQLValueString($colname_rsUser, "int"));
+$rsUser = mysql_query($query_rsUser, $Assessment) or die(mysql_error());
+$row_rsUser = mysql_fetch_assoc($rsUser);
+$totalRows_rsUser = mysql_num_rows($rsUser);
+
+$colname_rsLMBEscoring = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLMBEscoring = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLMBEscoring = sprintf("SELECT LMBEscores.LMBEscoringkey, LMBEscores.lmbekey, LMBEscores.takey, LMBE.lmbekey, LMBE.userkey, Registrants.userkey, Registrants.firstname, Registrants.lastname, Registrants.user_name FROM LMBEscores, LMBE, Registrants WHERE LMBEscores.takey = %s AND LMBE.lmbekey = LMBEscores.lmbekey AND Registrants.userkey = LMBE.userkey ORDER BY LMBEscores.lmbekey DESC", GetSQLValueString($colname_rsLMBEscoring, "int"));
+$rsLMBEscoring = mysql_query($query_rsLMBEscoring, $Assessment) or die(mysql_error());
+$row_rsLMBEscoring = mysql_fetch_assoc($rsLMBEscoring);
+$totalRows_rsLMBEscoring = mysql_num_rows($rsLMBEscoring);
+
+$queryString_rsLMBE = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsLMBE") == false && 
+        stristr($param, "totalRows_rsLMBE") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsLMBE = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsLMBE = sprintf("&totalRows_rsLMBE=%d%s", $totalRows_rsLMBE, $queryString_rsLMBE);
+
+//TOMLR Special List Recordset
+$maxRows_rsLMBE = 10;
+$pageNum_rsLMBE = 0;
+if (isset($_GET['pageNum_rsLMBE'])) {
+  $pageNum_rsLMBE = $_GET['pageNum_rsLMBE'];
+}
+$startRow_rsLMBE = $pageNum_rsLMBE * $maxRows_rsLMBE;
+
+$colname_rsLMBE = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLMBE = $_SESSION['log_userkey'];
+}
+// Defining List Recordset variable
+$sqlorderby_rsLMBE = "lmbekey";
+if (isset($sql_orderby)) {
+  $sqlorderby_rsLMBE = $sql_orderby;
+}
+mysql_select_db($database_Assessment, $Assessment);
+
+$query_rsLMBE = sprintf("SELECT LMBE.lmbekey, LMBE.userkey, LMBE.takey, LMBE.completed, LMBE.`date`, LMBE.testtime, LMBE.coded, Registrants.userkey, Registrants.firstname, Registrants.lastname FROM LMBE, Registrants WHERE LMBE.takey = %s AND LMBE.userkey = Registrants.userkey ORDER BY {$sqlorderby_rsLMBE}", GetSQLValueString($colname_rsLMBE, "text"));
+$query_limit_rsLMBE = sprintf("%s LIMIT %d, %d", $query_rsLMBE, $startRow_rsLMBE, $maxRows_rsLMBE);
+$rsLMBE = mysql_query($query_limit_rsLMBE, $Assessment) or die(mysql_error());
+$row_rsLMBE = mysql_fetch_assoc($rsLMBE);
+
+if (isset($_GET['totalRows_rsLMBE'])) {
+  $totalRows_rsLMBE = $_GET['totalRows_rsLMBE'];
+} else {
+  $all_rsLMBE = mysql_query($query_rsLMBE);
+  $totalRows_rsLMBE = mysql_num_rows($all_rsLMBE);
+}
+$totalPages_rsLMBE = ceil($totalRows_rsLMBE/$maxRows_rsLMBE)-1;
+//End TOMLR Special List Recordset
+?>
+<?php
+//sort column headers for rsLMBE
+$tfm_saveParams = explode(",","");
+$tfm_keepParams = "";
+if($tfm_order == "ASC") {
+	$tfm_order = "DESC";
+}else{
+	$tfm_order = "ASC";
+};
+while (list($key,$val) = each($tfm_saveParams)) {
+	if(isset($_GET[$val]))$tfm_keepParams .= ($val)."=".urlencode($_GET[$val])."&";	
+	if(isset($_POST[$val]))$tfm_keepParams .= ($val)."=".urlencode($_POST[$val])."&";
+}
+$tfm_orderbyURL = $_SERVER["PHP_SELF"]."?".$tfm_keepParams."tfm_order=".$tfm_order."&tfm_orderby=";
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template4php.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: </title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" --><!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #9D9F9C;
+}
+.twoColFixRtHdr #container {
+	width: 1300px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #F6F6F6;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/DTSheaderWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 1246px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 2;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footerWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a {
+	color: #EAEAEA;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu1 a:active {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 a:visited {
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a:hover {
+	color: #FFF;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div id="menu1">
+  <p><a href="/landing.php">home</a>&nbsp;&nbsp;&nbsp;<a href="/security/registration.php">register</a>&nbsp;&nbsp;&nbsp;<a href="/security/logIn.php">log in</a>&nbsp;&nbsp;&nbsp;<a href="/contactus.php">contact us</a>&nbsp;&nbsp;&nbsp;<a href="/security/logout.php">log out</a>&nbsp;&nbsp;
+  <!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->
+  <span class="logintext">
+  <?php if (isset($_SESSION['log_firstname'])) {  ?>
+  You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></span></p>
+  </div>
+      <!-- end #menu1 -->
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <p><span class="pspaced"><a href="../viewldma.php">LDMA</a> | <a href="../viewlera.php">LERA</a> | <a href="../viewllra.php">LLRA</a> | <a href="../viewlmla.php">LMLA</a> | <a href="../viewlmsa.php">LMSA</a> | <a href="../viewlrja.php">LRJA</a> | <a href="../viewlsua.php">LSUA</a> | <a href="viewlmbe.php">LMBE</a> | <a href="../viewlima.php">LIMA</a> | <a href="../../mindfulness/SMS/bc_viewsms.php">SMS</a> | <a href="../../mindfulness/SMJ/teacher_viewjournalentries.php">SMS journal</a> | <a href="../teacher_view_lectical_journal_entries.php">Lectical journal</a></span></p>
+  <p></p>
+  <h1>Results and commenting for <em><?php echo $row_rsUser['firstname']; ?> <?php echo $row_rsUser['lastname']; ?></em></h1>
+  <p>If the assessment has already been commented, the Done catagory will contain a &quot;1&quot;.</p>
+<p>&nbsp;
+<p>
+    <?php echo ($startRow_rsLMBE + 1) ?>&nbsp;to <?php echo min($startRow_rsLMBE + $maxRows_rsLMBE, $totalRows_rsLMBE) ?>&nbsp;of <?php echo $totalRows_rsLMBE ?>
+    &nbsp;
+    <?php //$TFM_navLinks
+if ($pageNum_rsLMBE > 0) {
+  printf('<a href="'."%s?pageNum_rsLMBE=%d%s", $currentPage, 0, $queryString_rsLMBE.'">First</a>');
+}else{
+  echo "First";
+}
+echo " | ";
+if ($pageNum_rsLMBE > 0) {
+  printf('<a href="'."%s?pageNum_rsLMBE=%d%s", $currentPage, max(0, $pageNum_rsLMBE - 1), $queryString_rsLMBE.'">Previous</a>');
+}else{
+  echo "Previous";
+}
+echo " | ";
+if ($pageNum_rsLMBE < $totalPages_rsLMBE) { 
+  printf('<a href="'."%s?pageNum_rsLMBE=%d%s", $currentPage, $pageNum_rsLMBE + 1, $queryString_rsLMBE.'">Next</a>');
+}else{
+  echo "Next";
+}
+echo " | ";
+if ($pageNum_rsLMBE < $totalPages_rsLMBE) { 
+  printf('<a href="'."%s?pageNum_rsLMBE=%d%s", $currentPage, $totalPages_rsLMBE, $queryString_rsLMBE.'">Last</a>');
+}else{
+  echo "Last";
+}
+?>
+    <br />
+  </p>
+  <table border="0">
+    <tr>
+      <td class="tablehead"><a href="<?Php echo ($tfm_orderbyURL); ?>lmbekey">LMBE</a></td>
+      <td width="140" class="tablehead"><a href="<?Php echo ($tfm_orderbyURL); ?>date">Date</a></td>
+      <td class="tablehead"><a href="<?Php echo ($tfm_orderbyURL); ?>testtime">Test time</a></td>
+      <td class="tablehead"><a href="<?Php echo ($tfm_orderbyURL); ?>firstname">First name</a></td>
+      <td class="tablehead"><a href="<?Php echo ($tfm_orderbyURL); ?>lastname">Last name</a></td>
+      <td class="tablehead">Done</td>
+      <td class="tablehead">Comment</td>
+      <td class="tablehead">Report</td>
+    </tr>
+    <?php do { ?>
+      <tr>
+        <td><div align="center"><?php echo $row_rsLMBE['lmbekey']; ?></div></td>
+        <td width="140"><div align="center"><?php echo $row_rsLMBE['date']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLMBE['testtime']; ?></div></td>
+        <td><div align="left"><?php echo $row_rsLMBE['firstname']; ?></div></td>
+        <td><div align="left"><?php echo $row_rsLMBE['lastname']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLMBE['completed']; ?></div></td>
+        <td><div align="center"><a href="../../codingLMBE/lmbetacomment.php?lmbekey=<?php echo $row_rsLMBE['lmbekey']; ?>">comment</a></div></td>
+        <td><div align="center"><a href="../../codingLMBE/lmbereport.php?lmbekey=<?php echo $row_rsLMBE['lmbekey']; ?>">view</a></div></td>
+      </tr>
+      <?php } while ($row_rsLMBE = mysql_fetch_assoc($rsLMBE)); ?>
+</table>
+  <h3>Edit comments</h3>
+  <p><?php echo ($startRow_rsLMBEscoring + 1) ?>&nbsp;to <?php echo min($startRow_rsLMBEscoring + $maxRows_rsLMBEscoring, $totalRows_rsLMBEscoring) ?>&nbsp;of <?php echo $totalRows_rsLMBEscoring ?> &nbsp;
+      <?php //$TFM_navLinks
+if ($pageNum_rsLMBEscoring > 0) {
+  printf('<a href="'."%s?pageNum_rsLMBEscoring=%d%s", $currentPage, 0, $queryString_rsLMBEscoring.'">First</a>');
+}else{
+  echo "First";
+}
+echo " | ";
+if ($pageNum_rsLMBEscoring > 0) {
+  printf('<a href="'."%s?pageNum_rsLMBEscoring=%d%s", $currentPage, max(0, $pageNum_rsLMBEscoring - 1), $queryString_rsLMBEscoring.'">Previous</a>');
+}else{
+  echo "Previous";
+}
+echo " | ";
+if ($pageNum_rsLMBEscoring < $totalPages_rsLMBEscoring) { 
+  printf('<a href="'."%s?pageNum_rsLMBEscoring=%d%s", $currentPage, $pageNum_rsLMBEscoring + 1, $queryString_rsLMBEscoring.'">Next</a>');
+}else{
+  echo "Next";
+}
+echo " | ";
+if ($pageNum_rsLMBEscoring < $totalPages_rsLMBEscoring) { 
+  printf('<a href="'."%s?pageNum_rsLMBEscoring=%d%s", $currentPage, $totalPages_rsLMBEscoring, $queryString_rsLMBEscoring.'">Last</a>');
+}else{
+  echo "Last";
+}
+?>
+      <br />
+</p>
+<table border="0">
+  <tr>
+    <td class="tablehead">LMBE</td>
+    <td class="tablehead">User name</td>
+    <td class="tablehead">First name</td>
+    <td class="tablehead">Last name</td>
+    <td class="tablehead">Edit</td>
+    </tr>
+  <?php do { ?>
+    <tr>
+      <td><div align="center"><?php echo $row_rsLMBEscoring['lmbekey']; ?></div></td>
+      <td><div align="center"><?php echo $row_rsLMBEscoring['user_name']; ?></div></td>
+      <td><div align="left"><?php echo $row_rsLMBEscoring['firstname']; ?></div></td>
+      <td><div align="left"><?php echo $row_rsLMBEscoring['lastname']; ?></div></td>
+      <td><div align="center"><a href="../../codingLMBE/lmbetacomment.php?LMBEscoringkey=<?php echo $row_rsLMBEscoring['LMBEscoringkey']; ?>&amp;lmbekey=<?php echo $row_rsLMBEscoring['lmbekey']; ?>">edit</a></div></td>
+    </tr>
+    <?php } while ($row_rsLMBEscoring = mysql_fetch_assoc($rsLMBEscoring)); ?>
+</table>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsUser);
+
+mysql_free_result($rsLMBEscoring);
+
+mysql_free_result($rsLMBE);
+?>

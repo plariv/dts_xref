@@ -1,0 +1,209 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title><?php echo $_SESSION['instrument_id']; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>Test page </h1>
+    <p>dolore quis nostrud exercitation consectetur adipisicing elit. Ut enim ad minim veniam, eu fugiat nulla pariatur. Sunt in culpa ullamco laboris nisi qui officia deserunt. Excepteur sint occaecat in reprehenderit in voluptate quis nostrud exrcitatin.</p>
+    <?php
+		//include_once 'open_flash_chart_object.php';
+		//open_flash_chart_object( 500, 300, 'http://'. $_SERVER['SERVER_NAME'] .'/openflashcharts/ofc_generator.php' );
+		
+		
+include_once( 'open-flash-chart.php' );
+
+$bar = new bar_sketch( 50, 6, '#99FF00', '#7030A0' );
+$bar->key( '% Complete', 10 );
+
+$data = array();
+$labels = array();
+
+$bar->data[] = 50;
+$labels[] = 'Mon';
+$bar->data[] = 65;
+$labels[] = 'Tue';
+$bar->data[] = 70;
+$labels[] = 'Wed';
+$bar->data[] = 75;
+$labels[] = 'Thu';
+$bar->data[] = 80;
+$labels[] = 'Fri';
+$bar->data[] = 89;
+$labels[] = 'Sat';
+$bar->data[] = 100;
+$labels[] = 'Sun';
+
+//
+// ----
+//
+$g = new graph();
+$g->title( 'Paper Mario, % complete', '{font-size: 18px; color: #A0A0A0;}' );
+
+$g->set_tool_tip( 'Progress, #val#%' );
+//
+//
+
+// set the X axis labels
+$g->set_x_labels( $labels );
+
+//$g->set_data( $data );
+//$g->bar_sketch( 50, 6, '#99FF00', '#7030A0', '% Complete', 10 );
+
+//
+// add the bar object to the graph
+//
+$g->data_sets[] = $bar;
+
+$g->set_x_label_style( 10, '#A0A0A0', 0, 1 );
+$g->set_y_label_style( 10, '#A0A0A0' );
+$g->x_axis_colour( '#A0A0A0', '#FFFFFF' );
+$g->set_x_legend( 'Week 1', 12, '#A0A0A0' );
+
+$g->y_axis_colour( '#A0A0A0', '#FFFFFF' );
+
+
+$g->set_y_min( 0 );
+$g->set_y_max( 100 );
+$g->y_label_steps( 2 );
+
+$g->set_width( 400 );
+$g->set_height( 250 );
+
+$g->set_output_type('js');
+echo $g->render();
+?>
+
+
+
+    <p>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Eu fugiat nulla pariatur. Qui officia deserunt duis aut irure dolor lorem ipsum dolor sit amet. Ullamco laboris nisi consectetur adipisicing elit, ut labore et dolore magna aliqua. In reprehenderit in voluptate ut enim ad minim veniam, eu fugiat nulla priaur.</p>
+    <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrants);
+?>

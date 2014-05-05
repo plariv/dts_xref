@@ -1,0 +1,802 @@
+<?php 
+
+/** INCLUDE FILE for the la_ report pages
+	This include file contains functions that will be useful in the la_reports pages.
+	Such as the function to write a DWC chart, get generic menu text, generate HTML bar charts, and an array listing the standard color pallette for bar charts.
+
+ **/
+
+
+
+
+// STANDARD COLOR PALETTE to make the HTML bar graph table bars.
+
+$htmlBarGraphColors = array(
+"BD1F06", "C94900", "FF8300", "345923", "005640", "004e56", "002B5E", "242054", "602257", 
+"CF4938", "D86C25", "FF9A3B", "5E774B", "347762", "377677", "22517D", "484775", "824A76");
+
+// NO - BAD - DO NOT USE
+$primaryColor = array(
+		'LDMA' => "c33c2c",
+		'LMBE' => "30308e",
+		'FOLA' => "114f56",
+		'LSUA' => "034572",
+		'LLRA' => "732477",
+		'LRJA' => "5e7012",
+		'LERA' => "9e1269",
+		'LDPA' => "1e6642",
+		'LSMA' => "d35a2a",
+		'SMJ'  => "f99319",
+		'LIMA' => "036b6b"
+		);
+		
+$secondaryColor = array(
+		'LDMA' => "c33c2c",
+		'LMBE' => "30308e",
+		'FOLA' => "114f56",
+		'LSUA' => "034572",
+		'LLRA' => "732477",
+		'LRJA' => "5e7012",
+		'LERA' => "9e1269",
+		'LDPA' => "1e6642",
+		'LSMA' => "d35a2a",
+		'SMJ'  => "f99319",
+		'LIMA' => "036b6b"
+		);
+
+// Current charts use the below colors.
+
+$chart_colors = array(
+		'LDMA' => "c33c2c db8a80 d35a2a",
+		'LMBE' => "30308e 8383bb",
+		'FOLA' => "114f56 70959a",
+		'LSUA' => "034572 688faa",
+		'LLRA' => "732477 ab7cad",
+		'LRJA' => "5e7012 9ea971",
+		'LERA' => "9e1269 c571a5",
+		'LIMA' => "036b6b 68a6a6",
+		'LDPA' => "1e6642 78a38e",
+		'LSMA' => "d35a2a e59c7f",
+		'SMA'  => "d35a2a e59c7f", 
+		'SMJ'  => "f99319 fbbe75",
+		'SMS'  => "356a8e 9ab5c7", 
+		'DEFAULT' => "BD1F06 004e56"
+		);
+
+
+
+function makeDWC($chartData) {
+	global $primaryColor, $secondaryColor;
+	include_once( '../openflashcharts/open-flash-chart.php' );
+	
+	$instr_base = str_replace("_JOURNAL", "", $_SESSION['instrument_id']);
+	
+	// Decide on bar colors - based on INSTRUMENT_ID
+	$color_ds1 = "1E5A96"; // defaults to blue and green
+	$color_ds2 = "147531";
+	if (isset($primaryColor[$instr_base]) AND $primaryColor[$instr_base] <> "") 
+	{ $color_ds1 = $primaryColor[$instr_base]; }
+	if (isset($secondaryColor[$instr_base]) AND $secondaryColor[$instr_base] <> "") 
+	{ $color_ds2 = $secondaryColor[$instr_base]; }
+	
+	
+	$col_x = $chartData['col_x'];
+	$col_y1 = $chartData['col_y1'];
+	
+	// bar_outline($alpha, $color, $outline_color)
+	$bar = new bar_outline( 75, '#'.$color_ds1, '#'.$color_ds1 );
+	
+	// initialize and label each data set
+	if (isset($chartData['legend1'])) {
+		$bar->key( $chartData['legend1'], 10 );
+	}
+	// assume there's only 1 data set until proven otherwise
+	$chartNumDataSets = 1;
+	if (isset($chartData['legend2'])) {
+		$bar2 = new bar_outline( 75, '#'.$color_ds2, '#'.$color_ds2 );
+		$bar2->key( $chartData['legend2'], 10 );
+		$chartNumDataSets ++;
+		$col_y2 = $chartData['col_y2'];
+	}
+	
+	$data = array();	// I don't think I actually use this $data[] anywhere...
+	$labels = array();
+	
+	$col_n = "";
+	if (isset($chartData['col_n'])) {
+		$col_n = $chartData['col_n'];
+	}
+	
+	if (isset($chartData['customlabels'])) {
+		$customLabels = $chartData['customlabels'];
+	}
+	
+	
+	
+	// text to add onto the label for each bar, which isn't taken from the SQL query
+	$x_prepend_label = "";
+	if (isset($chartData['x_prepend_label'])) {
+		$x_prepend_label = $chartData['x_prepend_label'];
+	}
+	
+	// add label and data for each point
+	$recordset = $chartData['recordset'];
+	
+	$i = 0; // $i tracks the # data points added.
+	while ($row_rsChart = mysql_fetch_assoc($recordset)) {
+		if (isset($customLabels)) {	// customLabels is an array too.
+			$labels[] = $x_prepend_label.$customLabels[$i];
+		} else {
+			$labels[] = $x_prepend_label.$row_rsChart[$col_x];
+		}
+		
+		// Decide on tooltip for this point. 
+		// Default tooltip:
+		$tooltip1 = $x_prepend_label.$row_rsChart[$col_x].": ".$row_rsChart[$col_y1];
+		if (isset($chartData['tooltip'])) {
+			$tooltip1 = $chartData['tooltip'];
+		} else if ($col_n <> "") {
+			$tooltip1 .= "<br>(n = ".$row_rsChart[$col_n].")";
+		} 
+		
+		//$bar->data[] = $row_rsChart[$col_y1];
+		$bar->add_data_tip( $row_rsChart[$col_y1], $tooltip1);
+		
+		if ($chartNumDataSets == 2) {
+			
+			$tooltip2 = $x_prepend_label.$row_rsChart[$col_x].": ".$row_rsChart[$col_y2];
+			if (isset($chartData['tooltip'])) {
+				$tooltip2 = $chartData['tooltip'];
+			} else if ($col_n <> "") {
+				$tooltip2 .= "<br>(n = ".$row_rsChart[$col_n].")";
+			} 
+			
+			$bar2->add_data_tip($row_rsChart[$col_y2], $tooltip2);
+		}
+		
+		$i ++;
+	} // end WHILE loop for processing data points.
+	
+	// Add NULL slots so that the bars don't get too huge.
+	while ($i < 4) {
+		$labels[] = "";
+		$bar->add_data_tip( isset($chartData["y_min"]) ? $chartData["y_min"] : 0 , "");
+		$i ++;
+	}
+	
+	// Reset the recordset in case you need to re-use it
+	if (mysql_num_rows($recordset) > 0) { mysql_data_seek($recordset, 0); }
+	
+	
+	//
+	// ---- CREATE THE GRAPH FROM THESE DATA
+	//
+	
+	$g = new graph();
+	$g->title( $chartData["title"], '{font-size: 14px; font-weight: bold; color: #303431; padding-top: 20px; padding-bottom: 11px}' );
+	$g->bg_colour = '#f6f6f6';
+	
+	// set any string text for the tool tip
+	$g->set_tool_tip( '#tip#' );
+	
+	
+	// set the X axis labels
+	$g->set_x_labels( $labels );
+	
+	//$g->set_data( $data );
+	//$g->bar_sketch( 50, 6, '#99FF00', '#7030A0', '% Complete', 10 );
+	
+	//
+	// add the bar object to the graph
+	//
+	$g->data_sets[] = $bar;
+	if ($chartNumDataSets == 2) {
+		$g->data_sets[] = $bar2;
+	}
+	
+	$g->set_x_label_style( 10, '#303431', 0, 1 );
+	$g->set_y_label_style( 10, '#303431' );
+	
+	$g->set_x_tick_size(0);
+	$g->x_axis_colour( '#A0A0A0', '#f6f6f6' );
+	$g->y_axis_colour( '#A0A0A0', '#f6f6f6' );
+	
+	// old legend color: #A0A0A0
+	$g->set_x_legend( $chartData["xlabel"], 12, '#303431' );
+	$g->set_y_legend( $chartData["ylabel"], 12, '#303431' );
+	
+	$g->set_y_min( isset($chartData["y_min"]) ? $chartData["y_min"] : 0 );
+	$g->set_y_max( isset($chartData["y_max"]) ? $chartData["y_max"] : 100 );
+	$g->y_label_steps( 2 );
+	
+	if (isset($chartData['bgimage'])) { 
+		$g->set_bg_image( $chartData['bgimage'], 'right', 'bottom' );
+		$g->x_axis_colour( '#A0A0A0', '#aaaaaa' );
+		$g->y_axis_colour( '#A0A0A0', '#aaaaaa' );
+		$g->y_label_steps( 1 );
+	}
+	
+	
+	if (isset($chartData["ylabel"])) {
+		
+	}
+	// 320 x 240, 555 x 416 
+	$g->set_width( isset($chartData["width"]) ? $chartData["width"] : 555 );
+	// 
+	$g->set_height( isset($chartData["height"]) ? $chartData["height"] : 416 );
+	
+	$g->set_output_type('js');
+	echo $g->render();
+
+}
+
+
+
+function highchart($recordset, $title, $subtitle, $label_x, $label_y, $label_xtip, 
+									 $col_names, $legends, $y_min, $y_max, $bgimage = "", $chart_type = "column") {
+	/* HighCharts documentation, examples etc. can be found on http://www.highcharts.com/
+	// HighCharts rely on JavaScript and little else.
+	
+	input $chartData should be an associative array with 9 elements:
+	 - "recordset" => 	the unopened recordset
+	 - "title" => 			chart title
+	 - "subtitle" => 		chart subtitle
+	 - "col_names" => 	array of RS column names: X value, N count, Y1 data set 1 [, Y2, ...]
+	 - "label_x" => 		X axis label
+	 - "label_y" => 		Y axis label
+	 - "label_xtip" => 	text to prepend to X value on tooltip
+	 - "legends" => 		descriptor for each data set: Y1 [, Y2, ...]
+	 - "y_constr" =>		Y min, max values to show on the chart
+	some of these elements are optional and can simply be an empty array or a "".
+	
+	*/
+	
+	global $chart_colors, $instrument_id_base;
+	if (!isset($instrument_id_base) OR $instrument_id_base == "") {
+		$instrument_id_base = "DEFAULT";
+	}
+	
+	$bar_colors = explode(" ", $chart_colors[$instrument_id_base]);
+	$col_x = $col_names[0]; array_shift($col_names);
+	$col_n = $col_names[0]; array_shift($col_names);
+	$num_series = 0;
+	$data = array( array(), array() );	// all data series will be stored inside here.
+	// $data: [0] is the X category name. [1] is the N for that X category. [2] is the first data set.
+	
+	
+	// figure out how many data series there are
+	
+	// go through the remaining column name strings to count how many data sets are present.
+	while (current($col_names) !== false) {
+		$num_series ++; 
+		$data[] = array();
+		next($col_names);
+	} 
+	
+	// Count total N for this chart
+	$total_n = 0;
+	if ($col_n <> "") { 
+		while ($row_rsChart = mysql_fetch_assoc($recordset)) {
+			$total_n += $row_rsChart[$col_n]; 
+		}
+		// Reset the recordset, will need it again at the primary data phase
+		if (mysql_num_rows($recordset) > 0) { mysql_data_seek($recordset, 0); }
+		$total_n = " (N = ".$total_n.")";
+	} else {
+		$total_n = "";
+	}
+	
+	
+	// Collect the label and data for each point
+	$length_label = 0;
+	$i = 0; // $i tracks the # data points added.
+	while ($row_rsChart = mysql_fetch_assoc($recordset)) { 
+		// add the label for this X category
+		$data[0][] = $row_rsChart[$col_x];
+		// Track the max length of legend text
+		if (strlen($row_rsChart[$col_x]) > $length_label) { 
+			$length_label = strlen($row_rsChart[$col_x]); 
+		} 
+		// add the N value
+		if ($col_n <> "") { 
+			$data[1][] = $row_rsChart[$col_n];
+		// echo "this ".$col_n." = ".$row_rsChart[$col_n];
+		}
+		
+		$cur_series = 0; // used to identify the place in the array
+		while ($cur_series < $num_series) {
+			// for DS 1, Y values are stored in $data[2] (3rd slot). 
+			// the data are fetched from the RS columns specified in the remaining fields of $col_names.
+			$data[2 + $cur_series][] = $row_rsChart[$col_names[$cur_series]];
+			$cur_series ++;
+		} // END while: while there are more data series to output
+	} // END while: for each row in the data recordset
+	
+	
+	// Reset the recordset in case you need to re-use it
+	if (mysql_num_rows($recordset) > 0) { mysql_data_seek($recordset, 0); }
+	
+	/* At this point $data should look something like: 
+		[0] (X categories) = "time 1", "time 2", "time 3", "time 4"
+		[1] (Ns) = 8, 17, 33, 5
+		[2] (Y series 1) = 87, 92.5, 83, 54
+		[3] (Y series 2) = 90, 96, 89, 73
+		[etc.] 
+		
+		*/
+	
+	// prepare chart settings
+	
+	$chart_id = mt_rand(1000, 9999); // unique ID for this chart
+	$chart_width = 560; // default full page
+	$fontsize_title = 18;
+	if (strpos($chart_type, "_med")) { $chart_width = 450; $fontsize_title = 16; } 
+	if (strpos($chart_type, "_small")) { $chart_width = 380; $fontsize_title = 15; } 
+	$fontsize_subtitle = $fontsize_title - 2;
+	$fontsize_axistitle = $fontsize_title - 2;
+	$fontsize_axislabel = $fontsize_title - 4;
+	$fontsize_legend = $fontsize_title - 7;
+	$fontsize_tooltip = $fontsize_title - 8;
+	$chart_height = $chart_width * .85;
+	
+	$float = "";
+	if (strpos($chart_type, "_left")) { $float = "class='fltlft'"; } 
+	if (strpos($chart_type, "_right")) { $float = "class='fltrt'"; } 
+	
+	$chart_type = str_replace(array("_med", "_small", "_left", "_right"), "", $chart_type);
+	
+	if ($chart_type == "line" AND $num_series > 2 AND $instrument_id_base == "LDMA") { 
+		if ($num_series < 5) { $chart_height += 30; } 
+		else { $chart_height += 60; }
+	}
+	
+	if ($length_label > 5 AND $instrument_id_base == "LDMA") {
+		$chart_height += ($length_label * 6);
+	}
+	
+	if ($subtitle <> "") {
+		$chart_height += 18;
+	}
+	if ($num_series > 1) { 
+		$chart_height += ($num_series*15);
+	}
+	
+	$legend_valign = "top";
+	$legend_x = -30;
+	$legend_y = 35;
+	
+	if ($chart_type == "line" AND $instrument_id_base == "LDMA") { 
+		$legend_x = -10;
+		$legend_y = -45 - ($length_label * 4);
+		$legend_valign = "bottom";
+	}
+	
+	
+	?>
+  <div id="chart_<?php echo $chart_id; ?>" <?php echo $float; ?>></div>
+  
+  <script type="text/javascript">
+  $(document).ready(function() {
+		var chart = new Highcharts.Chart({
+			
+			chart: {
+				renderTo: 'chart_<?php echo $chart_id; ?>',
+				defaultSeriesType: '<?php echo $chart_type; ?>',
+				<?php if ($bgimage <> "") { ?>
+					plotBackgroundImage: '<?php echo $bgimage; ?>',
+				<?php } ?>
+				backgroundColor: "",
+				spacingTop: 35,
+				width: <?php echo $chart_width; ?>,
+				height: <?php echo $chart_height; ?>
+			},
+			
+			title: {
+				text: '<?php // Echoes the specified title text, plus the N value if there is one.
+					echo $title; ?>',
+				
+				// TITLE STYLE -- you can enter CSS into this style panel, but don't specify alignment here.
+				style: {
+            color: '#474A47',
+						fontSize: '<?php echo $fontsize_title; ?>px'
+        },
+				
+				// SPACE ABOVE THE TITLE (squeezes the chart down). Default = 15.
+				y: 10,
+				
+				// SPACE BELOW THE TITLE (squeezes the chart down). Default = 15. 
+				margin: 35
+			},
+			
+			<?php if ($subtitle <> "" OR $total_n <> "") { ?>
+			subtitle: {
+				text: '<?php echo $subtitle." ".$total_n; ?>',
+				style: {
+					fontSize: '<?php echo $fontsize_subtitle; ?>px',
+					color: '#888888'
+				}
+			}, 
+			<?php } ?>
+			
+			xAxis: {
+				categories: [<?php 	// 			SET THE LABELS FOR EACH X CATEGORY
+				
+					// output the X categories to use, stored in $data slot 0.
+					$js_output = "";
+					reset($data[0]);
+					$c = 0;
+					while (current($data[0]) !== false) {
+						$js_output .= " '".ucfirst(current($data[0]))."', ";
+						$c ++;
+						next($data[0]);
+					}
+					
+					// if there's less than 4 groups, add spacers to make the bars look less awkward.
+					while ($c < 4) { 
+						$js_output .= " ' ', ";
+						$c ++;
+					}
+					
+					// snip off the ending comma
+					$js_output = substr($js_output, 0, strlen($js_output)-2);
+					echo $js_output; ?>], 
+				
+				labels: {
+					<?php if (strlen($js_output) > 60) { ?>
+						rotation: 315,
+						align: 'right',
+					<?php } ?>
+					style: { fontSize: '<?php echo $fontsize_axislabel; ?>px' },
+					y: 17
+				},
+				
+				title: {
+					text: <?php if ($label_x <> "") { echo "'".$label_x."', "; } 
+											else { echo "null, "; } ?>
+					style: {
+            color: '#474A47',
+						fontSize: '<?php echo $fontsize_axistitle; ?>px',
+						fontWeight: 'normal'
+        	}
+				}
+			},
+			
+			yAxis: {
+				<?php if ($y_min !== "") { ?>
+					min: <?php echo $y_min; ?>, 
+				<?php } ?>
+				<?php if ($y_max !== "") { ?>
+					max: <?php echo $y_max; ?>, 
+				<?php } ?>
+				endOnTick: false,
+				gridLineWidth: 0,
+				
+				
+				labels: {
+					style: { fontSize: '<?php echo $fontsize_axislabel; ?>px' }
+				},
+				
+				title: {
+					text: <?php if ($label_y <> "") { echo "'".$label_y."'"; } 
+											else { echo "null"; } ?>,
+					align: 'high',
+					style: {
+            color: '#474A47',
+						fontSize: '<?php echo $fontsize_axistitle; ?>px',
+						fontWeight: 'normal'
+        	}
+				}
+			},
+			
+			tooltip: {
+				formatter: function() {
+					var tip = '';
+					<?php if ($num_series > 1) { ?>
+						tip = tip + '<b>' + this.series.name + '</b><br>';
+					<?php } ?>
+					
+					tip = tip + '<?php echo $label_xtip; ?> ' + this.x + ': ' + this.y<?php 
+							if ($y_max == 100) { ?> + '%' <?php } ?>;
+					
+					if (this.point.n == null) {	 } else {
+						tip = tip + '<br> (n = ' + this.point.n + ')';
+					}
+					
+					return tip;
+				},
+				
+				style: { fontSize: '<?php echo $fontsize_tooltip; ?>pt' }
+			},
+			
+			plotOptions: {
+				bar: {
+					dataLabels: {
+						enabled: true
+					}
+				},
+				line: {
+					connectNulls: true
+				}
+			}, 
+			
+			legend: {
+				<?php if ($num_series <= 1) { ?>enabled: false, <?php } ?>
+				layout: 'vertical',
+				// align: 'right',
+				verticalAlign: 'bottom',
+				floating: false,
+				// x: <?php echo $legend_x; ?>,
+				// y: 25<?php // echo $legend_y; ?>,
+				borderWidth: 1,
+				backgroundColor: '#FFFFFF',
+				shadow: true,
+				style: { fontSize: '<?php echo $fontsize_legend; ?>px' }
+			},
+			
+			credits: {
+				enabled: false
+			},
+			
+			series: 
+			[<?php // begin series
+				$cur_series = 0;
+				// For each data series we might have included...
+				while ($cur_series < $num_series) {  
+				?>{ <?php // begin this data set
+					
+					// print out the name for this series (if legends are being used)
+					if (isset($legends[$cur_series])) {
+						?> name: '<?php echo $legends[$cur_series]; ?>', <?php 
+					}
+					
+					// use instrument-specific colors, if they are available. 
+					// Otherwise default to blue.
+					// Exception: Series titled 'COMPARISON_*' are pale gray.
+					if (isset($bar_colors[$cur_series])) {
+						if (strpos(' '.$col_names[$cur_series], 'COMPARISON_')) {
+							$bar_colors[$cur_series] = 'aaaaaa';
+						}
+						?>color: '#<?php echo $bar_colors[$cur_series]; ?>', <?php 
+					}
+					
+					// print out the Y values for this series
+					$i = 2 + $cur_series;
+					$c = 0; // to ensure a minimum of 4 bars present
+					$data_output = "";
+					reset($data[$i]); reset($data[1]);
+					// for each data point in this series...
+					while (current($data[$i]) !== false) {
+						// for each NON-NULL y-value...
+						if (current($data[$i]) <> "") { 
+							if ($col_n <> "") { 
+								$data_output .= "{n: ".current($data[1]).", ";
+								$data_output .= "y: ".current($data[$i])."}, ";
+							} else {
+								$data_output .= current($data[$i]).", ";
+							}
+						} else { 
+							$data_output .= " null, ";
+						}
+						next($data[1]); next($data[$i]);
+						$c ++; 
+					} 
+					
+					while ($c < 4) { 
+						$data_output .= " null, ";
+						$c ++;
+					}
+					
+					// snip off final comma
+					$data_output = substr($data_output, 0, strlen($data_output)-2);
+					?> data: 
+					[<?php 
+						echo $data_output; 
+					?>] 
+					<?php
+					
+					$cur_series ++;
+					
+				?>}<?php // end this data set, and add a comma if there's another one coming.
+				if ($cur_series < $num_series) { echo ", \n"; }
+					
+				} // END WHILE: loop for each data series present
+				
+			?>] <?php // end series ?>
+			
+		});
+		
+		
+	});
+  </script>
+	<?php
+		
+}
+
+
+
+
+
+
+
+
+
+
+function getMenuText($currentRow_rs, $whole_rs, $indexColName, $rowIndexValue, $menuColumnName) {
+	
+	$menuText = "";
+
+	mysql_data_seek($whole_rs, 0);
+	
+	$i = 0;
+	while ($currentRow_rs[$indexColName] <> $rowIndexValue AND $i < 100) 
+	{ $currentRow_rs = mysql_fetch_assoc($whole_rs);
+		$i ++;
+	}
+	
+	if ($i >= 100) { $menuText .= " *** ERROR *** Text is missing from ".$menuColumnName." at line ".$rowIndexValue."."; }
+	else { $menuText .= $currentRow_rs[$menuColumnName]; }
+	
+	$rows = mysql_num_rows($whole_rs);
+	if ($rows > 0) {  
+		mysql_data_seek($whole_rs, 0);
+		$currentRow_rs = mysql_fetch_assoc($whole_rs);
+	}
+	
+	$i = 0;
+	if (isset($currentRow_rs[$menuColumnName."_extra"])) {
+		while ($currentRow_rs[$indexColName] <> $rowIndexValue AND $i < 100) {
+			$currentRow_rs = mysql_fetch_assoc($whole_rs);
+			$i ++;
+		}
+		
+		$menuText .= $currentRow_rs[$menuColumnName."_extra"];
+		
+		$rows = mysql_num_rows($whole_rs);
+		if ($rows > 0) 
+		{  mysql_data_seek($whole_rs, 0);
+			$currentRow_rs = mysql_fetch_assoc($whole_rs);  }
+	}
+	
+	return $menuText;
+}
+
+
+function lookup($whole_rs, $id_column, $id_rowValue, $lookup_column_name) {
+	
+	/**** Lookup() is an update to the older (now deprecated) function getMenuText.
+		For this function to work properly, the SQL recordset which you pass to it
+		should NOT have the first row defined (this involves the command mysql_fetch_assoc).
+		Let the row be defined within this function, and just pass the unopened recordset. */
+	
+	if (mysql_num_rows($whole_rs) > 0) { mysql_data_seek($whole_rs, 0); }
+	$currentRow_rs = mysql_fetch_assoc($whole_rs);
+	
+	$menuText = "";
+	
+	$i = 0;
+	while ($currentRow_rs[$id_column] <> $id_rowValue AND $i < 100) 
+	{ $currentRow_rs = mysql_fetch_assoc($whole_rs);
+		$i ++;
+	}
+	
+	if ($i >= 100) 
+	{ $menuText .= " *** ERROR *** Text is missing from '".
+		$lookup_column_name."' at row '".$id_rowValue."'."; }
+	else { $menuText .= $currentRow_rs[$lookup_column_name]; }
+	
+	// Reset the recordset for re-use.
+	if (mysql_num_rows($whole_rs) > 0) { mysql_data_seek($whole_rs, 0); }
+	
+	// Check for EXTRA text, from a second column, which should be added to the feedback text returned.
+	$i = 0;
+	if (isset($currentRow_rs[$lookup_column_name."_extra"])) {
+		while ($currentRow_rs[$id_column] <> $id_rowValue AND $i < 100) {
+			$currentRow_rs = mysql_fetch_assoc($whole_rs);
+			$i ++;
+		}
+		
+		$menuText .= $currentRow_rs[$lookup_column_name."_extra"];
+		
+		// Reset the recordset for re-use (again).
+		$rows = mysql_num_rows($whole_rs);
+		if ($rows > 0) 
+		{  
+			mysql_data_seek($whole_rs, 0);
+			// $currentRow_rs = mysql_fetch_assoc($whole_rs);
+		}
+	}
+	
+	return $menuText;
+}
+
+
+function addCommaSyntaxGeneric($arrayStrings) {
+	$bigString = "";
+	
+	do {
+		
+		$thisString = current($arrayStrings);
+		
+		if (strlen($bigString) > 2) {
+			// convert "comma" placeholders to commas
+			$bigString = str_replace(array(" ||| ", " XXX "), ", ", $bigString); 
+			$bigString = substr($bigString, 0, strlen($bigString)-2); // snip off ending comma
+			$bigString .= " XXX "; // and replace it with an "and" placeholder
+		}
+		
+		$bigString .= $thisString." ||| ";
+		
+	} while ($thisText = next($arrayStrings));
+	
+	// convert "and" placeholder into an and
+	$bigString = str_replace(" XXX ", ", and ", $bigString);
+	// get rid of the final comma placeholder 
+	$bigString = str_replace(" ||| ", "", $bigString);
+	
+	// If there are exactly 2 terms, they will have the string ", and " between them. Get rid of the comma. 
+	if (substr_count($bigString, ",") == 1) {
+		$bigString = str_replace(",", "", $bigString);
+	}
+	
+	return $bigString;
+}
+
+
+
+function getCheckboxesProperSyntax($startingCode) {
+	
+	global $row_rsLaCodeDescriptions, $row_rsLaCodes;
+	
+	// Calculate what to say for dm_values 
+	$i = $startingCode; // starting code for dm_values
+	$string = "";
+	while ($row_rsLaCodeDescriptions['code_name'.$i] <> "") {
+		if ($row_rsLaCodes['code'.$i] > 0) {
+			/* manage the commas and "and" syntax. 
+			I can't think of any way to manage multi-phrase syntax without a str_replace. */
+			if (strlen($string) > 2) {
+				// convert "comma" placeholders to commas
+				$string = str_replace(array(" ||| ", " XXX "), ", ", $string); 
+				$string = substr($string, 0, strlen($string)-2); // snip off ending comma
+				$string .= " XXX "; // and replace it with an "and" placeholder
+			}
+			
+			$string .= $row_rsLaCodeDescriptions['code_name'.$i]." ||| ";
+		}
+		$i ++;
+	} 
+	// convert "and" placeholder into an and
+	$string = str_replace(" XXX ", ", and ", $string);
+	// get rid of the final comma placeholder 
+	$string = str_replace(" ||| ", "", $string);
+	
+	// If there are exactly 2 terms, they will have the string ", and " between them. Get rid of the comma. 
+	if (substr_count($string, ",") == 1) {
+		$string = str_replace(",", "", $string);
+	}
+	
+	return $string;
+	
+}
+
+
+
+function htmlBarGraphRow($text_left, $text_bar_left, $text_bar_right, $percent_length, $color) {
+	$string = "<table class='TableBarGraph' border='0' cellpadding='0' cellspacing='0'
+		style='padding-top: 10px; padding-bottom: 6px;'>
+		<tr>
+			<td width='45%' align='right'>".$text_left."</td>
+			<td width='".round($percent_length * 0.4)."%' bgcolor='#".$color."' align='right'>
+			<div class='fltlft'><font color='white'>".$text_bar_left."</font></div>
+			<div class='fltrt'><font color='white'>".$text_bar_right."</font></div>
+			</td><td></td></tr>
+		</table>";
+	
+	return $string;
+}
+
+
+
+
+
+?>

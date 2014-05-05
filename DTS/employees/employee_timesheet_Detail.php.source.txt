@@ -1,0 +1,234 @@
+<?php require_once('../Connections/Assessment.php'); ?><?php
+
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as intern")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+?><?php
+if (!session_id()) session_start(); 
+?>
+<?php
+$Paramtimesheetkey_WADAemployee_timesheet = "-1";
+if (isset($_GET['timesheetkey'])) {
+  $Paramtimesheetkey_WADAemployee_timesheet = (get_magic_quotes_gpc()) ? $_GET['timesheetkey'] : addslashes($_GET['timesheetkey']);
+}
+$ParamSessiontimesheetkey_WADAemployee_timesheet = "-1";
+if (isset($_SESSION['WADA_Insert_employee_timesheet'])) {
+  $ParamSessiontimesheetkey_WADAemployee_timesheet = (get_magic_quotes_gpc()) ? $_SESSION['WADA_Insert_employee_timesheet'] : addslashes($_SESSION['WADA_Insert_employee_timesheet']);
+}
+$Paramtimesheetkey2_WADAemployee_timesheet = "-1";
+if (isset($_GET['timesheetkey'])) {
+  $Paramtimesheetkey2_WADAemployee_timesheet = (get_magic_quotes_gpc()) ? $_GET['timesheetkey'] : addslashes($_GET['timesheetkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_WADAemployee_timesheet = sprintf("SELECT timesheetkey, userkey, submitterkey, date, project, work_type, work_description, work_notes, work_hours FROM employee_timesheet WHERE timesheetkey = %s OR ( -1= %s AND timesheetkey= %s)", GetSQLValueString($Paramtimesheetkey_WADAemployee_timesheet, "int"),GetSQLValueString($Paramtimesheetkey2_WADAemployee_timesheet, "int"),GetSQLValueString($ParamSessiontimesheetkey_WADAemployee_timesheet, "int"));
+$WADAemployee_timesheet = mysql_query($query_WADAemployee_timesheet, $Assessment) or die(mysql_error());
+$row_WADAemployee_timesheet = mysql_fetch_assoc($WADAemployee_timesheet);
+$totalRows_WADAemployee_timesheet = mysql_num_rows($WADAemployee_timesheet);
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Details employee_timesheet</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<link href="../WA_DataAssist/styles/Refined_Pacifica.css" rel="stylesheet" type="text/css" />
+<link href="../WA_DataAssist/styles/Arial.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+/* Details page CSS */
+.WADADetailsContainer {
+	font-size: 11px;
+}
+#WADADetails {
+	padding-top: 10px;
+}
+</style>
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>DETAILS FOR RECORD NUMBER <?php echo $row_WADAemployee_timesheet['timesheetkey']; ?></h1>
+  <div class="WADADetailsContainer"> <a name="top"></a>
+    <div class="WADAHorizLine"><img src="../WA_DataAssist/images/_tx_.gif" alt="" height="1" width="1" border="0" /></div>
+    <?php if ($totalRows_WADAemployee_timesheet > 0) { // Show if recordset not empty ?>
+      <div id="WADADetails">
+        <div class="WADAHeader"></div>
+        <table class="WADADataTable" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <th class="WADADataTableHeader">Intern/volunteer number</th>
+            <td class="WADADataTableCell"><?php echo($row_WADAemployee_timesheet['userkey']); ?></td>
+          </tr>
+          <tr>
+            <th class="WADADataTableHeader">Date</th>
+            <td class="WADADataTableCell"><?php echo($row_WADAemployee_timesheet['date']); ?></td>
+          </tr>
+          <tr>
+            <th class="WADADataTableHeader">Project</th>
+            <td class="WADADataTableCell"><?php echo($row_WADAemployee_timesheet['project']); ?></td>
+          </tr>
+          <tr>
+            <th class="WADADataTableHeader">Work type</th>
+            <td class="WADADataTableCell"><?php echo($row_WADAemployee_timesheet['work_type']); ?></td>
+          </tr>
+          <tr>
+            <th class="WADADataTableHeader">Work description</th>
+            <td class="WADADataTableCell"><?php echo($row_WADAemployee_timesheet['work_description']); ?></td>
+          </tr>
+          <tr>
+            <th class="WADADataTableHeader">Work notes</th>
+            <td class="WADADataTableCell"><?php echo($row_WADAemployee_timesheet['work_notes']); ?></td>
+          </tr>
+          <tr>
+            <th class="WADADataTableHeader">Work hours</th>
+            <td class="WADADataTableCell"><?php echo($row_WADAemployee_timesheet['work_hours']); ?></td>
+          </tr>
+        </table>
+        <div class="WADAHorizLine"><img src="../WA_DataAssist/images/_tx_.gif" alt="" height="1" width="1" border="0" /></div>
+        <div class="WADAButtonRow">
+          <table class="WADADataNavButtons" border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td class="WADADataNavButtonCell" nowrap="nowrap"><a href="employee_timesheet_Update.php?timesheetkey=<?php echo(rawurlencode($row_WADAemployee_timesheet['timesheetkey'])); ?>" title="Update"><img border="0" name="Update" id="Update" alt="Update" src="../WA_DataAssist/images/Pacifica/Refined_update.gif" /></a></td>
+              <td class="WADADataNavButtonCell" nowrap="nowrap"></td>
+              <td class="WADADataNavButtonCell" nowrap="nowrap"><a href="employee_timesheet_Results.php" title="Results"><img border="0" name="Results" id="Results" alt="Results" src="../WA_DataAssist/images/Pacifica/Refined_results.gif" /></a></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    <?php } // Show if recordset not empty ?>
+    <?php if ($totalRows_WADAemployee_timesheet == 0) { // Show if recordset empty ?>
+      <div class="WADANoResults">
+        <div class="WADANoResultsMessage">No record found.</div>
+      </div>
+      <div class="WADAHorizLine"><img src="../WA_DataAssist/images/_tx_.gif" alt="" height="1" width="1" border="0" /></div>
+      <div class="WADADetailsLinkArea">
+        <div class="WADADataNavButtonCell"><a href="employee_timesheet_Results.php" title="Results"><img border="0" name="Results1" id="Results1" alt="Results" src="../WA_DataAssist/images/Pacifica/Refined_results.gif" /></a></div>
+      </div>
+      <div class="WADAHorizLine"><img src="../WA_DataAssist/images/_tx_.gif" alt="" height="1" width="1" border="0" /></div>
+    <?php } // Show if recordset empty ?>
+</div>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($WADAemployee_timesheet);
+?>
+<?php
+mysql_free_result($rsRegistrant);
+?>

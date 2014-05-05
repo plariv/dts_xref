@@ -1,0 +1,1838 @@
+<?php 
+include_once '../includes/dts_functions.php';
+
+
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+$userkey = $_SESSION['log_userkey'];
+$user_level = $_SESSION['log_user_level'];
+
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../landing.php");
+}
+$instrument_id = $_SESSION['instrument_id'];
+
+// For the senior analysts, by default turn training tools on. For others, do not allow them to be on.
+$show_scores = "no";
+$can_see_scores = array(4623, 1000000539, 5124, 1000000533);
+if (in_array($_SESSION['log_userkey'], $can_see_scores)) {
+	$show_scores = "yes";
+	if (isset($_GET['training'])) {
+		$show_scores = $_GET['training'];
+	}
+} else {
+	$show_scores = "no";
+}
+
+$showOpen = false; 
+$openUrlString = "";
+if (isset($_GET['showOpen']) AND $_GET['showOpen'] == "yes") 
+{ 
+	$showOpen = true; 
+	$openUrlString = "showOpen=yes";
+} 
+
+$mode_training = false;
+$training_role = 0;
+$mode_junior = false;
+$mode_senior = false;
+$senior_juniors = "";
+// Zack VR and Clint are auto added to training mode
+// (uses Zack VR's secondary, trainee account)
+if ($userkey == 1000013678) 	{ $mode_training = true; $training_role = 2; } // ZVR
+if ($userkey == 1000013723) 	{ $mode_training = true; $training_role = 3; } // Clint
+// *** When ZVR and Clint are upgraded to juniors, use their normal userkeys again.
+// if ($userkey == 4623) 				{ $mode_senior = true; $senior_juniors = " 5124, 1000000533 "; }
+
+
+
+
+// Prepares the sort/search functionality for each query. This function looks at $_POST and $_GET and sets $_SESSION['sort'] and $_SESSION['search'] if appropriate input is found.
+initializeSortSearch($openUrlString);
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+
+
+
+
+
+
+
+//								PUT RECORD IN LIMBO
+
+if (isset($_POST['put_in_limbo'])) { 
+	$updateSQL = sprintf("UPDATE la_data SET flag = 1, admin_notes = %s WHERE lakey = %s ",
+		SQLstr($_POST['text'], "text"),
+		SQLstr($_POST['lakey'], "int"));
+	mysql_query($updateSQL) or die("Add to limbo: ".mysql_error());
+	if (mysql_affected_rows() == 1) { echo "<div align='center'>in limbo</div>"; }
+	else { echo "???"; } 
+	exit();
+}
+
+//								TAKE RECORD OUT OF LIMBO
+
+if (isset($_GET['unlimbo']) AND intval($_GET['unlimbo']) > 0) { 
+	$updateSQL = "UPDATE la_data SET flag=0 WHERE lakey = ".SQLstr($_GET['unlimbo'], "int");
+	mysql_query($updateSQL, $Assessment) or die("Remove from limbo: ".mysql_error());
+	header("Location: ".$currentPage);
+	exit();
+}
+
+//								FINALIZE RECORD
+
+if (isset($_GET['finalize']) AND intval($_GET['finalize']) > 0) { 
+	
+	// Get email address info for this user
+	$query_rsClient = "SELECT r.firstname, r.lastname, r.email AS taker_email, rb.email AS bc_email, 
+	d.coded_1_complete, d.instrument_id
+	FROM la_data d JOIN registrants r ON d.userkey = r.userkey
+	LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+	WHERE d.lakey = ".SQLstr($_GET['finalize'], "int");
+	$rsClient = mysql_query($query_rsClient, $Assessment) or die("rsClient: ".mysql_error());
+	$row_rsClient = mysql_fetch_assoc($rsClient);
+	
+	$complete_sql = "";
+	if (strpos($row_rsClient['instrument_id'], "JOURNAL")) { $complete_sql = " coded_1_complete=1, "; }
+	$updateSQL = sprintf("UPDATE la_data SET %s finalized=2, date_finalized=%s WHERE lakey = %s ",
+		$complete_sql,
+		SQLstr(date('Y-m-d'), "date"),
+		SQLstr($_GET['finalize'], "int"));
+	mysql_query($updateSQL, $Assessment) or die("Finalize record: ".mysql_error());
+	
+	// Send out the alert email
+	$subject = "{$row_rsClient['firstname']} {$row_rsClient['lastname']}'s {$instrument_id} has been finalized";
+	$body = "View {$row_rsClient['firstname']}'s report at http://devtestservice.org/la_reports/bc_select.php  \n Instrument ID: {$instrument_id} \n Record number: {$_GET['finalize']} ";
+	sendEmail($row_rsClient['bc_email'], "service@lectica.org", 
+		"service@lectica.org", $subject, $body);
+	
+	// Refresh the page
+	header("Location: ".$currentPage);
+	exit();
+}
+
+//								UN-FINALIZE RECORD
+
+if (isset($_GET['unfinalize']) AND intval($_GET['unfinalize']) > 0) { 
+	$updateSQL = "UPDATE la_data SET finalized=0 WHERE lakey = ".SQLstr($_GET['unfinalize'], "int");
+	mysql_query($updateSQL, $Assessment) or die("Unfinalize record: ".mysql_error());
+	
+	// **** NOTE: the client does NOT get alerted when we retract a report, only when we release / finalize one.
+	
+	// Refresh the page
+	header("Location: ".$currentPage);
+	exit();
+}
+
+//								RELEASE RECORD
+
+if (isset($_GET['release']) AND intval($_GET['release']) > 0) { 
+	
+	// Get email address info for this user
+	$query_rsClient = "SELECT r.firstname, r.lastname, r.email AS taker_email, rb.email AS bc_email,
+	d.coded_1_complete, d.instrument_id 
+	FROM la_data d JOIN registrants r ON d.userkey = r.userkey
+	LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+	WHERE d.lakey = ".SQLstr($_GET['release'], "int");
+	$rsClient = mysql_query($query_rsClient, $Assessment) or die("rsClient: ".mysql_error());
+	$row_rsClient = mysql_fetch_assoc($rsClient);
+	
+	$complete_sql = "";
+	if (strpos($row_rsClient['instrument_id'], "JOURNAL")) { $complete_sql = " coded_1_complete=1, "; }
+	$updateSQL = sprintf("UPDATE la_data SET %s finalized = 1, date_released = NOW() 
+		WHERE lakey = %s",
+			$complete_sql,
+			SQLstr($_GET['release'], "int"));
+	mysql_query($updateSQL, $Assessment) or die("Release record: ".mysql_error());
+	
+	// Send out the alert email
+	$subject = "{$row_rsClient['firstname']} {$row_rsClient['lastname']}'s {$instrument_id} has been released";
+	$body = "View your report at http://devtestservice.org \n\n The commenting on our assessments is done by highly trained human beings who occasionally make mistakes. If you notice any inconsistencies or errors in your report, please let us know and we will make prompt repairs. \n\n Instrument ID: {$instrument_id} \n Record number: {$_GET['release']} ";
+	sendEmail($row_rsClient['taker_email'], "service@lectica.org", 
+		$row_rsClient['bc_email'].", service@lectica.org", $subject, $body);
+	
+	// Refresh the page
+	header("Location: ".$currentPage);
+	exit();
+}
+
+
+
+
+
+
+
+
+
+
+// 						DEFAULTS FOR SHOWN COLUMNS
+
+$show = array(
+	'date_completed' => 1,   
+	'date_release' => 1,  
+	'userkey' => 1,  
+	'bulkcustomer' => 1,
+	'group' => 1,  
+	'scorer_1' => 1, 
+	'scorer_2' => 1,  
+	'scorer_3' => 1,   
+	'differences' => 1
+	);
+
+
+
+
+
+// 						QUERIES FOR SEARCH FILTERS
+
+$query_rsFilterGroups = sprintf("SELECT COUNT(DISTINCT d.lakey) AS numpeople, r.group
+FROM la_data d
+JOIN registrants r ON d.userkey = r.userkey
+WHERE d.instrument_id = %s AND r.group <> '' AND r.group IS NOT NULL
+ AND d.userkey <> '999' AND d.userkey <> '888' 
+GROUP BY r.group", 
+		SQLstr($instrument_id, "text"));  
+$rsFilterGroups = mysql_query($query_rsFilterGroups, $Assessment) or die("rsFilterGroups: ".mysql_error());
+$row_rsFilterGroups = mysql_fetch_assoc($rsFilterGroups);
+$totalRows_rsFilterGroups = mysql_num_rows($rsFilterGroups);
+
+
+
+$query_rsTestTime = sprintf("SELECT COUNT(DISTINCT d.lakey) AS numpeople, d.test_time
+FROM la_data d
+WHERE d.instrument_id = %s AND d.test_time IS NOT NULL
+ AND d.userkey <> '999' AND d.userkey <> '888' 
+GROUP BY d.test_time", 
+		SQLstr($instrument_id, "text")); 
+$rsTestTime = mysql_query($query_rsTestTime, $Assessment) or die("rsTestTime: ".mysql_error());
+$row_rsTestTime = mysql_fetch_assoc($rsTestTime);
+$totalRows_rsTestTime = mysql_num_rows($rsTestTime);
+
+
+$query_rsDilemma = sprintf("SELECT COUNT(DISTINCT d.lakey) AS numpeople, d.dilemmakey, di.dilemma_name
+FROM la_data d 
+JOIN la_dilemmas di ON d.dilemmakey = di.dilemmakey
+WHERE d.instrument_id = %s AND d.userkey <> '999' AND d.userkey <> '888' 
+GROUP BY di.dilemma_name ORDER BY di.dilemma_name", 
+		SQLstr($instrument_id, "text")); 
+// topher($query_rsDilemma); topher();
+$rsDilemma = mysql_query($query_rsDilemma) or die("rsDilemma: ".mysql_error());
+$row_rsDilemma = mysql_fetch_assoc($rsDilemma);
+
+
+
+$query_rsFilterAssign = sprintf("SELECT a.*, dil.dilemma_name, dil.dilemmakey, 
+	COUNT(DISTINCT d.lakey) AS numpeople 
+FROM la_data d
+JOIN la_assignments a ON d.assignmentkey = a.assignmentkey
+LEFT JOIN students_assignments sa ON sa.assignmentkey = a.assignmentkey 
+LEFT JOIN registrants r ON sa.userkey = r.userkey
+LEFT JOIN la_dilemmas dil ON a.assign_dilemmakey = dil.dilemmakey
+WHERE d.instrument_id = %s AND d.userkey <> '999' AND d.userkey <> '888' 
+GROUP BY assignmentkey",
+		SQLstr($instrument_id, "text"));
+$rsFilterAssign = mysql_query($query_rsFilterAssign, $Assessment) or die("rsFilterAssign: ".mysql_error());
+$row_rsFilterAssign = mysql_fetch_assoc($rsFilterAssign);
+$totalRows_rsFilterAssign = mysql_num_rows($rsFilterAssign);
+
+
+
+$query_rsFilterManLevels = sprintf("SELECT dem.man_level, dem.manlevelkey, 
+COUNT(DISTINCT d.lakey) AS numpeople 
+FROM registrants r
+JOIN demogs_man_level dem ON r.manlevelkey = dem.manlevelkey
+JOIN la_data d ON r.userkey = d.userkey
+WHERE d.instrument_id = %s AND d.userkey <> '999' AND d.userkey <> '888'   
+GROUP BY dem.manlevelkey ORDER BY dem.man_level_number",
+		SQLstr($instrument_id, "text")); 
+$rsFilterManLevels = mysql_query($query_rsFilterManLevels, $Assessment) or die("rsFilterManLevels: ".mysql_error());
+$row_rsFilterManLevels = mysql_fetch_assoc($rsFilterManLevels);
+$totalRows_rsFilterManLevels = mysql_num_rows($rsFilterManLevels);
+
+
+
+$query_rsFilterBc = sprintf("SELECT COUNT(DISTINCT d.lakey) AS numpeople, d.resellerkey, 
+IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer
+FROM la_data d
+JOIN registrants r ON d.userkey = r.userkey
+LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+WHERE d.instrument_id = %s AND rb.userkey IS NOT NULL 
+GROUP BY bulkcustomer
+ORDER BY bulkcustomer", 
+		SQLstr($instrument_id, "text")); 
+$rsFilterBc = mysql_query($query_rsFilterBc, $Assessment) or die("rsFilterGroups: ".mysql_error());
+$row_rsFilterBc = mysql_fetch_assoc($rsFilterBc);
+$totalRows_rsFilterBc = mysql_num_rows($rsFilterBc);
+
+
+
+$query_rsFilterScorer1 = sprintf("SELECT COUNT(d.lakey) AS numpeople, rs.userkey, rs.firstname 
+FROM la_data d
+JOIN la_scores s ON d.lakey = s.lakey
+LEFT JOIN registrants rs ON s.scorerkey_1 = rs.userkey 
+WHERE d.instrument_id = %s AND rs.userkey IS NOT NULL 
+ AND d.userkey <> '999' AND d.userkey <> '888'
+GROUP BY rs.userkey", 
+		SQLstr($instrument_id, "text")); 
+$rsFilterScorer1 = mysql_query($query_rsFilterScorer1, $Assessment) or die("rsFilterScorer1: ".mysql_error());
+$row_rsFilterScorer1 = mysql_fetch_assoc($rsFilterScorer1);
+$totalRows_rsFilterScorer1 = mysql_num_rows($rsFilterScorer1);
+
+
+
+$query_rsFilterScorer2 = sprintf("SELECT COUNT(d.lakey) AS numpeople, rs.userkey, rs.firstname 
+FROM la_data d
+JOIN la_scores s ON d.lakey = s.lakey
+LEFT JOIN registrants rs ON s.scorerkey_2 = rs.userkey 
+WHERE d.instrument_id = %s AND rs.userkey IS NOT NULL 
+ AND d.userkey <> '999' AND d.userkey <> '888'
+GROUP BY rs.userkey", 
+		SQLstr($instrument_id, "text")); 
+$rsFilterScorer2 = mysql_query($query_rsFilterScorer2, $Assessment) or die("rsFilterScorer2: ".mysql_error());
+$row_rsFilterScorer2 = mysql_fetch_assoc($rsFilterScorer2);
+$totalRows_rsFilterScorer2 = mysql_num_rows($rsFilterScorer2);
+
+
+
+$query_rsFilterScorer3 = sprintf("SELECT COUNT(d.lakey) AS numpeople, rs.userkey, rs.firstname 
+FROM la_data d
+JOIN la_scores s ON d.lakey = s.lakey
+LEFT JOIN registrants rs ON s.scorerkey_3 = rs.userkey 
+WHERE d.instrument_id = %s AND rs.userkey IS NOT NULL 
+ AND d.userkey <> '999' AND d.userkey <> '888'
+GROUP BY rs.userkey", 
+		SQLstr($instrument_id, "text")); 
+$rsFilterScorer3 = mysql_query($query_rsFilterScorer3, $Assessment) or die("rsFilterScorer3: ".mysql_error());
+$row_rsFilterScorer3 = mysql_fetch_assoc($rsFilterScorer3);
+$totalRows_rsFilterScorer3 = mysql_num_rows($rsFilterScorer3);
+
+
+
+// A special clause to add to queries to search for text across all probe fields.
+$searchText = "";
+if (isset($_POST['(s)essay_text']) AND $_POST['(s)essay_text'] <> "") { 
+	$theText = SQLstr('%'.$_POST['(s)essay_text'].'%', "text");
+	$searchText = " AND ( d.probe01 LIKE {$theText} OR d.probe02 LIKE {$theText} OR d.probe03 LIKE {$theText} OR d.probe04 LIKE {$theText} OR d.probe05 LIKE {$theText} )";
+}
+
+
+
+
+
+
+// Queue for Zak as senior coder, for junior coders
+if ($mode_senior) { 
+	$sql_rsQueueSenior = sprintf("SELECT d.lakey
+		FROM la_data d
+			JOIN la_scores s ON d.lakey = s.lakey
+		WHERE s.scorerkey_1 IN ({$senior_juniors}) AND d.scored_1 = 1 AND s.confidencekey_1 < 5
+		ORDER BY RAND() ");
+	$rsQueueSenior = mysql_query($sql_rsQueueSenior) or die("ERROR building senior queue: ".mysql_error());
+	$count_queue_senior = mysql_num_rows($rsQueueSenior);
+	$row_rsQueueSenior = mysql_fetch_assoc($rsQueueSenior);
+}
+
+
+// Defines for table 1: how many records to show at a time, what page number we're on, and consequently what data row we're starting on.
+$maxRows_rsLaData01 = 5;
+$pageNum_rsLaData01 = 0;
+if (isset($_GET['pageNum_rsLaData01'])) {
+  $pageNum_rsLaData01 = $_GET['pageNum_rsLaData01'];
+}
+$startRow_rsLaData01 = $pageNum_rsLaData01 * $maxRows_rsLaData01;
+
+// Table 1 recordset: scoring not yet started / to-do
+/**** Note that the queries for tables 1 and 2 should hide any entries from the demo accounts, 'testtaker' and 'bulkuser'. */
+
+$query_rsLaData01 = sprintf("SELECT d.lakey, d.instrument_id, d.test_time, 
+		d.resellerkey, d.scored_1, d.timestamp, d.date_completed, d.dilemmakey, di.dilemma_name, 
+		d.finalized, d.date_finalized, d.date_released, d.manlevelkey, d.flag, d.admin_notes, 
+		r.userkey, r.bulkuserkey, r.group, r.firstname, r.lastname, 
+		IF(rb.company <> '', LEFT(rb.company, 15), CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer,
+		a.assignmentkey, a.date_end, a.date_release, sa.assignmentkey AS possible_assignmentkey,
+		IF(a.date_release IS NOT NULL AND (a.date_end >= d.date_completed
+			 OR a.date_release >= d.date_completed + INTERVAL 14 DAY), 
+			 a.date_release, (d.date_completed + INTERVAL 14 DAY)) AS date_due,
+		CASE 
+			WHEN d.flag = 1 THEN 'limbo'
+			WHEN d.completed = 0 THEN 'started'
+			WHEN d.bc_allowedtoview = 0 THEN 'access denied'
+			WHEN d.completed = 1 THEN 'completed'
+			WHEN d.completed = 1 AND d.finalized = 3 THEN 'locked'
+		END AS status
+	FROM la_data d 
+		LEFT JOIN la_codes c ON d.lakey = c.lakey 
+		LEFT JOIN la_scores s ON d.lakey = s.lakey
+		LEFT JOIN la_dilemmas di ON d.dilemmakey = di.dilemmakey
+		LEFT JOIN registrants r ON d.userkey = r.userkey 
+		LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+		LEFT JOIN la_assignments a ON d.assignmentkey = a.assignmentkey
+		LEFT JOIN students_assignments sa ON d.userkey = sa.userkey AND a.assignmentkey IS NULL
+	WHERE d.scoring_started = 0  AND d.completed = 1 AND d.instrument_id = %s 
+		AND d.resellerkey <> 1000013376 # Tim Obrien students
+		## AND d.userkey <> 1000012259 # JaneSmith demo ENABLED
+		 ", 
+			SQLstr($instrument_id, "text"));
+$query_rsLaData01 .= $searchText.querySortSearch($query_rsLaData01, "d.lakey", "flag, date_due ASC");
+$query_limit_rsLaData01 = sprintf("%s LIMIT %d, %d", $query_rsLaData01, $startRow_rsLaData01, $maxRows_rsLaData01);
+$rsLaData01 = mysql_query($query_limit_rsLaData01) or die("rsLaData01: ".mysql_error());
+$row_rsLaData01 = mysql_fetch_assoc($rsLaData01);
+// echo str_replace("\n", "<br>", $query_limit_rsLaData01)."<br>";
+  $all_rsLaData01 = mysql_query($query_rsLaData01);
+  $totalRows_rsLaData01 = mysql_num_rows($all_rsLaData01);
+$totalPages_rsLaData01 = ceil($totalRows_rsLaData01/$maxRows_rsLaData01)-1;
+
+
+
+//	Table 2: records already scored
+$maxRows_rsLaData02 = 10;
+$pageNum_rsLaData02 = 0;
+if (isset($_GET['pageNum_rsLaData02'])) {
+  $pageNum_rsLaData02 = $_GET['pageNum_rsLaData02'];
+}
+$startRow_rsLaData02 = $pageNum_rsLaData02 * $maxRows_rsLaData02;
+
+$query_rsLaData02 = sprintf("SELECT d.lakey, d.instrument_id, d.resellerkey, d.test_time, 
+		d.flag, d.admin_notes, d.timestamp, d.date_completed, d.dilemmakey, di.dilemma_name, 
+		d.finalized, d.date_finalized, d.date_released, d.manlevelkey, 
+		r.userkey, r.group, r.bulkuserkey, r.firstname, r.lastname, 
+		d.scored_1, d.date_scored_1, d.scorerkey_1, 
+		d.scored_2, d.date_scored_2, d.scorerkey_2, 
+		d.scored_3, d.date_scored_3, d.scorerkey_3, 
+		CONCAT(rs1.firstname, ':', d.scored_1) scorer_1, 
+		CONCAT(rs2.firstname, ':', d.scored_2) scorer_2, 
+		CONCAT(rs3.firstname, ':', d.scored_3) scorer_3, 
+		s.lasnumber_1, s.confidencekey_1, s.lasnumber_2, s.lasnumber_3, s.diff_1_2, s.diff_1_3, 
+		d.coded_1, d.coderkey_1, d.coded_1_complete, 
+		a.assignmentkey, a.date_end, a.date_release, sa.assignmentkey AS possible_assignmentkey, 
+		IF(a.date_release IS NOT NULL AND (a.date_end >= d.date_completed
+			 OR a.date_release >= d.date_completed + INTERVAL 14 DAY), 
+			 a.date_release, (d.date_completed + INTERVAL 14 DAY)) AS date_due,
+		IF(rb.company <> '', LEFT(rb.company, 15), CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer,
+		CONCAT(IF(c.code_recommend <> '', 'S', ''), IF(c.codercomment <> '', 'P', ''),
+			IF(s.scorer_comment_1 <> '', 'S', '')) AS comments_1,
+		c.code_recommend, c.codercomment, s.scorer_comment_1, 
+		CASE 
+			WHEN d.completed = 0 THEN 'started'
+			WHEN d.scored_1 = 1 AND d.flag = 1 THEN 'scored, in limbo'
+			WHEN d.flag = 1 THEN 'limbo'
+			WHEN d.bc_allowedtoview = 0 THEN 'access denied'
+			WHEN d.finalized = 0 AND (d.scored_1 = 0 OR d.scored_1 IS NULL) THEN 'completed'
+			WHEN d.coded_1_complete = 1 AND d.finalized = 0 THEN 'coding complete'
+			WHEN d.scored_1 = 1 AND d.finalized = 0 THEN 'scored'
+			WHEN d.completed = 1 AND d.finalized = 2 THEN 'finalized'
+			WHEN d.completed = 1 AND d.finalized = 1 THEN 'released'
+			WHEN d.finalized = 3 THEN 'locked'
+		END AS status,
+		CASE 
+			WHEN d.flag = 1 THEN 2
+			WHEN d.finalized = 0 AND (d.scored_1 = 0 OR d.scored_1 IS NULL) THEN 0
+			WHEN d.finalized = 0 AND d.scored_1 = 1 THEN 1
+			WHEN d.completed = 1 AND d.finalized = 2 THEN 3
+			WHEN d.completed = 1 AND d.finalized = 1 THEN 4
+			WHEN d.finalized = 3 THEN 5
+		END AS status_order,
+		IF(d.finalized = 0, 0, 1) AS sort_finalized,
+		CASE
+			WHEN IFNULL(d.coded_1, 0) = 0 THEN 0
+			WHEN d.coded_1 = 1 AND d.coded_1_complete = 0 THEN 1
+			WHEN d.coded_1_complete = 1 THEN 2
+		END AS finalized_coder
+	FROM la_data d 
+		JOIN la_scores s on d.lakey = s.lakey
+		LEFT JOIN la_codes c ON d.lakey = c.lakey 
+		LEFT JOIN registrants r ON d.userkey = r.userkey
+		LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+		LEFT JOIN registrants rs1 ON d.scorerkey_1 = rs1.userkey
+		LEFT JOIN registrants rs2 ON d.scorerkey_2 = rs2.userkey
+		LEFT JOIN registrants rs3 ON d.scorerkey_3 = rs3.userkey
+		LEFT JOIN la_dilemmas di ON d.dilemmakey = di.dilemmakey
+		LEFT JOIN la_assignments a ON d.assignmentkey = a.assignmentkey
+		LEFT JOIN students_assignments sa ON d.userkey = sa.userkey AND a.assignmentkey IS NULL
+	WHERE d.scoring_started = 1 AND d.instrument_id = %s AND d.completed <> 2 ", 
+		SQLstr($instrument_id, "text"));
+if ($mode_training) { $query_rsLaData02 .= " AND d.pool_trainees = 1"; }
+
+$query_rsLaData02 .= $searchText.querySortSearch($query_rsLaData02, 
+		"d.lakey", "sort_finalized ASC, d.coded_1_complete DESC, s.last_updated DESC");
+$query_limit_rsLaData02 = sprintf("%s LIMIT %d, %d", $query_rsLaData02, $startRow_rsLaData02, $maxRows_rsLaData02);
+$rsLaData02 = mysql_query($query_limit_rsLaData02, $Assessment) or die("rsLaData02: ".mysql_error());
+$row_rsLaData02 = mysql_fetch_assoc($rsLaData02);
+ //topher(str_replace("\n", "<br>", $query_rsLaData02));
+  $all_rsLaData02 = mysql_query($query_rsLaData02);
+  $totalRows_rsLaData02 = mysql_num_rows($all_rsLaData02);
+$totalPages_rsLaData02 = ceil($totalRows_rsLaData02/$maxRows_rsLaData02)-1;
+
+
+
+$query_rsCountLimbo = sprintf("SELECT d.lakey
+	FROM la_data d 
+	WHERE d.instrument_id = %s AND d.completed <> 2
+		AND d.flag = 1 ", 
+			SQLstr($instrument_id, "text"));
+$rsCountLimbo = mysql_query($query_rsCountLimbo) or die("rsCountLimbo: ".mysql_error());
+$totalRows_rsCountLimbo = mysql_num_rows($rsCountLimbo);
+
+
+
+
+
+
+
+
+//	Table 3: not yet completed by test taker
+$maxRows_rsLaData03 = 5;
+$pageNum_rsLaData03 = 0;
+if (isset($_GET['pageNum_rsLaData03'])) {
+  $pageNum_rsLaData03 = $_GET['pageNum_rsLaData03'];
+}
+$startRow_rsLaData03 = $pageNum_rsLaData03 * $maxRows_rsLaData03;
+// Standard recordset, table 3
+$colname_rsLaData03 = "-1";
+if (isset($_SESSION['instrument_id'])) {
+  $colname_rsLaData03 = $_SESSION['instrument_id'];
+}
+$query_rsLaData03 = sprintf("SELECT d.lakey, d.instrument_id, d.test_time, d.resellerkey, 
+d.timestamp, d.date_completed, d.completed, d.manlevelkey, d.dilemmakey, di.dilemma_name, 
+r.userkey, r.group, r.bulkuserkey, r.firstname, r.lastname, 
+IF(rb.company <> '', LEFT(rb.company, 15), CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer,
+a.assignmentkey, a.date_release, sa.assignmentkey AS possible_assignment,
+CASE 
+	WHEN d.completed = 0 THEN 'started'
+	WHEN d.completed = 1 AND d.finalized = 0 AND d.bc_allowedtoview = 0
+		THEN 'access denied'
+	WHEN d.completed = 1 AND d.finalized = 0 AND d.bc_allowedtoview = 1 AND c.coded IS NULL
+		THEN 'completed'
+	WHEN d.completed = 1 AND d.finalized = 0 THEN 'scored'
+	WHEN d.completed = 1 AND d.finalized = 2 THEN 'finalized'
+	WHEN d.completed = 1 AND d.finalized = 1 THEN 'released'
+	WHEN d.completed = 1 AND d.finalized = 3 THEN 'locked'
+END AS status
+FROM la_data d
+LEFT JOIN la_codes c ON d.lakey = c.lakey 
+JOIN registrants r ON d.userkey = r.userkey
+LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+LEFT JOIN la_dilemmas di ON d.dilemmakey = di.dilemmakey
+LEFT JOIN la_assignments a ON d.assignmentkey = a.assignmentkey
+LEFT JOIN students_assignments sa ON d.userkey = sa.userkey AND a.assignmentkey IS NULL
+WHERE d.completed = 0 AND d.instrument_id = %s 
+ ", 
+		SQLstr($colname_rsLaData03, "text"));
+$query_rsLaData03 .= $searchText.querySortSearch($query_rsLaData03, "d.lakey", "timestamp ASC");
+$query_limit_rsLaData03 = sprintf("%s LIMIT %d, %d", $query_rsLaData03, $startRow_rsLaData03, $maxRows_rsLaData03);
+$rsLaData03 = mysql_query($query_limit_rsLaData03, $Assessment) or die("rsLaData03: ".mysql_error());
+$row_rsLaData03 = mysql_fetch_assoc($rsLaData03);
+$totalRows_rsLaData03 = mysql_num_rows($rsLaData03);
+
+  $all_rsLaData03 = mysql_query($query_rsLaData03);
+  $totalRows_rsLaData03 = mysql_num_rows($all_rsLaData03);
+$totalPages_rsLaData03 = ceil($totalRows_rsLaData03/$maxRows_rsLaData03)-1;
+
+
+
+// table 4: journal entries 
+$maxRows_rsJournals = 10;
+$pageNum_rsJournals = 0;
+if (isset($_GET['pageNum_rsJournals'])) {
+  $pageNum_rsJournals = $_GET['pageNum_rsJournals'];
+}
+$startRow_rsJournals = $pageNum_rsJournals * $maxRows_rsJournals;
+
+$query_rsJournals = "SELECT d.lakey, d.test_time, d.instrument_id, d.resellerkey, 
+		d.timestamp, d.date_completed, d.completed, d.manlevelkey, 
+		d.coded_1, d.coded_2, d.coded_3, d.coded_1_complete, 
+		r.userkey, r.bulkuserkey, r.group, r.firstname, r.lastname, 
+		IF(rb.company <> '', LEFT(rb.company, 15), CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer,
+		d.finalized, d.date_finalized, a.date_release, 
+		rc1.firstname AS coder1_first, rc2.firstname AS coder2_first, rc3.firstname AS coder3_first,
+		CASE 
+			WHEN d.completed = 0 THEN 'started'
+			WHEN d.completed = 1 AND d.finalized = 0 AND d.bc_allowedtoview = 0
+				THEN 'access denied'
+			WHEN d.completed = 1 AND d.finalized = 0 AND d.bc_allowedtoview = 1 AND c.coded IS NULL
+				THEN 'completed'
+			WHEN d.completed = 1 AND d.finalized = 0 AND c.coded = 1 
+				THEN 'scored'
+			WHEN d.completed = 1 AND d.finalized = 2 THEN 'finalized'
+			WHEN d.completed = 1 AND d.finalized = 1 THEN 'released'
+			WHEN d.completed = 1 AND d.finalized = 3 THEN 'locked'
+		END AS status,
+		CASE
+			WHEN IFNULL(d.coded_1, 0) = 0 THEN 0
+			WHEN d.coded_1 = 1 AND d.coded_1_complete = 0 THEN 1
+			WHEN d.coded_1_complete = 1 THEN 2
+		END AS finalized_coder
+	FROM la_data d
+		JOIN registrants r ON d.userkey = r.userkey 
+		LEFT JOIN la_codes c ON d.lakey = c.lakey
+		LEFT JOIN la_codes_2 c2 ON d.lakey = c2.lakey
+		LEFT JOIN la_codes_3 c3 ON d.lakey = c3.lakey
+		LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+		LEFT JOIN registrants rc1 ON rc1.userkey = d.coderkey_1
+		LEFT JOIN registrants rc2 ON rc2.userkey = d.coderkey_2
+		LEFT JOIN registrants rc3 ON rc3.userkey = d.coderkey_3
+		LEFT JOIN la_assignments a ON d.assignmentkey = a.assignmentkey 
+	WHERE d.instrument_id = '{$instrument_id}_JOURNAL' AND d.coded_1 = 1  ";
+$query_rsJournals .= querySortSearch($query_rsJournals, "finalized ASC");
+$query_limit_rsJournals = sprintf("%s LIMIT %d, %d", $query_rsJournals, $startRow_rsJournals, $maxRows_rsJournals);
+$rsJournals = mysql_query($query_limit_rsJournals, $Assessment) or die("rsJournals: ".mysql_error());
+$row_rsJournals = mysql_fetch_assoc($rsJournals);
+
+  $all_rsJournals = mysql_query($query_rsJournals);
+  $totalRows_rsJournals = mysql_num_rows($all_rsJournals);
+$totalPages_rsJournals = ceil($totalRows_rsJournals/$maxRows_rsJournals)-1;
+
+
+
+
+
+
+
+
+
+
+/**** QUERY STRINGS - as far as I can tell, these prepare the SQL queries to scroll through multiple pages of records in tables 1, 2, and 3 on this performance select page. 
+This defining section only existed for rsLaData01, not 02 or 03. I just copied & pasted, we'll see if that works. -TH */
+
+$queryString_rsLaData01 = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsLaData01") == false && 
+        stristr($param, "totalRows_rsLaData01") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsLaData01 = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsLaData01 = sprintf("&totalRows_rsLaData01=%d%s", $totalRows_rsLaData01, $queryString_rsLaData01);
+
+$queryString_rsLaData02 = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsLaData02") == false && 
+        stristr($param, "totalRows_rsLaData02") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsLaData02 = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsLaData02 = sprintf("&totalRows_rsLaData02=%d%s", $totalRows_rsLaData02, $queryString_rsLaData02);
+
+$queryString_rsLaData03 = "&showOpen=true";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsLaData03") == false && 
+        stristr($param, "totalRows_rsLaData03") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsLaData03 .= "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsLaData03 = sprintf("&totalRows_rsLaData03=%d%s", $totalRows_rsLaData03, $queryString_rsLaData03);
+
+$queryString_rsJournals = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsJournals") == false && 
+        stristr($param, "totalRows_rsJournals") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsJournals = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsJournals = sprintf("&totalRows_rsJournals=%d%s", $totalRows_rsJournals, $queryString_rsJournals);
+
+
+
+
+
+if (isset($_GET['download_score_data']) AND WA_Auth_RulePasses("Logged in as senior")) { 
+	
+	// get code descriptions for each perspective code
+	$rsLaCodeDesc = mysql_query("SELECT * FROM la_code_descriptions WHERE instrument_id = 'LDMA'", $Assessment) or die("la_code_descriptions query: ".mysql_error());
+	$row_rsLaCodeDesc = mysql_fetch_assoc($rsLaCodeDesc);
+	
+	// GENERATE AN SQL QUERY WHICH WILL CALCULATE WEIGHTED RESULTS FOR EACH PERSPECTIVE
+	// The resulting query needs to 
+	
+	$str_weighted_p = "";
+	
+	$i = 1; $i_pad = str_pad($i, 3, '0', STR_PAD_LEFT);
+	
+	while ($i < 201) {
+		// reference to the dilemma and perspective_level have to be based on p_taking code numbers
+		// rather than p_seeking code numbers. (the result must also be padded.)
+		$i_taken = $i;
+		if ($i_taken % 100 > 50) {
+			$i_taken -= 50; 
+		}
+		$i_taken = str_pad($i_taken, 3, '0', STR_PAD_LEFT);
+		
+		// for each code that has a name in la_code_descriptions,
+		// add a calculation for this code to the codes query.
+		if ($row_rsLaCodeDesc['code_name'.$i_pad] <> "") { 
+			$str_weighted_p .= 
+				sprintf(" (c.code{$i_pad} * ldp.code{$i_taken} * pl.code{$i_taken}) AS %s_{$i_pad}_%s, \n", 
+				// prefix for the code name is either 'pt_wt_' or 'ps_wt'
+				($i % 100 <= 50 ? "pt_wt" : "ps_wt"),
+				str_replace(array(' ', '/', ',', '(', ')'), '', $row_rsLaCodeDesc['code_name'.$i_pad])
+				);
+		}
+		
+		$i ++; $i_pad = str_pad($i, 3, '0', STR_PAD_LEFT);
+	}
+	
+	
+	
+	
+	$query_rsDownload = sprintf("SELECT r.userkey, r.firstname, r.lastname, 
+		d.lakey, d.manlevelkey AS man_level_orig, mla.man_level_adjusted, 
+		rb.firstname AS client_fn, rb.lastname AS client_ln, rb.company AS client_company, 
+		{$str_weighted_p} NULL AS end
+
+		FROM la_data d
+		JOIN registrants r ON d.userkey = r.userkey
+		LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+		JOIN la_scores s ON d.lakey = s.lakey
+		JOIN la_codes c ON d.lakey = c.lakey
+		LEFT JOIN la_ldma_dilemmas_perspectives ldp ON d.dilemmakey = ldp.dilemmakey
+		LEFT JOIN la_ldma_dilemmas_perspectives pl ON pl.dilemmaperspectivekey = 99
+		LEFT JOIN demogs_man_level man ON d.manlevelkey = man.manlevelkey
+		LEFT JOIN demogs_man_level_adjusted mla ON 
+			mla.manlevelgeneralkey = man.man_level_number AND mla.employeenumberkey = d.employeenumberkey
+		
+		WHERE d.instrument_id = 'LDMA' AND d.scored_1 = 1  ");
+			
+	// Run the same filter on this download query, as what was run on the rsLaData query, but turn off sort.
+	$query_rsDownload .= querySortSearch($query_rsLaData, "", "", 0);
+	// always sort by specified columns.
+	$query_rsDownload .= " ORDER BY d.lakey ";
+	
+	$rsDownload = mysql_query($query_rsDownload, $Assessment) or die(mysql_error());
+	$totalRows_rsDownload = mysql_num_rows($rsDownload);
+	//topher(str_replace("\n", "<br>", $query_rsDownload));
+	downloadData( $rsDownload, date('Y_md')."_allScoreData" );
+	exit();
+	
+}
+
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Select a performance to score</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+<link href="../includes/js_res/jquery.ui.smoothness.css" rel="stylesheet" type="text/css" />
+
+<script src="../includes/fullcalendar/fullcalendar.min.js" type="text/javascript"></script>
+<link href="../includes/fullcalendar/fullcalendar.css" rel="stylesheet" type="text/css" />
+
+<script src="../SpryAssets/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+.twoColFixRtHdr #container #mainContent h3 {
+	padding-top: 20px;
+}
+.twoColFixRtHdr #container #mainContent table {
+	margin-top: 0px;
+}
+.twoColFixRtHdr #container #mainContent h4 {
+	padding-top: 10px;
+}
+.twoColFixRtHdr #container #mainContent .box tr td p {
+	margin-top: 0px;
+	margin-bottom: 20px;
+}
+.container .inner_container .mainContent table {
+	margin-top: 5px;
+	margin-bottom: 20px;
+}
+.twoColFixRtHdr .CollapsiblePanel {
+	margin-top: 35px;
+}
+
+
+/* tooltip styling. by default the element to be styled is .tooltip  */
+.tooltip {
+	display:none;
+	background:#FFF;
+	width: 130px;
+	padding-top: 0px;
+	padding-bottom: 3px;
+	padding-right: 20px;
+	padding-left: 20px;
+	-moz-box-shadow: 6px 6px 5px #666;
+	-webkit-box-shadow: 6px 6px 5px #666;
+	box-shadow: 6px 6px 5px #666;
+	z-index: 1;
+	border: 1px solid #B1B1B1;
+}
+
+.comment_tooltip {
+	display:none;
+	text-align:left;
+	background:#FFF;
+	width: 300px;
+	padding-top: 4px;
+	padding-bottom: 5px;
+	padding-right: 20px;
+	padding-left: 20px;
+	-moz-box-shadow: 6px 6px 5px #666;
+	-webkit-box-shadow: 6px 6px 5px #666;
+	box-shadow: 6px 6px 5px #666;
+	z-index: 999;
+	border: 1px solid #B1B1B1;
+}
+
+.hotspot, .comment_hotspot {
+	cursor: pointer; cursor: hand	
+	height:100%; 
+	width:100%; 
+	position:relative;
+	text-decoration: none;
+}
+
+</style>
+
+
+<script type="text/javascript">
+
+// JQUERY to manage hidden elements on the page
+$(document).ready(function(){
+	
+	$('#filter_box').hide();
+	/* 
+	filter_shown = false;
+	$('#filter_header').hover(function(){
+		if (!filter_shown) { 
+			$('#filter_box').show(200);
+			filter_shown = true;
+		}
+	}); */
+	$('#filter_header').click(function(){
+		$('#filter_box').toggle(200);
+	});
+	
+	var tipShowing = false;
+	
+	$('.hotspot').tooltip({
+		position: 'center right', 
+		offset: [-0, -0],
+		effect: 'fade', 
+		fadeInSpeed: 100,
+		fadeOutSpeed: 100,
+		delay: 400,
+		events: {
+			def: 'click,mouseleave'
+		},
+		onShow: function() {
+			tipShowing = true;
+		},
+		onHide: function() {
+			tipShowing = false;
+		}
+	});
+	
+	// any <span> inside a .codercell div, should change class on mouseover.
+	$('.hotspot').mouseover(function() {
+		if (!tipShowing) {
+			this.style.backgroundColor = "#d0d0d0";	
+		}
+	});
+	
+	$('.hotspot').mouseout(function() {
+		this.style.backgroundColor = "";
+	});
+	
+	$('.comment_hotspot').tooltip({
+		position: 'bottom center',
+		// offset: [-130, 0], 
+		effect: 'fade', 
+		fadeInSpeed: 100,
+		fadeOutSpeed: 100,
+		delay:300,
+		layout: '<span/>',
+		events: {
+			def: 'mouseover, mouseleave'
+		}
+	}); 
+	
+	
+	$('.limbo_link').click(function(){
+		$(this).hide();
+		$(this).parent().find('.limbo_text').show();
+		$(this).parent().find('.limbo_why').show();
+		$(this).parent().find('.limbo_commit').show();
+		$(this).parent().parent().css('width', '450px');
+	});
+	
+	$('.limbo_commit').click(function(){
+		var textarea = $(this).parent().find('.limbo_why');
+		var lakey = textarea.attr('lakey');
+		var text = textarea.val();
+		$(this).parent().parent().parent().load('scoring_performance_select.php', {
+			put_in_limbo: 1,
+			lakey: lakey,
+			text: text
+		});
+	});
+	
+	$('.date').datepicker({ 
+		dateFormat: 'yy-mm-dd', 
+		numberOfMonths: 1,
+		showOtherMonths: true,
+		selectOtherMonths: true
+	});
+	
+});
+
+
+</script>
+
+
+
+
+
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+  <?php 
+	if ($show_scores == "yes") {
+    ?><a href="<?php echo $currentPage; ?>?training=no">hide training tools</a><?php
+  } else { ?><a href="<?php echo $currentPage; ?>?training=yes">view training tools</a>
+    <?php 
+	} ?> | 
+  <a href="../la_coding/code_strengths_view.php">S&amp;R details</a> | 
+  <a href="../la_coding/view_comments.php">score-based report comments</a> | 
+  <a href="../la_reports/bc_manage_accounts.php">manage test takers</a>
+  <?php 
+	if ($instrument_id == "FOLA") { ?> | 
+  	<a href="view_questions.php">view student questions</a>
+  	<?php 
+	} ?>
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1><?php echo $_SESSION['instrument_id']; ?> SCORER
+    	<?php if ($mode_training) { echo "TRAINING"; } else if ($mode_junior) { echo "JUNIOR"; } else { echo "SELECTION"; } ?>
+      AREA</h1>
+    
+    
+    <div id="CollapsiblePanel3" class="CollapsiblePanel">
+    	<?php if (!$mode_training) { ?>
+      <div class="CollapsiblePanelTab">DEADLINES</div>
+      <div class="CollapsiblePanelContent">
+      
+    	<?php deadlinesCalendar($currentPage); ?> 
+      
+      </div>
+      <?php } // ENDIF: if NOT mode_training ?>
+    </div>
+    
+   	<?php if (!$mode_training) { ?>
+    <h3><a id="filter_header" style="cursor:pointer; ">FILTER RESULTS</a></h3>
+    <?php } // ENDIF: if NOT mode_training ?>
+      
+    <?php if (isset($_SESSION['search']) AND $_SESSION['search'] <> "") { 
+			$searchDesc = $_SESSION['search'];
+			$searchDesc = str_replace(array("(s)", "(h)"), "", $searchDesc);
+			$searchDesc = str_replace("(low):", " >= '", $searchDesc);
+			$searchDesc = str_replace("(high):", " <= '", $searchDesc);
+			$searchDesc = str_replace("(e):", " = '", $searchDesc);
+			$searchDesc = str_replace(":", " contains '", $searchDesc);
+			$searchDesc = str_replace(",", "' AND ", $searchDesc);
+			$searchDesc = substr($searchDesc, 0, strlen($searchDesc)-5); ?>
+      <p> Current search: <?php echo $searchDesc; ?> | 
+      	<a href="<?php echo $currentPage; ?>?search=clear">clear search</a>
+      </p>
+		<?php } ?>
+   	
+    <div id="filter_box">
+    <table border="0">
+    <form id="form1" name="form1" method="post" action="">
+    <tr>
+      <td></td>
+      <td align="right"><input type="submit" name="SUBMIT" id="SUBMIT" value="FILTER" /></td>
+    </tr>
+    <tr>
+    	<td><div align="right">userkey</div></td>
+      <td><span id="sprytextfield1">
+        <input name="(s)userkey" type="text" value="<?php 
+				echo (isset($_POST['(s)userkey']) ? $_POST['(s)userkey'] : ""); ?>" size="10" />
+      </span></td>
+    </tr>
+    <tr>
+      <td align="left"><div align="right">record number</div></td>
+      <td align="left"><span id="sprytextfield2">
+        <input name="(s)lakey" type="text" value="<?php 
+					echo (isset($_POST['(s)lakey']) ? $_POST['(s)lakey'] : ""); ?>" size="10" />
+      </span></td>
+    </tr>
+    <?php if ($user_level >= 26) { ?>
+    <tr>
+      <td><div align="right">first name</div></td>
+      <td><input name="(s)firstname" type="text" value="<?php 
+				echo (isset($_POST['(s)firstname']) ? $_POST['(s)firstname'] : ""); ?>" size="15" />
+      </td>
+    </tr>
+    <tr>
+      <td><div align="right">last name</div></td>
+      <td><input name="(s)lastname" type="text" value="<?php 
+      echo (isset($_POST['(s)lastname']) ? $_POST['(s)lastname'] : ""); ?>" size="15" /></td>
+    </tr>
+    <?php } ?>
+    <tr>
+      <td><div align="right">group ID</div></td>
+      <td><span id="spryselect7">
+      <select name="(s)r:group" id="(s)r:group">
+        <?php $post_group = "";
+					if (isset($_POST['(s)r:group'])) { $post_group = $_POST['(s)r:group']; } ?>
+        <option selected="selected" value="" <?php if (!(strcmp("", $post_group))) 
+					{echo "selected=\"selected\"";} ?>> - view all - </option>
+        <?php 
+          do { 
+            $thisGroup = $row_rsFilterGroups['group']; ?>
+        <option value="<?php echo $thisGroup; ?>" <?php if (!(strcmp($post_group, $thisGroup))) 
+              {echo "selected=\"selected\"";} ?>><?php echo $thisGroup.
+								" (".$row_rsFilterGroups['numpeople'].")"; ?></option>
+        <?php 
+          } while ($row_rsFilterGroups = mysql_fetch_assoc($rsFilterGroups)); ?>
+      </select>
+      </span></td>
+    </tr>
+    <tr>
+      <td align="left"><div align="right">bulk customer</div></td>
+      <td align="left"><span id="spryselect3">
+        <select name="(s)resellerkey" class="pulldown_width_150" id="(s)resellerkey">
+          <?php $post_resellerkey = "";
+					if (isset($_POST['(s)resellerkey'])) 
+					{ $post_resellerkey = $_POST['(s)resellerkey']; } ?>
+          <option value="" <?php if (!(strcmp("", $post_resellerkey))) 
+					{echo "selected=\"selected\"";} ?>>
+            - view all - </option>
+          <?php do { 
+					$thisBc = $row_rsFilterBc['bulkcustomer']; ?>
+          <option value="<?php echo $row_rsFilterBc['resellerkey']; ?>" 
+						<?php if (!(strcmp($post_resellerkey, $row_rsFilterBc['resellerkey']))) 
+						{echo "selected=\"selected\"";} ?>><?php echo $thisBc; ?></option>
+          <?php } while ($row_rsFilterBc = mysql_fetch_assoc($rsFilterBc)); ?>
+          </select>
+      	</span>
+      </td>
+    </tr>
+    <tr>
+      <td align="left"><div align="right">assignment</div></td>
+      <td><span id="spryselect9">
+      	<select name="(s)assignmentkey" class="pulldown_width_150" id="(s)assignmentkey">
+      	<?php $search_assn = "";
+					if (isset($_POST['(s)assignmentkey'])) 
+						{ $search_assn = $_POST['(s)assignmentkey']; } ?>
+        <option value="" <?php if (!(strcmp("", $search_assn))) 
+									{ echo "selected=\"selected\""; } ?>> - view all - </option>
+        <?php 
+								// List groups available to me (based on the test takers already in our system) 
+								do {   
+      	if ($row_rsFilterAssign['assignmentkey'] <> "") { ?>
+        <option value="<?php echo $row_rsFilterAssign['assignmentkey']?>" 
+						<?php if (!(strcmp($row_rsFilterAssign['assignmentkey'], $search_assn))) 
+						{ echo "selected=\"selected\""; } 
+						?>>
+          <?php 
+						if (WA_Auth_RulePasses("Logged in as analyst")) { $row_rsFilterAssign['assignmentkey']; }
+						echo str_replace("_", " ", $row_rsFilterAssign['instrument_id']); 
+						?>
+          , group <?php echo $row_rsFilterAssign['assign_group']; 
+						?>: <?php echo ($row_rsFilterAssign['dilemma_name'] <> "" ? 
+							$row_rsFilterAssign['dilemma_name']." dilemma, " : ""); 
+						?> from <?php echo $row_rsFilterAssign['date_start']; ?> to 
+						<?php echo $row_rsFilterAssign['date_end']; ?></option>
+        <?php } } while ($row_rsFilterAssign = mysql_fetch_assoc($rsFilterAssign));
+						$rows = mysql_num_rows($rsFilterAssign);
+						if($rows > 0) {
+								mysql_data_seek($rsFilterAssign, 0);
+							$row_rsFilterAssign = mysql_fetch_assoc($rsFilterAssign);
+						} ?>
+      	</select></span>
+      </td>
+    </tr>
+    <tr>
+      <td><div align="right">management level</div></td>
+      <td><span id="spryselect10">
+        <select name="(s)manlevelkey(e)" class="pulldown_width_150" id="(s)manlevelkey(e)">
+          <?php $search_manlevel = "";
+        if (isset($_POST['(s)manlevelkey(e)'])) 
+          { $search_manlevel = $_POST['(s)manlevelkey(e)']; } ?>
+          <option value="" <?php if(!strcmp($search_manlevel, "")) 
+        { echo "selected=\"selected\""; } ?>>- view all -</option>
+          <?php do { ?>
+          <option value="<?php echo $row_rsFilterManLevels['manlevelkey']?>" 
+				<?php if(!strcmp( $search_manlevel, $row_rsFilterManLevels['manlevelkey'] )) 
+        { echo "selected=\"selected\""; } ?>>
+                  <?php 
+        echo $row_rsFilterManLevels['man_level']." (".$row_rsFilterManLevels['numpeople'].")"; ?>
+        </option>
+        <?php } while ($row_rsFilterManLevels = mysql_fetch_assoc($rsFilterManLevels));
+				$rows = mysql_num_rows($rsFilterManLevels);
+				if($rows > 0) {
+						mysql_data_seek($rsFilterManLevels, 0);
+					$row_rsFilterManLevels = mysql_fetch_assoc($rsFilterManLevels);
+				} ?>
+       	</select></span>
+      </td>
+    </tr>
+    <tr>
+      <td><div align="right">test time</div></td>
+      <td><span id="spryselect8">
+      <select name="(s)test_time" id="(s)test_time">
+        <?php $post_test_time = "";
+					if (isset($_POST['(s)test_time'])) { $post_test_time = $_POST['(s)test_time']; } ?>
+        <option selected="selected" value="" <?php if (!(strcmp("", $post_test_time))) 
+					{echo "selected=\"selected\"";} ?>> - view all - </option>
+        <?php 
+          do { ?>
+        <option value="<?php echo $row_rsTestTime['test_time']; ?>" <?php 
+							if (!(strcmp($post_test_time, $row_rsTestTime['test_time']))) 
+              {echo "selected=\"selected\"";} ?>><?php echo $row_rsTestTime['test_time'].
+								" (".$row_rsTestTime['numpeople'].")"; ?></option>
+        <?php 
+          } while ($row_rsTestTime = mysql_fetch_assoc($rsTestTime)); ?>
+      </select>
+      </span></td>
+    </tr>
+    <tr>
+      <td><div align="right">dilemma</div></td>
+      <td>
+      <select name="(s)dilemma_name(e)" id="(s)dilemma_name(e)">
+        <?php $post_dilemma = "";
+					if (isset($_POST['(s)dilemma_name(e)'])) { $post_dilemma = $_POST['(s)dilemma_name(e)']; } ?>
+        <option selected="selected" value="" <?php if ($post_dilemma == "") 
+					{ echo "selected='selected'"; } ?>> - view all - </option><?php 
+        do { ?>
+        	<option value="<?php echo $row_rsDilemma['dilemma_name']; ?>" <?php 
+						if ($row_rsDilemma['dilemma_name'] == $post_dilemma) 
+						{ echo "selected='selected'"; } ?>>
+							<?php echo $row_rsDilemma['dilemma_name'].
+							" (".$row_rsDilemma['numpeople'].")"; ?></option><?php 
+        } while ($row_rsDilemma = mysql_fetch_assoc($rsDilemma)); ?>
+      </select>
+      </td>
+    </tr>
+    <tr>
+      <td><div align="right"> completion date </div></td>
+      <td> from <span id="sprytextfield4">
+        <input name="(s)date_completed(low)" type="text" class="date" value="<?php 
+				echo (isset($_POST['(s)date_completed(low)']) ? $_POST['(s)date_completed(low)'] : ""); ?>" 
+        size="9" />
+        <span class="textfieldInvalidFormatMsg">Invalid format.</span></span> to <span id="sprytextfield5">
+          <input name="(s)date_completed(high)" type="text" class="date" value="<?php 
+					echo (isset($_POST['(s)date_completed(high)']) ? $_POST['(s)date_completed(high)'] : ""); ?>" 
+          size="9" />
+          <span class="textfieldInvalidFormatMsg">Invalid format.</span></span>
+      </td>
+    </tr>
+    <tr>  
+      <td><div align="right">score </div></td>
+      <td>from <span id="sprytextfield6">
+        <input name="(s)lasnumber_1(low)" type="text" value="<?php 
+          echo (isset($_POST['(s)lasnumber_1(low)']) ? $_POST['(s)lasnumber_1(low)'] : ""); 
+          ?>" size="9" />
+        </span> to <span id="sprytextfield7">
+        <input name="(s)lasnumber_1(high)" type="text" value="<?php 
+          echo (isset($_POST['(s)lasnumber_1(high)']) ? $_POST['(s)lasnumber_1(high)'] : ""); 
+          ?>" size="9" />
+        </span>
+      </td>
+    </tr>
+    <tr>
+      <td align="left"><div align="right">status</div></td>
+      <td><span id="spryselect2">
+      <select name="(h)status" class="pulldown_width_150" id="(h)status">
+        <?php $search_status = "";
+					if (isset($_POST['(h)status'])) 
+						{ $search_status = $_POST['(h)status']; } ?>
+        <option value="" <?php if (!(strcmp("", $search_status))) 
+						{ echo "selected=\"selected\""; } ?>> - view all - </option>
+        <option value="<?php echo "not started"; ?>" 
+						<?php if (!(strcmp("not started", $search_status))) 
+						{ echo "selected=\"selected\""; } ?>>not started</option>
+        <option value="<?php echo "started"; ?>" 
+						<?php if (!(strcmp("started", $search_status))) 
+						{ echo "selected=\"selected\""; } ?>>started</option>
+        <option value="<?php echo "completed"; ?>" 
+						<?php if (!(strcmp("completed", $search_status))) 
+						{ echo "selected=\"selected\""; } ?>>completed</option>
+        <option value="<?php echo "limbo"; ?>" 
+						<?php if (!(strcmp("limbo", $search_status))) 
+						{ echo "selected=\"selected\""; } ?>>in limbo</option>
+        <option value="<?php echo "coding complete"; ?>" 
+						<?php if (!(strcmp("coding complete", $search_status))) 
+						{ echo "selected=\"selected\""; } ?>>coding complete</option>
+        <option value="<?php echo "scored"; ?>" 
+						<?php if (!(strcmp("scored", $search_status))) 
+						{ echo "selected=\"selected\""; } ?>>scored</option>
+        <option value="<?php echo "finalized"; ?>" 
+						<?php if (!(strcmp("finalized", $search_status))) 
+						{ echo "selected=\"selected\""; } ?>>finalized</option>
+        <option value="<?php echo "released"; ?>" 
+						<?php if (!(strcmp("released", $search_status))) 
+						{ echo "selected=\"selected\""; } ?>>released</option>
+      </select>
+      <span class="selectRequiredMsg"><br />
+				Please select an item.</span></span>
+      </td>
+    </tr>
+    <tr>
+      <td><div align="right">scorer 1</div></td>
+      <td><span id="spryselect4">
+        <select name="(s)scorerkey_1" id="(s)scorerkey_1">
+          <?php $post_scorer = "";
+        if (isset($_POST['(s)scorerkey_1'])) { $post_scorer = $_POST['(s)scorerkey_1']; } ?>
+          <option value="" <?php if (!(strcmp("", $post_scorer))) 
+        {echo "selected=\"selected\"";} ?>> - view all - </option>
+          <?php 
+          do { ?>
+          <option value="<?php echo $row_rsFilterScorer1['userkey']; ?>" 
+            <?php if (!(strcmp($post_scorer, $row_rsFilterScorer1['userkey']))) 
+            {echo "selected=\"selected\"";} ?>><?php echo $row_rsFilterScorer1['firstname'].
+              " (".$row_rsFilterScorer1['numpeople'].")"; ?></option>
+          <?php 
+          } while ($row_rsFilterScorer1 = mysql_fetch_assoc($rsFilterScorer1));
+          // Reset the recordset 
+          if (mysql_num_rows($rsFilterScorer1) > 0) { 
+            mysql_data_seek($rsFilterScorer1, 0);
+            $row_rsFilterScorer1 = mysql_fetch_assoc($rsFilterScorer1);
+          } ?>
+        </select>
+      </span>
+      </td>
+    </tr>
+    <tr>
+      <td><div align="right">scorer 2</div></td>
+      <td><span id="spryselect5">
+        <select name="(s)scorerkey_2" id="(s)scorerkey_2">
+          <?php $post_scorer = "";
+        if (isset($_POST['(s)scorerkey_2'])) { $post_scorer = $_POST['(s)scorerkey_2']; } ?>
+          <option value="" <?php if (!(strcmp("", $post_scorer))) 
+          {echo "selected=\"selected\"";} ?>> - view all - </option>
+          <?php 
+          do { ?>
+          <option value="<?php echo $row_rsFilterScorer2['userkey']; ?>" 
+            <?php if (!(strcmp($post_scorer, $row_rsFilterScorer2['userkey']))) 
+            {echo "selected=\"selected\"";} ?>><?php echo $row_rsFilterScorer2['firstname'].
+              " (".$row_rsFilterScorer2['numpeople'].")"; ?></option>
+          <?php 
+          } while ($row_rsFilterScorer2 = mysql_fetch_assoc($rsFilterScorer2));
+          // Reset the recordset 
+          if (mysql_num_rows($rsFilterScorer2) > 0) { 
+            mysql_data_seek($rsFilterScorer2, 0);
+            $row_rsFilterScorer2 = mysql_fetch_assoc($rsFilterScorer2);
+          } ?>
+        </select>
+      </span>
+      </td>
+    </tr>
+    <tr>
+      <td><div align="right">scorer 3</div></td>
+      <td><span id="spryselect6">
+        <select name="(s)scorerkey_3" id="(s)scorerkey_3">
+          <?php $post_scorer = "";
+          if (isset($_POST['(s)scorerkey_3'])) { $post_scorer = $_POST['(s)scorerkey_3']; } ?>
+          <option value="" <?php if (!(strcmp("", $post_scorer))) 
+          {echo "selected=\"selected\"";} ?>> - view all - </option>
+          <?php 
+        do { ?>
+          <option value="<?php echo $row_rsFilterScorer3['userkey']; ?>" 
+          <?php if (!(strcmp($post_scorer, $row_rsFilterScorer3['userkey']))) 
+          {echo "selected=\"selected\"";} ?>><?php echo $row_rsFilterScorer3['firstname'].
+            " (".$row_rsFilterScorer3['numpeople'].")"; ?></option>
+          <?php 
+        } while ($row_rsFilterScorer3 = mysql_fetch_assoc($rsFilterScorer3)); 
+        // Reset the recordset 
+        if (mysql_num_rows($rsFilterScorer3) > 0) { 
+          mysql_data_seek($rsFilterScorer3, 0);
+          $row_rsFilterScorer3 = mysql_fetch_assoc($rsFilterScorer3);
+        }
+         ?>
+        </select></span>
+    	</td>
+  	</tr>
+    <tr>
+      <td align="left"><div align="right">text contains</div></td>
+      <td align="left"><span id="sprytextfield3">
+        <input name="(s)essay_text" type="text" value="<?php 
+        echo (isset($_POST['(s)essay_text']) ? $_POST['(s)essay_text'] : ""); ?>" size="30" />
+      </span></td>
+    </tr>
+    <tr>
+      <td></td>
+      <td align="right"><input type="submit" name="SUBMIT" id="SUBMIT" value="FILTER" /></td>
+    </tr>
+    </form>
+    </table>
+    
+    </div>
+    
+    <?php if (isset($count_queue_senior)) { ?>
+    	<h3><a href="score.php?lakey=<?php echo $row_rsQueueSenior['lakey']; ?>&scorer_no=2">2ND-CODE NEXT</a></h3>
+      <p><?php echo $count_queue_senior; ?> low-confidence junior records in queue to 2nd-code.</p>
+    <?php } ?>
+    
+    
+    <?php if (!$mode_training) { ?>
+    
+    <h3><a name="table1"></a>1ST SCORER QUEUE</h3>
+    
+    <p>Record <?php echo ($startRow_rsLaData01 + 1) ?>&nbsp;to <?php echo min($startRow_rsLaData01 + $maxRows_rsLaData01, $totalRows_rsLaData01) ?>&nbsp;of <?php echo $totalRows_rsLaData01 ?> &nbsp;&nbsp;
+    <a href="<?php printf("%s?pageNum_rsLaData01=%d%s", $currentPage, 0, $queryString_rsLaData01); ?>#table1">First</a> | <a href="<?php printf("%s?pageNum_rsLaData01=%d%s", $currentPage, max(0, $pageNum_rsLaData01 - 1), $queryString_rsLaData01); ?>#table1">Previous</a> | <a href="<?php printf("%s?pageNum_rsLaData01=%d%s", $currentPage, min($totalPages_rsLaData01, $pageNum_rsLaData01 + 1), $queryString_rsLaData01); ?>#table1">Next</a> | <a href="<?php printf("%s?pageNum_rsLaData01=%d%s", $currentPage, $totalPages_rsLaData01, $queryString_rsLaData01); ?>#table1">Last</a></p>
+    <table class="minimalist-a">
+      <tr>
+        <th><a href="<?php echo $currentPage; ?>?sort=lakey#table1">Record</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=date_completed#table1">Completed</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=date_release#table1">Due</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=userkey#table1">Test taker</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=bulkcustomer#table1">Bulk customer</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=group#table1">Group</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=status#table1">Status</a></th>
+        <th>View</th>
+        <th>Score</th>
+      </tr>
+      <?php 
+			if ($totalRows_rsLaData01 > 0) { 
+				do { ?>
+        <tr>
+          <td><?php echo $row_rsLaData01['lakey']; ?></td>
+          <td><?php 
+						echo date('Y-m-d', strtotime($row_rsLaData01['date_completed'])); ?></td>
+          <td><?php 
+						echo date('Y-m-d', strtotime($row_rsLaData01['date_due'])); 
+						if ($row_rsLaData01['date_release'] == "") { 
+							echo "<a class='comment_hotspot'>*</a>";
+							echo "<span class='comment_tooltip'>This record doesn't have an assignment.</span>"; 
+						}
+						else if ($row_rsLaData01['date_completed'] >= 
+										 date('Y-m-d', strtotime('+1 day', strtotime($row_rsLaData01['date_end'])))) { 
+							echo "<a class='comment_hotspot'>*</a> <span class='comment_tooltip'>
+								This record was completed after the due date.<br>
+								(assignment due on ".$row_rsLaData01['date_end'].")</span>"; 
+						} ?></td>
+          <td><?php echo $row_rsLaData01['userkey']; ?></td>
+          <td><?php echo ($row_rsLaData01['bulkcustomer'] <> "" ? 
+						$row_rsLaData01['bulkcustomer'] : "-none-"); ?></td>
+          <td><?php echo $row_rsLaData01['group']; ?></td>
+          <td>
+          	<div class="hotspot" align="center">&nbsp;<?php 
+							if ($row_rsLaData01['flag'] == 1) { ?>
+            		<span class="red">in limbo</span>
+           		<?php } ?>&nbsp;
+            </div>
+          	
+            <!-- The popup of links for status for the top table -->
+            <div class="tooltip">
+              <p>
+              <?php if ($row_rsLaData01['flag'] == 1) { ?>
+                <a href="<?php echo $currentPage; ?>?unlimbo=<?php 
+                  echo $row_rsLaData01['lakey']; ?>">remove from limbo</a>
+              <?php } else { ?>
+                <a class="limbo_link">put in limbo</a><br />
+                <textarea class="limbo_why" lakey="<?php echo $row_rsLaData01['lakey']; ?>" 
+                	style="display:none"></textarea><br />
+                <input type="submit" class="limbo_commit" value="put in limbo" style="display:none" />
+              <?php } ?>
+              </p>
+            </div>
+						
+						
+          </td>
+          <td><a href="view.php?lakey=<?php 
+						echo $row_rsLaData01['lakey']; ?>" target="_blank">view</a></td>
+          <td><a href="scoring_start.php?lakey=<?php echo $row_rsLaData01['lakey']; ?>&scorer_no=1">score</a></td>
+        </tr>
+        <?php } while ($row_rsLaData01 = mysql_fetch_assoc($rsLaData01));
+				} ?>
+    </table>
+    
+    <?php } // ENDIF: mode_training ?>
+    
+    
+    <h3><a name="table2"></a>UPDATE, 2ND SCORE, OR 3RD SCORE</h3>
+    
+    <p>Record <?php echo ($startRow_rsLaData02 + 1) ?>&nbsp;to <?php echo min($startRow_rsLaData02 + $maxRows_rsLaData02, $totalRows_rsLaData02) ?>&nbsp;of <?php echo $totalRows_rsLaData02 ?> &nbsp;&nbsp;
+    &nbsp;<a href="<?php printf("%s?pageNum_rsLaData02=%d%s", $currentPage, 0, $queryString_rsLaData02); ?>#table2">First</a> | <a href="<?php printf("%s?pageNum_rsLaData02=%d%s", $currentPage, max(0, $pageNum_rsLaData02 - 1), $queryString_rsLaData02); ?>#table2">Previous</a> | <a href="<?php printf("%s?pageNum_rsLaData02=%d%s", $currentPage, min($totalPages_rsLaData02, $pageNum_rsLaData02 + 1), $queryString_rsLaData02); ?>#table2">Next</a> | <a href="<?php printf("%s?pageNum_rsLaData02=%d%s", $currentPage, $totalPages_rsLaData02, $queryString_rsLaData02); ?>#table2">Last</a> &nbsp; &nbsp; 
+    <?php if ($totalRows_rsCountLimbo > 0) { ?>
+    	<a class='red' href='?search=(h)status:limbo,'><?php echo $totalRows_rsCountLimbo; ?> in limbo</a>
+    <?php } ?></p>
+
+<table class="minimalist-a">
+      <tr>
+        <th><a href="<?php echo $currentPage; ?>?sort=lakey#table2">Record</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=date_completed#table2">Completed</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=date_release#table2">Due</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=date_scored_1#table2">Scored</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=userkey#table2">Test taker</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=bulkcustomer#table2">Bulk customer</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=group#table2">Group</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=scorer_1#table2">Sc'd 1</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=scorer_2#table2">Sc'd 2</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=scorer_3#table2">Sc'd 3</a></th>
+        <?php if (!$mode_training) { ?>
+          <th><a href="<?php echo $currentPage; ?>?sort=finalized_coder#table2">Coded</a></th>
+          <th><a href="<?php echo $currentPage; ?>?sort=status#table2">Status</a></th>
+        <?php } ?>
+        <?php if ($show_scores == "yes" OR $mode_training) { ?>
+          <th><a href="<?php echo $currentPage; ?>?sort=lasnumber_1#table2">S1</a></th>
+          <th><a href="<?php echo $currentPage; ?>?sort=diff_1_2#table2">Dif 1:2</a></th>
+          <th><a href="<?php echo $currentPage; ?>?sort=diff_1_3#table2">Dif 1:3</a></th>
+          <th><a href="<?php echo $currentPage; ?>?sort=confidencekey_1#table2">Conf</a></th>
+          <th><a href="<?php echo $currentPage; ?>?sort=comments_1#table2">Com</a></th>
+          <th><a href="<?php echo $currentPage; ?>?sort=lasnumber_2#table2">S2</a></th>
+          <th><a href="<?php echo $currentPage; ?>?sort=lasnumber_3#table2">S3</a></th>
+        <?php } ?>
+      </tr>
+      
+      <!-- REPEATING REGION for each (relevant) entry in the la_scores table -->
+      <?php 
+			if ($row_rsLaData02['lakey'] > 0) { 
+				do { 
+					// Trainees: have they scored the record yet?
+					$i_have_scored = false;
+					if ($mode_training AND $row_rsLaData02['lasnumber_'.$training_role] > 0) { $i_have_scored = true; }
+					if ($mode_senior AND $row_rsLaData02['lasnumber_2'] > 0) { $i_have_scored = true; }
+					?>
+        <tr>
+          <td><?php echo $row_rsLaData02['lakey']; ?></td>
+          <td><?php echo date('Y-m-d', strtotime($row_rsLaData02['date_completed'])); ?></td>
+          <td><?php 
+						echo date('Y-m-d', strtotime($row_rsLaData02['date_due'])); 
+						if ($row_rsLaData02['date_release'] == "") { 
+							echo "<a class='comment_hotspot'>*</a>";
+							echo "<span class='comment_tooltip'>This record doesn't have an assignment.</span>"; 
+						}
+						else if ($row_rsLaData02['date_completed'] >= 
+										 date('Y-m-d', strtotime('+1 day', strtotime($row_rsLaData02['date_end'])))) { 
+							echo "<a class='comment_hotspot'>*</a> <span class='comment_tooltip'>
+								This record was completed after the due date.<br>
+								(assignment due on ".$row_rsLaData02['date_end'].")</span>"; 
+						} ?></td>
+          <td><?php if ($row_rsLaData02['date_scored_1'] > 0) { 
+						echo date('Y-m-d', strtotime($row_rsLaData02['date_scored_1'])); 
+					} else { echo "?"; } ?></td>
+          <td><?php echo $row_rsLaData02['userkey']; ?></td>
+          <td><?php echo ($row_rsLaData02['bulkcustomer'] <> "" ? 
+						$row_rsLaData02['bulkcustomer'] : "-none-"); ?></td>
+          <td><?php echo $row_rsLaData02['group']; ?></td>
+          
+          <td>
+          	<div <?php if (!$mode_training) { ?>class="hotspot"<?php } ?> >&nbsp;<?php 
+							echo $row_rsLaData02['scorer_1']; ?>
+            </div>
+          	
+            <!-- The popup of links for the 1st scorer -->
+            <div class="tooltip">
+              <p>
+              <a href="score.php?lakey=<?php echo $row_rsLaData02['lakey']; ?>&amp;scorer_no=1">
+              	update</a><br />
+              <a href="../la_reports/report_individual.php?lakey=<?php 
+								echo $row_rsLaData02['lakey']; ?>&mode=checkreport&scorer_no=1">
+                view report</a>
+              </p>
+            </div>
+          </td>
+          
+          <td>
+          	<div <?php if (!$mode_training OR ($training_role == 2 /*AND !$i_have_scored*/)) { ?>class="hotspot"<?php } ?> align="center">&nbsp;<?php 
+							echo $row_rsLaData02['scorer_2']; ?>
+            </div>
+          	
+            <!-- The popup of links for the 2nd scorer -->
+            <div class="tooltip">
+              <p>
+              <a href="score.php?lakey=<?php echo $row_rsLaData02['lakey']; ?>&amp;scorer_no=2"><?php 
+								if ($row_rsLaData02['scored_2'] == 1) { ?>update<?php }
+								else { ?>2nd-score<?php } ?></a>
+              <?php 
+              if ($row_rsLaData02['scored_2'] == 1) { ?>
+              	<br /><a href="../la_reports/report_individual.php?lakey=<?php 
+								echo $row_rsLaData02['lakey']; ?>&mode=checkreport&scorer_no=2">view report</a><?php 
+							} ?>
+              </p>
+            </div>
+          </td>
+          
+          <td>
+          	<div <?php if (!$mode_training OR ($training_role == 3 /*AND !$i_have_scored*/)) { ?>class="hotspot"<?php } ?> align="center">&nbsp;<?php 
+							echo $row_rsLaData02['scorer_3']; ?>
+            </div>
+          	
+            <!-- The popup of links for the 3rd scorer -->
+            <div class="tooltip">
+              <p>
+              <a href="score.php?lakey=<?php echo $row_rsLaData02['lakey']; ?>&amp;scorer_no=3"><?php 
+								if ($row_rsLaData02['scored_3'] == 1) { ?>update<?php }
+								else { ?>3rd-score<?php } ?></a><br />
+              <a href="../la_reports/report_individual.php?lakey=<?php 
+								echo $row_rsLaData02['lakey']; ?>&mode=checkreport&scorer_no=3">view report</a>
+              </p>
+            </div>
+          </td>
+          
+          <?php if (!$mode_training) { ?>
+          
+          <td>
+          	<div align="center"><?php 
+            if ($row_rsLaData02['coded_1'] == 1) { 
+              if ($row_rsLaData02['coded_1_complete'] == 1) { echo "completed"; } 
+							else { echo "yes"; }
+            } 
+						else { echo "no"; } ?></div>
+          </td>
+          
+          <!-- The status column indicates limbo, finalized, and released status, etc. -->
+          <td>
+          	<div class="hotspot" align="center">&nbsp;<?php 
+							if ($row_rsLaData02['flag'] == "1") { ?>
+								<span class="red">in limbo</span><?php 
+							} 
+							else if ($row_rsLaData02['status'] == "finalized") { 
+								echo "f:".$row_rsLaData02['date_finalized']; 
+							} else if ($row_rsLaData02['status'] == "released") {
+								echo "r:".$row_rsLaData02['date_released'];
+							}
+							else if ($row_rsLaData02['status'] == "locked") { 
+								?><span class="red">locked</span><?php 
+							} else { 
+								echo $row_rsLaData02['status']; 
+							} ?>&nbsp;
+            </div>
+            
+            <!-- The popup of 'record status management' links -->
+            <div class="tooltip">
+              <p><?php 
+								if ($row_rsLaData02['admin_notes'] <> "") { 
+									echo "Admin notes: ".$row_rsLaData02['admin_notes']." <br>";
+								}
+								if ($row_rsLaData02['flag'] == "1") { ?>
+                  <a href="<?php echo $currentPage; ?>?unlimbo=<?php 
+									echo $row_rsLaData02['lakey']; ?>">remove from limbo</a><br /><?php
+								} else { 
+									if ($row_rsLaData02['finalized'] == 0) { 
+										if ($row_rsLaData02['coded_1_complete'] == 1 OR $instrument_id == "FOLA") { ?>
+                      <a href="<?php echo $currentPage; ?>?finalize=<?php 
+                      echo $row_rsLaData02['lakey']; ?>">finalize</a><?php
+										} else { echo "<em>can't finalize</em>"; } ?><br />
+										<a class="limbo_link">put in limbo</a><br />
+                    <span class="limbo_text" style="display:none">Notes on why:</span><br />
+                    <textarea class="limbo_why" lakey="<?php echo $row_rsLaData02['lakey']; ?>" 
+                      style="display:none"><?php echo $row_rsLaData02['admin_notes']; ?></textarea><br />
+                    <input type="submit" class="limbo_commit" 
+                    	value="put in limbo" style="display:none" /><?php 
+									}
+									if (($row_rsLaData02['finalized'] == 2 OR $instrument_id == "FOLA") 
+											AND $row_rsLaData02['finalized'] <> 1) {
+										if ($row_rsLaData02['coded_1_complete'] == 1 
+												OR $instrument_id == "FOLA" OR $instrument_id == "LLRA_JOURNAL") { ?>
+                      <a href="<?php echo $currentPage; ?>?release=<?php 
+                      echo $row_rsLaData02['lakey']; ?>">release</a><br /><?php
+										}
+									} 
+									if ($row_rsLaData02['finalized'] > 0) { ?>
+                    <a href="<?php echo $currentPage; ?>?unfinalize=<?php 
+										echo $row_rsLaData02['lakey']; ?>">unfinalize</a><?php
+									} 
+								} ?>
+              </p>
+            </div>
+          </td>
+          <?php } // ENDIF: if NOT mode_training ?>
+          
+        <?php if ($show_scores == "yes" OR $mode_training) { ?>
+          <td align="center">
+          	<?php 
+						if (($mode_training AND !$i_have_scored) 
+							OR ($mode_senior AND !$i_have_scored AND strpos($senior_juniors, $row_rsLaData02['scorerkey_1']) AND $row_rsLaData02['confidencekey_1'] < 5)) { 
+							echo "<span class='a-llra'>?</span>";
+						} else { 
+							echo $row_rsLaData02['lasnumber_1']; 
+						} ?>
+					</td>
+          <td align="center">
+          	<?php if (!$mode_training OR $i_have_scored) { echo $row_rsLaData02['diff_1_2']; } ?>
+          </td>
+          <td align="center">
+          	<?php if (!$mode_training OR $i_have_scored) { echo $row_rsLaData02['diff_1_3']; } ?>
+          </td>
+          
+          <td align="center" ><?php echo $row_rsLaData02['confidencekey_1']; ?></td>
+          
+          <td align="center"><a class='comment_hotspot'><?php if (!$mode_training OR $i_have_scored) { echo $row_rsLaData02['comments_1']; } ?></a>
+          	<span class='comment_tooltip'><?php 
+							if ($row_rsLaData02['code_recommend'] <> "") { ?>
+            		<strong>Suggestion</strong>: 
+								<?php echo $row_rsLaData02['code_recommend']; ?><br /><?php 
+							} 
+							if ($row_rsLaData02['codercomment'] <> "") { ?>
+              	<strong>Performance comment</strong>: 
+								<?php echo $row_rsLaData02['codercomment']; 
+							} 
+							if ($row_rsLaData02['scorer_comment_1'] <> "") { ?>
+              	<strong>Scorer comment</strong>: 
+								<?php echo $row_rsLaData02['scorer_comment_1']; 
+							} ?>
+            </span>
+          </td>
+          
+          <td align="center" class="background_gray_light">
+						<?php if (!$mode_training OR $i_have_scored OR $trainee_role == 2) { echo $row_rsLaData02['lasnumber_2']; } ?></td>
+          <td align="center" class="background_gray">
+						<?php if (!$mode_training OR $i_have_scored OR $trainee_role == 3) { echo $row_rsLaData02['lasnumber_3']; } ?></td>
+        <?php } ?>
+          
+        </tr>
+        <?php 
+				} while ($row_rsLaData02 = mysql_fetch_assoc($rsLaData02));
+			} ?>
+</table>
+
+
+
+<div id="CollapsiblePanel1" class="CollapsiblePanel">
+  <?php if (!$mode_training) { ?>
+  <div class="CollapsiblePanelTab">VIEW <?php echo $totalRows_rsLaData03; ?> INCOMPLETE RECORDS</div>
+  <div class="CollapsiblePanelContent">
+    
+    <p>Record <?php echo ($startRow_rsLaData03 + 1) ?>&nbsp;to <?php echo min($startRow_rsLaData03 + $maxRows_rsLaData03, $totalRows_rsLaData03) ?>&nbsp;of <?php echo $totalRows_rsLaData03 ?> &nbsp;&nbsp; <a href="<?php printf("%s?pageNum_rsLaData03=%d%s", $currentPage, 0, $queryString_rsLaData03); ?>">First</a> | <a href="<?php printf("%s?pageNum_rsLaData03=%d%s", $currentPage, max(0, $pageNum_rsLaData03 - 1), $queryString_rsLaData03); ?>">Previous</a> | <a href="<?php printf("%s?pageNum_rsLaData03=%d%s", $currentPage, min($totalPages_rsLaData03, $pageNum_rsLaData03 + 1), $queryString_rsLaData03); ?>">Next</a> | <a href="<?php printf("%s?pageNum_rsLaData03=%d%s", $currentPage, $totalPages_rsLaData03, $queryString_rsLaData03); ?>">Last</a></p>
+    <table class="minimalist-a">
+      <tr>
+        <th>Record</th>
+        <th>Started</th>
+        <th>Due</th>
+        <th>Test taker</th>
+        <th>Bulk customer</th>
+        <th>Group</th>
+        <th>View </th>
+      </tr>
+      <?php 
+			if ($totalRows_rsLaData03 > 0) { 
+				do { ?>
+        <tr>
+          <td><?php echo $row_rsLaData03['lakey']; ?></td>
+          <td align="center"><?php echo date('Y-m-d', strtotime($row_rsLaData03['timestamp'])); ?></td>
+          <td align="center"><?php 
+					if ($row_rsLaData03['date_release'] <> "") { echo $row_rsLaData03['date_release']; }
+					else {
+						echo "<em>not assigned</em>"; 
+						if ($row_rsLaData03['possible_assignmentkey'] <> "") { 
+							echo " (".$row_rsLaData03['possible_assignmentkey']."?)";
+						}
+					} ?></td>
+          <td align="center"><?php echo $row_rsLaData03['userkey']; ?></td>
+          <td><?php echo ($row_rsLaData03['bulkcustomer'] <> "" ? 
+              $row_rsLaData03['bulkcustomer'] : "-none-"); ?></td>
+          <td align="center"><?php echo $row_rsLaData03['group']; ?></td>
+          <td><a href="view.php?lakey=<?php echo $row_rsLaData03['lakey']; ?>" target="_blank">view</a></td>
+        </tr>
+      	<?php 
+				} while ($row_rsLaData03 = mysql_fetch_assoc($rsLaData03)); 
+			} ?>
+    </table>
+  </div>
+  <?php } // ENDIF: mode_training ?>
+</div>
+
+<div id="CollapsiblePanel2" class="CollapsiblePanel">
+	<?php if (!$mode_training) { ?>
+  <div class="CollapsiblePanelTab">CODED JOURNAL ENTRIES TO FINALIZE</div>
+  <div class="CollapsiblePanelContent">
+  
+    <p>Records <?php echo ($startRow_rsJournals + 1) ?> to <?php echo min($startRow_rsJournals + $maxRows_rsJournals, $totalRows_rsJournals) ?> of <?php echo $totalRows_rsJournals ?> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<a href="<?php printf("%s?pageNum_rsJournals=%d%s", $currentPage, 0, $queryString_rsJournals); ?>">First</a> | <a href="<?php printf("%s?pageNum_rsJournals=%d%s", $currentPage, max(0, $pageNum_rsJournals - 1), $queryString_rsJournals); ?>">Previous</a> | <a href="<?php printf("%s?pageNum_rsJournals=%d%s", $currentPage, min($totalPages_rsJournals, $pageNum_rsJournals + 1), $queryString_rsJournals); ?>">Next</a> | <a href="<?php printf("%s?pageNum_rsJournals=%d%s", $currentPage, $totalPages_rsJournals, $queryString_rsJournals); ?>">Last</a></p>
+    <table class="minimalist-a">
+      <tr>
+        <th scope="col"><a href="<?php echo $currentPage; ?>?sort=lakey">Record</a></th>
+        <th scope="col"><a href="<?php echo $currentPage; ?>?sort=date_completed">Date</a></th>
+        <th scope="col"><a href="<?php echo $currentPage; ?>?sort=date_release">Release date</a></th>
+        <th scope="col"><a href="<?php echo $currentPage; ?>?sort=userkey">Userkey</a></th>
+        <th scope="col"><a href="<?php echo $currentPage; ?>?sort=bulkcustomer">Bulk customer</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=finalized_coder">1st-coded</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=coder1_first">Coder 1</a></th>
+        <th>Report</th>
+        <th><a href="<?php echo $currentPage; ?>?sort=finalized">Finalize</a></th>
+        <th><a href="<?php echo $currentPage; ?>?sort=finalized">Release</a></th>
+      </tr>
+      
+      <?php 
+			if ($totalRows_rsJournals > 0) { 
+				do { ?>
+        <tr>
+          <td><?php echo $row_rsJournals['lakey']; ?></td>
+          <td align="center"><?php echo $row_rsJournals['date_completed']; ?></td>
+          <td align="center"><?php echo $row_rsJournals['date_release']; ?></td>
+          <td align="center"><?php echo $row_rsJournals['userkey']; ?></td>
+          <td><?php echo ($row_rsJournals['bulkcustomer'] <> "" ? 
+						$row_rsJournals['bulkcustomer'] : "-none-"); ?></td>
+          <td align="center"><?php 
+					if ($row_rsJournals['coded_1'] == 1) { 
+						if ($row_rsJournals['coded_1_complete'] == 1) { echo "completed"; } else { echo "yes"; }
+					} else { echo "no"; } ?></td>
+          <td><?php echo $row_rsJournals['coder1_first']; ?></td>
+          <td align="center"><a href="../la_reports/report_individual.php?lakey=<?php echo $row_rsJournals['lakey']; ?>&mode=checkreport&scorer_no=1" target="_blank">view</a></td>
+          <td align="center"><a href="scoring_finalize_bc.php?lakey=<?php echo $row_rsJournals['lakey']; ?>" title="Finalize to bulk customer"> <?php if ($row_rsJournals['finalized'] >= 1) {echo "(finalized)"; } else echo "finalize"; ?>
+              </a></td>
+          <td align="center" class="background_gray"><a href="scoring_finalize_all.php?lakey=<?php echo $row_rsJournals['lakey']; ?>" title="Release to the bulk customer and the test taker"><?php 
+					if ($row_rsJournals['finalized'] == 1) {echo "(released)"; } else echo "release"; ?>
+              </a></td>
+        </tr>
+        <?php 
+				} while ($row_rsJournals = mysql_fetch_assoc($rsJournals)); 
+			} ?>
+    </table>
+  
+  </div>
+  <?php } // ENDIF: if NOT mode_training ?>
+</div>
+
+
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+    <p>&nbsp;</p>
+    
+  
+    
+    <script type="text/javascript">
+// relies on the PHP variable $open, defined at top.
+		
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", {contentIsOpen:true});
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2", {contentIsOpen:true});
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3"<?php 
+	if ($showOpen) { ?>, {contentIsOpen:true}<?php } ?>);
+	
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield3 = new Spry.Widget.ValidationTextField("sprytextfield3", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield4 = new Spry.Widget.ValidationTextField("sprytextfield4", "date", {isRequired:false, validateOn:["blur"], format:"yyyy-mm-dd", useCharacterMasking:true});
+var sprytextfield5 = new Spry.Widget.ValidationTextField("sprytextfield5", "date", {isRequired:false, validateOn:["blur"], format:"yyyy-mm-dd", useCharacterMasking:true});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect8 = new Spry.Widget.ValidationSelect("spryselect8", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect9 = new Spry.Widget.ValidationSelect("spryselect9", {isRequired:false, validateOn:["change", "blur"]});
+var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {isRequired:false, validateOn:["change", "blur"]});
+var spryselect10 = new Spry.Widget.ValidationSelect("spryselect10", {validateOn:["blur", "change"], isRequired:false});
+var sprytextfield7 = new Spry.Widget.ValidationTextField("sprytextfield7", "none", {isRequired:false, validateOn:["blur"]});
+var sprytextfield6 = new Spry.Widget.ValidationTextField("sprytextfield6", "none", {isRequired:false, validateOn:["blur"]});
+var spryselect6 = new Spry.Widget.ValidationSelect("spryselect6", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {isRequired:false, validateOn:["blur", "change"]});
+    </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+?>

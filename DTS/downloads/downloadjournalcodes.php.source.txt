@@ -1,0 +1,82 @@
+<?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsJournal = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsJournal = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsJournal = sprintf("SELECT Registrants.userkey, Registrants.firstname, Registrants.lastname, Journal.journalkey, Journal.teacherkey, Journal.`date`, Journal.teachercomment, Journal.journalentry_1, Journal.journalentry_2, Journal.noticing_1, Journal.insights_1, Journal.wellbeing_1, Journal.connected_1, Journal.compassion_1, Journal.noticing2, Journal.insights_2, Journal.wellbeing_2, Journal.connected_2, Journal.compassion_2 FROM Registrants, Journal WHERE Journal.teacherkey = %s AND Registrants.userkey = Journal.userkey ORDER BY Journal.`date` DESC", GetSQLValueString($colname_rsJournal, "int"));
+$rsJournal = mysql_query($query_rsJournal, $Assessment) or die(mysql_error());
+$row_rsJournal = mysql_fetch_assoc($rsJournal);
+$totalRows_rsJournal = mysql_num_rows($rsJournal);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+<p>
+  <?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=JournalCodes.txt\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+  journalkey*date*first name*last name*noticing_1*insights_1*wellbeing_1*connected_1*compassion_1*noticing2*insights_2*wellbeing_2*connected_2*compassion_2
+  <br />
+<?php do { ?>
+<?php echo $row_rsJournal['journalkey']; ?>*<?php echo $row_rsJournal['date']; ?>*<?php echo $row_rsJournal['firstname']; ?>*<?php echo $row_rsJournal['lastname']; ?>*<?php echo $row_rsJournal['noticing_1']; ?>*<?php echo $row_rsJournal['insights_1']; ?>*<?php echo $row_rsJournal['wellbeing_1']; ?>*<?php echo $row_rsJournal['connected_1']; ?>*<?php echo $row_rsJournal['compassion_1']; ?>*<?php echo $row_rsJournal['noticing2']; ?>*<?php echo $row_rsJournal['insights_2']; ?>*<?php echo $row_rsJournal['wellbeing_2']; ?>*<?php echo $row_rsJournal['connected_2']; ?>*<?php echo $row_rsJournal['compassion_2']; ?><br />
+<?php } while ($row_rsJournal = mysql_fetch_assoc($rsJournal)); ?>
+</p>
+<?
+exit();
+?>
+
+</body>
+</html>
+<?php
+mysql_free_result($rsJournal);
+?>

@@ -1,0 +1,460 @@
+<?php 
+function tfm_cleanOrderBy($theValue, $defaultSort) {
+	if (preg_match("/^[\w,]{1,50}\s+(asc|desc)\s*$/i",$theValue, $matches)) {
+		return $matches[0];
+	}
+	return $defaultSort;
+}
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+$tfm_orderby =(!isset($_GET["tfm_orderby"]))?"limakey":$_GET["tfm_orderby"];
+$tfm_order =(!isset($_GET["tfm_order"]))?"DESC":$_GET["tfm_order"];
+$sql_orderby = $tfm_orderby." ".$tfm_order;
+$sql_orderby = tfm_cleanOrderBy($sql_orderby, "limakey");
+?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+$colname_rsUser = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsUser = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsUser = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsUser, "int"));
+$rsUser = mysql_query($query_rsUser, $Assessment) or die(mysql_error());
+$row_rsUser = mysql_fetch_assoc($rsUser);
+$totalRows_rsUser = mysql_num_rows($rsUser);
+
+$colname_rsLIMAcoding = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLIMAcoding = (get_magic_quotes_gpc()) ? $_SESSION['log_userkey'] : addslashes($_SESSION['log_userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLIMAcoding = sprintf("SELECT lima.limakey, lima.resellerkey, lima.userkey, registrants.userkey, registrants.firstname, registrants.lastname, registrants.user_name, limascores.limakey, limascores.lasname FROM lima, registrants, limascores WHERE lima.resellerkey = %s AND lima.commented > 0 and registrants.userkey = lima.userkey and limascores.limakey = lima.limakey ORDER BY lima.limakey desc", GetSQLValueString($colname_rsLIMAcoding, "int"));
+$rsLIMAcoding = mysql_query($query_rsLIMAcoding, $Assessment) or die(mysql_error());
+$row_rsLIMAcoding = mysql_fetch_assoc($rsLIMAcoding);
+$totalRows_rsLIMAcoding = mysql_num_rows($rsLIMAcoding);
+
+$queryString_rsLIMA = "";
+if (!empty($_SERVER['query_string'])) {
+  $params = explode("&", $_SERVER['query_string']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsLIMA") == false && 
+        stristr($param, "totalRows_rsLIMA") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsLIMA = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsLIMA = sprintf("&totalrows_rslima=%d%s", $totalRows_rsLIMA, $queryString_rsLIMA);
+
+//TOMLR Special List Recordset
+$maxRows_rsLIMA = 10;
+$pageNum_rsLIMA = 0;
+if (isset($_GET['pagenum_rslima'])) {
+  $pageNum_rsLIMA = $_GET['pagenum_rslima'];
+}
+$startRow_rsLIMA = $pageNum_rsLIMA * $maxRows_rsLIMA;
+
+$colname_rsLIMA = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLIMA = $_SESSION['log_userkey'];
+}
+// Defining List Recordset variable
+$sqlorderby_rsLIMA = "limakey";
+if (isset($sql_orderby)) {
+  $sqlorderby_rsLIMA = $sql_orderby;
+}
+mysql_select_db($database_Assessment, $Assessment);
+
+$query_rsLIMA = sprintf("SELECT lima.limakey, lima.userkey, lima.resellerkey, lima.completed, lima.`date`, lima.testtime, lima.commented, registrants.userkey, registrants.firstname, registrants.lastname FROM lima, registrants WHERE lima.resellerkey = %s AND lima.userkey = registrants.userkey and lima.commented < 1 order by {$sqlorderby_rslima}", GetSQLValueString($colname_rsLIMA, "text"));
+$query_limit_rsLIMA = sprintf("%s limit %d, %d", $query_rsLIMA, $startRow_rsLIMA, $maxRows_rsLIMA);
+$rsLIMA = mysql_query($query_limit_rsLIMA, $Assessment) or die(mysql_error());
+$row_rsLIMA = mysql_fetch_assoc($rsLIMA);
+
+if (isset($_GET['totalrows_rslima'])) {
+  $totalRows_rsLIMA = $_GET['totalrows_rslima'];
+} else {
+  $all_rsLIMA = mysql_query($query_rsLIMA);
+  $totalRows_rsLIMA = mysql_num_rows($all_rsLIMA);
+}
+$totalPages_rsLIMA = ceil($totalRows_rsLIMA/$maxRows_rsLIMA)-1;
+//End TOMLR Special List Recordset
+?>
+<?php
+//sort column headers for rsLIMA
+$tfm_saveParams = explode(",","");
+$tfm_keepParams = "";
+if($tfm_order == "ASC") {
+	$tfm_order = "desc";
+}else{
+	$tfm_order = "asc";
+};
+while (list($key,$val) = each($tfm_saveParams)) {
+	if(isset($_GET[$val]))$tfm_keepParams .= ($val)."=".urlencode($_GET[$val])."&";	
+	if(isset($_POST[$val]))$tfm_keepParams .= ($val)."=".urlencode($_POST[$val])."&";
+}
+$tfm_orderbyURL = $_SERVER["PHP_SELF"]."?".$tfm_keepParams."tfm_order=".$tfm_order."&tfm_orderby=";
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelima2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: </title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+.twoColFixRtHdr #container #mainContent h6 a {
+	color: #767A76;
+}
+-->
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LIMAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>RESULTS AND COMMENTING for <em><?php echo $row_rsUser['firstname']; ?> <?php echo $row_rsUser['lastname']; ?></em></h1>
+<h3>Select an assessment to comment</h3>
+  <p class="copyright">
+    <?php echo ($startRow_rsLIMA + 1) ?>&nbsp;to <?php echo min($startRow_rsLIMA + $maxRows_rsLIMA, $totalRows_rsLIMA) ?>&nbsp;of <?php echo $totalRows_rsLIMA ?>
+    &nbsp;
+    <?php //$TFM_navLinks
+if ($pageNum_rsLIMA > 0) {
+  printf('<a href="'."%s?pageNum_rsLIMA=%d%s", $currentPage, 0, $queryString_rsLIMA.'">First</a>');
+}else{
+  echo "First";
+}
+echo " | ";
+if ($pageNum_rsLIMA > 0) {
+  printf('<a href="'."%s?pageNum_rsLIMA=%d%s", $currentPage, max(0, $pageNum_rsLIMA - 1), $queryString_rsLIMA.'">Previous</a>');
+}else{
+  echo "Previous";
+}
+echo " | ";
+if ($pageNum_rsLIMA < $totalPages_rsLIMA) { 
+  printf('<a href="'."%s?pageNum_rsLIMA=%d%s", $currentPage, $pageNum_rsLIMA + 1, $queryString_rsLIMA.'">Next</a>');
+}else{
+  echo "Next";
+}
+echo " | ";
+if ($pageNum_rsLIMA < $totalPages_rsLIMA) { 
+  printf('<a href="'."%s?pageNum_rsLIMA=%d%s", $currentPage, $totalPages_rsLIMA, $queryString_rsLIMA.'">Last</a>');
+}else{
+  echo "Last";
+}
+?>
+    <br />
+    <br />
+  </p>
+  <table width="98%" border="0">
+    <tr class="limabackground">
+      <td class="tablehead3"><a href="<?Php echo ($tfm_orderbyURL); ?>limakey">LIMA</a></td>
+      <td width="140" class="tablehead3"><a href="<?Php echo ($tfm_orderbyURL); ?>date">Date</a></td>
+      <td class="tablehead3"><a href="<?Php echo ($tfm_orderbyURL); ?>testtime">Test time</a></td>
+      <td class="tablehead3"><div align="left"><a href="<?Php echo ($tfm_orderbyURL); ?>firstname">First name</a></div></td>
+      <td class="tablehead3"><div align="left"><a href="<?Php echo ($tfm_orderbyURL); ?>lastname">Last name</a></div></td>
+      <td class="tablehead3">Comment</td>
+    </tr>
+    <?php do { ?>
+      <tr>
+        <td><div align="center"><?php echo $row_rsLIMA['limakey']; ?></div></td>
+        <td width="140"><div align="center"><?php echo $row_rsLIMA['date']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLIMA['testtime']; ?></div></td>
+        <td><div align="left"><?php echo $row_rsLIMA['firstname']; ?></div></td>
+        <td><div align="left"><?php echo $row_rsLIMA['lastname']; ?></div></td>
+        <td><div align="center"><a href="../scoring_lima/limateachercoding.php?limakey=<?php echo $row_rsLIMA['limakey']; ?>&amp;userkey=<?php echo $row_rsLIMA['userkey']; ?>">comment</a></div></td>
+      </tr>
+      <?php } while ($row_rsLIMA = mysql_fetch_assoc($rsLIMA)); ?>
+</table>
+  <h3>Edit comments or view reports</h3>
+  <p align="center"><span class="copyright"><?php echo ($startRow_rsLIMAcoding + 1) ?>&nbsp;to <?php echo min($startRow_rsLIMAcoding + $maxRows_rsLIMAcoding, $totalRows_rsLIMAcoding) ?>&nbsp;of <?php echo $totalRows_rsLIMAcoding ?> &nbsp;
+      <?php //$TFM_navLinks
+if ($pageNum_rsLIMAcoding > 0) {
+  printf('<a href="'."%s?pageNum_rsLIMAcoding=%d%s", $currentPage, 0, $queryString_rsLIMAcoding.'">First</a>');
+}else{
+  echo "First";
+}
+echo " | ";
+if ($pageNum_rsLIMAcoding > 0) {
+  printf('<a href="'."%s?pageNum_rsLIMAcoding=%d%s", $currentPage, max(0, $pageNum_rsLIMAcoding - 1), $queryString_rsLIMAcoding.'">Previous</a>');
+}else{
+  echo "Previous";
+}
+echo " | ";
+if ($pageNum_rsLIMAcoding < $totalPages_rsLIMAcoding) { 
+  printf('<a href="'."%s?pageNum_rsLIMAcoding=%d%s", $currentPage, $pageNum_rsLIMAcoding + 1, $queryString_rsLIMAcoding.'">Next</a>');
+}else{
+  echo "Next";
+}
+echo " | ";
+if ($pageNum_rsLIMAcoding < $totalPages_rsLIMAcoding) { 
+  printf('<a href="'."%s?pageNum_rsLIMAcoding=%d%s", $currentPage, $totalPages_rsLIMAcoding, $queryString_rsLIMAcoding.'">Last</a>');
+}else{
+  echo "Last";
+}
+?>
+      <br />
+  </span></p>
+<table width="98%" border="0">
+  <tr class="limabackground">
+    <td class="tablehead3">LIMA</td>
+    <td class="tablehead3"><div align="left">First name</div></td>
+    <td class="tablehead3"><div align="left">Last name</div></td>
+    <td class="tablehead3">Score</td>
+    <td class="tablehead3">Edit comments</td>
+    </tr>
+  <?php do { ?>
+    <tr>
+      <td><div align="center"><?php echo $row_rsLIMAcoding['limakey']; ?></div></td>
+      <td><div align="left"><?php echo $row_rsLIMAcoding['firstname']; ?></div></td>
+      <td><div align="left"><?php echo $row_rsLIMAcoding['lastname']; ?></div></td>
+      <td><div align="center"><?php echo $row_rsLIMAcoding['lasname']; ?></div></td>
+      <td><div align="center"><a href="../scoring_lima/limateachercoding.php?limakey=<?php echo $row_rsLIMAcoding['limakey']; ?>&amp;userkey=<?php echo $row_rsLIMAcoding['userkey']; ?>">select</a></div></td>
+    </tr>
+    <?php } while ($row_rsLIMAcoding = mysql_fetch_assoc($rsLIMAcoding)); ?>
+</table>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer -->
+  <!-- end #container -->
+</div>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsUser);
+
+mysql_free_result($rsLIMAcoding);
+
+mysql_free_result($rsLIMA);
+?>

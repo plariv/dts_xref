@@ -1,0 +1,139 @@
+<?php 
+require_once('Connections/Assessment.php'); 
+require_once 'includes/dts_functions.php';
+?>
+
+<!doctype html>
+<html lang="en">
+
+<head>
+
+	<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="">
+	<meta name="author" content="">
+
+	<title>DTS: home page</title>
+
+	<link href="/_assets/css/bootstrap.css" rel="stylesheet" type="text/css">
+	<link href="/_assets/css/bootstrap-responsive.css" rel="stylesheet" type="text/css">
+	<link href="/_assets/_css/custom.css" rel="stylesheet" type="text/css">
+
+	<!-- Le fav and touch icons -->
+	<link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/ico/apple-touch-icon-144-precomposed.png">
+	<link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/ico/apple-touch-icon-114-precomposed.png">
+	<link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/ico/apple-touch-icon-72-precomposed.png">
+	<link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
+	<link rel="shortcut icon" href="assets/ico/favicon.png">
+
+	<!-- HTML5 shim for IE backwards compatibility -->
+	    <!--[if lt IE 9]>
+	      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	    <![endif]-->
+	<!--<link href="SpryAssets/SpryPopupDialog.css" rel="stylesheet" type="text/css" />-->
+	<!--<link href="SpryAssets/SpryPopupDialog.css" rel="stylesheet" type="text/css" />-->
+
+	<script src="/_assets/_js/jquery.js"></script>
+	<script src="/_assets/js/bootstrap.min.js"></script>
+
+
+  <script type='text/javascript'>
+  $(document).ready(function(){
+		
+		// autofocus on the login field
+		$('#user_name').click(function(){
+			$(this).select();
+		});
+		
+    $('#user_name').select();
+		
+		$('#login').submit(function(){
+			if ($('#user_name').val() == '') { 
+				alert('Please enter your username.'); 
+				return false; 
+			}
+			if ($('#userpassword').val() == '') { 
+				alert('Please enter your password.'); 
+				return false; 
+			}
+		});
+		
+  });
+  </script>
+
+	<style type="text/css">
+
+		body { background-color: #93CCCB; }
+
+	</style>
+
+	<!-- Google Analytics tag -->
+	<script type="text/javascript">
+
+	  var _gaq = _gaq || [];
+	  _gaq.push(['_setAccount', 'UA-37375176-1']);
+	  _gaq.push(['_trackPageview']);
+
+	  (function() {
+	    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+	    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+	    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	  })();
+		
+		$(document).ready(function(){
+			// $('#myModal').modal();
+		});
+
+	</script>
+
+</head>
+
+<body style='padding-top:30px;'>
+
+<div class="row-fluid">
+  <div class="header-fluid header-background span12" align="center" style=' margin:0px; padding:0px;'>
+    <img src="_assets/_images/dts/index/dts_lectica.png" alt="DTS logo" height="662" style='width:90%; min-width:300px;'/>
+    	<h4 style="color:#ffffff; text-align:center; font-size:160%; font-weight:200; padding-top:40px; padding-bottom:60px; padding-left:20%; padding-right:20%;">Discover DTS—we make transformative learning tools that help managers and teams build vital leadership skills.</h4>
+
+		<ul class="thumbnails">
+
+			<li class="span6">
+        <article>
+          <p align='right'><a style='margin-right:15px; margin-left:15px;' class="btn btn-teal" href="https://www.lectica.org/visitors/about_lectatests.php">Learn more &raquo;</a></p>
+        </article>
+      </li>
+
+			<li class="span6">
+				<article>
+        	<form id='login' method='post' action='security/logIn.php'>
+            <p align='left'><input style='width:150px;' id='user_name' name="user_name" type="text" placeholder="user name"></p>
+            <p align='left'><input style='width:150px;' id='userpassword' name="userpassword" type="password" placeholder="password"></p>
+            <p align='left'><input type='submit' class="btn" value='Log in &raquo;'></p>
+          </form>
+				</article>
+			</li> 
+      
+		</ul> 
+
+
+    <p style='line-height:30px;'>&nbsp;</p>
+	<div><img style="width:90%;" src="_assets/_images/dts/index/individuals_teams.png" alt="team" />
+    </div>
+<!-- FOOTER COPYRIGHT -->
+	<div style='margin-left:4%; margin-right:4%; text-align:left;'>
+		<p style="color:#FFF; padding-left:0px;"><?php include("_includes/navigation/footer_copyright_plain_dts.html"); ?></p>
+	</div>
+</div>
+
+
+    
+     <!-- Javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+
+</body>
+</html>
+<?php
+?>

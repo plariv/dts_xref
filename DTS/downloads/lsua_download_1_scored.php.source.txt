@@ -1,0 +1,76 @@
+<?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as senior")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLSUA = "-1";
+if (isset($_GET['bulkcustomerkey'])) {
+  $colname_rsLSUA = (get_magic_quotes_gpc()) ? $_GET['bulkcustomerkey'] : addslashes($_GET['bulkcustomerkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUA = sprintf("SELECT LSUA.lsuakey, LSUA.userkey, LSUA.user_name, LSUA.testtime, LSUA.age, LSUA.`date`, LSUA.bulkcustomerkey, LSUAscores.lsuakey, Registrants.userkey, Registrants.firstname, Registrants.lastname, Registrants.email, LSUA.datefinalized, LSUA.age, LSUA.edulevel, LSUA.sex, LSUA.ethnicity1, LSUA.`language`, LSUA.englishquality, LSUA.aspect1, LSUA.aspect1essay, LSUA.aspect2, LSUA.aspect2essay, LSUA.aspect3, LSUA.aspect3essay, LSUA.aspect4, LSUA.aspect4essay, LSUA.generalself, LSUA.idealself, LSUAscores.aspect1las_1, LSUAscores.aspect2las_1, LSUAscores.aspect3las_1, LSUAscores.aspect4las_1, LSUAscores.generalselflas_1, LSUAscores.idealselflas_1, LSUAscores.lasnumber_1, LSUAscores.lasname, LSUAscores.strength_01, LSUAscores.strength_02, LSUAscores.strength_03, LSUAscores.strength_04, LSUAscores.strength_05, LSUAscores.strength_06, LSUAscores.strength_07, LSUAscores.strength_08, LSUAscores.strength_09, LSUAscores.strength_10, LSUAscores.strength_11, LSUAscores.strength_12, LSUAscores.strength_13, LSUAscores.strength_14, LSUAscores.strength_15, LSUAscores.strength_16, LSUAscores.strength_17, LSUAscores.strength_18, LSUAscores.strength_19, LSUAscores.strength_20, LSUAscores.strength_21, LSUAscores.strength_22, LSUAscores.strength_23, LSUAscores.strength_24, LSUAscores.growth_01, LSUAscores.growth_02, LSUAscores.growth_03, LSUAscores.growth_04, LSUAscores.growth_05, LSUAscores.growth_06, LSUAscores.growth_07, LSUAscores.growth_08, LSUAscores.growth_09, LSUAscores.growth_10, LSUAscores.growth_11, LSUAscores.growth_12, LSUAscores.growth_13, LSUAscores.growth_14, LSUAscores.growth_15, LSUAscores.growth_16, LSUAscores.growth_17, LSUAscores.growth_18, LSUAscores.growth_19, LSUAscores.growth_20, LSUAscores.growth_21, LSUAscores.growth_22, LSUAscores.growth_23, LSUAscores.growth_24  FROM LSUA, LSUAscores, Registrants WHERE LSUA.bulkcustomerkey = %s AND Registrants.userkey = LSUA.userkey AND LSUA.lsuakey = LSUAscores.lsuakey", GetSQLValueString($colname_rsLSUA, "int"));
+$rsLSUA = mysql_query($query_rsLSUA, $Assessment) or die(mysql_error());
+$row_rsLSUA = mysql_fetch_assoc($rsLSUA);
+$totalRows_rsLSUA = mysql_num_rows($rsLSUA);
+?>
+<?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=LSUAscored.txt\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+lsuakey **date **testtime **firstname **lastname **email **datefinalized **age **edulevel **sex **ethnicity1 **language **englishquality **aspect1 **aspect1essay **aspect2 **aspect2essay **aspect3 **aspect3essay **aspect4 **aspect4essay **generalself **idealself **aspect1las_1 **aspect2las_1 **aspect3las_1 **aspect4las_1 **generalselflas_1 **idealselflas_1 **lasnumber_1 **lasname **strength_01 **strength_02 **strength_03 **strength_04 **strength_05 **strength_06 **strength_07 **strength_08 **strength_09 **strength_10 **strength_11 **strength_12 **strength_13 **strength_14 **strength_15 **strength_16 **strength_17 **strength_18 **strength_19 **strength_20 **strength_21 **strength_22 **strength_23 **strength_24 **growth_01 **growth_02 **growth_03 **growth_04 **growth_05 **growth_06 **growth_07 **growth_08 **growth_09 **growth_10 **growth_11 **growth_12 **growth_13 **growth_14 **growth_15 **growth_16 **growth_17 **growth_18 **growth_19 **growth_20 **growth_21 **growth_22 **growth_23 **growth_24,,,
+<?php do { ?>
+<?php echo $row_rsLSUA['lsuakey']; ?>**<?php echo $row_rsLSUA['date']; ?>**<?php echo $row_rsLSUA['testtime']; ?>**<?php echo $row_rsLSUA['firstname']; ?>**<?php echo $row_rsLSUA['lastname']; ?>**<?php echo $row_rsLSUA['email']; ?>**<?php echo $row_rsLSUA['datefinalized']; ?>**<?php echo $row_rsLSUA['age']; ?>**<?php echo $row_rsLSUA['edulevel']; ?>**<?php echo $row_rsLSUA['sex']; ?>**<?php echo $row_rsLSUA['ethnicity1']; ?>**<?php echo $row_rsLSUA['language']; ?>**<?php echo $row_rsLSUA['englishquality']; ?>**<?php echo $row_rsLSUA['aspect1']; ?>**<?php echo $row_rsLSUA['aspect1essay']; ?>**<?php echo $row_rsLSUA['aspect2']; ?>**<?php echo $row_rsLSUA['aspect2essay']; ?>**<?php echo $row_rsLSUA['aspect3']; ?>**<?php echo $row_rsLSUA['aspect3essay']; ?>**<?php echo $row_rsLSUA['aspect4']; ?>**<?php echo $row_rsLSUA['aspect4essay']; ?>**<?php echo $row_rsLSUA['generalself']; ?>**<?php echo $row_rsLSUA['idealself']; ?>**<?php echo $row_rsLSUA['aspect1las_1']; ?>**<?php echo $row_rsLSUA['aspect2las_1']; ?>**<?php echo $row_rsLSUA['aspect3las_1']; ?>**<?php echo $row_rsLSUA['aspect4las_1']; ?>**<?php echo $row_rsLSUA['generalselflas_1']; ?>**<?php echo $row_rsLSUA['idealselflas_1']; ?>**<?php echo $row_rsLSUA['lasnumber_1']; ?>**<?php echo $row_rsLSUA['lasname']; ?>**<?php echo $row_rsLSUA['strength_01']; ?>**<?php echo $row_rsLSUA['strength_02']; ?>**<?php echo $row_rsLSUA['strength_03']; ?>**<?php echo $row_rsLSUA['strength_04']; ?>**<?php echo $row_rsLSUA['strength_05']; ?>**<?php echo $row_rsLSUA['strength_06']; ?>**<?php echo $row_rsLSUA['strength_07']; ?>**<?php echo $row_rsLSUA['strength_08']; ?>**<?php echo $row_rsLSUA['strength_09']; ?>**<?php echo $row_rsLSUA['strength_10']; ?>**<?php echo $row_rsLSUA['strength_11']; ?>**<?php echo $row_rsLSUA['strength_12']; ?>**<?php echo $row_rsLSUA['strength_13']; ?>**<?php echo $row_rsLSUA['strength_14']; ?>**<?php echo $row_rsLSUA['strength_15']; ?>**<?php echo $row_rsLSUA['strength_16']; ?>**<?php echo $row_rsLSUA['strength_17']; ?>**<?php echo $row_rsLSUA['strength_18']; ?>**<?php echo $row_rsLSUA['strength_19']; ?>**<?php echo $row_rsLSUA['strength_20']; ?>**<?php echo $row_rsLSUA['strength_21']; ?>**<?php echo $row_rsLSUA['strength_22']; ?>**<?php echo $row_rsLSUA['strength_23']; ?>**<?php echo $row_rsLSUA['strength_24']; ?>**<?php echo $row_rsLSUA['growth_01']; ?>**<?php echo $row_rsLSUA['growth_02']; ?>**<?php echo $row_rsLSUA['growth_03']; ?>**<?php echo $row_rsLSUA['growth_04']; ?>**<?php echo $row_rsLSUA['growth_05']; ?>**<?php echo $row_rsLSUA['growth_06']; ?>**<?php echo $row_rsLSUA['growth_07']; ?>**<?php echo $row_rsLSUA['growth_08']; ?>**<?php echo $row_rsLSUA['growth_09']; ?>**<?php echo $row_rsLSUA['growth_10']; ?>**<?php echo $row_rsLSUA['growth_11']; ?>**<?php echo $row_rsLSUA['growth_12']; ?>**<?php echo $row_rsLSUA['growth_13']; ?>**<?php echo $row_rsLSUA['growth_14']; ?>**<?php echo $row_rsLSUA['growth_15']; ?>**<?php echo $row_rsLSUA['growth_16']; ?>**<?php echo $row_rsLSUA['growth_17']; ?>**<?php echo $row_rsLSUA['growth_18']; ?>**<?php echo $row_rsLSUA['growth_19']; ?>**<?php echo $row_rsLSUA['growth_20']; ?>**<?php echo $row_rsLSUA['growth_21']; ?>**<?php echo $row_rsLSUA['growth_22']; ?>**<?php echo $row_rsLSUA['growth_23']; ?>**<?php echo $row_rsLSUA['growth_24']; ?>,,,
+<?php } while ($row_rsLSUA = mysql_fetch_assoc($rsLSUA)); ?>
+<?
+exit();
+?>
+<?php
+mysql_free_result($rsLSUA);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Untitled Document</title>
+</head>
+<body>
+</body>
+</html>

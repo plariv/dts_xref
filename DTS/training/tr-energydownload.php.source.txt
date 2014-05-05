@@ -1,0 +1,75 @@
+<?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsEnergy = "-1";
+if (isset($_GET['user_name'])) {
+  $colname_rsEnergy = $_GET['user_name'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEnergy = sprintf("SELECT Energyscores.energykey, Energyscores.scorerusername, Energyscores.handspringlas, Energyscores.fallspringlas, Energyscores.onspringlas, Energyscores.besidespringlas, Energyscores.flatrolllas, Energyscores.downrolllas, Energyscores.bouncelas, Energyscores.lasname, Energyscores_trainees.scorerusername2, Energyscores_trainees.handspringlas2, Energyscores_trainees.fallspringlas2, Energyscores_trainees.onspringlas2, Energyscores_trainees.besidespringlas2, Energyscores_trainees.flatrolllas2, Energyscores_trainees.downrolllas2, Energyscores_trainees.bouncelas2, Energyscores_trainees.lasname2 FROM Energyscores LEFT JOIN Energyscores_trainees ON Energyscores.energykey = Energyscores_trainees.energykey WHERE Energyscores_trainees.scorerusername2 = %s", GetSQLValueString($colname_rsEnergy, "text"));
+$rsEnergy = mysql_query($query_rsEnergy, $Assessment) or die(mysql_error());
+$row_rsEnergy = mysql_fetch_assoc($rsEnergy);
+$totalRows_rsEnergy = mysql_num_rows($rsEnergy);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+<p>
+<?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=tr-energydownload.csv\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+</p>
+<p>
+<?php do { ?>
+<?php echo $row_rsEnergy['energykey']; ?>,<?php echo $row_rsEnergy['scorerusername']; ?>,<?php echo $row_rsEnergy['handspringlas']; ?>,<?php echo $row_rsEnergy['fallspringlas']; ?>,<?php echo $row_rsEnergy['essay3las']; ?>,<?php echo $row_rsEnergy['besidespringlas']; ?>,<?php echo $row_rsEnergy['flatrolllas']; ?>,<?php echo $row_rsEnergy['downrolllas']; ?>,<?php echo $row_rsEnergy['bouncelas']; ?>,<?php echo $row_rsEnergy['lasname']; ?>,<?php echo $row_rsEnergy['scorerusername2']; ?>,<?php echo $row_rsEnergy['handspringlas2']; ?>,<?php echo $row_rsEnergy['fallspringlas2']; ?>,<?php echo $row_rsEnergy['onspringlas2']; ?>,<?php echo $row_rsEnergy['besidespringlas2']; ?>,<?php echo $row_rsEnergy['flatrolllas2']; ?>,<?php echo $row_rsEnergy['downrolllas2']; ?>,<?php echo $row_rsEnergy['bouncelas2']; ?>,<?php echo $row_rsEnergy['lasname2']; ?>,<br />
+<?php } while ($row_rsEnergy = mysql_fetch_assoc($rsEnergy)); ?>
+</p>
+<?
+exit();
+?>
+</body>
+</html>
+<?php
+mysql_free_result($rsEnergy);
+?>

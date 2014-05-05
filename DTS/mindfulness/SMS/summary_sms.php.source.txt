@@ -1,0 +1,465 @@
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+// Anyone can access this page.
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../../security/logIn.php");
+}
+?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+
+// user that is logged in
+$logged_in = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $logged_in = $_SESSION['log_userkey'];
+}
+
+// user that the page is viewing
+$userkey = "-1";
+if (isset($_GET['userkey'])) {
+  $userkey = $_GET['userkey'];
+} else { 
+	$userkey = $logged_in;
+}
+
+
+
+
+
+/* VIEWER AUTHENTICATION:
+	 IF this user is the person being viewed, allow them access.
+	 Else, set a filter on each query for the logged-in user as teacherkey / takey.
+	 The viewer won't be able to see any entries for which they are not the teacher / ta in the mindfulness / journal table.
+	 */
+
+$filterTeacher_mindfulness = "";
+$filterTeacher_journal = "";
+if ($logged_in == $userkey) {
+	$access = TRUE;
+} else {
+	$access = TRUE; 
+	// $access doesn't actually do anything right now. The $filters do the work.
+	$filterTeacher_mindfulness = " AND mindfulness.teacherno = '{$logged_in}' ";
+	$filterTeacher_journal = " AND (journal.teacherkey = '{$logged_in}' OR journal.takey = '{$logged_in}') ";
+}
+
+
+
+
+// registrant data for the VIEWED user
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($userkey, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulness = sprintf("SELECT Registrants.userkey, Registrants.firstname, Registrants.lastname, Mindfulness.mindfulkey, Mindfulness.sms09mean, Mindfulness.testtime, Mindfulness.userkey, Mindfulness.`timestamp`, Mindfulness.sms08mean, Mindfulness.sms10mean FROM Registrants, Mindfulness WHERE Mindfulness.userkey = %s and Registrants.userkey = Mindfulness.userkey ".$filterTeacher_mindfulness." ORDER BY Mindfulness.testtime", 
+		GetSQLValueString($userkey, "int"));
+$rsMindfulness = mysql_query($query_rsMindfulness, $Assessment) or die(mysql_error());
+$row_rsMindfulness = mysql_fetch_assoc($rsMindfulness);
+$totalRows_rsMindfulness = mysql_num_rows($rsMindfulness);
+
+
+
+$maxRows_rsJournal = 10;
+$pageNum_rsJournal = 0;
+if (isset($_GET['pageNum_rsJournal'])) {
+  $pageNum_rsJournal = $_GET['pageNum_rsJournal'];
+}
+$startRow_rsJournal = $pageNum_rsJournal * $maxRows_rsJournal;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsJournal = sprintf("SELECT Journal.userkey, Journal.`time`, Journal.journalkey, Journal.journalentrytitle, Journal.journalentry_1, Journal.journalentry_2,  Journal.teachercomment, Registrants.userkey, Registrants.firstname, Registrants.lastname FROM Journal, Registrants WHERE Journal.userkey = %s AND Registrants.userkey = Journal.userkey ".$filterTeacher_journal." ORDER BY Journal.`time` DESC", 
+		GetSQLValueString($userkey, "int"));
+$rsJournal = mysql_query($query_rsJournal, $Assessment) or die(mysql_error());
+$row_rsJournal = mysql_fetch_assoc($rsJournal);
+$totalRows_rsJournal = mysql_num_rows($rsJournal);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulScale_1 = sprintf("SELECT Mindfulness.mindfulkey, Mindfulness.userkey, Mindfulness.testtime, Mindfulness.sms10mean, Mindfulscale.mindfullevel, Mindfulscale.mindfulurl FROM Mindfulness, Mindfulscale WHERE Mindfulness.userkey = %s AND Mindfulness.testtime = 1 AND Mindfulness.sms10mean = Mindfulscale.mindfullevel ".$filterTeacher_mindfulness, 
+		GetSQLValueString($userkey, "int"));
+$rsMindfulScale_1 = mysql_query($query_rsMindfulScale_1, $Assessment) or die(mysql_error());
+$row_rsMindfulScale_1 = mysql_fetch_assoc($rsMindfulScale_1);
+$totalRows_rsMindfulScale_1 = mysql_num_rows($rsMindfulScale_1);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulScale_2 = sprintf("SELECT Mindfulness.mindfulkey, Mindfulness.userkey, Mindfulness.testtime, Mindfulness.sms10mean, Mindfulscale.mindfullevel, Mindfulscale.mindfulurl FROM Mindfulness, Mindfulscale WHERE Mindfulness.userkey = %s AND Mindfulness.testtime = 2 AND Mindfulness.sms10mean = Mindfulscale.mindfullevel ".$filterTeacher_mindfulness, 
+		GetSQLValueString($userkey, "int"));
+$rsMindfulScale_2 = mysql_query($query_rsMindfulScale_2, $Assessment) or die(mysql_error());
+$row_rsMindfulScale_2 = mysql_fetch_assoc($rsMindfulScale_2);
+$totalRows_rsMindfulScale_2 = mysql_num_rows($rsMindfulScale_2);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulScale_3 = sprintf("SELECT Mindfulness.mindfulkey, Mindfulness.userkey, Mindfulness.testtime, Mindfulness.sms10mean, Mindfulscale.mindfullevel, Mindfulscale.mindfulurl FROM Mindfulness, Mindfulscale WHERE Mindfulness.userkey = %s AND Mindfulness.testtime = 3 AND Mindfulness.sms10mean = Mindfulscale.mindfullevel ".$filterTeacher_mindfulness, 
+		GetSQLValueString($userkey, "int"));
+$rsMindfulScale_3 = mysql_query($query_rsMindfulScale_3, $Assessment) or die(mysql_error());
+$row_rsMindfulScale_3 = mysql_fetch_assoc($rsMindfulScale_3);
+$totalRows_rsMindfulScale_3 = mysql_num_rows($rsMindfulScale_3);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulScale_4 = sprintf("SELECT Mindfulness.mindfulkey, Mindfulness.userkey, Mindfulness.testtime, Mindfulness.sms10mean, Mindfulscale.mindfullevel, Mindfulscale.mindfulurl FROM Mindfulness, Mindfulscale WHERE Mindfulness.userkey = %s AND Mindfulness.testtime = 4 AND Mindfulness.sms10mean = Mindfulscale.mindfullevel ".$filterTeacher_mindfulness, 
+		GetSQLValueString($userkey, "int"));
+$rsMindfulScale_4 = mysql_query($query_rsMindfulScale_4, $Assessment) or die(mysql_error());
+$row_rsMindfulScale_4 = mysql_fetch_assoc($rsMindfulScale_4);
+$totalRows_rsMindfulScale_4 = mysql_num_rows($rsMindfulScale_4);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulScale_5 = sprintf("SELECT Mindfulness.mindfulkey, Mindfulness.userkey, Mindfulness.testtime, Mindfulness.sms10mean, Mindfulscale.mindfullevel, Mindfulscale.mindfulurl FROM Mindfulness, Mindfulscale WHERE Mindfulness.userkey = %s AND Mindfulness.testtime = 5 AND Mindfulness.sms10mean = Mindfulscale.mindfullevel ".$filterTeacher_mindfulness, 
+		GetSQLValueString($userkey, "int"));
+$rsMindfulScale_5 = mysql_query($query_rsMindfulScale_5, $Assessment) or die(mysql_error());
+$row_rsMindfulScale_5 = mysql_fetch_assoc($rsMindfulScale_5);
+$totalRows_rsMindfulScale_5 = mysql_num_rows($rsMindfulScale_5);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulScale_6 = sprintf("SELECT Mindfulness.mindfulkey, Mindfulness.userkey, Mindfulness.testtime, Mindfulness.sms10mean, Mindfulscale.mindfullevel, Mindfulscale.mindfulurl FROM Mindfulness, Mindfulscale WHERE Mindfulness.userkey = %s AND Mindfulness.testtime = 6 AND Mindfulness.sms10mean = Mindfulscale.mindfullevel ".$filterTeacher_mindfulness, 
+		GetSQLValueString($userkey, "int"));
+$rsMindfulScale_6 = mysql_query($query_rsMindfulScale_6, $Assessment) or die(mysql_error());
+$row_rsMindfulScale_6 = mysql_fetch_assoc($rsMindfulScale_6);
+$totalRows_rsMindfulScale_6 = mysql_num_rows($rsMindfulScale_6);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulScale_7 = sprintf("SELECT Mindfulness.mindfulkey, Mindfulness.userkey, Mindfulness.testtime, Mindfulness.sms10mean, Mindfulscale.mindfullevel, Mindfulscale.mindfulurl FROM Mindfulness, Mindfulscale WHERE Mindfulness.userkey = %s AND Mindfulness.testtime = 7 AND Mindfulness.sms10mean = Mindfulscale.mindfullevel ".$filterTeacher_mindfulness, 
+		GetSQLValueString($userkey, "int"));
+$rsMindfulScale_7 = mysql_query($query_rsMindfulScale_7, $Assessment) or die(mysql_error());
+$row_rsMindfulScale_7 = mysql_fetch_assoc($rsMindfulScale_7);
+$totalRows_rsMindfulScale_7 = mysql_num_rows($rsMindfulScale_7);
+
+
+
+
+
+
+// total rows of viewed data
+$totalRowsData = $totalRows_rsMindfulness + $totalRows_rsJournal + $totalRows_rsMindfulScale_1 + $totalRows_rsMindfulScale_2 + $totalRows_rsMindfulScale_3 + $totalRows_rsMindfulScale_4 + $totalRows_rsMindfulScale_5 + $totalRows_rsMindfulScale_6 + $totalRows_rsMindfulScale_7;
+
+
+
+
+
+
+include '../../includes/general_custom_functions.php';
+
+
+?>
+
+
+
+
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mindfulness1.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>SMS: Student summary</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+.left {
+	width: 661px;
+	background-image: url(../../images/mindful/scalebackground.png);
+	height: 516px;
+	margin-left: 10px;
+	margin-top: 16px;
+}
+.leftwide {
+	width: 734px;
+}
+-->
+</style>
+<script src="../../SpryAssetsSMS/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="../../SpryAssetsSMS/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+	background-color: #93B3C8;
+}
+.oneColFixCtrHdr #container {
+	width: 780px;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #7799B8;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+	background-image: url(/images/mindful/m-background.gif);
+}
+.oneColFixCtrHdr #header {
+	background-color: #DDDDDD;
+	background-image: url(/images/mindful/m-header.gif);
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+	height: 104px;
+}
+.oneColFixCtrHdr #menu {
+	background-color: #8AB3C4;
+	padding-top: 0;
+	padding-right: 40px;
+	padding-bottom: 0;
+	height: 20px;
+	background-image: url(/images/skin/SMSmenu.jpg);
+}
+.oneColFixCtrHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0;
+	vertical-align: text-bottom;
+}
+.oneColFixCtrHdr #mainContent {
+	padding-top: 30;
+	padding-right: 45px;
+	padding-bottom: 0;
+	padding-left: 45px;
+}
+.oneColFixCtrHdr #footer {
+	padding: 0 10px;
+}
+.oneColFixCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+-->
+</style>
+<link href="/css/styles3.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssets/SpryMenuBarHorizontalmind.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="oneColFixCtrHdr">
+
+<div id="container">
+  <div id="header">
+    <h1>&nbsp;</h1>
+  <!-- end #header --></div>
+  <div id="menu">
+       <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/landing.php">home</a></li>
+<li><a href="/mindfulness/SMS/m-articles.html">articles</a></li>
+        <li><a href="/mindfulness/SMS/m-intro.html">intro</a></li>
+        <li><a href="/mindfulness/SMS/m-start.php">survey</a></li>
+        <li><a href="/mindfulness/SMS/m-suggestions.php">ideas</a></li>
+        <li><a href="/mindfulness/SMS/m-teacherinfo.php" class="MenuBarItemSubmenu">teachers</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/bc_viewsms.php">view SMS results</a></li>
+            <li><a href="/mindfulness/SMJ/teacher_viewjournalentries.php">view SMS journal</a></li>
+            <li><a href="/bulkcustomers/bulkpolicies.php">policies &amp; schedules</a></li>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+        <li><a href="#" class="MenuBarItemSubmenu">research</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+    </ul>
+    <!-- end #menu --></div>
+  <div id="mainContent">
+    <!-- InstanceBeginEditable name="Main" -->
+    <p>
+      <?php 
+			// if the viewer is the person being viewed, show test taker links.
+			if ($userkey == $logged_in) {
+				include '../menu_indiv_SMS_links.php';
+			} else {
+				include '../menu_bulk_SMS_links.php';
+			} ?>
+    </p>
+    
+    <h1>Summary for <?php echo ucfirst($row_rsRegistrants['firstname']); ?> <?php echo ucfirst($row_rsRegistrants['lastname']); ?> </h1>
+    <?php if ($totalRowsData == 0 AND $userkey == $logged_in) { ?>
+			<p><span class="red">You do not have any SMS or journal entries to view.</span> You may take the SMS or write an SMJ journal entry using the above links. Please <?php contactUsForHelp("contact us", "userkey = ".$userkey); ?> if you think there is a problem.</p>
+		<?php } else if ($totalRowsData == 0 AND $userkey <> $logged_in) { ?>
+			<p><span class="red">No SMS records or SMJ journal entries were found where you are the teacher or TA.</span> If you know that the student has taken the SMS or written journal entries, they may have more than one account or may have selected the wrong teacher. We can fix this if you <a href="../../contactus.php">contacts us</a> with the names and email addresses of affected students.</p>
+		<?php } else if ($userkey <> $logged_in) { ?>
+   	<p>If some of your student's results do not appear on this page, they probably have more than one account. We can fix this if you  <a href="../../contactus.php">contacts us</a> with the names and email addresses of affected students.</p>
+    <?php } ?>
+    
+    <div id="CollapsiblePanel1" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">Click here to view a table of your results</div>
+      <div class="CollapsiblePanelContent">
+        <table border="0">
+          <tr>
+            <td class="tablehead">Date</td>
+            <td class="tablehead">Test time</td>
+            <td class="tablehead">Mean 2009</td>
+            <td class="tablehead">Mean 2010</td>
+          </tr>
+          <?php do { ?>
+          <tr>
+            <td><?php echo $row_rsMindfulness['timestamp']; ?></td>
+            <td><div align="center"><?php echo $row_rsMindfulness['testtime']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsMindfulness['sms09mean']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsMindfulness['sms10mean']; ?></div></td>
+          </tr>
+          <?php } while ($row_rsMindfulness = mysql_fetch_assoc($rsMindfulness)); ?>
+        </table>
+        <p>&nbsp;</p>
+      </div>
+    </div>
+    
+    <p><a href="../SMS/indiv_selectsms.php">What do my results mean?</a></p>
+
+    <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">Click here to view your journal entries</div>
+<div class="CollapsiblePanelContent">
+        <p class="downloads">Records <?php echo ($startRow_rsJournal + 1) ?> &nbsp;to <?php echo min($startRow_rsJournal + $maxRows_rsJournal, $totalRows_rsJournal) ?> of <?php echo $totalRows_rsJournal ?>&nbsp;&nbsp;
+          <!--**** We're not using these links for anything. <?php //$TFM_navLinks
+if ($pageNum_rsJournal > 0) {
+  printf('<a href="'."%s?pageNum_rsJournal=%d%s", $currentPage, 0, $queryString_rsJournal.'">First</a>');
+}else{
+  echo "First";
+}
+echo " | ";
+if ($pageNum_rsJournal > 0) {
+  printf('<a href="'."%s?pageNum_rsJournal=%d%s", $currentPage, max(0, $pageNum_rsJournal - 1), $queryString_rsJournal.'">Previous</a>');
+}else{
+  echo "Previous";
+}
+echo " | ";
+if ($pageNum_rsJournal < $totalPages_rsJournal) { 
+  printf('<a href="'."%s?pageNum_rsJournal=%d%s", $currentPage, $pageNum_rsJournal + 1, $queryString_rsJournal.'">Next</a>');
+}else{
+  echo "Next";
+}
+echo " | ";
+if ($pageNum_rsJournal < $totalPages_rsJournal) { 
+  printf('<a href="'."%s?pageNum_rsJournal=%d%s", $currentPage, $totalPages_rsJournal, $queryString_rsJournal.'">Last</a>');
+}else{
+  echo "Last";
+}
+?>-->
+          </span></p>
+        <table border="0">
+          <tr>
+            <td class="tablehead">Number</td>
+            <td class="tablehead">Date</td>
+            <td class="tablehead">Journal entry</td>
+            <td class="tablehead">Comments</td>
+          </tr>
+          <?php do { ?>
+          <tr>
+            <td><div align="center"><?php echo $row_rsJournal['journalkey']; ?></div></td>
+            <td><?php echo $row_rsJournal['time']; ?></td>
+            <td>Formal practice: <?php echo $row_rsJournal['journalentry_1']; ?><br />
+              <br />
+Informal practice: <?php echo $row_rsJournal['journalentry_2']; ?><br /></td>
+            <td><div align="center"><a href="../SMJ/journal_summarycomment.php?journalkey=<?php echo $row_rsJournal['journalkey']; ?>">select</a></div></td>
+          </tr>
+          <?php } while ($row_rsJournal = mysql_fetch_assoc($rsJournal)); ?>
+        </table>
+        <p></p>
+      </div>
+    </div>
+    <h3><strong>SMS 2010 RESULTS BY TEST TIME</strong> </h3>
+<div class="left">
+  <img src="../../images/mindful/scalebar.png" width="45" height="516" hspace="0" align="top" />
+  
+  <?php if ($row_rsMindfulScale_1['mindfulurl'] <> "") { ?>
+  	<img src="<?php echo $row_rsMindfulScale_1['mindfulurl']; ?>" width="80" height="516" hspace="0" align="top" class="scalelrja" />
+  <?php } if ($row_rsMindfulScale_2['mindfulurl'] <> "") { ?>
+  	<img src="<?php echo $row_rsMindfulScale_2['mindfulurl']; ?>" alt="" width="88" height="516" hspace="0" align="top" class="scalelrja" />
+  <?php } if ($row_rsMindfulScale_3['mindfulurl'] <> "") { ?>
+  	<img src="<?php echo $row_rsMindfulScale_3['mindfulurl']; ?>" alt="" width="88" height="516" hspace="0" align="top" class="scalelrja" />
+  <?php }  if ($row_rsMindfulScale_4['mindfulurl'] <> "") { ?>
+  <img src="<?php echo $row_rsMindfulScale_4['mindfulurl']; ?>" alt="" width="88" height="516" hspace="0" align="top" class="scalelrja" />
+  <?php } if ($row_rsMindfulScale_5['mindfulurl'] <> "") { ?>
+  <img src="<?php echo $row_rsMindfulScale_5['mindfulurl']; ?>" alt="" width="88" height="516" hspace="0" align="top" class="scalelrja" />
+  <?php } if ($row_rsMindfulScale_6['mindfulurl'] <> "") { ?>
+  <img src="<?php echo $row_rsMindfulScale_6['mindfulurl']; ?>" alt="" width="88" height="516" hspace="0" align="top" class="scalelrja" />
+  <?php } if ($row_rsMindfulScale_7['mindfulurl'] <> "") { ?>
+  <img src="<?php echo $row_rsMindfulScale_7['mindfulurl']; ?>" alt="" width="88" height="516" hspace="0" align="top" class="scalelrja" />
+  <?php } ?>
+  </div>
+    <br class="clearfloat" />   
+<div class="leftwide">
+      <p>&nbsp;</p>
+</div>
+    <br class="clearfloat" />   
+    <script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+    </script>
+    <!-- InstanceEndEditable -->
+	<!-- end #mainContent --></div>
+  <div id="footer">
+    <p align="center">©2010-2011 Sharon Solloway. All rights reserved.</p>
+  <!-- end #footer --></div>
+<!-- end #container --></div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrants);
+
+mysql_free_result($rsMindfulness);
+
+mysql_free_result($rsJournal);
+
+mysql_free_result($rsMindfulScale_1);
+
+mysql_free_result($rsMindfulScale_2);
+
+mysql_free_result($rsMindfulScale_3);
+
+mysql_free_result($rsMindfulScale_4);
+
+mysql_free_result($rsMindfulScale_5);
+
+mysql_free_result($rsMindfulScale_6);
+
+mysql_free_result($rsMindfulScale_7);
+?>

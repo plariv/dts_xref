@@ -1,0 +1,496 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+//WA Database Search Include
+require_once("../WADbSearch/HelperPHP.php");
+?>
+<?php
+//WA Database Search (Copyright 2005, WebAssist.com)
+//Recordset: WADAresources;
+//Searchpage: resources_Search.php;
+//Form: WADASearchForm;
+$WADbSearch1_DefaultWhere = "";
+if (!session_id()) session_start();
+if ((isset($_GET["Search"]) && $_GET["Search"] != "")) {
+  $WADbSearch1 = new FilterDef;
+  $WADbSearch1->initializeQueryBuilder("MYSQL","1");
+  //keyword array declarations
+
+  //comparison list additions
+  $WADbSearch1->addComparisonFromList("resource_theme","S_resource_theme","AND","=",0);
+  $WADbSearch1->addComparisonFromEdit("resource_text","S_resource_text","AND","Includes",0);
+  $WADbSearch1->addComparisonFromEdit("resource_url","S_resource_url","AND","Includes",0);
+  $WADbSearch1->addComparisonFromList("phase_low","S_phase_low","AND","Includes",0);
+  $WADbSearch1->addComparisonFromList("phase_high","S_phase_high","AND","Includes",0);
+
+  //save the query in a session variable
+  if (1 == 1) {
+    $_SESSION["WADbSearch1_resources_results"]=$WADbSearch1->whereClause;
+  }
+}
+else     {
+  $WADbSearch1 = new FilterDef;
+  $WADbSearch1->initializeQueryBuilder("MYSQL","1");
+  //get the filter definition from a session variable
+  if (1 == 1)     {
+    if (isset($_SESSION["WADbSearch1_resources_results"]) && $_SESSION["WADbSearch1_resources_results"] != "")     {
+      $WADbSearch1->whereClause = $_SESSION["WADbSearch1_resources_results"];
+    }
+    else     {
+      $WADbSearch1->whereClause = $WADbSearch1_DefaultWhere;
+    }
+  }
+  else     {
+    $WADbSearch1->whereClause = $WADbSearch1_DefaultWhere;
+  }
+}
+$WADbSearch1->whereClause = str_replace("\\''", "''", $WADbSearch1->whereClause);
+$WADbSearch1whereClause = '';
+?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+?>
+<?php
+$currentPage = $_SERVER["PHP_SELF"];
+?>
+<?php
+$maxRows_WADAresources = 5;
+$pageNum_WADAresources = 0;
+if (isset($_GET['pageNum_WADAresources'])) {
+  $pageNum_WADAresources = $_GET['pageNum_WADAresources'];
+}
+$startRow_WADAresources = $pageNum_WADAresources * $maxRows_WADAresources;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_WADAresources = "SELECT * FROM resources";
+setQueryBuilderSource($query_WADAresources,$WADbSearch1,false);
+$query_limit_WADAresources = sprintf("%s LIMIT %d, %d", $query_WADAresources, $startRow_WADAresources, $maxRows_WADAresources);
+$WADAresources = mysql_query($query_limit_WADAresources, $Assessment) or die(mysql_error());
+$row_WADAresources = mysql_fetch_assoc($WADAresources);
+
+if (isset($_GET['totalRows_WADAresources'])) {
+  $totalRows_WADAresources = $_GET['totalRows_WADAresources'];
+} else {
+  $all_WADAresources = mysql_query($query_WADAresources);
+  $totalRows_WADAresources = mysql_num_rows($all_WADAresources);
+}
+$totalPages_WADAresources = ceil($totalRows_WADAresources/$maxRows_WADAresources)-1;
+?>
+<?php
+$maxRows_WADADynListlas = 1000;
+$pageNum_WADADynListlas = 0;
+if (isset($_GET['pageNum_WADADynListlas'])) {
+  $pageNum_WADADynListlas = $_GET['pageNum_WADADynListlas'];
+}
+$startRow_WADADynListlas = $pageNum_WADADynListlas * $maxRows_WADADynListlas;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_WADADynListlas = "SELECT lasname FROM las ORDER BY lasname";
+$query_limit_WADADynListlas = sprintf("%s LIMIT %d, %d", $query_WADADynListlas, $startRow_WADADynListlas, $maxRows_WADADynListlas);
+$WADADynListlas = mysql_query($query_limit_WADADynListlas, $Assessment) or die(mysql_error());
+$row_WADADynListlas = mysql_fetch_assoc($WADADynListlas);
+
+if (isset($_GET['totalRows_WADADynListlas'])) {
+  $totalRows_WADADynListlas = $_GET['totalRows_WADADynListlas'];
+} else {
+  $all_WADADynListlas = mysql_query($query_WADADynListlas);
+  $totalRows_WADADynListlas = mysql_num_rows($all_WADADynListlas);
+}
+$totalPages_WADADynListlas = ceil($totalRows_WADADynListlas/$maxRows_WADADynListlas)-1;
+
+?>
+<?php
+$queryString_WADAresources = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_WADAresources") == false && 
+        stristr($param, "totalRows_WADAresources") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_WADAresources = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_WADAresources = sprintf("&totalRows_WADAresources=%d%s", $totalRows_WADAresources, $queryString_WADAresources);
+?>
+<?php
+//WA AltClass Iterator
+class WA_AltClassIterator     {
+  var $DisplayIndex;
+  var $DisplayArray;
+  
+  function WA_AltClassIterator($theDisplayArray = array(1)) {
+    $this->ClassCounter = 0;
+    $this->ClassArray   = $theDisplayArray;
+  }
+  
+  function getClass($incrementClass)  {
+    if (sizeof($this->ClassArray) == 0) return "";
+  	if ($incrementClass) {
+      if ($this->ClassCounter >= sizeof($this->ClassArray)) $this->ClassCounter = 0;
+      $this->ClassCounter++;
+    }
+    if ($this->ClassCounter > 0)
+      return $this->ClassArray[$this->ClassCounter-1];
+    else
+      return $this->ClassArray[0];
+  }
+}
+?><?php
+//WA Alternating Class
+$WARRT_AltClass1 = new WA_AltClassIterator(explode("|", "WADAResultsRowDark|"));
+?>
+<?php
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsResourceType = "SELECT DISTINCT resource_theme FROM resources ORDER BY resource_theme";
+$rsResourceType = mysql_query($query_rsResourceType, $Assessment) or die(mysql_error());
+$row_rsResourceType = mysql_fetch_assoc($rsResourceType);
+$totalRows_rsResourceType = mysql_num_rows($rsResourceType);
+
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Select a resource</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<link href="../WA_DataAssist/styles/Refined_Pacifica.css" rel="stylesheet" type="text/css" />
+<link href="../WA_DataAssist/styles/Verdana.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+.WADAResultsNavigation {
+	padding-top: 5px;
+	padding-bottom: 10px;
+}
+.WADAResultsCount {
+	font-size: 11px;
+}
+.WADAResultsNavTop, .WADAResultsInsertButton {
+	clear: none;
+}
+.WADAResultsNavTop {
+	width: 60%;
+	float: left;
+}
+.WADAResultsInsertButton {
+	width: 30%;
+	float: right;
+	text-align: right;
+}
+.WADAResultsNavButtonCell, .WADAResultsInsertButton {
+	padding: 2px;
+}
+.WADAResultsTable {
+	font-size: 11px;
+	clear: both;
+	padding-top: 1px;
+	padding-bottom: 1px;
+}
+
+.WADAResultsTableHeader, .WADAResultsTableCell {
+	padding: 3px;
+	text-align: left;
+}
+
+.WADAResultsTableHeader {
+	padding-left: 3px;
+	padding-right: 6px;
+}
+
+.WADAResultsTableCell {
+	padding-left: 3px;
+	padding-right: 6px;
+}
+
+.WADAResultsTableCell {
+	border-left: 1px solid #BABDC2;
+}
+
+.WADAResultsEditButtons {
+	border-left: 1px solid #BABDC2;
+	border-right: 1px solid #BABDC2;
+}
+
+.WADAResultsRowDark {
+	background-color: #DFE4E9;
+}
+</style>
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+
+<h1>SELECT A RESOURCE</h1>
+<p>To build the learning suggestions that populate our reports, we have reviewed and scored a range of resources. On this page, you  can access information about many of these resources. We hope the resources in this list will help you to serve your clients/students. </p>
+<p>Please help us to build this list of resources: <a href="../contactus.php?subject=Resource suggestion">suggest a resource</a> | <a href="../contactus.php?subject=Resource comment">comment on a resource</a></p>
+<div class="WADAResultsContainer"> <a name="top"></a>
+  <div class="WADASearchContainer">
+    <form action="resources_results_resellers.php" method="get" name="WADASearchForm" id="WADASearchForm">
+      <div class="WADAHorizLine"><img src="../WA_DataAssist/images/_tx_.gif" alt="" height="1" width="1" border="0" /></div>
+      <table class="WADADataTable" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <th class="WADADataTableHeader">Resource type</th>
+          <td class="WADADataTableCell"><span id="spryselect1">
+            <select name="S_resource_theme" id="S_resource_theme">
+              <option value="">-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsResourceType['resource_theme']?>"><?php echo $row_rsResourceType['resource_theme']?></option>
+              <?php
+} while ($row_rsResourceType = mysql_fetch_assoc($rsResourceType));
+  $rows = mysql_num_rows($rsResourceType);
+  if($rows > 0) {
+      mysql_data_seek($rsResourceType, 0);
+	  $row_rsResourceType = mysql_fetch_assoc($rsResourceType);
+  }
+?>
+              </select>
+</span></td>
+          <th class="WADADataTableHeader">Lowest phase</th>
+          <td class="WADADataTableCell"><span id="sprytextfield3">
+            <input type="text" name="S_phase_low" id="S_phase_low" value="" size="4" />
+          </span></td>
+          <td class="WADADataTableCell">&nbsp;</td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Resource text</th>
+          <td class="WADADataTableCell"><span id="sprytextfield1">
+            <input type="text" name="S_resource_text" id="S_resource_text" value="" size="32" />
+</span>&nbsp;&nbsp;</td>
+          <th class="WADADataTableHeader">Highest phase</th>
+          <td class="WADADataTableCell"><span id="sprytextfield4">
+            <input type="text" name="S_phase_high" id="S_phase_high" value="" size="4" />
+          </span></td>
+          <td class="WADADataTableCell">&nbsp;</td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Url</th>
+          <td class="WADADataTableCell"><span id="sprytextfield2">
+            <input type="text" name="S_resource_url" id="S_resource_url" value="" size="32" />
+</span></td>
+          <th class="WADADataTableHeader">&nbsp;</th>
+          <th class="WADADataTableHeader">&nbsp;</th>
+          <th class="WADADataTableHeader">&nbsp;</th>
+          </tr>
+        <tr>
+          <th colspan="2" class="WADADataTableHeader"><em>To show all results, click the &quot;search&quot; button.</em></th>
+          <th class="WADADataTableHeader">&nbsp;</th>
+          <th class="WADADataTableHeader">&nbsp;</th>
+          <th class="WADADataTableHeader"><span class="WADADataTableCell"><span class="WADADataNavButtonCell">
+            <input type="submit" name="Search" id="Search" value="SEARCH OR RESET" />
+          </span></span></th>
+          </tr>
+        </table>
+      <div class="WADAHorizLine"><img src="../WA_DataAssist/images/_tx_.gif" alt="" height="1" width="1" border="0" /></div>
+    </form>
+    </div>
+  <div class="WADAHorizLine"><img src="../WA_DataAssist/images/_tx_.gif" alt="" height="1" width="1" border="0" /></div>
+  <?php if ($totalRows_WADAresources > 0) { // Show if recordset not empty ?>
+    <div class="WADAResults">
+      <div class="WADAResultsNavigation">
+        <div class="WADAResultsCount">Records <?php echo ($startRow_WADAresources + 1) ?> to <?php echo min($startRow_WADAresources + $maxRows_WADAresources, $totalRows_WADAresources) ?> of <?php echo $totalRows_WADAresources ?></div>
+        <div class="WADAResultsNavTop">
+          <table border="0" cellpadding="0" cellspacing="0" class="WADAResultsNavTable">
+            <tr valign="middle">
+              <td class="WADAResultsNavButtonCell" nowrap="nowrap"><?php if ($pageNum_WADAresources > 0) { // Show if not first page ?>
+                  <a href="<?php printf("%s?pageNum_WADAresources=%d%s", $currentPage, 0, $queryString_WADAresources); ?>" title="First"><img border="0" name="First" id="First" alt="First" src="../WA_DataAssist/images/Pacifica/Refined_first.gif" /></a>
+                  <?php } // Show if not first page ?></td>
+              <td class="WADAResultsNavButtonCell" nowrap="nowrap"><?php if ($pageNum_WADAresources > 0) { // Show if not first page ?>
+                  <a href="<?php printf("%s?pageNum_WADAresources=%d%s", $currentPage, max(0, $pageNum_WADAresources - 1), $queryString_WADAresources); ?>" title="Previous"><img border="0" name="Previous" id="Previous" alt="Previous" src="../WA_DataAssist/images/Pacifica/Refined_previous.gif" /></a>
+                  <?php } // Show if not first page ?></td>
+              <td class="WADAResultsNavButtonCell" nowrap="nowrap"><?php if ($pageNum_WADAresources < $totalPages_WADAresources) { // Show if not last page ?>
+                  <a href="<?php printf("%s?pageNum_WADAresources=%d%s", $currentPage, min($totalPages_WADAresources, $pageNum_WADAresources + 1), $queryString_WADAresources); ?>" title="Next"><img border="0" name="Next" id="Next" alt="Next" src="../WA_DataAssist/images/Pacifica/Refined_next.gif" /></a>
+                  <?php } // Show if not last page ?></td>
+              <td class="WADAResultsNavButtonCell" nowrap="nowrap"><?php if ($pageNum_WADAresources < $totalPages_WADAresources) { // Show if not last page ?>
+                  <a href="<?php printf("%s?pageNum_WADAresources=%d%s", $currentPage, $totalPages_WADAresources, $queryString_WADAresources); ?>" title="Last"><img border="0" name="Last" id="Last" alt="Last" src="../WA_DataAssist/images/Pacifica/Refined_last.gif" /></a>
+                  <?php } // Show if not last page ?></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      <table class="WADAResultsTable" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <th class="WADAResultsTableHeader">Record</th>
+          <th class="WADAResultsTableHeader">Resource text</th>
+          <th class="WADAResultsTableHeader">Lowest phase</th>
+          <th class="WADAResultsTableHeader">Highest phase</th>
+          <th>&nbsp;</th>
+        </tr>
+        <?php do { ?>
+          <tr class="<?php echo $WARRT_AltClass1->getClass(true); ?>">
+            <td class="WADAResultsTableCell"><a href="resources_detail_resellers.php?resourceskey=<?php echo(rawurlencode($row_WADAresources['resourceskey'])); ?>" ><?php echo($row_WADAresources['resourceskey']); ?></a></td>
+            <td class="WADAResultsTableCell"><?php echo($row_WADAresources['resource_text']); ?></td>
+            <td class="WADAResultsTableCell"><?php echo($row_WADAresources['phase_low']); ?></td>
+            <td class="WADAResultsTableCell"><?php echo($row_WADAresources['phase_high']); ?></td>
+            <td class="WADAResultsEditButtons" nowrap="nowrap"><table class="WADAEditButton_Table">
+              <tr>
+                <td><a href="resources_detail_resellers.php?resourceskey=<?php echo(rawurlencode($row_WADAresources['resourceskey'])); ?>" title="View"><img border="0" name="View<?php echo(rawurlencode($row_WADAresources['resourceskey'])); ?>" id="View<?php echo(rawurlencode($row_WADAresources['resourceskey'])); ?>" alt="View" src="../WA_DataAssist/images/Pacifica/Refined_zoom.gif" /></a></td>
+                </tr>
+            </table></td>
+          </tr>
+          <?php } while ($row_WADAresources = mysql_fetch_assoc($WADAresources)); ?>
+      </table>
+      <div class="WADAResultsNavigation">
+        <div class="WADAResultsCount">Records <?php echo ($startRow_WADAresources + 1) ?> to <?php echo min($startRow_WADAresources + $maxRows_WADAresources, $totalRows_WADAresources) ?> of <?php echo $totalRows_WADAresources ?></div>
+        <div class="WADAResultsNavBottom">
+          <table border="0" cellpadding="0" cellspacing="0" class="WADAResultsNavTable">
+            <tr valign="middle">
+              <td class="WADAResultsNavButtonCell" nowrap="nowrap"><?php if ($pageNum_WADAresources > 0) { // Show if not first page ?>
+                  <a href="<?php printf("%s?pageNum_WADAresources=%d%s", $currentPage, 0, $queryString_WADAresources); ?>" title="First"><img border="0" name="First1" id="First1" alt="First" src="../WA_DataAssist/images/Pacifica/Refined_first.gif" /></a>
+                  <?php } // Show if not first page ?></td>
+              <td class="WADAResultsNavButtonCell" nowrap="nowrap"><?php if ($pageNum_WADAresources > 0) { // Show if not first page ?>
+                  <a href="<?php printf("%s?pageNum_WADAresources=%d%s", $currentPage, max(0, $pageNum_WADAresources - 1), $queryString_WADAresources); ?>" title="Previous"><img border="0" name="Previous1" id="Previous1" alt="Previous" src="../WA_DataAssist/images/Pacifica/Refined_previous.gif" /></a>
+                  <?php } // Show if not first page ?></td>
+              <td class="WADAResultsNavButtonCell" nowrap="nowrap"><?php if ($pageNum_WADAresources < $totalPages_WADAresources) { // Show if not last page ?>
+                  <a href="<?php printf("%s?pageNum_WADAresources=%d%s", $currentPage, min($totalPages_WADAresources, $pageNum_WADAresources + 1), $queryString_WADAresources); ?>" title="Next"><img border="0" name="Next1" id="Next1" alt="Next" src="../WA_DataAssist/images/Pacifica/Refined_next.gif" /></a>
+                  <?php } // Show if not last page ?></td>
+              <td class="WADAResultsNavButtonCell" nowrap="nowrap"><?php if ($pageNum_WADAresources < $totalPages_WADAresources) { // Show if not last page ?>
+                  <a href="<?php printf("%s?pageNum_WADAresources=%d%s", $currentPage, $totalPages_WADAresources, $queryString_WADAresources); ?>" title="Last"><img border="0" name="Last1" id="Last1" alt="Last" src="../WA_DataAssist/images/Pacifica/Refined_last.gif" /></a>
+                  <?php } // Show if not last page ?></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <?php } // Show if recordset not empty ?>
+  <?php if ($totalRows_WADAresources == 0) { // Show if recordset empty ?>
+    <div class="WADANoResults">
+      <div class="WADANoResultsMessage">No results for your search</div>
+    <?php } // Show if recordset empty ?>
+</div>
+<script type="text/javascript">
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {validateOn:["blur", "change"], isRequired:false});
+</script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($WADAresources);
+?>
+<?php
+mysql_free_result($WADADynListundefined);
+?>
+<?php
+mysql_free_result($WADADynListlas);
+
+mysql_free_result($rsResourceType);
+?>

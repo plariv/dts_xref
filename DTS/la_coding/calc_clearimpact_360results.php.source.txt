@@ -1,0 +1,332 @@
+<?php include_once ("../includes/dts_functions.php");
+
+die("This is a script that makes changes in the database. Please read through it to understand what it does, before running it.");
+
+$req_test_time = "";
+if (isset($_GET['req_test_time'])) { $req_test_time = $_GET['req_test_time']; }
+
+
+
+// dynamically generated snippets for the main query
+
+$sql_filter_select = "";
+$sql_filter_where = "";
+
+if ($req_test_time <> "") { 
+	$sql_filter_where .= sprintf(" AND d%s.lakey IS NOT NULL", intval($req_test_time));
+}
+
+/* 
+// prepare select fields for the entrance & exit surveys
+for ($sd = 1; $sd <= 2; $sd ++) { // for each of the 2 surveys as $sd
+	$sql_filter_select .= " 
+		sd{$sd}.lasurveykey AS survey_{$sd}_key,
+		sd{$sd}.instrument_id AS survey_{$sd}_instrument, 
+		sd{$sd}.date_completed AS survey_{$sd}_date, 
+		sd{$sd}.result_avg_page1 AS survey_{$sd}_avg, ";
+	// for each stem (I)
+	$sql_filter_select .= " '' AS survey_{$sd}_I, ";
+	for ($s = zeropad(1, 3); $s <= 14; $s = zeropad($s+1, 3)) {
+		$sql_filter_select .= " sd{$sd}.stem{$s} AS survey_{$sd}_stem{$s}, ";
+	}
+	// for each stem (my peers)
+	$sql_filter_select .= " '' AS survey_{$sd}_peers, ";
+	for ($s = zeropad(22, 3); $s <= 26; $s = zeropad($s+1, 3)) {
+		$sql_filter_select .= " sd{$sd}.stem{$s} AS survey_{$sd}_stem{$s}, ";
+	}
+	// for each stem (my directs)
+	$sql_filter_select .= " '' AS survey_{$sd}_directreports, ";
+	for ($s = zeropad(32, 3); $s <= 36; $s = zeropad($s+1, 3)) {
+		$sql_filter_select .= " sd{$sd}.stem{$s} AS survey_{$sd}_stem{$s}, ";
+	}
+	// for each stem (my supervisor)
+	$sql_filter_select .= " '' AS survey_{$sd}_supervisor, ";
+	for ($s = zeropad(42, 3); $s <= 46; $s = zeropad($s+1, 3)) {
+		$sql_filter_select .= " sd{$sd}.stem{$s} AS survey_{$sd}_stem{$s}, ";
+	}
+}
+ */
+
+
+
+// The main query
+$sql = "SELECT 
+		
+		r.userkey, r.firstname, r.lastname, r.group, 
+		
+		# Demographics
+		
+		r.birth_year, 
+		r.sexkey, CASE
+			WHEN r.sexkey = 1 THEN 'male'
+			WHEN r.sexkey = 2 THEN 'female'
+		END AS sex_name,
+		r.ethnicity1key, deth.ethnicity AS ethnicity_name, 
+		r.languagekey, dlan.language AS language_name,
+		r.englishqualitykey, deng.english_quality AS english_quality_name,
+		r.edukey, dedu.edu_level,
+		r.major, 
+		r.occupation, 
+		r.sectorkey, dsec.sector AS sector_name, 
+		r.profesionkey, dpro.profession AS profession_name, 
+		r.expertise1key, dexp.expertise AS expertise_name, 
+		r.discipline1key, ddis.discipline AS discipline_name, 
+		r.branch, r.department, 
+		r.supervisor_userkey, r.supervisor AS supervisor_name, 
+		d1.manlevelkey AS ldma_1_manlevelkey, dman.man_level AS management_level, 
+		d1.employeenumberkey AS ldma_1_employeenumberkey, demp.employee_number AS num_employees, 
+		d1.superviseekey AS ldma_1_superviseekey, dsup.supervisees AS num_supervisees, 
+		GROUP_CONCAT(CONVERT(rse.userkey, CHAR(99))) AS supervisees_userkeys, 
+		GROUP_CONCAT(CONCAT(' ', rse.firstname, ' ', rse.lastname)) AS supervisees_names, 
+		d1.longestprojectkey AS ldma_1_longestprojectkey, dlon.longest_project, 
+		
+		# LDMAs
+		
+		d1.lakey AS ldma_1_lakey, d1.date_completed AS ldma_1_date,
+		s1.lasnumber_1 AS ldma_1_score, 
+		c1.code451 AS ldma_1_scale_ptaking,
+		c1.code452 AS ldma_1_scale_pseeking,
+		c1.code453 AS ldma_1_scale_pcoord,
+		c1.code454 AS ldma_1_scale_context,
+		c1.code455 AS ldma_1_scale_dmprocess,
+		c1.code456 AS ldma_1_scale_collab,
+		d1.hours_to_complete, d1.minutes_to_complete, d1.time_to_complete, 
+		
+		d3.lakey AS ldma_2_lakey,
+		c3.code451 AS ldma_2_scale_ptaking,
+		c3.code452 AS ldma_2_scale_pseeking,
+		c3.code453 AS ldma_2_scale_pcoord,
+		c3.code454 AS ldma_2_scale_context,
+		c3.code455 AS ldma_2_scale_dmprocess,
+		c3.code456 AS ldma_2_scale_collab,
+		
+		d6.lakey AS ldma_3_lakey,
+		c6.code451 AS ldma_3_scale_ptaking,
+		c6.code452 AS ldma_3_scale_pseeking,
+		c6.code453 AS ldma_3_scale_pcoord,
+		c6.code454 AS ldma_3_scale_context,
+		c6.code455 AS ldma_3_scale_dmprocess,
+		c6.code456 AS ldma_3_scale_collab,
+		
+		d8.lakey AS ldma_4_lakey, d8.date_completed AS ldma_4_date,
+		s8.lasnumber_1 AS ldma_4_score, 
+		c8.code451 AS ldma_4_scale_ptaking,
+		c8.code452 AS ldma_4_scale_pseeking,
+		c8.code453 AS ldma_4_scale_pcoord,
+		c8.code454 AS ldma_4_scale_context,
+		c8.code455 AS ldma_4_scale_dmprocess,
+		c8.code456 AS ldma_4_scale_collab,
+		d8.hours_to_complete, d8.minutes_to_complete, d8.time_to_complete, 
+		
+		# OTHER JOURNALS
+		
+		d4.lakey AS llra_lakey, 
+		c4.code493 AS llra_score_overall, 
+		c4.code481 AS llra_theme_cognition,
+		c4.code482 AS llra_theme_communication,
+		c4.code483 AS llra_theme_emotion,
+		c4.code484 AS llra_theme_ethics,
+		c4.code485 AS llra_theme_personality,
+		c4.code486 AS llra_theme_social,
+		c4.code487 AS llra_theme_approach,
+		
+		d5.lakey AS lrja_lakey,
+		c5.code491 AS lrja_score_overall, 
+		c5.code481 AS lrja_theme_complexity,
+		c5.code482 AS lrja_theme_evidence,
+		c5.code483 AS lrja_theme_inquiry,
+		c5.code485 AS lrja_theme_perspective,
+		c5.code486 AS lrja_theme_truthcertainty,
+		
+		d7.lakey AS lera_lakey,
+		c7.code491 AS lera_score_overall, 
+		c7.code481 AS lera_theme_whatmakesethical,
+		c7.code482 AS lera_theme_goodandright,
+		c7.code483 AS lera_theme_values,
+		c7.code484 AS lera_theme_ethicsperspectives,
+		c7.code485 AS lera_theme_ethicalrelativism,
+		c7.code486 AS lera_theme_spiritualityethics,
+		c7.code487 AS lera_theme_ethicaldecisionmaking,
+		c7.code488 AS lera_theme_ethicscitizenship,
+		
+		# SURVEYS fields are dynamically generated
+		
+		{$sql_filter_select}
+		
+		sd2.instrument_id AS ldma_360_intstrument, 
+		sd2.lasurveykey AS ldma_360_lasurveykey, sd2.lakey AS ldma_360_lakey, 
+		sd2.date_completed AS ldma_360_date_completed, 
+		
+		ROUND(AVG(
+		  (IFNULL(sd2m01.item_value, 0) + IFNULL(sd2m02.item_value, 0) + IFNULL(sd2m03.item_value, 0) + IFNULL(sd2m04.item_value, 0) + 
+		  IFNULL(sd2m05.item_value, 0) + IFNULL(sd2m06.item_value, 0) + IFNULL(sd2m07.item_value, 0) + IFNULL(sd2m08.item_value, 0) + 
+		  IFNULL(sd2m09.item_value, 0) + IFNULL(sd2m10.item_value, 0) + IFNULL(sd2m11.item_value, 0) + IFNULL(sd2m12.item_value, 0) + 
+		  IFNULL(sd2m14.item_value, 0))
+		  /
+		  (IF(sd2m01.item_value > 0, 1, 0) + IF(sd2m02.item_value > 0, 1, 0) + IF(sd2m03.item_value > 0, 1, 0) + IF(sd2m04.item_value > 0, 1, 0) + 
+		  IF(sd2m05.item_value > 0, 1, 0) + IF(sd2m06.item_value > 0, 1, 0) + IF(sd2m07.item_value > 0, 1, 0) + IF(sd2m08.item_value > 0, 1, 0) + 
+		  IF(sd2m09.item_value > 0, 1, 0) + IF(sd2m10.item_value > 0, 1, 0) + IF(sd2m11.item_value > 0, 1, 0) + IF(sd2m12.item_value > 0, 1, 0) + 
+		  IF(sd2m14.item_value > 0, 1, 0))
+		), 2) AS ldma_360_avg_i,
+		
+		ROUND(AVG(
+		  (IFNULL(sd2m22.item_value, 0) + IFNULL(sd2m23.item_value, 0) + IFNULL(sd2m24.item_value, 0) + IFNULL(sd2m25.item_value, 0) + 
+		  IFNULL(sd2m26.item_value, 0))
+		  /
+		  (IF(sd2m22.item_value > 0, 1, 0) + IF(sd2m23.item_value > 0, 1, 0) + IF(sd2m24.item_value > 0, 1, 0) + IF(sd2m25.item_value > 0, 1, 0) + 
+		  IF(sd2m26.item_value > 0, 1, 0))
+		), 2) AS ldma_360_avg_peers,
+		
+		ROUND(AVG(
+		  (IFNULL(sd2m32.item_value, 0) + IFNULL(sd2m33.item_value, 0) + IFNULL(sd2m34.item_value, 0) + IFNULL(sd2m35.item_value, 0) + 
+		  IFNULL(sd2m36.item_value, 0))
+		  /
+		  (IF(sd2m32.item_value > 0, 1, 0) + IF(sd2m33.item_value > 0, 1, 0) + IF(sd2m34.item_value > 0, 1, 0) + IF(sd2m35.item_value > 0, 1, 0) + 
+		  IF(sd2m36.item_value > 0, 1, 0))
+		), 2) AS ldma_360_avg_directs,
+		
+		ROUND(AVG(
+		  (IFNULL(sd2m42.item_value, 0) + IFNULL(sd2m43.item_value, 0) + IFNULL(sd2m44.item_value, 0) + IFNULL(sd2m45.item_value, 0) + 
+		  IFNULL(sd2m46.item_value, 0))
+		  /
+		  (IF(sd2m42.item_value > 0, 1, 0) + IF(sd2m43.item_value > 0, 1, 0) + IF(sd2m44.item_value > 0, 1, 0) + IF(sd2m45.item_value > 0, 1, 0) + 
+		  IF(sd2m46.item_value > 0, 1, 0))
+		), 2) AS ldma_360_avg_supervisor,
+		
+		sd2m01.item_value AS ldma_360_i_timetothink,
+		sd2m02.item_value AS ldma_360_i_engaged,
+		sd2m03.item_value AS ldma_360_i_questions,
+		sd2m04.item_value AS ldma_360_i_takep,
+		sd2m05.item_value AS ldma_360_i_seekp,
+		sd2m06.item_value AS ldma_360_i_impactculture,
+		sd2m07.item_value AS ldma_360_i_devcapacity,
+		sd2m08.item_value AS ldma_360_i_productive,
+		sd2m09.item_value AS ldma_360_i_communicate,
+		sd2m10.item_value AS ldma_360_i_leader,
+		sd2m11.item_value AS ldma_360_i_member,
+		sd2m12.item_value AS ldma_360_i_changeefforts,
+		sd2m14.item_value AS ldma_360_i_lei,
+		
+		sd2m22.item_value AS ldma_360_peers_engaged,
+		sd2m23.item_value AS ldma_360_peers_questions,
+		sd2m24.item_value AS ldma_360_peers_seekp,
+		sd2m25.item_value AS ldma_360_peers_productive,
+		sd2m26.item_value AS ldma_360_peers_lei,
+		
+		sd2m32.item_value AS ldma_360_directs_engaged,
+		sd2m33.item_value AS ldma_360_directs_questions,
+		sd2m34.item_value AS ldma_360_directs_seekp,
+		sd2m35.item_value AS ldma_360_directs_productive,
+		sd2m36.item_value AS ldma_360_directs_lei,
+		
+		sd2m42.item_value AS ldma_360_sup_engaged,
+		sd2m43.item_value AS ldma_360_sup_questions,
+		sd2m44.item_value AS ldma_360_sup_seekp,
+		sd2m45.item_value AS ldma_360_sup_productive,
+		sd2m46.item_value AS ldma_360_sup_lei
+		
+	FROM registrants r
+		
+		#LDMA 1
+		LEFT JOIN la_data d1 ON d1.userkey = r.userkey AND d1.instrument_id = 'LDMA' 
+			AND d1.test_time = 1 AND d1.finalized > 0
+		LEFT JOIN la_scores s1 ON d1.lakey = s1.lakey 
+		LEFT JOIN la_codes c1 ON d1.lakey = c1.lakey
+		
+		# Demographics joins
+		LEFT JOIN demogs_ethnicity deth ON r.ethnicity1key = deth.ethnicitykey
+		LEFT JOIN demogs_english_quality deng ON r.englishqualitykey = deng.englishqualitykey
+		LEFT JOIN demogs_languages dlan ON r.languagekey = dlan.languagekey
+		LEFT JOIN demogs_man_level dman ON d1.manlevelkey = dman.manlevelkey
+		LEFT JOIN demogs_employee_number demp ON d1.employeenumberkey = demp.employeenumberkey
+		LEFT JOIN demogs_longest_project dlon ON d1.longestprojectkey = dlon.longestprojectkey
+		LEFT JOIN demogs_supervisees dsup ON d1.superviseekey = dsup.superviseekey
+		LEFT JOIN demogs_professions dpro ON r.profesionkey = dpro.professionkey
+		LEFT JOIN demogs_edu dedu ON r.edukey = dedu.edukey
+		LEFT JOIN demogs_discipline ddis ON r.discipline1key = ddis.disciplinekey
+		LEFT JOIN demogs_expertise dexp ON r.expertise1key = dexp.expertisekey
+		LEFT JOIN demogs_sector dsec ON r.sectorkey = dsec.sectorkey
+		
+		# Supervisees
+		LEFT JOIN registrants rse ON r.userkey = rse.supervisor_userkey
+		
+		# LDMA 2
+		LEFT JOIN la_data d3 ON d3.userkey = r.userkey AND d3.instrument_id = 'LDMA_JOURNAL' 
+			AND d3.test_time = 2 AND d3.finalized > 0
+		LEFT JOIN la_codes c3 ON d3.lakey = c3.lakey
+		
+		# LLRA
+		LEFT JOIN la_data d4 ON r.userkey = d4.userkey AND d4.instrument_id = 'LLRA_JOURNAL' 
+			AND d4.finalized > 0
+		LEFT JOIN la_codes c4 ON d4.lakey = c4.lakey
+		
+		# LRJA
+		LEFT JOIN la_data d5 ON r.userkey = d5.userkey AND d5.instrument_id = 'LRJA_JOURNAL' 
+			AND d5.finalized > 0
+		LEFT JOIN la_codes c5 ON d5.lakey = c5.lakey
+		
+		# LDMA 3
+		LEFT JOIN la_data d6 ON d6.userkey = r.userkey AND d6.instrument_id = 'LDMA_JOURNAL' 
+			AND d6.test_time = 3 AND d6.finalized > 0
+		LEFT JOIN la_codes c6 ON d6.lakey = c6.lakey
+		
+		# LERA
+		LEFT JOIN la_data d7 ON r.userkey = d7.userkey AND d7.instrument_id = 'LERA_JOURNAL' 
+			AND d7.finalized > 0
+		LEFT JOIN la_codes c7 ON d7.lakey = c7.lakey
+		
+		# LDMA 4
+		LEFT JOIN la_data d8 ON d8.userkey = r.userkey AND d8.instrument_id = 'LDMA' 
+			AND d8.test_time = 4 AND d8.finalized > 0
+		LEFT JOIN la_scores s8 ON d8.lakey = s8.lakey 
+		LEFT JOIN la_codes c8 ON d8.lakey = c8.lakey
+		
+		# LDMA 360 POST (PRE was removed for now)
+		LEFT JOIN la_survey_data sd2 ON d8.lakey = sd2.lakey OR d6.lakey = sd2.lakey
+		
+		LEFT JOIN la_menus sd2m01 ON sd2.stem001 = sd2m01.menukey
+		LEFT JOIN la_menus sd2m02 ON sd2.stem002 = sd2m02.menukey
+		LEFT JOIN la_menus sd2m03 ON sd2.stem003 = sd2m03.menukey
+		LEFT JOIN la_menus sd2m04 ON sd2.stem004 = sd2m04.menukey
+		LEFT JOIN la_menus sd2m05 ON sd2.stem005 = sd2m05.menukey
+		LEFT JOIN la_menus sd2m06 ON sd2.stem006 = sd2m06.menukey
+		LEFT JOIN la_menus sd2m07 ON sd2.stem007 = sd2m07.menukey
+		LEFT JOIN la_menus sd2m08 ON sd2.stem008 = sd2m08.menukey
+		LEFT JOIN la_menus sd2m09 ON sd2.stem009 = sd2m09.menukey
+		LEFT JOIN la_menus sd2m10 ON sd2.stem010 = sd2m10.menukey
+		LEFT JOIN la_menus sd2m11 ON sd2.stem011 = sd2m11.menukey
+		LEFT JOIN la_menus sd2m12 ON sd2.stem012 = sd2m12.menukey
+		LEFT JOIN la_menus sd2m13 ON sd2.stem013 = sd2m13.menukey
+		LEFT JOIN la_menus sd2m14 ON sd2.stem014 = sd2m14.menukey
+		
+		LEFT JOIN la_menus sd2m22 ON sd2.stem022 = sd2m22.menukey
+		LEFT JOIN la_menus sd2m23 ON sd2.stem023 = sd2m23.menukey
+		LEFT JOIN la_menus sd2m24 ON sd2.stem024 = sd2m24.menukey
+		LEFT JOIN la_menus sd2m25 ON sd2.stem025 = sd2m25.menukey
+		LEFT JOIN la_menus sd2m26 ON sd2.stem026 = sd2m26.menukey
+		
+		LEFT JOIN la_menus sd2m32 ON sd2.stem032 = sd2m32.menukey
+		LEFT JOIN la_menus sd2m33 ON sd2.stem033 = sd2m33.menukey
+		LEFT JOIN la_menus sd2m34 ON sd2.stem034 = sd2m34.menukey
+		LEFT JOIN la_menus sd2m35 ON sd2.stem035 = sd2m35.menukey
+		LEFT JOIN la_menus sd2m36 ON sd2.stem036 = sd2m36.menukey
+		
+		LEFT JOIN la_menus sd2m42 ON sd2.stem042 = sd2m42.menukey
+		LEFT JOIN la_menus sd2m43 ON sd2.stem043 = sd2m43.menukey
+		LEFT JOIN la_menus sd2m44 ON sd2.stem044 = sd2m44.menukey
+		LEFT JOIN la_menus sd2m45 ON sd2.stem045 = sd2m45.menukey
+		LEFT JOIN la_menus sd2m46 ON sd2.stem046 = sd2m46.menukey
+
+	WHERE r.bulkuserkey = 1000001053 
+		{$sql_filter_where}
+	
+	GROUP BY r.userkey
+	";
+	
+echo str_replace("\n", "<br>", $sql); die();
+$rsResults = mysql_query($sql) or die("ERROR running the query ".mysql_error());
+	
+	
+
+
+?>

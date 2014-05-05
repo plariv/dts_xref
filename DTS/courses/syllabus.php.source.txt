@@ -1,0 +1,454 @@
+<?
+include_once "../includes/dts_functions.php";
+
+if (!WA_Auth_RulePasses("Logged in to registrants")) { $userkey = 0; }
+else { $userkey = $_SESSION['log_userkey']; }
+
+$can_edit = false; if (WA_Auth_RulePasses("Logged in as senior")) { $can_edit = true; }
+
+$_SESSION['instrument_id'] = "FOLA"; // just for the page banner
+
+if (!isset($_GET['coursekey'])) { header("Location: ../landing.php"); exit(); }
+$coursekey = $_GET['coursekey'];
+
+
+
+// fetch this course
+$sql_visibility = " AND c.is_visible_to_public = 1 ";
+if ($can_edit) { $sql_visibility = ""; }
+$sql = prepsql("SELECT c.*, 
+		CONCAT(i1.firstname, ' ', i1.lastname) AS instructor1_name,
+		CONCAT(i2.firstname, ' ', i2.lastname) AS instructor2_name,
+		CONCAT(i3.firstname, ' ', i3.lastname) AS instructor3_name,
+		IF(cr.key > 0, 1, 0) AS is_registered_and_logged_in,
+		s.day_of_week AS section_day_of_week,
+		s.time_of_day AS section_time_of_day
+	FROM courses c 
+		LEFT JOIN course_registrations cr ON c.key = cr.coursekey AND cr.userkey = ? 
+			AND cr.is_paid_in_full = 1
+		LEFT JOIN course_class_sections s ON cr.sectionkey = s.key
+		LEFT JOIN registrants i1 ON c.instructor1_userkey = i1.userkey
+		LEFT JOIN registrants i2 ON c.instructor2_userkey = i2.userkey
+		LEFT JOIN registrants i3 ON c.instructor3_userkey = i3.userkey
+	WHERE c.key = ? {$sql_visibility} ", 
+		$userkey, $coursekey);
+$rsCourse = query($sql, 'rsCourse');
+$course = $rsCourse->fetch_assoc();
+$is_lectures_only = false; if ($course['is_lectures_only'] == 1) { $is_lectures_only = true; }
+
+// fetch parts
+$sql = sprintf("SELECT p.*
+	FROM course_parts p
+	WHERE p.coursekey = %s 
+	ORDER BY p.number ", 
+		SQLstr($coursekey, 'int'));
+$rsParts = query($sql, 'rsParts');
+
+// fetch classes
+// $sql_visibility handles permissions for viewing class descriptions.
+// By default, viewers aren't allowed to view clasess; registered students are allowed to view the "published" ones; and admins can view them all.
+$sql_visibility = " AND 1=0 ";
+if ($course['is_registered_and_logged_in']) { 
+	$sql_visibility = " AND cl.is_visible_to_students = 1 "; }
+if ($can_edit) { $sql_visibility = ""; }
+$sql = sprintf("SELECT cl.*
+	FROM course_classes cl
+		JOIN courses c ON cl.coursekey = c.key
+	WHERE cl.coursekey = %s {$sql_visibility} 
+	ORDER BY cl.number ", 
+		SQLstr($coursekey, 'int'));
+$rsClasses = query($sql, 'rsClasses');
+
+// fetch sections
+$sql = sprintf("SELECT s.*
+	FROM course_class_sections s
+	WHERE s.coursekey = %s 
+	ORDER BY s.day_of_week ", 
+		SQLstr($coursekey, 'int'));
+$rsSections = query($sql, 'rsSections');
+
+// Array of days of week. Indexed 0-6 same as date() does it.
+$days = array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday');
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: Syllabus for course: <? echo $course['title']; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryTabbedPanelsVertical.css" rel="stylesheet" type="text/css" />
+
+
+
+<style type="text/css">
+
+	.twoColFixRtHdr #container #mainContent ol { padding-left: 35px; }
+
+	.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible h2 {
+		margin-top: 0px;
+	}
+
+	.unpublic { color: gray; font-style: italic; }
+</style>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+	
+	<!-- Not putting any links here for now -->
+
+<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    
+	<? if ($rsCourse->num_rows == 0) { ?>
+		<div class='box'>This course doesn't exist or isn't available yet. Please <a href='../contactus.php'>contact us</a> with any questions.</div>
+	<? } else { ?>
+
+  <h1><? echo strtoupper($course['title']); ?></h1>
+
+	<? if ($can_edit) { ?>
+		<p><a href='courses_list.php'>« list courses</a></p>
+	<? } ?>
+
+  <p><? 
+		if (isset($_GET['printerv']) AND $_GET['printerv'] == "yes") { ?>
+			<script type='text/javascript'>
+				$(function(){ $('.TabbedPanelsContent').css('width', '600px'); });
+			</script>
+			<a href="syllabus.php?coursekey=<? echo $coursekey; ?>&printerv=no">
+      view by sections</a>
+    	<? 
+  	} else { ?>
+			<a href="syllabus.php?coursekey=<? echo $coursekey; ?>&printerv=yes">
+      printer-friendly view</a>
+    	<? 
+  	} ?> | 
+  	<a href='register.php?coursekey=<? echo $coursekey; ?>'>
+  		<? if ($is_lectures_only) { ?>purchase the FOLA lecture series<? } 
+  		else { ?>register for this course<? } ?>
+  	</a> | 
+  	<a href='registration_status.php?coursekey=<? echo $coursekey; ?>'>view my registration status</a>
+  </p>
+  
+  <div id="TabbedPanels1" class="VTabbedPanels">
+  
+    <? 
+    // If you omit the TabbedPanelsTabGroup, you get a printer-friendly page.
+		if (!isset($_GET['printerv']) OR $_GET['printerv'] == "no") { ?>
+	    <ul class="TabbedPanelsTabGroup">
+	      <li class="TabbedPanelsTab">Introduction</li>
+	      <li class="TabbedPanelsTab">Learning points</li>
+	      <li class="TabbedPanelsTab">Logistics</li>
+
+	      <!-- 1 tab per part -->
+	      <? while ($row = $rsParts->fetch_assoc()) { ?>
+					<li class="TabbedPanelsTab">Part <? echo $row['number']; ?></li>
+				<? } ?>
+				<? if ($can_edit) { ?><li class='TabbedPanelsTab'>+ add part</li><? } ?>
+
+	      <!-- 1 tab per class. (If permission is denied, the query will be empty.) -->
+	      <? while ($class = $rsClasses->fetch_assoc()) { ?>
+					<li class="TabbedPanelsTab">
+						<? if (!$class['is_visible_to_students']) { echo "<span class='unpublic'>"; } ?>
+						Module <? echo $class['number']; ?>: 
+						<? echo $class['title_short']; ?>
+						<? if (!$class['is_visible_to_students']) { echo "</span>"; } ?>
+					</li>
+				<? } ?>
+				<? if ($can_edit) { ?><li class='TabbedPanelsTab'>+ add class</li><? } ?>
+	    </ul>
+    <? } ?>
+    
+    <!-- ________________________________________________________________ -->
+    
+    <div class="TabbedPanelsContentGroup">
+      <div class="TabbedPanelsContent">					<!-- Div: Introduction -->
+      <? if ($can_edit) { ?>
+      	<div class='fltrt'>
+      		<a href='course_edit.php?coursekey=<? echo $coursekey; ?>'>edit course</a>
+      	</div>
+      <? } ?>
+      <h2>Introduction</h2>
+      <? echo $course['description_long']; ?>
+      <p>&nbsp;</p>
+    </div>
+    
+    <div class="TabbedPanelsContent">								<!-- Div: Learning points -->
+      <? if ($can_edit) { ?><div class='fltrt'>
+      	<a href='course_edit.php?coursekey=<? echo $coursekey; ?>'>edit course</a></div>
+      <? } ?>
+			<h2>Learning points</h2>
+			<? echo $course['learning_points']; ?>
+      <p>&nbsp;</p>
+    </div>
+
+    <div class="TabbedPanelsContent">								<!-- Div: Logistics -->
+      <? if ($can_edit) { ?><div class='fltrt'>
+      	<a href='course_edit.php?coursekey=<? echo $coursekey; ?>'>edit course</a></div>
+      <? } ?>
+
+			<h2>Logistics</h2>
+
+      <? if (!$is_lectures_only) { ?>
+
+				<table>
+					<tr>
+						<td>Dates</td>
+						<td><? echo ($course['date_start'] <> '' ? date('F jS, Y', strtotime($course['date_start'])): '?'); ?> 
+							to <? echo ($course['date_end'] <> '' ? date('F jS, Y', strtotime($course['date_end'])) : '?'); ?></td>
+					</tr>
+					<tr>
+						<td>Register by</td>
+						<td><? echo ($course['register_by_date'] <> '' ? date('F jS, Y', strtotime($course['register_by_date'])) : '?'); ?></td>
+					</tr>
+					<tr>
+						<td>Instructors</td>
+						<td><? echo $course['instructor1_name']; ?>
+							<? if ($course['instructor2_name'] <> '') { 
+							echo '<br />'.$course['instructor2_name']; } ?>
+							<? if ($course['instructor3_name'] <> '') { 
+							echo '<br />'.$course['instructor3_name']; } ?>, visiting lecturer
+						</td>
+					</tr>
+					<tr>
+						<td>Sections</td>
+						<td>
+							<? $is_first_row = true;
+							while ($row = $rsSections->fetch_assoc()) { ?>
+								<? echo $days[$row['day_of_week']]; ?>s, 
+								<? echo date('g:i', strtotime($row['time_of_day'])); ?> to 
+								<? echo date('g:i A', 
+									strtotime("+{$row['duration_mins']} minutes", 
+										strtotime($row['time_of_day']))); ?> 
+								EST
+								<? if ($can_edit) { ?>
+									(<a href='course_class_section_edit.php?sectionkey=<? echo $row['key']; ?>'>edit</a>
+									<a href='course_class_sections_list.php?coursekey=<? echo $coursekey; ?>&delete_section=<? echo $row['key']; ?>'>delete</a>)
+								<? } ?>							
+								<? if ($is_first_row) { $is_first_row = false; echo " or "; } ?>
+								<br />
+							<? } ?>
+							<? if ($can_edit) { ?>
+								<a href='course_class_sections_list.php?coursekey=<? echo $coursekey; ?>&new_section=yes'>+ add section</a>
+							<? } ?>
+						</td>
+					</tr>
+				</table>
+				<h3>Fees</h3>
+				<table>
+					<tr>
+						<td>General Education Level</td>
+						<td>$<? echo $course['price_level1']; ?></td>
+					</tr>
+					<tr>
+						<td>Certificate Level</td>
+						<td>$<? echo $course['price_level2']; ?></td>
+					</tr>
+					<tr>
+						<td>Deposit</td>
+						<td>$<? echo $course['deposit_amount']; ?></td>
+				</table>
+
+			<? } // END IF: Logistics for full courses
+			else if ($can_edit) { ?>
+				<p><em><span class='red'>Price information</span> should be embedded into the logistics boilerplate (below).</em></p>
+			<? } ?>
+
+			<? echo $course['logistics']; ?>
+      <p>&nbsp;</p>
+    </div>
+    
+    <? if ($rsParts->num_rows > 0) { $rsParts->data_seek(0); } ?> 
+    <? while ($row = $rsParts->fetch_assoc()) { ?>
+			<div class="TabbedPanelsContent">										<!-- Div: Course Part -->
+				<? if ($can_edit) { ?><div class='fltrt'>
+      			<a href='course_part_edit.php?partkey=<? echo $row['key']; ?>'>edit</a> | 
+      			<a href='course_parts_list.php?coursekey=<? echo $coursekey; ?>&delete_part=<? echo $row['key']; ?>'>delete</a>
+      		</div>
+      	<? } ?>
+				<h2><? echo $row['title']; ?></h2>
+				<? echo $row['description']; ?>
+			</div>
+		<? } ?>
+
+		<? if ($can_edit) { ?>
+			<div class="TabbedPanelsContent">										<!-- Spacer (Add Parts) -->
+				<h2>Add course part</h2>
+				<a href='course_parts_list.php?coursekey=<? 
+					echo $coursekey; ?>&new_part=yes'>+ add part</a>
+			</div>
+		<? } ?>
+
+
+    <? if ($rsClasses->num_rows > 0) { $rsClasses->data_seek(0); } ?> 
+    <? while ($class = $rsClasses->fetch_assoc()) { ?>
+			<div class="TabbedPanelsContent">										<!-- Div: Class -->
+
+				<? if ($can_edit) { ?><div class='fltrt'>
+      			<a href='course_class_edit.php?classkey=<? echo $class['key']; ?>'>edit</a> | 
+      			<a href='course_classes_list.php?coursekey=<? echo $coursekey; ?>&delete_class=<? echo $class['key']; ?>'>delete</a>
+      		</div>
+      	<? } ?>
+
+				<h2><? echo $class['title_long']; ?></h2>
+
+				<? if (!$class['is_visible_to_students']) { ?><p class='red'>Not yet visible to students</p><? } ?>
+
+				<? echo $class['description']; ?>
+				
+				<? if ($class['guiding_questions'] <> '') { ?>
+					<h3>Guiding questions</h3>
+					<? echo $class['guiding_questions']; ?>
+				<? } ?>
+				
+				<? if ($class['learning_goals'] <> '') { ?>
+					<h3>Learning goals</h3>
+					<? echo $class['learning_goals']; ?>
+				<? } ?>
+
+				<? if ($class['readings'] <> '') { ?>
+					<h3>Readings</h3>
+					<? echo $class['readings']; ?>
+					<? if ($class['readings_optional'] <> '') { ?>
+						<h3>Optional readings</h3>
+						<? echo $class['readings_optional']; ?>
+					<? } ?>
+				<? } ?>
+				
+				<? if ($class['link_to_lecture'] <> '') { ?>
+					<h3>Lecture</h3>
+					<a href='<? echo $class['link_to_lecture']; ?>' target='_blank'>view lecture</a>
+				<? } ?>
+				
+				<? if ($class['assignment'] <> '') { ?>
+					<h3><? if ($is_lectures_only) { echo "Reflections"; } else { echo "Assignment"; } ?></h3>
+					<? if (!$is_lectures_only) { ?>
+						<p><em>due <? echo date('F jS, Y', strtotime($class['date_assignment_due'])); ?>.</em></p>
+					<? } ?>
+					<? echo $class['assignment']; ?>
+				<? } ?>
+
+				<? if ($class['materials'] <> '') { ?>
+					<h3>Materials</h3>
+					<? echo $class['materials']; ?>
+				<? } ?>
+
+				<? if (!$is_lectures_only) { ?>
+					<h3>Class date</h3>
+					<? $days = $course['section_day_of_week']; 
+					if ($days == '') { $days = '1'; echo "(the week of) ";  }
+					echo date('F jS, Y', strtotime("+{$days} days", strtotime($class['date_of_class']))); ?>
+					<!-- at <? echo date('h:i A', strtotime($course['section_time_of_day'])); ?> EST -->
+				<? } ?>
+
+			</div>
+		<? } ?>
+
+		<? if ($can_edit) { ?>
+			<div class="TabbedPanelsContent">										<!-- Spacer (Add Classes) -->
+				<h2>Add class</h2>
+				<a href='course_classes_list.php?coursekey=<? 
+					echo $coursekey; ?>&new_class=yes'>+ add class</a>
+			</div>
+		<? } ?>
+
+
+    </div>
+  </div>
+
+  <script type="text/javascript">
+		var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+  </script>
+
+<? } // ENDIF: only show syllabus if it exists ?>
+
+  <br class='clearfloat' />
+  <p>&nbsp;</p>
+	<p>&nbsp;</p>
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

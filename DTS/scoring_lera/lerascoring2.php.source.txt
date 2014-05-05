@@ -1,0 +1,780 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['php_self'];
+if (isset($_SERVER['query_string'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['query_string']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE lerascores SET lasname=%s, pride_self_2=%s, pride_forother_18=%s, sadness_general_4=%s, sadness_specific_10=%s, fear_forself_5=%s, fear_forother_19=%s, indignation_atother_6=%s, indignation_forother_21=%s, anger_atself_25=%s, anger_atother_7=%s, anger_forother_20=%s, disgust_specific_8=%s, disgust_general_27=%s, disgust_atother_24=%s, guilt_specific_9=%s, guilt_general_26=%s, shame_specific_11=%s, shame_general_12=%s, shame_forother_22=%s, embarrassment_self_13=%s, embarrassment_forother_23=%s, contempt_29=%s, schadenfreude_30=%s, mudita_14=%s, elevation_3=%s, sympathy_15=%s, daad_16=%s, compassion_17=%s, hope_28=%s, happiness_1=%s WHERE lerakey=%s",
+                       GetSQLValueString($_POST['lasname'], "text"),
+                       GetSQLValueString(isset($_POST['pride_self_2']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['pride_forother_18']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sadness_general_4']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sadness_specific_10']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['fear_forself_5']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['fear_forother_19']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['indignation_atother_6']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['indignation_forother_21']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['anger_atself_25']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['anger_atother_7']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['anger_forother_20']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['disgust_specific_8']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['disgust_general_27']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['disgust_atother_24']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['guilt_specific_9']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['guilt_general_26']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['shame_specific_11']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['shame_general_12']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['shame_forother_22']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['embarrassment_self_13']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['embarrassment_forother_23']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['contempt_29']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['schadenfreude_30']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['mudita_14']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['elevation_3']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sympathy_15']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['daad_16']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['compassion_17']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['hope_28']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['happiness_1']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['lerakey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "lerascoring3.php";
+  if (isset($_SERVER['query_string'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['query_string'];
+  }
+  header(sprintf("location: %s", $updateGoTo));
+}
+
+$colname_rsLERAessays = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAessays = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAessays = sprintf("SELECT lerakey, lera.goodlife, lera.goodcitizen, lera.moralmean, lera.personaldilemma, lera.dilemma1, lera.dilemma2, lera.dilemma3  FROM lera WHERE lerakey = %s", GetSQLValueString($colname_rsLERAessays, "int"));
+$rsLERAessays = mysql_query($query_rsLERAessays, $Assessment) or die(mysql_error());
+$row_rsLERAessays = mysql_fetch_assoc($rsLERAessays);
+$totalRows_rsLERAessays = mysql_num_rows($rsLERAessays);
+
+$colname_rsLasname = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLasname = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasname = sprintf("SELECT lerascores.lerakey, lerascores.lasnumber_1, lasnumber.lasnumber, lasnumber.lasname  FROM lerascores, lasnumber  WHERE lasnumber.lasnumber = lerascores.lasnumber_1 AND lerascores.lerakey = %s", GetSQLValueString($colname_rsLasname, "int"));
+$rsLasname = mysql_query($query_rsLasname, $Assessment) or die(mysql_error());
+$row_rsLasname = mysql_fetch_assoc($rsLasname);
+$totalRows_rsLasname = mysql_num_rows($rsLasname);
+
+$colname_rsLERAscores = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAscores = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAscores = sprintf("SELECT lerakey, lasname, happiness_1, hope_28, pride_self_2, elevation_3, sadness_general_4, sadness_specific_10, fear_forself_5, indignation_atother_6, anger_atself_25, anger_atother_7, disgust_specific_8, disgust_general_27, guilt_specific_9, guilt_general_26, shame_specific_11, shame_general_12, embarrassment_self_13, mudita_14, sympathy_15, daad_16, compassion_17, pride_forother_18, fear_forother_19, anger_forother_20, indignation_forother_21, shame_forother_22, embarrassment_forother_23, disgust_atother_24, contempt_29, schadenfreude_30 FROM lerascores WHERE lerakey = %s", GetSQLValueString($colname_rsLERAscores, "int"));
+$rsLERAscores = mysql_query($query_rsLERAscores, $Assessment) or die(mysql_error());
+$row_rsLERAscores = mysql_fetch_assoc($rsLERAscores);
+$totalRows_rsLERAscores = mysql_num_rows($rsLERAscores);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_1 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 1";
+$rsMoralEmotionsGood_1 = mysql_query($query_rsMoralEmotionsGood_1, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_1 = mysql_fetch_assoc($rsMoralEmotionsGood_1);
+$totalRows_rsMoralEmotionsGood_1 = mysql_num_rows($rsMoralEmotionsGood_1);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_2 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 2";
+$rsMoralEmotionsGood_2 = mysql_query($query_rsMoralEmotionsGood_2, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_2 = mysql_fetch_assoc($rsMoralEmotionsGood_2);
+$totalRows_rsMoralEmotionsGood_2 = mysql_num_rows($rsMoralEmotionsGood_2);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_4 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 4";
+$rsMoralEmotionsGood_4 = mysql_query($query_rsMoralEmotionsGood_4, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_4 = mysql_fetch_assoc($rsMoralEmotionsGood_4);
+$totalRows_rsMoralEmotionsGood_4 = mysql_num_rows($rsMoralEmotionsGood_4);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_5 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 5";
+$rsMoralEmotionsGood_5 = mysql_query($query_rsMoralEmotionsGood_5, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_5 = mysql_fetch_assoc($rsMoralEmotionsGood_5);
+$totalRows_rsMoralEmotionsGood_5 = mysql_num_rows($rsMoralEmotionsGood_5);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_14 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 14";
+$rsMoralEmotionsGood_14 = mysql_query($query_rsMoralEmotionsGood_14, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_14 = mysql_fetch_assoc($rsMoralEmotionsGood_14);
+$totalRows_rsMoralEmotionsGood_14 = mysql_num_rows($rsMoralEmotionsGood_14);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_16 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 16";
+$rsMoralEmotionsGood_16 = mysql_query($query_rsMoralEmotionsGood_16, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_16 = mysql_fetch_assoc($rsMoralEmotionsGood_16);
+$totalRows_rsMoralEmotionsGood_16 = mysql_num_rows($rsMoralEmotionsGood_16);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_18 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 18";
+$rsMoralEmotionsGood_18 = mysql_query($query_rsMoralEmotionsGood_18, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_18 = mysql_fetch_assoc($rsMoralEmotionsGood_18);
+$totalRows_rsMoralEmotionsGood_18 = mysql_num_rows($rsMoralEmotionsGood_18);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_28 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 28";
+$rsMoralEmotionsGood_28 = mysql_query($query_rsMoralEmotionsGood_28, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_28 = mysql_fetch_assoc($rsMoralEmotionsGood_28);
+$totalRows_rsMoralEmotionsGood_28 = mysql_num_rows($rsMoralEmotionsGood_28);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_3 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 3";
+$rsMoralEmotionsDev_3 = mysql_query($query_rsMoralEmotionsDev_3, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_3 = mysql_fetch_assoc($rsMoralEmotionsDev_3);
+$totalRows_rsMoralEmotionsDev_3 = mysql_num_rows($rsMoralEmotionsDev_3);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_13 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 13";
+$rsMoralEmotionsDev_13 = mysql_query($query_rsMoralEmotionsDev_13, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_13 = mysql_fetch_assoc($rsMoralEmotionsDev_13);
+$totalRows_rsMoralEmotionsDev_13 = mysql_num_rows($rsMoralEmotionsDev_13);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_17 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 17";
+$rsMoralEmotionsDev_17 = mysql_query($query_rsMoralEmotionsDev_17, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_17 = mysql_fetch_assoc($rsMoralEmotionsDev_17);
+$totalRows_rsMoralEmotionsDev_17 = mysql_num_rows($rsMoralEmotionsDev_17);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_15 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 15";
+$rsMoralEmotionsDev_15 = mysql_query($query_rsMoralEmotionsDev_15, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_15 = mysql_fetch_assoc($rsMoralEmotionsDev_15);
+$totalRows_rsMoralEmotionsDev_15 = mysql_num_rows($rsMoralEmotionsDev_15);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_19 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 19";
+$rsMoralEmotionsDev_19 = mysql_query($query_rsMoralEmotionsDev_19, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_19 = mysql_fetch_assoc($rsMoralEmotionsDev_19);
+$totalRows_rsMoralEmotionsDev_19 = mysql_num_rows($rsMoralEmotionsDev_19);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_8 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 8";
+$rsMoralEmotionsDev_8 = mysql_query($query_rsMoralEmotionsDev_8, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_8 = mysql_fetch_assoc($rsMoralEmotionsDev_8);
+$totalRows_rsMoralEmotionsDev_8 = mysql_num_rows($rsMoralEmotionsDev_8);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_9 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 9";
+$rsMoralEmotionsDev_9 = mysql_query($query_rsMoralEmotionsDev_9, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_9 = mysql_fetch_assoc($rsMoralEmotionsDev_9);
+$totalRows_rsMoralEmotionsDev_9 = mysql_num_rows($rsMoralEmotionsDev_9);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_11 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 11";
+$rsMoralEmotionsDev_11 = mysql_query($query_rsMoralEmotionsDev_11, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_11 = mysql_fetch_assoc($rsMoralEmotionsDev_11);
+$totalRows_rsMoralEmotionsDev_11 = mysql_num_rows($rsMoralEmotionsDev_11);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_20 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 20";
+$rsMoralEmotionsDev_20 = mysql_query($query_rsMoralEmotionsDev_20, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_20 = mysql_fetch_assoc($rsMoralEmotionsDev_20);
+$totalRows_rsMoralEmotionsDev_20 = mysql_num_rows($rsMoralEmotionsDev_20);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_21 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 21";
+$rsMoralEmotionsDev_21 = mysql_query($query_rsMoralEmotionsDev_21, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_21 = mysql_fetch_assoc($rsMoralEmotionsDev_21);
+$totalRows_rsMoralEmotionsDev_21 = mysql_num_rows($rsMoralEmotionsDev_21);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_25 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 25";
+$rsMoralEmotionsDev_25 = mysql_query($query_rsMoralEmotionsDev_25, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_25 = mysql_fetch_assoc($rsMoralEmotionsDev_25);
+$totalRows_rsMoralEmotionsDev_25 = mysql_num_rows($rsMoralEmotionsDev_25);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsStall_29 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 29";
+$rsMoralEmotionsStall_29 = mysql_query($query_rsMoralEmotionsStall_29, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsStall_29 = mysql_fetch_assoc($rsMoralEmotionsStall_29);
+$totalRows_rsMoralEmotionsStall_29 = mysql_num_rows($rsMoralEmotionsStall_29);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsStall_30 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 30";
+$rsMoralEmotionsStall_30 = mysql_query($query_rsMoralEmotionsStall_30, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsStall_30 = mysql_fetch_assoc($rsMoralEmotionsStall_30);
+$totalRows_rsMoralEmotionsStall_30 = mysql_num_rows($rsMoralEmotionsStall_30);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsStall_12 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 12";
+$rsMoralEmotionsStall_12 = mysql_query($query_rsMoralEmotionsStall_12, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsStall_12 = mysql_fetch_assoc($rsMoralEmotionsStall_12);
+$totalRows_rsMoralEmotionsStall_12 = mysql_num_rows($rsMoralEmotionsStall_12);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsStall_26 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 26";
+$rsMoralEmotionsStall_26 = mysql_query($query_rsMoralEmotionsStall_26, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsStall_26 = mysql_fetch_assoc($rsMoralEmotionsStall_26);
+$totalRows_rsMoralEmotionsStall_26 = mysql_num_rows($rsMoralEmotionsStall_26);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsStall_27 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 27";
+$rsMoralEmotionsStall_27 = mysql_query($query_rsMoralEmotionsStall_27, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsStall_27 = mysql_fetch_assoc($rsMoralEmotionsStall_27);
+$totalRows_rsMoralEmotionsStall_27 = mysql_num_rows($rsMoralEmotionsStall_27);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsBoth_24 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 24";
+$rsMoralEmotionsBoth_24 = mysql_query($query_rsMoralEmotionsBoth_24, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsBoth_24 = mysql_fetch_assoc($rsMoralEmotionsBoth_24);
+$totalRows_rsMoralEmotionsBoth_24 = mysql_num_rows($rsMoralEmotionsBoth_24);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsBoth_6 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 6";
+$rsMoralEmotionsBoth_6 = mysql_query($query_rsMoralEmotionsBoth_6, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsBoth_6 = mysql_fetch_assoc($rsMoralEmotionsBoth_6);
+$totalRows_rsMoralEmotionsBoth_6 = mysql_num_rows($rsMoralEmotionsBoth_6);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsBoth_7 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 7";
+$rsMoralEmotionsBoth_7 = mysql_query($query_rsMoralEmotionsBoth_7, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsBoth_7 = mysql_fetch_assoc($rsMoralEmotionsBoth_7);
+$totalRows_rsMoralEmotionsBoth_7 = mysql_num_rows($rsMoralEmotionsBoth_7);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsBoth_22 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 22";
+$rsMoralEmotionsBoth_22 = mysql_query($query_rsMoralEmotionsBoth_22, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsBoth_22 = mysql_fetch_assoc($rsMoralEmotionsBoth_22);
+$totalRows_rsMoralEmotionsBoth_22 = mysql_num_rows($rsMoralEmotionsBoth_22);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsBoth_23 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 23";
+$rsMoralEmotionsBoth_23 = mysql_query($query_rsMoralEmotionsBoth_23, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsBoth_23 = mysql_fetch_assoc($rsMoralEmotionsBoth_23);
+$totalRows_rsMoralEmotionsBoth_23 = mysql_num_rows($rsMoralEmotionsBoth_23);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsBoth_10 = "SELECT moralemotionkey, good_right, emotiondescription FROM leramoralemotions WHERE moralemotionkey = 10";
+$rsMoralEmotionsBoth_10 = mysql_query($query_rsMoralEmotionsBoth_10, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsBoth_10 = mysql_fetch_assoc($rsMoralEmotionsBoth_10);
+$totalRows_rsMoralEmotionsBoth_10 = mysql_num_rows($rsMoralEmotionsBoth_10);
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelerascore2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: </title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #916446;
+	background-image: url(/images/skin/LERAbackground.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LERAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #A78166;
+	background-image: url(/images/skin/LERAmenu.jpg);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #A78166;
+	background-image: url(/images/skin/LERAmenu.jpg);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container .indent46 a:link {
+	color: #929292;
+}
+.twoColFixRtHdr #container .indent46 a:visited {
+	color: #929292;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:hover {
+	color: #474A47;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="#" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="/" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <a href="/scoring/chooseassessment.php">choose assessment</a> | <a href="/scoring/chooselera.php">choose lera</a> | <a href="/scoring/bulkcustomerselect.php">sortable</a><a href="/scoring_lera/lera_sortable.php"></a> | <a href="/scoring_lera/lera_essaycom.php">essay comments</a> | <a href="/scoring_lera/lera_generalcom.php">general comment</a> | <a href="/scoring_lera/lera_strengths.php">strengths</a> | <a href="/scoring_lera/lera_growthareas.php">growth areas</a> | <a href="/scoring_lera/lera_resources.php">resources</a> | <a href="/scoring_lera/lera_strengthcom.php">strength comments</a> | <a href="/scoring_lera/lera_growthcom.php">growth comments</a> | <a href="/scoring_lera/lera_recommendstrength.php">recommendation strength</a> | <a href="/scoring_lera/lera_recommendgrowth.php">recommendation growth</a> | <a href="/scoring_lera/lera_emotions.php">moral emotions</a></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>CODE ASSESSMENT <?php echo $_GET['lerakey']; ?> (page 1)</h1>
+      <p>Check moral emotions that are expressed in this performance.</p>
+      <form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+        <table>
+          <tr>
+            <td><input type="checkbox" name="pride_self_2" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['pride_self_2'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsGood_2['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="pride_forother_18" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['pride_forother_18'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsGood_18['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="sadness_general_4" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['sadness_general_4'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsGood_4['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="sadness_specific_10" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['sadness_specific_10'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsBoth_10['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="fear_forself_5" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['fear_forself_5'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsGood_5['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="fear_forother_19" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['fear_forother_19'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsDev_19['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="indignation_atother_6" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['indignation_atother_6'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsBoth_6['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="indignation_forother_21" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['indignation_forother_21'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsDev_21['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="anger_atself_25" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['anger_atself_25'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsDev_25['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="anger_atother_7" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['anger_atother_7'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsBoth_7['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="anger_forother_20" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['anger_forother_20'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsDev_20['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="disgust_specific_8" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['disgust_specific_8'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsDev_8['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="disgust_general_27" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['disgust_general_27'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsStall_27['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="disgust_atother_24" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['disgust_atother_24'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsBoth_24['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="guilt_specific_9" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['guilt_specific_9'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsDev_9['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="guilt_general_26" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['guilt_general_26'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsStall_26['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="shame_specific_11" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['shame_specific_11'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsDev_11['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="shame_general_12" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['shame_general_12'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsStall_12['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="shame_forother_22" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['shame_forother_22'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsBoth_22['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="embarrassment_self_13" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['embarrassment_self_13'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsDev_13['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="embarrassment_forother_23" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['embarrassment_forother_23'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsBoth_23['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="contempt_29" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['contempt_29'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsStall_29['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="schadenfreude_30" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['schadenfreude_30'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsStall_30['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="mudita_14" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['mudita_14'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsGood_14['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="elevation_3" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['elevation_3'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsDev_3['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="sympathy_15" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['sympathy_15'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsDev_15['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="daad_16" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['daad_16'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsGood_16['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="compassion_17" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['compassion_17'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsDev_17['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="hope_28" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['hope_28'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsGood_28['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td><input type="checkbox" name="happiness_1" value=""  <?php if (!(strcmp(htmlentities($row_rsLERAscores['happiness_1'], ENT_COMPAT, 'UTF-8'),1))) {echo "checked=\"checked\"";} ?> /></td>
+            <td><?php echo $row_rsMoralEmotionsGood_1['emotiondescription']; ?></td>
+          </tr>
+          <tr valign="baseline">
+            <td>&nbsp;</td>
+            <td><div align="right">
+              <input type="submit" value="SUBMIT" />
+            </div></td>
+          </tr>
+        </table>
+        <input type="hidden" name="lerakey" value="<?php echo $_GET['lerakey']; ?>" />
+        <input type="hidden" name="lasname" value="<?php echo $row_rsLasname['lasname']; ?>" />
+        <input type="hidden" name="MM_update" value="form1" />
+        <input type="hidden" name="lerakey" value="<?php echo $row_rsLERAscores['lerakey']; ?>" />
+    </form>
+    <h2>Essays</h2>      
+      <h3>Good life</h3>
+    <p><?php echo $row_rsLERAessays['goodlife']; ?></p>
+    <h3>Good citizen</h3>
+    <p><?php echo $row_rsLERAessays['goodcitizen']; ?></p>
+    <h3>Meaning of morality</h3>
+    <p><?php echo $row_rsLERAessays['moralmean']; ?></p>
+    <h3>Dilemma 1</h3>
+    <p><?php echo $row_rsLERAessays['personaldilemma']; ?> <?php echo $row_rsLERAessays['dilemma1']; ?></p>
+    <h3>Dilemma 2</h3>
+    <p><?php echo $row_rsLERAessays['dilemma2']; ?></p>
+    <h3>Dilemma 3</h3>
+    <p><?php echo $row_rsLERAessays['dilemma3']; ?></p>
+    <p>&nbsp;</p>
+    <p>&nbsp;</p><p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+<!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsDecision);
+
+mysql_free_result($rsLERAessays);
+
+mysql_free_result($rsLasname);
+
+mysql_free_result($rsLERAscores);
+
+mysql_free_result($rsMoralEmotionsGood_1);
+
+mysql_free_result($rsMoralEmotionsDev_3);
+
+mysql_free_result($rsMoralEmotionsStall_27);
+
+mysql_free_result($rsMoralEmotionsBoth_10);
+
+mysql_free_result($rsMoralEmotionsStall_30);
+
+mysql_free_result($rsMoralEmotionsStall_29);
+
+mysql_free_result($rsMoralEmotionsBoth_23);
+
+mysql_free_result($rsMoralEmotionsBoth_22);
+
+mysql_free_result($rsMoralEmotionsBoth_7);
+
+mysql_free_result($rsMoralEmotionsBoth_6);
+
+mysql_free_result($rsMoralEmotionsBoth_24);
+
+mysql_free_result($rsMoralEmotionsStall_26);
+
+mysql_free_result($rsMoralEmotionsStall_12);
+
+mysql_free_result($rsMoralEmotionsDev_25);
+
+mysql_free_result($rsMoralEmotionsDev_21);
+
+mysql_free_result($rsMoralEmotionsDev_20);
+
+mysql_free_result($rsMoralEmotionsDev_11);
+
+mysql_free_result($rsMoralEmotionsDev_9);
+
+mysql_free_result($rsMoralEmotionsDev_8);
+
+mysql_free_result($rsMoralEmotionsDev_19);
+
+mysql_free_result($rsMoralEmotionsDev_15);
+
+mysql_free_result($rsMoralEmotionsDev_13);
+
+mysql_free_result($rsMoralEmotionsDev_17);
+
+mysql_free_result($rsMoralEmotionsGood_28);
+
+mysql_free_result($rsMoralEmotionsGood_18);
+
+mysql_free_result($rsMoralEmotionsGood_16);
+
+mysql_free_result($rsMoralEmotionsGood_14);
+
+mysql_free_result($rsMoralEmotionsGood_5);
+
+mysql_free_result($rsMoralEmotionsGood_4);
+
+mysql_free_result($rsMoralEmotionsGood_2);
+
+mysql_free_result($rsLasnumber);
+?>

@@ -1,0 +1,249 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Rferences</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible p {
+	line-height: 20px;
+}
+.container .inner_container .column1 .TabbedPanelsTab {
+	padding-left: 6px;
+}
+-->
+</style>
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+        <td valign="top"><p><a href="referencesmj.php">ethical reasoning</a> | <a href="referencesrj.php">reflective judgment</a> | <a href="referencesself.php">self understanding</a> | <a href="referencesdm.php">decision making</a> | <a href="referenceslead.php">leadership</a> | <a href="references.php">site</a> | <a href="../creativity/c-results.php">creativity</a></p>
+          <h1>SITE REFERENCES
+          </h1>
+          <div id="TabbedPanels1" class="TabbedPanels">
+            <ul class="TabbedPanelsTabGroup">
+              <li class="TabbedPanelsTab">A-B</li>
+              <li class="TabbedPanelsTab">C-E</li>
+              <li class="TabbedPanelsTab">F-G</li>
+              <li class="TabbedPanelsTab">H-J</li>
+              <li class="TabbedPanelsTab">K-L</li>
+              <li class="TabbedPanelsTab">M-P</li>
+              <li class="TabbedPanelsTab">Q-T</li>
+              <li class="TabbedPanelsTab">U-Z</li>
+            </ul>
+            <div class="TabbedPanelsContentGroup">
+              <div class="TabbedPanelsContent">
+                <p>_____ (2001). Washington, D. C.: <i>Atlas of Science Literacy. </i>American Association for the Advancement of Science, National Science Teachers Association.                </p>
+                <p>Amir, R., Frankl, D. R., &amp; Tamir, R. (1987). Justifications of answers to multiple choice items as a means for identifying misconceptions. In J. D. Novak (Ed.), <i>Proceedings of the Second International Seminar on Misconceptions and Educational Strategies in Science and Mathematics</i> (Vol. Vol. I, pp. 15-26). Ithaca, NY: Cornell University.</p>
+                <p>Armon, C. (1984). Ideals of the good life: Evaluative reasoning in children and adults. Unpublished Doctoral dissertation, Harvard, Boston.</p>
+                <p>Armon, C., &amp; Dawson, T. L. (1997). Developmental trajectories in moral reasoning across the lifespan. <i>Journal of Moral Education, 26,</i> 433-453.</p>
+                <p>Bass, B. M. (1985). <em>Leadership and performance beyond expectations</em>. New York: The Free Press.</p>
+                <p></p>
+              </div>
+              <div class="TabbedPanelsContent">
+                <p>Case, R. (1985). Intellectual development: Birth to adulthood. New York: Academic Press.</p>
+                <p>Case, R., &amp; Okamoto, Y. (1996). <i>The role of central conceptual structures in the development of children's thought</i> (Vol. 61 (1-2). New York: Blackwell.</p>
+                <p>Cavallo, A. M. L. (1996). Meaningful learning, reasoning ability, and students' understanding and problem solving of topics in genetics. <i>Journal of Research in Science Teaching, 33</i>, 625-656.</p>
+                <p>Chandler, M. J., Boyes, M., &amp; Ball, L. (1990). Relativism and stations of epistemic doubt. <em>Journal of Experimental Child Psychology, 50,</em> 370-395.</p>
+                <p>Colby, A., &amp; Kohlberg, L. (1987a). The measurement of moral judgment, Vol. 1: Theoretical foundations and research validation. New York: Cambridge University Press.</p>
+                <p>Colby, A., &amp; Kohlberg, L. (1987b). The measurement of moral judgment, Vol. 2: Standard issue scoring manual. New York: Cambridge University Press.</p>
+                <p>Commons, M. L., Trudeau, E. J., Stein, S. A., Richards, S. A., &amp; Krause, S. R. (1998). Hierarchical complexity of tasks shows the existence of developmental stages. Developmental Review, 18, 237-278.</p>
+                <p>Commons, M. L., Straughn, J., Meaney, M., Johnstone, J., Weaver, J. H., Lichtenbaum, E., et al. (1995, November). The general stage scoring system: How to score anything. Paper presented at the Annual meeting of the Association for Moral Education.</p>
+                <p>Damon, W. (1977). Measurement and social development. Counseling Psychologist, 6, 13-15.</p>
+                <p>Demetriou, A., Platsidou, M., Efklides, A., Metallidou, Y., &amp; et al. (1991). The development of quantitative-relational abilities from childhood to adolescence: Structure, scaling, and individual differences. <i>Learning &amp; Instruction, 1,</i> 19-43.</p>
+                <p></p>
+              </div>
+              <div class="TabbedPanelsContent">
+                <p>Fischer, K. (1980). A theory of cognitive development: The control and construction of hierarchies of skills.<i> Psychological Review, 87, </i>477-531.</p>
+                <p>Fischer, K., &amp; Rose, S. P. (1999). Rulers, clocks, and non-linear dynamics: Measurement and method in developmental research. In G. Savelsbergh &amp; H.</p>
+                <p>van der Maas &amp; P. van Geert (Eds.), <i>Nonlinear developmental processes</i> (pp. 197-212). Amsterdam: Royal Netherlands Academy of Arts and Sciences.</p>
+                <p>Fischer, K. W., &amp; Bidell, T. R. (1998). Dynamic development of psychological structures in action and thought. In W. Damon &amp; R. M. Lerner (Eds.), <i>Handbook of Child Psychology: Theoretical models of human development </i>(5 ed., pp. 467-561). New York: John Wiley &amp; Sons.</p>
+                <p>Fischer, K. W., Hand, H. H., Watson, M. W., van Parys, M., &amp; Tucker, J. (1984). Putting the child into socialization: The development of social categories in preschool children. In L. Katz (Ed.), <i>Current topics in early childhood education </i>(Vol. 5, pp. 27-72). Norwood, NJ: Ablex.</p>
+                <p>Furnham, A., &amp; Briggs, J. (1993). Ethical ideology and moral choice: A study concerning the allocation of medical resources.<em> Journal of Social Behavior &amp; Personality, 8</em>(1), 87-98.</p>
+                <p>Germann. (1994). Testing a model of science process skills acquisition: An interaction with parents' education, preferred language, gender, science attitude, cognitive development, academic ability, and biology knowledge. <i>Journal of Research in Science Teaching, 31</i>, 749-783.</p>
+              </div>
+              <div class="TabbedPanelsContent">
+                <p>Halford, G. (1999). <i>The development of intelligence includes the capacity to processing relations of greater complexity, The development of intelligence. </i>(pp. 193-213). Hove, England: Psychology Press/Taylor &amp; Francis (UK).</p>
+                <p>Harvey, M. E. (2001). <em>The impact of organizational ethical climate and ethical ideology on the propensity to create budgetary slack and job satisfaction.</em> Nova Southeastern University, Ann Arbor, MI.</p>
+                <p>Hooijiberg, R., &amp; Schneider (2001). Behavioral complexity and social intelligence: how executive leaders use stakeholders to form systems perspective. In Zaccaro &amp; Klimoski (Eds.), <em>The nature of organizational leadership: Understanding the performance imperatives confronting today's leaders.</em> (pp. 104-131). San Francisco: Jossey-Bass.<br />
+                </p>
+                <p>Jaques, E. (1996). <em>Requisite organization</em>. Arlignton, VA.: Cason Hall &amp; Co.</p>
+              </div>
+              <div class="TabbedPanelsContent">
+                <p>Keller, M., Eckensberger, L. H., &amp; von Rosen, K. (1989). A critical note on the conception of preconventional morality: The case of stage 2 in Kohlberg's theory.<i> International Journal of Behavioral Development, 12,</i> 57-69.</p>
+                <p>Keller, M., Edelstein, W., Schmid, C., Fang, F., &amp; Faug, G. (1998). Reasoning about responsibilities and obligations in close relationships: A comparison across two cultures. <em>Developmental Psychology, 34</em>(4), 731-741.</p>
+                <p>Killen, M. (1991). Social and moral development in early childhood. In J. L. G. William M. Kurtines (Ed.), <i>Handbook of moral behavior and development, Vol. 1: Theory; Vol. 2: Research; Vol. 3: Application.</i> (pp. 115-138): Lawrence Erlbaum Associates, Inc, Hillsdale, NJ, US.</p>
+                <p>Kitchener, K. S. (1983). Cognition, metacognition, and epistemic cognition: A three level model of cognitive processing. <em>Human Development, 26,</em> 222-232.</p>
+                <p>Kitchener, K. S., &amp; King, P. M. (1990). <i>The reflective judgment model: ten years of research.</i> In M. L. Commons &amp; C. Armon &amp; L. Kohlberg &amp; F. A. Richards &amp; T. A. Grotzer &amp; J. D. Sinnott (Eds.), Adult development (Vol. 2, pp. 62-78). New York NY: Praeger.</p>
+                <p>Kleiser, S. B., Sivadas, E., Kellaris, J. J., &amp; Dahlstrom, R. F. (2003). Ethical ideologies: Efficient assessment and influence on ethical judgements of marketing practices. <em>Psychology &amp; Marketing, 20</em>(1), 1-21.</p>
+                <p>Kuhn, D. (1976). Short-term longitudinal evidence for the sequentiality of Kohlberg's early stages of moral judgment. <i>Developmental Psychology, 12,</i> 162-166.</p>
+                <p>Kuhn, D., Cheney, R., &amp; Weinstock, M. (2000). The development of epistemological understanding. Cognitive Development, 15, 309-328.</p>
+                <p>Lawson, A. E., Alkhoury, S., Benford, R., Clark, B. R., &amp; Falconer, K. A. (2000). What kinds of scientific concepts exist? Concept construction and intellectual development in college biology. <i>Journal of Research in Science Teaching, 37,</i> 996-1018.</p>
+                <p>Lawson, A. E., &amp; Renner, J. W. (1975). Relationships of concrete and formal operational science subject matter and the developmental level of the learner. <i>Journal of Research in Science Teaching, 12</i>, 347-358.</p>
+                <p>Lawson, A. E., &amp; Thompson, L. D. (1988). Formal reasoning ability and misconceptions concerning genetics and natural selection.<i> Journal of Research in Science Teaching, 25</i>, 733-746.</p>
+                <p>Lawson, A. E., &amp; Weser, J. (1990). The rejection of nonscientific beliefs about life: Effects of instruction and reasoning skills.<i> Journal of Research in Science Teaching, 27,</i> 589-606.</p>
+              </div>
+              <div class="TabbedPanelsContent">
+                <p>Mines, R. A., King, P. M., Hood, A. B., &amp; Wood, P. K. (1990). Stages of intellectual development and associated critical thinking skills in college students. <em>Journal of College Student Development, 31,</em> 538-547.</p>
+                <p>Perry, W. G. (1970). <i>Forms of intellectual and ethical development in the college years.</i> New York: Holt, Rinehart, &amp; Winston.</p>
+                <p>Piaget, J., &amp; Inhelder, B. (1969). <i>The psychology of the child.</i> New York: Basic Books.</p>
+                <p>Piaget, J. (2000). <i>Studies in reflecting abstraction</i> (R. L. Campbell, Trans.). Hove: Psychology Press.</p>
+                <p>Park, H. (2002). <em>Socially responsible buying in the apparel industry.</em> Unpublished doctoral dissertation, Ohio State University, Columbus, OH.</p>
+              </div>
+              <div class="TabbedPanelsContent">
+                <p>Renner, J. W., &amp; Marek, E. A. (1990). An educational theory base for science teaching. <i>Journal of Research in Science Teaching, 27</i>, 241-246.</p>
+                <p>Schoenfeld, A. (Ed.). (2007). <em>Assessing mathematical proficiency</em> (Vol. 53). New York: Cambridge University Press.</p>
+                <p>Schommer, M. (1990). Effects of beliefs about the nature of knowledge on comprehension. <em>Journal of Educational Psychology, 82,</em> 498-504.</p>
+                <p>Schommer, M. (1994). An emerging conceptualization of epistemological beliefs and their role in learning. In R. Garner &amp; P. A. Alexander (Eds.), <em>Beliefs about text and instruction with text</em> (pp. 25-40). Hillsdale, NJ: Lawrence Erlbaum.</p>
+                <p>Schommer, M., Calvert, C., Gariglietti, G., &amp; Bajaj, A. (1997). The development of epistemological beliefs among secondary students: A longitudinal study. <em>Journal of Educational Psychology, 89,</em> 37-40.</p>
+                <p>Schommer-Aikins, M., &amp; Hutter, R. (2002). Epistemological beliefs and thinking about everyday controversial issues. <em>Journal of Psychology: Interdisciplinary &amp; Applied,</em> 136, 1.</p>
+                <p>Shayer, M., &amp; Adey, P. S. (1993). Accelerating the development of formal thinking in middle and high school students: IV. Three years after a two-year intervention. <i>Journal of Research in Science Teaching, 30,</i> 351-366.</p>
+                <p>Silva, T., &amp; Nicholls, J. G. (1993). College students as writing theorists: Goals and beliefs about the causes of success. <em>Contemporary Educational Psychology, 18, </em>281-293.</p>
+                <p>Singer, J. D., &amp; Willett, J. B. (2003). Applied longitudinal data analysis: Modeling change and event occurrence. New York: Oxford.</p>
+                <p>Sivadas, E., Kleiser, S. B., Kellaris, J., &amp; Dahlstrom, R. (2002). Moral philosophy, ethical evaluations, and sales manager hiring intentions. <em>Journal of Personal Selling &amp; Sales Management, 23</em>(1), 7-21.</p>
+                <p>Spiro, R. J., Coulson, R. L., Feltovich, P. J., &amp; Anderson, D. (1988). Cognitive flexibility theory: Advanced knowledge acquisition in ill-structured domains. In V. Patel (Ed.), Proceedings of the 10th Annual Conference of the Cognitive Science Society. Hillsdale, NJ: Erlbaum.</p>
+              </div>
+              <div class="TabbedPanelsContent">
+                <p>Vitell, S. J., Rallapalli, K. C., &amp; Singhapakdi, A. (1993). Marketing norms: The influence of personal moral philosophies and organizational ethical culture. Journal of the <em>Academy of Marketing Science, 21</em>(4), 331-337.</p>
+                <p>Wilson, M., &amp; Sloane, K. (2000). From principles to practice: An embedded assessment system. <i>Applied Measurement in Education, 13</i>, 181-208</p>
+              </div>
+            </div>
+          </div>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+    </td>
+    <script type="text/javascript">
+<!--
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+//-->
+        </script>
+  <!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+  <div align="center"><br />
+  </div>
+  <!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" --><!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

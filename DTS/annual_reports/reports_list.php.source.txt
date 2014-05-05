@@ -1,0 +1,254 @@
+<?php 
+include_once '../includes/dts_functions.php';	
+
+$can_edit = false;
+if (WA_Auth_RulePasses("Logged in as senior")) { $can_edit = true; } 
+
+$userkey = $_SESSION['log_userkey'];
+
+if (isset($_SESSION['instrument_id'])) { unset($_SESSION['instrument_id']); }
+
+
+// create new report
+if (isset($_GET['new_report'])) {
+	if (!$can_edit) { die("ERROR - can't edit!"); }
+	$sql_create = sprintf("INSERT INTO annual_reports (title, introduction, date_created) VALUES ('NEW REPORT', 
+		'<h2>Introduction</h2><p>Edit any field by clicking on the pencil (far right).', NOW())");
+	$result = mysql_query($sql_create) or die("ERROR creating new report: ".mysql_error());
+	$key = mysql_insert_id();
+	header("Location: ?"); exit();
+}
+
+// create duplicate of this report
+if (isset($_GET['clone_report'])) {
+	if (!$can_edit) { die("ERROR - can't edit!"); }
+	$old_reportkey = $_GET['clone_report']; 
+	// create new report object
+	$sql_create = sprintf("INSERT INTO annual_reports (title, description_admin, content_intro, date_created)
+		SELECT CONCAT('CLONE: ', title), description_admin, content_intro, NOW()
+		FROM annual_reports r
+		WHERE r.key = %s",
+			SQLstr($old_reportkey,'int'));
+	$result = mysql_query($sql_create) or die("ERROR cloning this report: ".mysql_error());
+	$new_reportkey = mysql_insert_id();
+	// clone sections
+	$sql_sections = sprintf("INSERT INTO annual_report_sections (in_reportkey, order, text_header, text_revealed, date_created)
+		SELECT %s, order, text_header, text_revealed, NOW()
+		FROM annual_report_sections s
+		WHERE s.in_reportkey = %s",
+			SQLstr($new_reportkey, 'int'),
+			SQLstr($old_reportkey, 'int'));
+	$result = mysql_query($sql_sections) or die("ERROR cloning sections: ".mysql_error());
+	// refresh view
+	header("Location: ?"); exit();
+}
+
+
+
+// fetch list of annual reports
+$sql_public = "";
+if (!$can_edit) { $sql_public = " AND r.is_public = 1 "; }
+$sql = "SELECT r.*,
+	COUNT(s.key) AS num_sections
+	FROM annual_reports r
+		LEFT JOIN annual_report_sections s ON r.key = s.in_reportkey
+	WHERE 1=1 {$sql_public}
+	GROUP BY r.key
+	ORDER BY r.title";
+$rsReports = mysql_query($sql) or die("ERROR fetching list of reports: ".mysql_error());
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: List of reports</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<script src="../includes/jquery.js"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<script src="../includes/jquery.dotimeout.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+<script src="../includes/jquery.highlight.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+	
+	$('#filter_rows').keyup(function(){
+		// quarter-second timeout reduces JS lag if searching huge page
+		$('#loading_filter_rows').show();
+		$.doTimeout('search', 250, function(){
+			var search_term = $('#filter_rows').val();
+			var rows = $('.list_row');
+			if (search_term == '') { 
+				rows.removeHighlight().show(); 
+			} else {
+				// thanks to Johann Burkard for the excellent Highlight plugin.
+				// Remove highlight spans, and remove any other elements that have had the highlight class added
+				rows.removeHighlight();
+				rows.find('.highlight').removeClass('highlight');
+				rows.highlight(search_term); 
+				// Hide all stems; then show stems where highlights were found (at any level).
+				rows.hide();
+				rows.find('.highlight').parents('.list_row').show();
+			}
+			$('#loading_filter_rows').hide();
+		});
+		
+	});
+
+});
+
+
+</script>
+
+<style type="text/css">
+
+	a { color: #008A8C; cursor: pointer; }
+
+	#filter_rows { margin: 0px; padding: 0px; }
+	#loading_filter_rows { display: none; }
+
+	.highlight { background-color: yellow }
+	.list_row_hover { background-color: #ddd; }
+
+	.black { color: black; }
+
+</style>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>LIST OF REPORTS</h1>
+  
+  <? if ($can_edit) { ?>
+	  <p>Filter <input type='text' id='filter_rows' />
+	  	<span id='loading_filter_rows'><em>Loading...</em></span>
+	  </p>
+	  <p>&nbsp;</p>
+	<? } ?>
+
+  <table class='minimalist-a'>
+  	<tr>
+  		<? if ($can_edit) { ?>
+    		<th>Key</th>
+    	<? } ?>
+    	<th>Title</th>
+    	<? if ($can_edit) { ?>
+    		<th># sections</th>
+    		<th>Public?</th>
+    	<? } ?>
+    	<th colspan='2'></th>
+    </tr>
+    <? while ($report = mysql_fetch_assoc($rsReports)) { ?>
+	    <tr class='list_row'>
+    		<? if ($can_edit) { ?>
+	    		<td><? echo $report['key']; ?></td>
+	    	<? } ?>
+	    	<td class='black'><? echo $report['title']; ?></td>
+    		<? if ($can_edit) { ?>
+		    	<td class='black'><? echo $report['num_sections']; ?></td>
+		    	<td><? echo ($report['is_public'] == 1 ? "yes" : "no"); ?></td>
+		    <? } ?>
+	    	<td><a href='report_view.php?reportkey=<? echo $report['key']; ?>'>
+	    		view <? if ($can_edit) { ?>& edit<? } ?></a></td>
+    		<? if ($can_edit) { ?>
+	    		<td><a href='?clone_report=<? echo $report['key']; ?>'>clone</a></td>
+	    	<? } ?>
+	    </tr>
+    <? } ?>
+    <? if ($can_edit) { ?>
+	    <tr>
+	      <td colspan='10'>
+	        <a href='?new_report'>+ new report</a>
+	      </td>
+	    </tr>
+	  <? } ?>
+  </table>
+  
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

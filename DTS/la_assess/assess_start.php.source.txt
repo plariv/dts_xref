@@ -1,0 +1,144 @@
+<?php
+  ob_start();
+
+// SetSessionVar.php
+// Sessiom start & error reporting requred for session variables code
+if (!isset($_SESSION)) {
+  session_start();
+}
+error_reporting(E_ALL); 
+
+
+require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" ); 
+include_once ("../includes/general_custom_functions.php");
+mysql_select_db($database_Assessment, $Assessment);
+
+
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+$userkey = $_SESSION['log_userkey']; 
+
+
+// if no instrument_id is chosen, then force the user to choose one.
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_base = str_replace("_JOURNAL", "", $instrument_id); 
+
+
+
+
+// If an LAKEY is specified, then the user should just be directed on to the first page.
+if (isset($_GET['lakey']) AND $_GET['lakey'] <> "") {
+	header(sprintf("Location: assess_personal1.php?lakey=".$_GET['lakey']));
+	exit();
+}
+
+
+
+//						CALCULATE WHICH TEST TIME THIS IS
+
+// The test time is calculated as: find the largest test_time number among this user's records for this instrument_id, and add 1 to it. If the assignment has a test time assigned to it, this result won't matter.
+
+$query_rsTestTime = sprintf("SELECT lakey, userkey, test_time FROM la_data WHERE userkey = %s AND (instrument_id = %s OR instrument_id = %s) ORDER BY test_time DESC", 
+		SQLstr($userkey, "int"), 
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base."_JOURNAL", "text"));
+$rsTestTime = mysql_query($query_rsTestTime, $Assessment) or die(mysql_error());
+$row_rsTestTime = mysql_fetch_assoc($rsTestTime);
+$test_time_today = $row_rsTestTime['test_time'] + 1;
+
+
+
+// Look up this registrant
+$sql = sprintf("SELECT * FROM registrants WHERE userkey = %s", 
+	SQLstr($userkey, 'int'));
+$rsRegistrant = mysql_query($sql) or die("ERROR looking up this user.");
+$registrant = mysql_fetch_assoc($rsRegistrant);
+
+// 						CHECK IF THE USER HAS ANY UN-STARTED ASSIGNMENTS FOR THIS INSTRUMENT_ID
+
+// Prioritizes 1) any assignment which is LIVE; 2) the most recent incomplete assignment.
+$sql = sprintf("SELECT a.*, dil.*, rb.company, r.bulkuserkey, 
+		IF(NOW() BETWEEN a.date_start AND a.date_end, 1, 0) AS is_live
+	FROM registrants r 
+		JOIN students_assignments sa ON r.userkey = sa.userkey 
+		JOIN la_assignments a ON sa.assignmentkey = a.assignmentkey
+			AND NOW() >= a.date_start
+		LEFT JOIN la_data d ON d.userkey = r.userkey AND d.assignmentkey = sa.assignmentkey
+		LEFT JOIN la_dilemmas dil ON a.assign_dilemmakey = dil.dilemmakey 
+		LEFT JOIN registrants rb ON a.bulkcustomerkey = rb.userkey 
+	WHERE r.userkey = %s AND a.instrument_id = %s AND d.lakey IS NULL
+	ORDER BY is_live DESC, a.date_end DESC 
+	LIMIT 1",
+		SQLstr($userkey, "int"),
+		SQLstr($instrument_id, "text"));
+$rsAssignments = mysql_query($sql) or die("rsAssignments: ".mysql_error());
+$assignment = mysql_fetch_assoc($rsAssignments);
+
+// If this assignment has a test time marked for it, save that test_time rather than the autocalc one.
+if ($assignment['test_time'] > 0) { 
+	$test_time_today = $assignment['test_time'];
+}
+
+// If this assn has research conditions, look up the dilemma for this user's condition + test time. 
+// Otherwise, default to the dilemmakey selected for this assignment (which may in turn be blank).
+// NOTE: There is NO NEED to check whether a previous la_data record is associated with this conditionkey. Only one la_data record should be associated with an assignmentkey (barring rare problem cases), and that's all we need worry about. 
+$dilemmakey = $assignment['dilemmakey'];
+$conditionkey = null;
+if ($assignment['use_dilemma_conditions'] == 1) { 
+	// Look up this research condition, if a dilemma is present for this test time
+	$sql_condition = sprintf("SELECT c.* 
+		FROM students_conditions sc 
+			JOIN la_conditions c ON sc.conditionkey = c.conditionkey
+		WHERE sc.userkey = %s AND c.instrument_id = %s AND time0%s_dilemmakey > 0 ",
+			SQLstr($userkey, 'int'),
+			SQLstr($instrument_id, 'text'),
+			SQLstr($test_time_today, 'int'));
+	$rsCondition = mysql_query($sql_condition) or die("ERROR preparing test condition: ".mysql_error());
+	$condition = mysql_fetch_assoc($rsCondition);
+	if ($condition['conditionkey'] > 0) { 
+		$conditionkey = $condition['conditionkey'];
+		$dilemmakey = $condition['time0'.$test_time_today.'_dilemmakey'];
+	}
+}
+
+
+
+// Resellerkey: based on assignment if present, otherwise based on the user
+$resellerkey = $assignment['bulkuserkey'];
+if ($resellerkey == 0) { $resellerkey = $registrant['bulkuserkey']; }
+
+$insertSQL = sprintf("INSERT INTO la_data 
+	(instrument_id, userkey, resellerkey, test_time, assignmentkey, conditionkey, dilemmakey) 
+	VALUES (%s, %s, %s, %s, %s, %s, %s) ",
+		 SQLstr($instrument_id, 'text'),
+		 SQLstr($userkey, 'int'),
+		 SQLstr($resellerkey, 'int'),
+		 SQLstr($test_time_today, 'int'),
+		 SQLstr($assignment['assignmentkey'], 'int'),
+		 SQLstr($conditionkey, 'int'),
+		 SQLstr($dilemmakey, 'int'));
+
+$Result1 = mysql_query($insertSQL, $Assessment) or die("Insert new record: ".mysql_error());
+$insert_ID = mysql_insert_id();
+
+$time_start = time(); // note the time the record was started.
+// If this record is finished in one sitting (not interrupted such that the URL variables would be reloaded), the URL var starttime will be carried through to the final page and the time to complete will be calculated there.
+
+
+
+$insertGoTo = "assess_personal1.php?lakey=".$insert_ID;
+if (isset($time_start)) { $insertGoTo .= "&starttime=".$time_start; }
+if (isset($_SERVER['QUERY_STRING'])) {
+	$insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+	$insertGoTo .= $_SERVER['QUERY_STRING'];
+}
+
+header(sprintf("Location: %s", $insertGoTo));
+
+
+?>

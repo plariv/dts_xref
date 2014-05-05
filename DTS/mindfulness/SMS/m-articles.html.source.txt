@@ -1,0 +1,193 @@
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mindfulness1.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Mindfulness survey:  References</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+
+
+<script src="../../SpryAssetsSMS/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../../SpryAssetsSMS/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+	background-color: #93B3C8;
+}
+.oneColFixCtrHdr #container {
+	width: 780px;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #7799B8;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+	background-image: url(/images/mindful/m-background.gif);
+}
+.oneColFixCtrHdr #header {
+	background-color: #DDDDDD;
+	background-image: url(/images/mindful/m-header.gif);
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+	height: 104px;
+}
+.oneColFixCtrHdr #menu {
+	background-color: #8AB3C4;
+	padding-top: 0;
+	padding-right: 40px;
+	padding-bottom: 0;
+	height: 20px;
+	background-image: url(/images/skin/SMSmenu.jpg);
+}
+.oneColFixCtrHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0;
+	vertical-align: text-bottom;
+}
+.oneColFixCtrHdr #mainContent {
+	padding-top: 30;
+	padding-right: 45px;
+	padding-bottom: 0;
+	padding-left: 45px;
+}
+.oneColFixCtrHdr #footer {
+	padding: 0 10px;
+}
+.oneColFixCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+-->
+</style>
+<link href="/css/styles3.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssets/SpryMenuBarHorizontalmind.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="oneColFixCtrHdr">
+
+<div id="container">
+  <div id="header">
+    <h1>&nbsp;</h1>
+  <!-- end #header --></div>
+  <div id="menu">
+       <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/landing.php">home</a></li>
+<li><a href="/mindfulness/SMS/m-articles.html">articles</a></li>
+        <li><a href="/mindfulness/SMS/m-intro.html">intro</a></li>
+        <li><a href="/mindfulness/SMS/m-start.php">survey</a></li>
+        <li><a href="/mindfulness/SMS/m-suggestions.php">ideas</a></li>
+        <li><a href="/mindfulness/SMS/m-teacherinfo.php" class="MenuBarItemSubmenu">teachers</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/bc_viewsms.php">view SMS results</a></li>
+            <li><a href="/mindfulness/SMJ/teacher_viewjournalentries.php">view SMS journal</a></li>
+            <li><a href="/bulkcustomers/bulkpolicies.php">policies &amp; schedules</a></li>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+        <li><a href="#" class="MenuBarItemSubmenu">research</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+    </ul>
+    <!-- end #menu --></div>
+  <div id="mainContent">
+    <!-- InstanceBeginEditable name="Main" -->
+<h1>References<br />
+  </h1>
+<div id="TabbedPanels1" class="TabbedPanels">
+      <ul class="TabbedPanelsTabGroup">
+        <li class="TabbedPanelsTab">Developing the SMS</li>
+        <li class="TabbedPanelsTab" tabindex="0">Articles</li>
+        <li class="TabbedPanelsTab">Books</li>
+        </ul>
+    <div class="TabbedPanelsContentGroup">
+      <div class="TabbedPanelsContent">
+        <p>&nbsp;</p>
+        <h3>ARTICLES AND PRESENTATIONS</h3>
+        <p>Solloway, S. G. &amp; Dawson, T. L. (2011, April). <a href="../../PDF/2011_0402ReportSMS.pdf">Measuring mindfulness in the university classroom: Reliability and validity concerns</a>. Center for Mindfulness in Medicine, Health Care, and Society: 9th Annual International Scientific Conference for Clinicians, Researchers, and Educators: Norwood, MA.        </p>
+        <p>Solloway, S. G. &amp; Dawson, T. L. (2010, April). <a href="2010mbsr/2010_MBSR.php">Utilizing Rasch Analysis to compare the psychometric properties of four mindfulness measures and conduct scale revision.</a> Center for Mindfulness in Medicine, Health Care, and Society: 8th Annual International Scientific Conference for Clinicians, Researchers, and Educators: Norwood, MA. </p>
+        <p>Solloway, S. G., &amp; Fisher, W. P. (2007). <a href="../../PDF/MindfulnessPractice.pdf">Mindfulness in measurement: Reconsidering the measurable in mindfulness practice</a>. <em>International Journal of Transpersonal Studies, 26</em>, 58-81.</p>
+        <p>Solloway, S. G., &amp; Fisher, W. P. (2007). <a href="../../PDF/SollowayJAM.pdf">Mindfulness practice: A Rasch variable construct innovation</a>. <em>Journal of Applied Measurement, 8</em>(4), 359-372.</p>
+        <h3>ABOUT THE RASCH MODEL</h3>
+        <p>Dr. Solloway is using the <a href="http://www.rasch.org/">Rasch Model</a> to develop the SMS. First introduced over 50 years ago, the Rasch model, which is the most stringent of a family of models that are informed by item response theory, gradually has become the &quot;gold standard&quot; in scale development. </p>
+        <p>If you are interested in learning more about this model, we recommend a visit to the site of the Institute for Objective Measurement (<a href="http://www.rasch.org/">IOM</a>). We also recommend the following chapters and articles:</p>
+        <p>Bond, T., &amp; Fox, C., (2007). <em>Applying the Rasch model: Fundamental measurement in the human sciences </em>(2nd ed.). Mahwah, NJ: Lawrence Erlbaum Associates http://homesjcu.edu.au/-edtgb/book/].</p>
+        <p>Blanton, H., &amp; Jaccard, J. (2006). Arbitrary metrics in psychology. <em>American Psychologist, 61</em>(1), 27-41.</p>
+        <p>Curtis, D. D. (2005). Comparing classical and contemporary analyses and Rasch measurement. In S. Alagumalai, Curtis, D. D., &amp; Hungi, N. (Eds.), <em>Applied Rasch measurement: A book of exemplars </em>(pp. 179-195). Netherlands: Springer. </p>
+        <p>Hobart, J. D. Cano, S. J., Zajicek, J. P., &amp; Thompson, Al. J. (2007). Rating scales as outcome measures for clinical trials in neurology: problems, solutions, and recommendations. <em>Lancet Neural, 6, </em>1094-1105.</p>
+        <p>Iramaneerat, C., Smith, E. V., Jr., Smith, R. M. (2008). An introduction to Rasch measurement. In <em>Best practices in quantitative methods </em>(50-70). Los Angeles: Sage. </p>
+        <p>Ludlow, L. H., Enterline, S. E., &amp; Cochran-Smith, M. (2008). Learning to teach for social justice-beliefs scale: An application of Rasch measurement principles. <em>Measurement and Evaluation in Counseling and Development, 40,</em> 194-214.<br />
+          </p>
+        <p>Wilson, M. (2005). <em>Constructing measures: An item response modeling approach. </em>Mahwah, NJ: Lawrence Erlbaum Associates.</p>
+<p>&nbsp;</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <p>&nbsp;</p>
+        <p>Baer, R. A., Smith, G. T., &amp; Allen, K. B. (2004). Assessment of mindfulness by self-report. <em>Assessment, 11</em>(3), 191-206.</p>
+        <p>Baer, R. A., Smith, G. T., Hopkins, J., Krietemeyer, J., &amp; Toney, L. (2006). Using self-report assessment methods to explore facets of mindfulness. <em>Assessment, 13</em>(1), 27-45.</p>
+        <p>Brefcznski-Lewis, J. A., Lutz, A., Schaefer, H. S., Levinson, D. B., &amp; Davidson, R. J. (2007). Neural correlates of attentional expertise in long-term meditation practitioners. <em>Proceedings of the National Academy of Sciences, 104</em>(27), 11483-11488.</p>
+        <p>Brown, K., &amp; Ryan, R. M.(2003). The benefits of being present: Mindfulness and its role in psychological well-being. <em>Journal of Personality and Social Psychology, 84</em>(4), 822-848.</p>
+        <p align="left">Davidson, R. J., &amp; Lutz, A. (2008). Buddha’s brain: Neuroplasticity and meditation. <em>IEEE Singal Processing, 25</em>(1), 171-174.</p>
+        <p align="left">Davidson, R. J., Kabat-Zinn, J., Schumacher, J., Rosenkranz, M., Muller, D., Santorelli, S. F., Urbanowski, M. A., Harrington, A., Bonus, K., &amp; Sheridan, J. (2003). Alternations in brain and immune function produced by mindfulness meditation. <em>Psychosomatic Medicine, 65,</em> 564-570.</p>
+        <p align="left">Ekman, P.l, Davidson, R. J., Ricard, M., Wallace, B. A. (2005). Buddhist and psychological perspectives on emotions and well-being, <em>Current Directions in Psychological Science, 14</em>, 59-63.</p>
+        <p>Lau, M.A., Bishop, S. R., Segal, Z.V., Buis, T., Anderson, N. D., Carlson, L., Sharpiro, S., &amp; Carnody, J. (2006). The Toronto Mindfulness Scale: Development and validation. <em>Journal of Clinical Psychology, 62</em>(12), 1445-1467.</p>
+        <p align="left">Lutz, A., Brefczynski-Lewis, J. A., Johnsone, T., &amp; Davidson, R. J. (2008). Voluntary regulation of the neural circuitry of emotion by compassion meditation: Effects of expertise. <em>PLoSOne, 3</em>(3), e1897. doi:10.1371/journal.pone.0001897.</p>
+        <p align="left">Lutz, A., Dunne, J. P., Davidson, R. J. (2005). Meditation and the neuroscience of consciousness: An introduction. <em>Cambridge Handbook of Consciousness</em>, edited by P. Zelazo, M. Moscovitch, &amp; E. Thompson.</p>
+        <p align="left">Lutz, A., Greischar, L. L., Rawlings, N. B., Ricard, M., &amp; Davidson, R. J. (2004). Long-term meditators self-induced high-amplitude gamma synchrony during metal practice. <em>Proceedings of the National Academy of Sciences, 101,</em> 16369-16373.</p>
+        <p align="left">Lutz, Al, Slagter, H. A., Dunne, J., &amp; Davidson, R. J. (2008). Attention regulation and monitoring in meditation. <em>Trends in Cognitive Sciences, 12</em>(4), 163-169. </p>
+        <p>Ryback, D. (2006). Self-determination and the neurology of mindfulness. <em>Journal of Humanistic Psychology, 46</em>(4), 474-4934. </p>
+        <p align="left">Slagter, H. A., Lutz, A., Greishar, L. L., Francis, A. D., Nieuwehuis, S., Davis, J. M., &amp; Davidson, R. J. (2007). Mental training affects use of limited brain resources. <em>PLoS Biology, 5</em>(6), e138 doi:10.1371/journal.pbio.0050138.</p>
+        <p align="left">Solloway, S. G., &amp; Fisher, W. P. (2007). Mindfulness in measurement: Reconsidering the measurable in mindfulness practice. <em>International Journal of Transpersonal Studies, 26</em>, 58-81.</p>
+      </div>
+      <div class="TabbedPanelsContent">
+      <p>&nbsp;</p>
+      <p>Austin, J. (2006). <em>Zen-brain reflections.</em> Cambridge, MA: MIT Press.</p>
+        <p>Austin, J. (1999). <em>Zen and the brain: Toward an understanding of meditation and consciousness.</em> Cambridge, MA: MIT Press.</p>
+          <p>Begley, S. (2007). <em>Train your mind change your brain: How a new science reveals our extraordinary potential to transform ourselves.</em> New York: Ballantine Books.</p>
+          <p>Doidge, N., (2007). <em>The brain that changes itself: Stories of personal triumph from the frontiers of brain science.</em> New York: Penguin.</p>
+          <p>Goleman, D., &amp; Gurin, J. (Eds). (1993). <em>Mind-body medicine: How to use your mind for better health.</em> New York: Consumer Reports Books.</p>
+          <p>Kabat-Zinn, J. (2005).<em> Coming to our senses: Healing ourselves and the world through mindfulness. </em>New York: Hyperion. </p>
+          <p>Kabat-Zinn, J. (1990). <em>Full-catastrophe living: Using the wisdom of your body and mind to face stress, pain, and illness. </em>New York: Delta.</p>
+          <p>Oliver, J. D. (Ed.). (2009). <em>Commit to sit: Tools for cultivating a meditation practice from the pages of Tricycle.</em></p>
+          <p>Ratey, J. J. (2008). <em>Spark: The revolutionary new science of exercise and the brain.</em> London: Little Brown &amp; Company.</p>
+        <p>Schwartz, J. M., &amp; Begley, S. (2003). <em>The mind and the brain: Neuroplasticity and the power of mental force.</em> New York: Harper-Perennial.</p>
+          <p>Swartz, J. M. &amp; Beyette, B. (1997). <em>Brain lock: Free yourself from obsessive-compulsive behavior.</em> New York: Harper Perennial. </p>
+          <p>Wallace, B. A. (2006). <em>Contemplative science: Where Buddhism and neuroscience converge.</em> New York: Columbia University Press.</p>
+          <p>Wallace, B. A. (2006). <em>The attention revolution: Unlocking the power of the focused mind.</em> Someville, MA: Wisdom Publications.</p>
+          <p>Zajonc. A. (2008). <em>Meditation as contemplative inquiry: When knowing becomes love.</em> Great Barrington, MA: Lindisfarne Books.</p>
+    </div>
+    </div>
+</div>
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+  <script type="text/javascript">
+<!--
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+//-->
+        </script>
+    <!-- InstanceEndEditable -->
+	<!-- end #mainContent --></div>
+  <div id="footer">
+    <p align="center">©2010-2011 Sharon Solloway. All rights reserved.</p>
+  <!-- end #footer --></div>
+<!-- end #container --></div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

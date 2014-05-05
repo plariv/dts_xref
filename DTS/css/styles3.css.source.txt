@@ -1,0 +1,470 @@
+@charset "UTF-8";
+.emphasisSMS {
+	font-weight: bold;
+	color: #C94900;
+}
+.disco08 {
+	color: #5A00DF;
+	font-weight: bold;
+}
+.disco09 {
+	color: #0320DF;
+	font-weight: bold;
+}
+.disco10 {
+	font-weight: bold;
+	color: #055B9E;
+}
+.disco11 {
+	font-weight: bold;
+	color: #01B3A4;
+}
+.disco12 {
+	color: #0F6802;
+	font-weight: bold;
+}
+.indent10 {
+	margin-left: 10px;
+}
+blockquote {
+	margin-left: 20px;
+	margin-top: 0px;
+	margin-right: 20px;
+}
+.tdunderline {
+	border-bottom-width: thin;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+}
+h1 {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 18px;
+	color: #036;
+	line-height: 28px;
+	margin-top: 30px;
+	margin-right: 10px;
+	margin-bottom: 18px;
+	margin-left: 10px;
+	font-style: normal;
+	font-weight: normal;
+	font-variant: normal;
+	letter-spacing: 2px;
+}
+h2 {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 12px;
+	line-height: 22px;
+	margin-top: 6px;
+	margin-bottom: 6px;
+	font-weight: normal;
+	font-style: normal;
+	color: #003366;
+	margin-left: 10px;
+	margin-right: 10px;
+}
+h3 {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 12px;
+	font-weight: bold;
+	letter-spacing: 2px;
+	color: #003366;
+	padding-left: 10px;
+	margin-top: 22px;
+	margin-right: 0px;
+	margin-bottom: 10px;
+	margin-left: 0px;
+	font-variant: small-caps;
+}
+h4 {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 10px;
+	font-style: normal;
+	line-height: 16px;
+	font-weight: normal;
+	color: #003366;
+	margin-top: 2px;
+	margin-right: 10px;
+	margin-left: 10px;
+	margin-bottom: 2px;
+}
+h5 {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 11px;
+	line-height: 13px;
+	font-weight: lighter;
+	color: #003366;
+	margin-left: 4px;
+	margin-top: 0px;
+	margin-right: 4px;
+	margin-bottom: 0px;
+	padding: 1px;
+}
+h6 {
+	font-family: Verdana, Geneva, sans-serif;
+	font-size: 12px;
+	line-height: 28px;
+	font-weight: bold;
+	text-decoration: blink;
+	margin-top: 20px;
+	margin-right: 10px;
+	margin-bottom: 6px;
+	margin-left: 10px;
+	color: #003366;
+	letter-spacing: 1px;
+}
+
+.table {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 10px;
+	line-height: 12px;
+	color: #003366;
+	padding-top: 2px;
+	padding-right: 2px;
+	padding-bottom: 2px;
+	padding-left: 2px;
+}
+.tableheader {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 10px;
+	line-height: 12px;
+	font-weight: bold;
+	color: #FFFFFF;
+	background-color: #66A0C9;
+	text-align: center;
+	padding-top: 2px;
+	padding-right: 2px;
+	padding-bottom: 2px;
+	padding-left: 2px;
+}
+.tablehead {
+	text-align: center;
+	color: #25507C;
+	font-weight: bold;
+	border-top-width: thin;
+	border-right-width: thin;
+	border-bottom-width: 0px;
+	border-top-style: double;
+	border-right-style: double;
+	border-top-color: #FFF;
+	background-image: url(../images/mindful/SMS_vert_line.png);
+	padding-top: 2px;
+	padding-bottom: 9px;
+	border-right-color: #FFF;
+}
+
+/* SpryAccordion.css - Revision: Spry Preview Release 1.4 */
+
+/* Copyright (c) 2006. Adobe Systems Incorporated. All rights reserved. */
+
+/* This is the selector for the main Accordion container. For our default style,
+ * we draw borders on the left, right, and bottom. The top border of the Accordion
+ * will be rendered by the first AccordionPanelTab which never moves.
+ *
+ * If you want to constrain the width of the Accordion widget, set a width on
+ * the Accordion container. By default, our accordion expands horizontally to fill
+ * up available space.
+ *
+ * The name of the class ("Accordion") used in this selector is not necessary
+ * to make the widget function. You can use any class name you want to style the
+ * Accordion container.
+ */
+.Accordion {
+	border-bottom: solid 1px gray;
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 11px;
+	font-weight: normal;
+	line-height: 18px;
+	margin-bottom: 24px;
+}
+
+/* This is the selector for the AccordionPanel container which houses the
+ * panel tab and a panel content area. It doesn't render visually, but we
+ * make sure that it has zero margin and padding.
+ *
+ * The name of the class ("AccordionPanel") used in this selector is not necessary
+ * to make the widget function. You can use any class name you want to style an
+ * accordion panel container.
+*/
+.AccordionPanel {
+	margin: 0px;
+	padding: 0px;
+}
+
+/* This is the selector for the AccordionPanelTab. This container houses
+ * the title for the panel. This is also the container that the user clicks
+ * on to open a specific panel.
+ *
+ * The name of the class ("AccordionPanelTab") used in this selector is not necessary
+ * to make the widget function. You can use any class name you want to style an
+ * accordion panel tab container.
+ */
+.AccordionPanelTab {
+	background-color: #C4D4E6;
+	margin: 1px;
+	cursor: pointer;
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 11px;
+	font-style: normal;
+	font-weight: normal;
+	color: #003366;
+	letter-spacing: 1px;
+	line-height: 16px;
+	padding-top: 0px;
+	padding-right: 1px;
+	padding-bottom: 1px;
+	padding-left: 4px;
+	border-left-color: white;
+	border-left-style: solid;
+	border-top-width: 2px;
+	border-bottom-width: 0px;
+	border-left-width: 2px;
+	border-top-style: solid;
+	border-bottom-style: solid;
+	border-top-color: white;
+	border-bottom-color: white;
+}
+
+/* This is the selector for a Panel's Content area. It's important to note that
+ * you should never put any padding on the panel's content area if you plan to
+ * use the Accordions panel animations. Placing a non-zero padding on the content
+ * area can cause the accordion to abruptly grow in height while the panels animate.
+ *
+ * Anyone who styles an Accordion *MUST* specify a height on the Accordion Panel
+ * Content container.
+ *
+ * The name of the class ("AccordionPanelContent") used in this selector is not necessary
+ * to make the widget function. You can use any class name you want to style an
+ * accordion panel content container.
+ */
+.AccordionPanelContent {
+	padding: 0px;
+	height: 260px;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-style: normal;
+	line-height: 18px;
+	font-weight: lighter;
+	font-variant: normal;
+	margin-top: 2pt;
+	margin-right: 0px;
+	margin-bottom: 2px;
+	margin-left: 0px;
+	color: #575757;
+	overflow: hidden;
+}
+
+/* This is an example of how to change the appearance of the panel tab that is
+ * currently open. The class "AccordionPanelOpen" is programatically added and removed
+ * from panels as the user clicks on the tabs within the Accordion.
+ */
+.AccordionPanelOpen .AccordionPanelTab {
+	background-color: #1666AC;
+}
+
+/* This is an example of how to change the appearance of the panel tab as the
+ * mouse hovers over it. The class "AccordionPanelTabHover" is programatically added
+ * and removed from panel tab containers as the mouse enters and exits the tab container.
+ */
+.AccordionPanelTabHover {
+	color: #555555;
+}
+.AccordionPanelOpen .AccordionPanelTabHover {
+	color: #555555;
+}
+
+/* This is an example of how to change the appearance of all the panel tabs when the
+ * Accordion has focus. The "AccordionFocused" class is programatically added and removed
+ * whenever the Accordion gains or loses keyboard focus.
+ */
+.AccordionFocused .AccordionPanelTab {
+	background-color: #B6E0F2;
+}
+
+/* This is an example of how to change the appearance of the panel tab that is
+ * currently open when the Accordion has focus.
+ */
+.AccordionFocused .AccordionPanelOpen .AccordionPanelTab {
+	background-color: #80D6F3;
+}
+.emphasis {
+	color: #474747;
+	font-weight: bold;
+}
+p {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 11px;
+	font-style: normal;
+	line-height: 22px;
+	font-weight: normal;
+	color: #003366;
+	margin-top: 10px;
+	margin-right: 10px;
+	margin-bottom: 10px;
+	margin-left: 10px;
+}
+a:link {
+	color: #25507C;
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+}
+a:visited {
+	color: #25507C;
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+}
+a:hover {
+	color: #9D3800;
+}
+li {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 11px;
+	line-height: 20px;
+	color: #003366;
+	margin-top: 5px;
+	margin-right: 0px;
+	margin-bottom: 5px;
+	margin-left: 0px;
+}
+ul {
+	margin-top: 0px;
+	margin-bottom: 0px;
+	font-family: Verdana, Geneva, sans-serif;
+}
+ol {
+	margin: 0px;
+	color: #036;
+}
+.insertupdatetable {
+	font-family: Helvetica Neue, helvetica, arial, "san serif";
+	font-size: 11px;
+	line-height: 13px;
+	color: #003366;
+	padding-top: 1px;
+	padding-right: 4px;
+	padding-bottom: 1px;
+	padding-left: 4px;
+	font-weight: normal;
+}
+td {
+	font-family: Verdana, Geneva, sans-serif;
+	font-size: 11px;
+	color: #036;
+	text-align: left;
+	vertical-align: top;
+	padding-top: 3px;
+	padding-bottom: 3px;
+	line-height: 16px;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.privacy {
+	font-size: 10px;
+}
+.red {
+	color: #C94900;
+}
+.tablesms {
+	font-size: 11px;
+	padding-top: 3px;
+	padding-right: 5px;
+	padding-bottom: 3px;
+	padding-left: 10px;
+	line-height: 15px;
+	vertical-align: top;
+	border-bottom-width: thin;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	color: #003366;
+	font-family: Verdana, Geneva, sans-serif;
+}
+.tablemenu {
+	font-family: Verdana, Geneva, sans-serif;
+	font-size: 11px;
+	color: #036;
+}
+.star {
+	font-size: 9px;
+	color: #7F1C1B;
+}
+
+menu {
+}
+select {
+}
+option {
+}
+a img { border: none; }
+.downloads {
+	font-size: 10px;
+	line-height: 16px;
+}
+.downloadbox {
+	margin-top: 40px;
+	margin-bottom: 6px;
+	margin-right: 40px;
+	margin-left: 40px;
+	background-color: #BED0DC;
+	padding-top: 10px;
+	padding-right: 10px;
+	padding-bottom: 10px;
+	padding-left: 10px;
+	border: 1px solid #225F9E;
+}
+table {
+	margin-right: 10px;
+	margin-left: 0px;
+	margin-top: 16px;
+	margin-bottom: 16px;
+}
+.tablenoindent {
+	margin-left: 0px;
+}
+.image20pxtopbottom {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+.textarea120_520 {
+	font-size: 11px;
+	line-height: 18px;
+	height: 120px;
+	width: 520px;
+}
+.textarea80_520 {
+	font-size: 11px;
+	line-height: 18px;
+	height: 80px;
+	width: 520px;
+}
+.textarea120_420 {
+	font-size: 11px;
+	line-height: 18px;
+	height: 120px;
+	width: 420px;
+}
+.textarea300_420 {
+	font-size: 11px;
+	line-height: 18px;
+	height: 300px;
+	width: 420px;
+}
+.tableleading_20 {
+	line-height: 20px;
+}
+.tableindent {
+	margin-right: 10px;
+	margin-left: 10px;
+}
+.list_400 {
+	width: 400px;
+}
+.list_500 {
+	width: 500px;
+}
+textarea {
+	background-color: #E9F1F6;
+}
+input {
+	background-color: #E9F1F6;
+}
+button {
+}

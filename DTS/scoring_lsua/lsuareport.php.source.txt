@@ -1,0 +1,1390 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLSUA = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsLSUA = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUA = sprintf("SELECT lsua.aspect1essay, lsua.aspect2, lsua.aspect1, lsua.aspect2essay, lsua.aspect3, lsua.aspect3essay, lsua.aspect4, lsua.aspect4essay, lsua.generalself, lsua.idealself, lsua.comments, lsuascores.lsuakey, lsuascores.lasnumber_1, lsuascores.aspect1las, lsuascores.aspect2las, lsuascores.aspect3las, lsuascores.aspect4las, lsuascores.generalselflas, lsuascores.idealselflas, lsuascores.lasname, lsuascores.strengths, lsuascores.growthareas, registrants.userkey, registrants.firstname, registrants.lastname, lsua.userkey, lsua.`date`, lsua.testtime, lsuascores.strengthpreface1, lsuascores.strengthnumber, lsuascores.strengthpreface2, lsuascores.strength_01, lsuascores.strength_02, lsuascores.strength_03, lsuascores.strength_04, lsuascores.strength_05, lsuascores.strength_06, lsuascores.strength_07, lsuascores.strength_08, lsuascores.strength_09, lsuascores.strength_10, lsuascores.strength_11, lsuascores.strength_12, lsuascores.strength_13, lsuascores.strength_14, lsuascores.strength_15, lsuascores.strength_16, lsuascores.strength_17, lsuascores.strength_18, lsuascores.strength_19, lsuascores.strength_20, lsuascores.strength_21, lsuascores.strength_22, lsuascores.strength_23, lsuascores.strength_24, lsuascores.strengthlast, lsuascores.strengthsuggest, lsuascores.growthpreface1, lsuascores.growthnumber, lsuascores.growthpreface2, lsuascores.growth_01, lsuascores.growth_02, lsuascores.growth_03, lsuascores.growth_04, lsuascores.growth_05, lsuascores.growth_06, lsuascores.growth_07, lsuascores.growth_08, lsuascores.growth_09, lsuascores.growth_10, lsuascores.growth_11, lsuascores.growth_12, lsuascores.growth_13, lsuascores.growth_14, lsuascores.growth_15, lsuascores.growth_16, lsuascores.growth_17, lsuascores.growth_18, lsuascores.growth_19, lsuascores.growth_20, lsuascores.growth_21, lsuascores.growth_22, lsuascores.growthlast, lsuascores.growthsuggest, lsuascores.recommend1, lsuascores.recommend2 FROM lsua, lsuascores, registrants WHERE lsua.lsuakey = %s AND lsuascores.lsuakey = %s and lsua.userkey = registrants.userkey", GetSQLValueString($colname_rsLSUA, "int"),GetSQLValueString($colname_rsLSUA, "int"));
+$rsLSUA = mysql_query($query_rsLSUA, $Assessment) or die(mysql_error());
+$row_rsLSUA = mysql_fetch_assoc($rsLSUA);
+$totalRows_rsLSUA = mysql_num_rows($rsLSUA);
+
+$colname_rsLasByAge = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLasByAge = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasByAge = sprintf("SELECT lasname, lasbyageart, lasbyageart2 FROM  lasbyage WHERE lasname = %s", GetSQLValueString($colname_rsLasByAge, "text"));
+$rsLasByAge = mysql_query($query_rsLasByAge, $Assessment) or die(mysql_error());
+$row_rsLasByAge = mysql_fetch_assoc($rsLasByAge);
+$totalRows_rsLasByAge = mysql_num_rows($rsLasByAge);
+
+$colname_rsLsuaAspectComment1 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsLsuaAspectComment1 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLsuaAspectComment1 = sprintf("SELECT lsuaaspectcomment.las, lsuaaspectcomment.aspect, lsuaaspectcomment.aspectcomment, lsua.lsuakey, lsua.aspect1, lsuascores.lsuakey, lsuascores.aspect1las FROM lsuaaspectcomment, lsua, lsuascores WHERE lsua.lsuakey = %s AND lsua.aspect1 = lsuaaspectcomment.aspect and lsuascores.aspect1las = lsuaaspectcomment.las and lsuascores.lsuakey = lsua.lsuakey", GetSQLValueString($colname_rsLsuaAspectComment1, "int"));
+$rsLsuaAspectComment1 = mysql_query($query_rsLsuaAspectComment1, $Assessment) or die(mysql_error());
+$row_rsLsuaAspectComment1 = mysql_fetch_assoc($rsLsuaAspectComment1);
+$totalRows_rsLsuaAspectComment1 = mysql_num_rows($rsLsuaAspectComment1);
+
+$colname_rsLsuaAspectComment2 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsLsuaAspectComment2 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLsuaAspectComment2 = sprintf("SELECT lsuaaspectcomment.las, lsuaaspectcomment.aspect, lsuaaspectcomment.aspectcomment, lsua.lsuakey, lsua.aspect2, lsuascores.lsuakey, lsuascores.aspect2las FROM lsuaaspectcomment, lsua, lsuascores WHERE lsua.lsuakey = %s AND lsua.aspect2 = lsuaaspectcomment.aspect and lsuascores.aspect2las = lsuaaspectcomment.las and lsuascores.lsuakey = lsua.lsuakey", GetSQLValueString($colname_rsLsuaAspectComment2, "int"));
+$rsLsuaAspectComment2 = mysql_query($query_rsLsuaAspectComment2, $Assessment) or die(mysql_error());
+$row_rsLsuaAspectComment2 = mysql_fetch_assoc($rsLsuaAspectComment2);
+$totalRows_rsLsuaAspectComment2 = mysql_num_rows($rsLsuaAspectComment2);
+
+$colname_rsLsuaAspectComment3 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsLsuaAspectComment3 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLsuaAspectComment3 = sprintf("SELECT lsuaaspectcomment.las, lsuaaspectcomment.aspect, lsuaaspectcomment.aspectcomment, lsua.lsuakey, lsua.aspect3, lsuascores.lsuakey, lsuascores.aspect3las FROM lsuaaspectcomment, lsua, lsuascores WHERE lsua.lsuakey = %s AND lsua.aspect3 = lsuaaspectcomment.aspect and lsuascores.aspect3las = lsuaaspectcomment.las and lsuascores.lsuakey = lsua.lsuakey", GetSQLValueString($colname_rsLsuaAspectComment3, "int"));
+$rsLsuaAspectComment3 = mysql_query($query_rsLsuaAspectComment3, $Assessment) or die(mysql_error());
+$row_rsLsuaAspectComment3 = mysql_fetch_assoc($rsLsuaAspectComment3);
+$totalRows_rsLsuaAspectComment3 = mysql_num_rows($rsLsuaAspectComment3);
+
+$colname_rsLsuaAspectComment4 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsLsuaAspectComment4 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLsuaAspectComment4 = sprintf("SELECT lsuaaspectcomment.las, lsuaaspectcomment.aspect, lsuaaspectcomment.aspectcomment, lsua.lsuakey, lsua.aspect4, lsuascores.lsuakey, lsuascores.aspect4las FROM lsuaaspectcomment, lsua, lsuascores WHERE lsua.lsuakey = %s AND lsua.aspect4 = lsuaaspectcomment.aspect and lsuascores.aspect4las = lsuaaspectcomment.las and lsuascores.lsuakey = lsua.lsuakey", GetSQLValueString($colname_rsLsuaAspectComment4, "int"));
+$rsLsuaAspectComment4 = mysql_query($query_rsLsuaAspectComment4, $Assessment) or die(mysql_error());
+$row_rsLsuaAspectComment4 = mysql_fetch_assoc($rsLsuaAspectComment4);
+$totalRows_rsLsuaAspectComment4 = mysql_num_rows($rsLsuaAspectComment4);
+
+$colname_rsLSUAlascomment = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsLSUAlascomment = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAlascomment = sprintf("SELECT lsuascores.lsuakey, lsuascores.lasname, lsualascomment.`comment`, lsualascomment.las, lsualascomment.selfperspective, lsualascomment.socialperspective, lsualascomment.temporalperspective, lsualascomment.selfevaluation, lsualascomment.selfgrowth FROM lsuascores, lsualascomment WHERE lsuakey = %s AND lsualascomment.las = lsuascores.lasname", GetSQLValueString($colname_rsLSUAlascomment, "int"));
+$rsLSUAlascomment = mysql_query($query_rsLSUAlascomment, $Assessment) or die(mysql_error());
+$row_rsLSUAlascomment = mysql_fetch_assoc($rsLSUAlascomment);
+$totalRows_rsLSUAlascomment = mysql_num_rows($rsLSUAlascomment);
+
+$colname_rsLSUAtrue = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLSUAtrue = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAtrue = sprintf("SELECT las, truecomment, idealcomment FROM lsuatrueideal WHERE las = %s", GetSQLValueString($colname_rsLSUAtrue, "text"));
+$rsLSUAtrue = mysql_query($query_rsLSUAtrue, $Assessment) or die(mysql_error());
+$row_rsLSUAtrue = mysql_fetch_assoc($rsLSUAtrue);
+$totalRows_rsLSUAtrue = mysql_num_rows($rsLSUAtrue);
+
+$colname_rsLSUAresource1 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsLSUAresource1 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAresource1 = sprintf("SELECT lsuascores.lsuakey, lsuascores.lasname, lsuaresources.las, lsuaresources.resource, lsuaresources.resourcename FROM lsuascores, lsuaresources WHERE lsuascores.lsuakey = %s AND lsuaresources.las = lsuascores.lasname and lsuaresources.resourcename='resource 1'", GetSQLValueString($colname_rsLSUAresource1, "int"));
+$rsLSUAresource1 = mysql_query($query_rsLSUAresource1, $Assessment) or die(mysql_error());
+$row_rsLSUAresource1 = mysql_fetch_assoc($rsLSUAresource1);
+$totalRows_rsLSUAresource1 = mysql_num_rows($rsLSUAresource1);
+
+$colname_rsLSUAresource2 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsLSUAresource2 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAresource2 = sprintf("SELECT lsuascores.lsuakey, lsuascores.lasname, lsuaresources.las, lsuaresources.resource, lsuaresources.resourcename FROM lsuascores, lsuaresources WHERE lsuascores.lsuakey = %s AND lsuaresources.las = lsuascores.lasname and lsuaresources.resourcename='resource 2'", GetSQLValueString($colname_rsLSUAresource2, "int"));
+$rsLSUAresource2 = mysql_query($query_rsLSUAresource2, $Assessment) or die(mysql_error());
+$row_rsLSUAresource2 = mysql_fetch_assoc($rsLSUAresource2);
+$totalRows_rsLSUAresource2 = mysql_num_rows($rsLSUAresource2);
+
+$colname_rsLSUAresource3 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsLSUAresource3 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAresource3 = sprintf("SELECT lsuascores.lsuakey, lsuascores.lasname, lsuaresources.las, lsuaresources.resource, lsuaresources.resourcename FROM lsuascores, lsuaresources WHERE lsuascores.lsuakey = %s AND lsuaresources.las = lsuascores.lasname and lsuaresources.resourcename='resource 3'", GetSQLValueString($colname_rsLSUAresource3, "int"));
+$rsLSUAresource3 = mysql_query($query_rsLSUAresource3, $Assessment) or die(mysql_error());
+$row_rsLSUAresource3 = mysql_fetch_assoc($rsLSUAresource3);
+$totalRows_rsLSUAresource3 = mysql_num_rows($rsLSUAresource3);
+
+$colname_rsLSUAresource4 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsLSUAresource4 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAresource4 = sprintf("SELECT lsuascores.lsuakey, lsuascores.lasname, lsuaresources.las, lsuaresources.resource, lsuaresources.resourcename FROM lsuascores, lsuaresources WHERE lsuascores.lsuakey = %s AND lsuaresources.las = lsuascores.lasname and lsuaresources.resourcename='resource 4'", GetSQLValueString($colname_rsLSUAresource4, "int"));
+$rsLSUAresource4 = mysql_query($query_rsLSUAresource4, $Assessment) or die(mysql_error());
+$row_rsLSUAresource4 = mysql_fetch_assoc($rsLSUAresource4);
+$totalRows_rsLSUAresource4 = mysql_num_rows($rsLSUAresource4);
+
+$colname_rsLSUAresource5 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsLSUAresource5 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAresource5 = sprintf("SELECT lsuascores.lsuakey, lsuascores.lasname, lsuaresources.las, lsuaresources.resource, lsuaresources.resourcename FROM lsuascores, lsuaresources WHERE lsuascores.lsuakey = %s AND lsuaresources.las = lsuascores.lasname and lsuaresources.resourcename='resource 5'", GetSQLValueString($colname_rsLSUAresource5, "int"));
+$rsLSUAresource5 = mysql_query($query_rsLSUAresource5, $Assessment) or die(mysql_error());
+$row_rsLSUAresource5 = mysql_fetch_assoc($rsLSUAresource5);
+$totalRows_rsLSUAresource5 = mysql_num_rows($rsLSUAresource5);
+
+$colname_rsLSUAresource6 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsLSUAresource6 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAresource6 = sprintf("SELECT lsuascores.lsuakey, lsuascores.lasname, lsuaresources.las, lsuaresources.resource, lsuaresources.resourcename FROM lsuascores, lsuaresources WHERE lsuascores.lsuakey = %s AND lsuaresources.las = lsuascores.lasname and lsuaresources.resourcename='resource 6'", GetSQLValueString($colname_rsLSUAresource6, "int"));
+$rsLSUAresource6 = mysql_query($query_rsLSUAresource6, $Assessment) or die(mysql_error());
+$row_rsLSUAresource6 = mysql_fetch_assoc($rsLSUAresource6);
+$totalRows_rsLSUAresource6 = mysql_num_rows($rsLSUAresource6);
+
+$colname_rsLSUAstruggle1 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLSUAstruggle1 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAstruggle1 = sprintf("SELECT * FROM lsuastruggles WHERE las = %s AND strugglename = 'struggle 1'", GetSQLValueString($colname_rsLSUAstruggle1, "text"));
+$rsLSUAstruggle1 = mysql_query($query_rsLSUAstruggle1, $Assessment) or die(mysql_error());
+$row_rsLSUAstruggle1 = mysql_fetch_assoc($rsLSUAstruggle1);
+$totalRows_rsLSUAstruggle1 = mysql_num_rows($rsLSUAstruggle1);
+
+$colname_rsLSUAstruggle2 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLSUAstruggle2 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAstruggle2 = sprintf("SELECT * FROM lsuastruggles WHERE las = %s AND strugglename = 'struggle 2'", GetSQLValueString($colname_rsLSUAstruggle2, "text"));
+$rsLSUAstruggle2 = mysql_query($query_rsLSUAstruggle2, $Assessment) or die(mysql_error());
+$row_rsLSUAstruggle2 = mysql_fetch_assoc($rsLSUAstruggle2);
+$totalRows_rsLSUAstruggle2 = mysql_num_rows($rsLSUAstruggle2);
+
+$colname_rsLSUAstruggle3 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLSUAstruggle3 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAstruggle3 = sprintf("SELECT * FROM lsuastruggles WHERE las = %s AND strugglename = 'struggle 3'", GetSQLValueString($colname_rsLSUAstruggle3, "text"));
+$rsLSUAstruggle3 = mysql_query($query_rsLSUAstruggle3, $Assessment) or die(mysql_error());
+$row_rsLSUAstruggle3 = mysql_fetch_assoc($rsLSUAstruggle3);
+$totalRows_rsLSUAstruggle3 = mysql_num_rows($rsLSUAstruggle3);
+
+$colname_rsLSUAstruggle4 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLSUAstruggle4 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAstruggle4 = sprintf("SELECT * FROM lsuastruggles WHERE las = %s AND strugglename = 'struggle 4'", GetSQLValueString($colname_rsLSUAstruggle4, "text"));
+$rsLSUAstruggle4 = mysql_query($query_rsLSUAstruggle4, $Assessment) or die(mysql_error());
+$row_rsLSUAstruggle4 = mysql_fetch_assoc($rsLSUAstruggle4);
+$totalRows_rsLSUAstruggle4 = mysql_num_rows($rsLSUAstruggle4);
+
+$colname_rsLSUAstruggle5 = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLSUAstruggle5 = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAstruggle5 = sprintf("SELECT * FROM lsuastruggles WHERE las = %s AND strugglename = 'struggle 5'", GetSQLValueString($colname_rsLSUAstruggle5, "text"));
+$rsLSUAstruggle5 = mysql_query($query_rsLSUAstruggle5, $Assessment) or die(mysql_error());
+$row_rsLSUAstruggle5 = mysql_fetch_assoc($rsLSUAstruggle5);
+$totalRows_rsLSUAstruggle5 = mysql_num_rows($rsLSUAstruggle5);
+
+$colname_rsOptimism = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsOptimism = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsOptimism = sprintf("SELECT optimismkey, lsuakey, optimismcomment, optimismscore, optimismaverage FROM optimismsurvey WHERE lsuakey = %s", GetSQLValueString($colname_rsOptimism, "int"));
+$rsOptimism = mysql_query($query_rsOptimism, $Assessment) or die(mysql_error());
+$row_rsOptimism = mysql_fetch_assoc($rsOptimism);
+$totalRows_rsOptimism = mysql_num_rows($rsOptimism);
+
+$colname_rsCharacter = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsCharacter = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCharacter = sprintf("SELECT characterkey, lsuakey, charactercomment, persistencescore, persistenceaverage, learnerscore, learneraverage, integrityscore, integrityaverage, emotionscore, emotionaverage, challengescore, challengeaverage FROM charactersurvey WHERE lsuakey = %s", GetSQLValueString($colname_rsCharacter, "int"));
+$rsCharacter = mysql_query($query_rsCharacter, $Assessment) or die(mysql_error());
+$row_rsCharacter = mysql_fetch_assoc($rsCharacter);
+$totalRows_rsCharacter = mysql_num_rows($rsCharacter);
+
+$colname_rsStrength_01 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_01 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_01 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.coded, lsuascores.strength_01 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 1 and lsuascores.strength_01  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_01, "int"));
+$rsStrength_01 = mysql_query($query_rsStrength_01, $Assessment) or die(mysql_error());
+$row_rsStrength_01 = mysql_fetch_assoc($rsStrength_01);
+$totalRows_rsStrength_01 = mysql_num_rows($rsStrength_01);
+
+$colname_rsStrength_02 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_02 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_02 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_02 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 2 and lsuascores.strength_02  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_02, "int"));
+$rsStrength_02 = mysql_query($query_rsStrength_02, $Assessment) or die(mysql_error());
+$row_rsStrength_02 = mysql_fetch_assoc($rsStrength_02);
+$totalRows_rsStrength_02 = mysql_num_rows($rsStrength_02);
+
+$colname_rsStrength_03 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_03 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_03 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_03 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 3 and lsuascores.strength_03  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_03, "int"));
+$rsStrength_03 = mysql_query($query_rsStrength_03, $Assessment) or die(mysql_error());
+$row_rsStrength_03 = mysql_fetch_assoc($rsStrength_03);
+$totalRows_rsStrength_03 = mysql_num_rows($rsStrength_03);
+
+$colname_rsStrength_04 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_04 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_04 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_04 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 4 and lsuascores.strength_04  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_04, "int"));
+$rsStrength_04 = mysql_query($query_rsStrength_04, $Assessment) or die(mysql_error());
+$row_rsStrength_04 = mysql_fetch_assoc($rsStrength_04);
+$totalRows_rsStrength_04 = mysql_num_rows($rsStrength_04);
+
+$colname_rsStrength_05 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_05 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_05 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_05 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 5 and lsuascores.strength_05  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_05, "int"));
+$rsStrength_05 = mysql_query($query_rsStrength_05, $Assessment) or die(mysql_error());
+$row_rsStrength_05 = mysql_fetch_assoc($rsStrength_05);
+$totalRows_rsStrength_05 = mysql_num_rows($rsStrength_05);
+
+$colname_rsStrength_06 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_06 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_06 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_06 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 6 and lsuascores.strength_06  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_06, "int"));
+$rsStrength_06 = mysql_query($query_rsStrength_06, $Assessment) or die(mysql_error());
+$row_rsStrength_06 = mysql_fetch_assoc($rsStrength_06);
+$totalRows_rsStrength_06 = mysql_num_rows($rsStrength_06);
+
+$colname_rsStrength_07 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_07 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_07 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_07 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 7 and lsuascores.strength_07  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_07, "int"));
+$rsStrength_07 = mysql_query($query_rsStrength_07, $Assessment) or die(mysql_error());
+$row_rsStrength_07 = mysql_fetch_assoc($rsStrength_07);
+$totalRows_rsStrength_07 = mysql_num_rows($rsStrength_07);
+
+$colname_rsStrength_08 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_08 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_08 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_08 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 8 and lsuascores.strength_08  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_08, "int"));
+$rsStrength_08 = mysql_query($query_rsStrength_08, $Assessment) or die(mysql_error());
+$row_rsStrength_08 = mysql_fetch_assoc($rsStrength_08);
+$totalRows_rsStrength_08 = mysql_num_rows($rsStrength_08);
+
+$colname_rsStrength_09 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_09 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_09 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_09 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 9 and lsuascores.strength_09  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_09, "int"));
+$rsStrength_09 = mysql_query($query_rsStrength_09, $Assessment) or die(mysql_error());
+$row_rsStrength_09 = mysql_fetch_assoc($rsStrength_09);
+$totalRows_rsStrength_09 = mysql_num_rows($rsStrength_09);
+
+$colname_rsStrength_10 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_10 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_10 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_10 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 10 and lsuascores.strength_10  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_10, "int"));
+$rsStrength_10 = mysql_query($query_rsStrength_10, $Assessment) or die(mysql_error());
+$row_rsStrength_10 = mysql_fetch_assoc($rsStrength_10);
+$totalRows_rsStrength_10 = mysql_num_rows($rsStrength_10);
+
+$colname_rsStrength_11 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_11 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_11 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_11 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 11 and lsuascores.strength_11  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_11, "int"));
+$rsStrength_11 = mysql_query($query_rsStrength_11, $Assessment) or die(mysql_error());
+$row_rsStrength_11 = mysql_fetch_assoc($rsStrength_11);
+$totalRows_rsStrength_11 = mysql_num_rows($rsStrength_11);
+
+$colname_rsStrength_12 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_12 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_12 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_12 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 12 and lsuascores.strength_12  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_12, "int"));
+$rsStrength_12 = mysql_query($query_rsStrength_12, $Assessment) or die(mysql_error());
+$row_rsStrength_12 = mysql_fetch_assoc($rsStrength_12);
+$totalRows_rsStrength_12 = mysql_num_rows($rsStrength_12);
+
+$colname_rsStrength_13 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_13 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_13 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_13 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 13 and lsuascores.strength_13  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_13, "int"));
+$rsStrength_13 = mysql_query($query_rsStrength_13, $Assessment) or die(mysql_error());
+$row_rsStrength_13 = mysql_fetch_assoc($rsStrength_13);
+$totalRows_rsStrength_13 = mysql_num_rows($rsStrength_13);
+
+$colname_rsStrength_14 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_14 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_14 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_14 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 14 and lsuascores.strength_14  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_14, "int"));
+$rsStrength_14 = mysql_query($query_rsStrength_14, $Assessment) or die(mysql_error());
+$row_rsStrength_14 = mysql_fetch_assoc($rsStrength_14);
+$totalRows_rsStrength_14 = mysql_num_rows($rsStrength_14);
+
+$colname_rsStrength_15 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_15 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_15 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_15 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 15 and lsuascores.strength_15  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_15, "int"));
+$rsStrength_15 = mysql_query($query_rsStrength_15, $Assessment) or die(mysql_error());
+$row_rsStrength_15 = mysql_fetch_assoc($rsStrength_15);
+$totalRows_rsStrength_15 = mysql_num_rows($rsStrength_15);
+
+$colname_rsStrength_16 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_16 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_16 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_16 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 16 and lsuascores.strength_16  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_16, "int"));
+$rsStrength_16 = mysql_query($query_rsStrength_16, $Assessment) or die(mysql_error());
+$row_rsStrength_16 = mysql_fetch_assoc($rsStrength_16);
+$totalRows_rsStrength_16 = mysql_num_rows($rsStrength_16);
+
+$colname_rsStrength_17 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_17 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_17 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsua_strength1.strength1key = 17 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND strength1name = strength_17 and lsuascores.strength_17  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_17, "int"));
+$rsStrength_17 = mysql_query($query_rsStrength_17, $Assessment) or die(mysql_error());
+$row_rsStrength_17 = mysql_fetch_assoc($rsStrength_17);
+$totalRows_rsStrength_17 = mysql_num_rows($rsStrength_17);
+
+$colname_rsStrength_18 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_18 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_18 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_18 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 18 and lsuascores.strength_18  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_18, "int"));
+$rsStrength_18 = mysql_query($query_rsStrength_18, $Assessment) or die(mysql_error());
+$row_rsStrength_18 = mysql_fetch_assoc($rsStrength_18);
+$totalRows_rsStrength_18 = mysql_num_rows($rsStrength_18);
+
+$colname_rsStrength_19 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_19 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_19 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_19 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 19 and lsuascores.strength_19  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_19, "int"));
+$rsStrength_19 = mysql_query($query_rsStrength_19, $Assessment) or die(mysql_error());
+$row_rsStrength_19 = mysql_fetch_assoc($rsStrength_19);
+$totalRows_rsStrength_19 = mysql_num_rows($rsStrength_19);
+
+$colname_rsStrength_20 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_20 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_20 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_20 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 20 and lsuascores.strength_20  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_20, "int"));
+$rsStrength_20 = mysql_query($query_rsStrength_20, $Assessment) or die(mysql_error());
+$row_rsStrength_20 = mysql_fetch_assoc($rsStrength_20);
+$totalRows_rsStrength_20 = mysql_num_rows($rsStrength_20);
+
+$colname_rsStrength_21 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_21 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_21 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_21 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 21 and lsuascores.strength_21  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_21, "int"));
+$rsStrength_21 = mysql_query($query_rsStrength_21, $Assessment) or die(mysql_error());
+$row_rsStrength_21 = mysql_fetch_assoc($rsStrength_21);
+$totalRows_rsStrength_21 = mysql_num_rows($rsStrength_21);
+
+$colname_rsStrength_22 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_22 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_22 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_22 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 22 and lsuascores.strength_22  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_22, "int"));
+$rsStrength_22 = mysql_query($query_rsStrength_22, $Assessment) or die(mysql_error());
+$row_rsStrength_22 = mysql_fetch_assoc($rsStrength_22);
+$totalRows_rsStrength_22 = mysql_num_rows($rsStrength_22);
+
+$colname_rsStrength_23 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_23 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_23 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_23 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 23 and lsuascores.strength_23  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_23, "int"));
+$rsStrength_23 = mysql_query($query_rsStrength_23, $Assessment) or die(mysql_error());
+$row_rsStrength_23 = mysql_fetch_assoc($rsStrength_23);
+$totalRows_rsStrength_23 = mysql_num_rows($rsStrength_23);
+
+$colname_rsStrength_24 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrength_24 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength_24 = sprintf("SELECT lsua_strength1.strength1key, lsua_strength1.strength1name, lsua_strength1.strength1, lsuascores.lsuakey, lsuascores.strength_24 FROM lsua_strength1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_strength1.strength1key = 24 and lsuascores.strength_24  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsStrength_24, "int"));
+$rsStrength_24 = mysql_query($query_rsStrength_24, $Assessment) or die(mysql_error());
+$row_rsStrength_24 = mysql_fetch_assoc($rsStrength_24);
+$totalRows_rsStrength_24 = mysql_num_rows($rsStrength_24);
+
+
+$colname_rsGrowth_01 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_01 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_01 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_01 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 1 and lsuascores.growth_01  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_01, "int"));
+$rsGrowth_01 = mysql_query($query_rsGrowth_01, $Assessment) or die(mysql_error());
+$row_rsGrowth_01 = mysql_fetch_assoc($rsGrowth_01);
+$totalRows_rsGrowth_01 = mysql_num_rows($rsGrowth_01);
+
+$colname_rsGrowth_02 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_02 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_02 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_02 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 2 and lsuascores.growth_02  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_02, "int"));
+$rsGrowth_02 = mysql_query($query_rsGrowth_02, $Assessment) or die(mysql_error());
+$row_rsGrowth_02 = mysql_fetch_assoc($rsGrowth_02);
+$totalRows_rsGrowth_02 = mysql_num_rows($rsGrowth_02);
+
+$colname_rsGrowth_03 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_03 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_03 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_03 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 3 and lsuascores.growth_03  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_03, "int"));
+$rsGrowth_03 = mysql_query($query_rsGrowth_03, $Assessment) or die(mysql_error());
+$row_rsGrowth_03 = mysql_fetch_assoc($rsGrowth_03);
+$totalRows_rsGrowth_03 = mysql_num_rows($rsGrowth_03);
+
+$colname_rsGrowth_04 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_04 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_04 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_04 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 4 and lsuascores.growth_04  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_04, "int"));
+$rsGrowth_04 = mysql_query($query_rsGrowth_04, $Assessment) or die(mysql_error());
+$row_rsGrowth_04 = mysql_fetch_assoc($rsGrowth_04);
+$totalRows_rsGrowth_04 = mysql_num_rows($rsGrowth_04);
+
+$colname_rsGrowth_05 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_05 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_05 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_05 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 5 and lsuascores.growth_05  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_05, "int"));
+$rsGrowth_05 = mysql_query($query_rsGrowth_05, $Assessment) or die(mysql_error());
+$row_rsGrowth_05 = mysql_fetch_assoc($rsGrowth_05);
+$totalRows_rsGrowth_05 = mysql_num_rows($rsGrowth_05);
+
+$colname_rsGrowth_06 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_06 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_06 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_06 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 6 and lsuascores.growth_06  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_06, "int"));
+$rsGrowth_06 = mysql_query($query_rsGrowth_06, $Assessment) or die(mysql_error());
+$row_rsGrowth_06 = mysql_fetch_assoc($rsGrowth_06);
+$totalRows_rsGrowth_06 = mysql_num_rows($rsGrowth_06);
+
+$colname_rsGrowth_07 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_07 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_07 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_07 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 7 and lsuascores.growth_07  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_07, "int"));
+$rsGrowth_07 = mysql_query($query_rsGrowth_07, $Assessment) or die(mysql_error());
+$row_rsGrowth_07 = mysql_fetch_assoc($rsGrowth_07);
+$totalRows_rsGrowth_07 = mysql_num_rows($rsGrowth_07);
+
+$colname_rsGrowth_08 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_08 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_08 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_08 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 8 and lsuascores.growth_08  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_08, "int"));
+$rsGrowth_08 = mysql_query($query_rsGrowth_08, $Assessment) or die(mysql_error());
+$row_rsGrowth_08 = mysql_fetch_assoc($rsGrowth_08);
+$totalRows_rsGrowth_08 = mysql_num_rows($rsGrowth_08);
+
+$colname_rsGrowth_09 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_09 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_09 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_09 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 9 and lsuascores.growth_09  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_09, "int"));
+$rsGrowth_09 = mysql_query($query_rsGrowth_09, $Assessment) or die(mysql_error());
+$row_rsGrowth_09 = mysql_fetch_assoc($rsGrowth_09);
+$totalRows_rsGrowth_09 = mysql_num_rows($rsGrowth_09);
+
+$colname_rsGrowth_10 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_10 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_10 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_10 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 10 and lsuascores.growth_10  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_10, "int"));
+$rsGrowth_10 = mysql_query($query_rsGrowth_10, $Assessment) or die(mysql_error());
+$row_rsGrowth_10 = mysql_fetch_assoc($rsGrowth_10);
+$totalRows_rsGrowth_10 = mysql_num_rows($rsGrowth_10);
+
+$colname_rsGrowth_11 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_11 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_11 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_11 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 11 and lsuascores.growth_11  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_11, "int"));
+$rsGrowth_11 = mysql_query($query_rsGrowth_11, $Assessment) or die(mysql_error());
+$row_rsGrowth_11 = mysql_fetch_assoc($rsGrowth_11);
+$totalRows_rsGrowth_11 = mysql_num_rows($rsGrowth_11);
+
+$colname_rsGrowth_12 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_12 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_12 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_12 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 12 and lsuascores.growth_12  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_12, "int"));
+$rsGrowth_12 = mysql_query($query_rsGrowth_12, $Assessment) or die(mysql_error());
+$row_rsGrowth_12 = mysql_fetch_assoc($rsGrowth_12);
+$totalRows_rsGrowth_12 = mysql_num_rows($rsGrowth_12);
+
+$colname_rsGrowth_13 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_13 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_13 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_13 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 13 and lsuascores.growth_13  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_13, "int"));
+$rsGrowth_13 = mysql_query($query_rsGrowth_13, $Assessment) or die(mysql_error());
+$row_rsGrowth_13 = mysql_fetch_assoc($rsGrowth_13);
+$totalRows_rsGrowth_13 = mysql_num_rows($rsGrowth_13);
+
+$colname_rsGrowth_14 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_14 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_14 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_14 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 14 and lsuascores.growth_14  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_14, "int"));
+$rsGrowth_14 = mysql_query($query_rsGrowth_14, $Assessment) or die(mysql_error());
+$row_rsGrowth_14 = mysql_fetch_assoc($rsGrowth_14);
+$totalRows_rsGrowth_14 = mysql_num_rows($rsGrowth_14);
+
+$colname_rsGrowth_15 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_15 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_15 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_15 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 15 and lsuascores.growth_15  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_15, "int"));
+$rsGrowth_15 = mysql_query($query_rsGrowth_15, $Assessment) or die(mysql_error());
+$row_rsGrowth_15 = mysql_fetch_assoc($rsGrowth_15);
+$totalRows_rsGrowth_15 = mysql_num_rows($rsGrowth_15);
+
+$colname_rsGrowth_16 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_16 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_16 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_16 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 16 and lsuascores.growth_16  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_16, "int"));
+$rsGrowth_16 = mysql_query($query_rsGrowth_16, $Assessment) or die(mysql_error());
+$row_rsGrowth_16 = mysql_fetch_assoc($rsGrowth_16);
+$totalRows_rsGrowth_16 = mysql_num_rows($rsGrowth_16);
+
+$colname_rsGrowth_17 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_17 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_17 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsua_growth1.growth1key = 17 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND growth1name = growth_17 and lsuascores.growth_17  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_17, "int"));
+$rsGrowth_17 = mysql_query($query_rsGrowth_17, $Assessment) or die(mysql_error());
+$row_rsGrowth_17 = mysql_fetch_assoc($rsGrowth_17);
+$totalRows_rsGrowth_17 = mysql_num_rows($rsGrowth_17);
+
+$colname_rsGrowth_18 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_18 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_18 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_18 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 18 and lsuascores.growth_18  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_18, "int"));
+$rsGrowth_18 = mysql_query($query_rsGrowth_18, $Assessment) or die(mysql_error());
+$row_rsGrowth_18 = mysql_fetch_assoc($rsGrowth_18);
+$totalRows_rsGrowth_18 = mysql_num_rows($rsGrowth_18);
+
+$colname_rsGrowth_19 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_19 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_19 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_19 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 19 and lsuascores.growth_19  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_19, "int"));
+$rsGrowth_19 = mysql_query($query_rsGrowth_19, $Assessment) or die(mysql_error());
+$row_rsGrowth_19 = mysql_fetch_assoc($rsGrowth_19);
+$totalRows_rsGrowth_19 = mysql_num_rows($rsGrowth_19);
+
+$colname_rsGrowth_20 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_20 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_20 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_20 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 20 and lsuascores.growth_20  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_20, "int"));
+$rsGrowth_20 = mysql_query($query_rsGrowth_20, $Assessment) or die(mysql_error());
+$row_rsGrowth_20 = mysql_fetch_assoc($rsGrowth_20);
+$totalRows_rsGrowth_20 = mysql_num_rows($rsGrowth_20);
+
+$colname_rsGrowth_21 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_21 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_21 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_21 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 21 and lsuascores.growth_21  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_21, "int"));
+$rsGrowth_21 = mysql_query($query_rsGrowth_21, $Assessment) or die(mysql_error());
+$row_rsGrowth_21 = mysql_fetch_assoc($rsGrowth_21);
+$totalRows_rsGrowth_21 = mysql_num_rows($rsGrowth_21);
+
+$colname_rsGrowth_22 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowth_22 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowth_22 = sprintf("SELECT lsua_growth1.growth1key, lsua_growth1.growth1name, lsua_growth1.growth1, lsuascores.lsuakey, lsuascores.growth_22 FROM lsua_growth1, lsuascores WHERE lsuascores.lsuakey = %s AND lsua_growth1.growth1key = 22 and lsuascores.growth_22  = 1 and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowth_22, "int"));
+$rsGrowth_22 = mysql_query($query_rsGrowth_22, $Assessment) or die(mysql_error());
+$row_rsGrowth_22 = mysql_fetch_assoc($rsGrowth_22);
+$totalRows_rsGrowth_22 = mysql_num_rows($rsGrowth_22);
+
+$colname_rsRecommendStrength = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsRecommendStrength = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecommendStrength = sprintf("SELECT lsua_recommend1.recommend1key, lsua_recommend1.las, lsua_recommend1.recommend1name, lsua_recommend1.recommend1, lsuascores.lsuakey, lsuascores.lasname FROM lsua_recommend1, lsuascores WHERE lsuascores.lsuakey = %s AND lsuascores.recommend1 = lsua_recommend1.recommend1key and lsuascores.coded = 1", GetSQLValueString($colname_rsRecommendStrength, "int"));
+$rsRecommendStrength = mysql_query($query_rsRecommendStrength, $Assessment) or die(mysql_error());
+$row_rsRecommendStrength = mysql_fetch_assoc($rsRecommendStrength);
+$totalRows_rsRecommendStrength = mysql_num_rows($rsRecommendStrength);
+
+$colname_rsRecommendGrowth = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsRecommendGrowth = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecommendGrowth = sprintf("SELECT lsua_recommend2.recommend2key, lsua_recommend2.las, lsua_recommend2.recommend2name, lsua_recommend2.recommend2, lsuascores.lsuakey, lsuascores.lasname FROM lsua_recommend2, lsuascores WHERE lsuascores.lsuakey = %s AND lsuascores.recommend2 = lsua_recommend2.recommend2key and lsuascores.coded = 1", GetSQLValueString($colname_rsRecommendGrowth, "int"));
+$rsRecommendGrowth = mysql_query($query_rsRecommendGrowth, $Assessment) or die(mysql_error());
+$row_rsRecommendGrowth = mysql_fetch_assoc($rsRecommendGrowth);
+$totalRows_rsRecommendGrowth = mysql_num_rows($rsRecommendGrowth);
+
+$colname_rsGrowthlast = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsGrowthlast = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowthlast = sprintf("SELECT lsua_growth2.growth2key, lsua_growth2.growth2, lsuascores.lsuakey, lsuascores.growthlast FROM lsua_growth2, lsuascores WHERE lsuascores.growthlast = lsua_growth2.growth2key AND lsuascores.lsuakey = %s and lsuascores.coded = 1", GetSQLValueString($colname_rsGrowthlast, "int"));
+$rsGrowthlast = mysql_query($query_rsGrowthlast, $Assessment) or die(mysql_error());
+$row_rsGrowthlast = mysql_fetch_assoc($rsGrowthlast);
+$totalRows_rsGrowthlast = mysql_num_rows($rsGrowthlast);
+
+$colname_rsStrengthlast = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsStrengthlast = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrengthlast = sprintf("SELECT lsua_strength2.strength2key, lsua_strength2.strength2, lsuascores.lsuakey, lsuascores.strengthlast FROM lsua_strength2, lsuascores WHERE lsuascores.strengthlast = lsua_strength2.strength2key AND lsuascores.lsuakey = %s and lsuascores.coded = 1", GetSQLValueString($colname_rsStrengthlast, "int"));
+$rsStrengthlast = mysql_query($query_rsStrengthlast, $Assessment) or die(mysql_error());
+$row_rsStrengthlast = mysql_fetch_assoc($rsStrengthlast);
+$totalRows_rsStrengthlast = mysql_num_rows($rsStrengthlast);
+
+$colname_rsRecommendBoilerplate1 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsRecommendBoilerplate1 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecommendBoilerplate1 = sprintf("SELECT lsua_recommendboilerplate.recommendbpkey, lsua_recommendboilerplate.recommendbp, lsuascores.lsuakey, lsuascores.coded FROM lsua_recommendboilerplate, lsuascores WHERE lsuascores.lsuakey = %s AND lsuascores.coded = 1 and lsua_recommendboilerplate.recommendbpkey = 1", GetSQLValueString($colname_rsRecommendBoilerplate1, "int"));
+$rsRecommendBoilerplate1 = mysql_query($query_rsRecommendBoilerplate1, $Assessment) or die(mysql_error());
+$row_rsRecommendBoilerplate1 = mysql_fetch_assoc($rsRecommendBoilerplate1);
+$totalRows_rsRecommendBoilerplate1 = mysql_num_rows($rsRecommendBoilerplate1);
+
+$colname_rsRecommendBoilerplate2 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsRecommendBoilerplate2 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecommendBoilerplate2 = sprintf("SELECT lsua_recommendboilerplate.recommendbpkey, lsua_recommendboilerplate.recommendbp, lsuascores.lsuakey, lsuascores.coded FROM lsua_recommendboilerplate, lsuascores WHERE lsuascores.lsuakey = %s AND lsuascores.coded = 1 and lsua_recommendboilerplate.recommendbpkey = 2", GetSQLValueString($colname_rsRecommendBoilerplate2, "int"));
+$rsRecommendBoilerplate2 = mysql_query($query_rsRecommendBoilerplate2, $Assessment) or die(mysql_error());
+$row_rsRecommendBoilerplate2 = mysql_fetch_assoc($rsRecommendBoilerplate2);
+$totalRows_rsRecommendBoilerplate2 = mysql_num_rows($rsRecommendBoilerplate2);
+
+$colname_rsRecommendBoilerplate3 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsRecommendBoilerplate3 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecommendBoilerplate3 = sprintf("SELECT lsua_recommendboilerplate.recommendbpkey, lsua_recommendboilerplate.recommendbp, lsuascores.lsuakey, lsuascores.coded FROM lsua_recommendboilerplate, lsuascores WHERE lsuascores.lsuakey = %s AND lsuascores.coded = 1 and lsua_recommendboilerplate.recommendbpkey = 3", GetSQLValueString($colname_rsRecommendBoilerplate3, "int"));
+$rsRecommendBoilerplate3 = mysql_query($query_rsRecommendBoilerplate3, $Assessment) or die(mysql_error());
+$row_rsRecommendBoilerplate3 = mysql_fetch_assoc($rsRecommendBoilerplate3);
+$totalRows_rsRecommendBoilerplate3 = mysql_num_rows($rsRecommendBoilerplate3);
+
+$colname_rsLSUA2 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsLSUA2 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUA2 = sprintf("SELECT lsua.aspect1essay, lsua.aspect2, lsua.aspect1, lsua.aspect2essay, lsua.aspect3, lsua.aspect3essay, lsua.aspect4, lsua.aspect4essay, lsua.generalself, lsua.idealself, lsua.comments, lsuascores.lsuakey, lsuascores.aspect1las, lsuascores.aspect2las, lsuascores.aspect3las, lsuascores.aspect4las, lsuascores.generalselflas, lsuascores.idealselflas, lsuascores.lasname, lsuascores.strengths, lsuascores.growthareas, registrants.userkey, registrants.firstname, registrants.lastname, lsua.userkey, lsua.`date`, lsua.testtime, lsuascores.strengthpreface1, lsuascores.strengthnumber, lsuascores.strengthpreface2, lsuascores.strength_01, lsuascores.strength_02, lsuascores.strength_03, lsuascores.strength_04, lsuascores.strength_05, lsuascores.strength_06, lsuascores.strength_07, lsuascores.strength_08, lsuascores.strength_09, lsuascores.strength_10, lsuascores.strength_11, lsuascores.strength_12, lsuascores.strength_13, lsuascores.strength_14, lsuascores.strength_15, lsuascores.strength_16, lsuascores.strength_17, lsuascores.strength_18, lsuascores.strength_19, lsuascores.strength_20, lsuascores.strength_21, lsuascores.strength_22, lsuascores.strength_23, lsuascores.strength_24, lsuascores.strengthlast, lsuascores.strengthsuggest, lsuascores.growthpreface1, lsuascores.growthnumber, lsuascores.growthpreface2, lsuascores.growth_01, lsuascores.growth_02, lsuascores.growth_03, lsuascores.growth_04, lsuascores.growth_05, lsuascores.growth_06, lsuascores.growth_07, lsuascores.growth_08, lsuascores.growth_09, lsuascores.growth_10, lsuascores.growth_11, lsuascores.growth_12, lsuascores.growth_13, lsuascores.growth_14, lsuascores.growth_15, lsuascores.growth_16, lsuascores.growth_17, lsuascores.growth_18, lsuascores.growth_19, lsuascores.growth_20, lsuascores.growth_21, lsuascores.growth_22, lsuascores.growthlast, lsuascores.growthsuggest, lsuascores.recommend1, lsuascores.recommend2, lsuascores.coded FROM lsua, lsuascores, registrants WHERE lsua.lsuakey = %s AND lsuascores.lsuakey = %s and lsua.userkey = registrants.userkey and lsuascores.coded = 1", GetSQLValueString($colname_rsLSUA2, "int"),GetSQLValueString($colname_rsLSUA2, "int"));
+$rsLSUA2 = mysql_query($query_rsLSUA2, $Assessment) or die(mysql_error());
+$row_rsLSUA2 = mysql_fetch_assoc($rsLSUA2);
+$totalRows_rsLSUA2 = mysql_num_rows($rsLSUA2);
+
+$colname_rsRecommendboilerplate4 = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsRecommendboilerplate4 = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecommendboilerplate4 = sprintf("SELECT lsua_recommendboilerplate.recommendbpkey, lsua_recommendboilerplate.recommendbp, lsuascores.lsuakey, lsuascores.coded FROM lsua_recommendboilerplate, lsuascores WHERE lsuascores.lsuakey = %s AND lsuascores.coded = 0 and lsua_recommendboilerplate.recommendbpkey = 4", GetSQLValueString($colname_rsRecommendboilerplate4, "int"));
+$rsRecommendboilerplate4 = mysql_query($query_rsRecommendboilerplate4, $Assessment) or die(mysql_error());
+$row_rsRecommendboilerplate4 = mysql_fetch_assoc($rsRecommendboilerplate4);
+$totalRows_rsRecommendboilerplate4 = mysql_num_rows($rsRecommendboilerplate4);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+$colname_rsScoreComment = "-1";
+if (isset($_GET['lsuakey'])) {
+  $colname_rsScoreComment = $_GET['lsuakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsScoreComment = sprintf("SELECT lsuascores.lsuakey, lsuascores.lasnumber_1, lasnumber.lasnumber, lasnumber.lasexplanation FROM lsuascores, lasnumber WHERE lsuascores.lsuakey = %s AND lasnumber.lasnumber = lsuascores.lasnumber_1", GetSQLValueString($colname_rsScoreComment, "int"));
+$rsScoreComment = mysql_query($query_rsScoreComment, $Assessment) or die(mysql_error());
+$row_rsScoreComment = mysql_fetch_assoc($rsScoreComment);
+$totalRows_rsScoreComment = mysql_num_rows($rsScoreComment);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelsua2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LSUA report</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+-->
+</style>
+<script src="../SpryAssetsAssessments/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="../SpryAssetsAssessments/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LSUAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <td width="680" valign="top"><h1>Report for <?php echo $row_rsLSUA['firstname']; ?> <?php echo $row_rsLSUA['lastname']; ?></h1>
+      <p><strong>Date of assessment</strong>: <?php echo $row_rsLSUA['date']; ?></p>
+      <p><?php echo $row_rsScoreComment['lasexplanation']; ?></p>
+      <p>Click on a panel to view your results. Click again to close it. Open all of the panels to  print the full report.</p>
+<div id="CollapsiblePanel8" class="CollapsiblePanel">
+  <div class="CollapsiblePanelTab">THINKING ABOUT  RELATIONSHIPS IN PHASE <?php echo $_GET['lasname']; ?></div>
+  <div class="CollapsiblePanelContent">
+    <p><strong>When you think about your<?php echo $row_rsLsuaAspectComment1['aspect']; ?></strong><em>,</em> <?php echo $row_rsLsuaAspectComment1['aspectcomment']; ?></p>
+    <p><strong>When you think about your<?php echo $row_rsLsuaAspectComment2['aspect']; ?></strong><em>,</em> <?php echo $row_rsLsuaAspectComment2['aspectcomment']; ?></p>
+    <p><strong>When you think about your<?php echo $row_rsLsuaAspectComment3['aspect']; ?></strong><em>,</em> <?php echo $row_rsLsuaAspectComment3['aspectcomment']; ?></p>
+    <p><strong>When you think about your<?php echo $row_rsLsuaAspectComment4['aspect']; ?></strong><em>,</em> <?php echo $row_rsLsuaAspectComment4['aspectcomment']; ?></p>
+    <p><?php echo $row_rsLSUAtrue['truecomment']; ?></p>
+    <p><?php echo $row_rsLSUAtrue['idealcomment']; ?></p>
+    <p>&nbsp;</p>
+  </div>
+</div>
+<div id="CollapsiblePanel9" class="CollapsiblePanel">
+  <div class="CollapsiblePanelTab">PERSONAL COMMENTS ON YOUR ESSAYS</div>
+  <div class="CollapsiblePanelContent">
+    <h3><strong>Personal strengths</strong></h3>
+    <p><?php echo $row_rsLSUA['strengths']; ?><?php echo $row_rsLSUA2['strengthpreface1']; ?> <?php echo $row_rsLSUA2['strengthnumber']; ?> <?php echo $row_rsLSUA2['strengthpreface2']; ?> <?php echo $row_rsStrength_01['strength1'];?> <?php echo $row_rsStrength_02['strength1'];?> <?php echo $row_rsStrength_03['strength1'];?> <?php echo $row_rsStrength_04['strength1'];?> <?php echo $row_rsStrength_05['strength1'];?> <?php echo $row_rsStrength_06['strength1'];?> <?php echo $row_rsStrength_07['strength1'];?> <?php echo $row_rsStrength_08['strength1'];?> <?php echo $row_rsStrength_09['strength1'];?> <?php echo $row_rsStrength_10['strength1'];?> <?php echo $row_rsStrength_11['strength1'];?> <?php echo $row_rsStrength_12['strength1'];?> <?php echo $row_rsStrength_13['strength1'];?> <?php echo $row_rsStrength_14['strength1'];?> <?php echo $row_rsStrength_15['strength1'];?> <?php echo $row_rsStrength_16['strength1'];?> <?php echo $row_rsStrength_17['strength1'];?> <?php echo $row_rsStrength_18['strength1'];?> <?php echo $row_rsStrength_19['strength1'];?> <?php echo $row_rsStrength_20['strength1'];?> <?php echo $row_rsStrength_21['strength1'];?> <?php echo $row_rsStrength_22['strength1'];?> <?php echo $row_rsStrength_23['strength1'];?> <?php echo $row_rsStrength_24['strength1'];?> <?php echo $row_rsStrengthlast['strength2']; ?></p>
+    <h3><strong>Personal growth areas</strong></h3>
+    <p> <?php echo $row_rsLSUA['s_growthareas']; ?><?php echo $row_rsLSUA2['growthpreface1']; ?> <?php echo $row_rsLSUA2['growthnumber']; ?> <?php echo $row_rsLSUA2['growthpreface2']; ?> <?php echo $row_rsGrowth_01['growth1'];?> <?php echo $row_rsGrowth_02['growth1'];?> <?php echo $row_rsGrowth_03['growth1'];?> <?php echo $row_rsGrowth_04['growth1'];?> <?php echo $row_rsGrowth_05['growth1'];?> <?php echo $row_rsGrowth_06['growth1'];?> <?php echo $row_rsGrowth_07['growth1'];?> <?php echo $row_rsGrowth_08['growth1'];?> <?php echo $row_rsGrowth_09['growth1'];?> <?php echo $row_rsGrowth_10['growth1'];?> <?php echo $row_rsGrowth_11['growth1'];?> <?php echo $row_rsGrowth_12['growth1'];?> <?php echo $row_rsGrowth_13['growth1'];?> <?php echo $row_rsGrowth_14['growth1'];?> <?php echo $row_rsGrowth_15['growth1'];?> <?php echo $row_rsGrowth_16['growth1'];?> <?php echo $row_rsGrowth_17['growth1'];?> <?php echo $row_rsGrowth_18['growth1'];?> <?php echo $row_rsGrowth_19['growth1'];?> <?php echo $row_rsGrowth_20['growth1'];?> <?php echo $row_rsGrowth_21['growth1'];?> <?php echo $row_rsGrowth_22['growth1'];?><?php echo $row_rsGrowthlast['growth2']; ?></p>
+    <h3>Personal recommendations</h3>
+    <p><?php echo $row_rsRecommendBoilerplate1['recommendbp']; ?><?php echo $row_rsLSUA['lasname']; ?><?php echo $row_rsRecommendBoilerplate2['recommendbp']; ?><?php echo $row_rsRecommendStrength['recommend1']; ?> <?php echo $row_rsRecommendBoilerplate3['recommendbp']; ?> <?php echo $row_rsRecommendGrowth['recommend2']; ?><?php echo $row_rsRecommendboilerplate4['recommendbp']; ?><br />
+    </p>
+  </div>
+</div>
+<div id="CollapsiblePanel1" class="CollapsiblePanel">
+  <div class="CollapsiblePanelTab">REASONING ABOUT THE SELF IN PHASE <?php echo $_GET['lasname']; ?></div>
+  <div class="CollapsiblePanelContent">
+    <p><strong>Perspective on yourself:</strong> <?php echo $row_rsLSUAlascomment['selfperspective']; ?></p>
+    <p><strong>Social perspective:</strong> <?php echo $row_rsLSUAlascomment['socialperspective']; ?></p>
+    <p><strong>Historical perspective:</strong> <?php echo $row_rsLSUAlascomment['temporalperspective']; ?></p>
+    <p><strong>Self evaluation:</strong> <?php echo $row_rsLSUAlascomment['selfevaluation']; ?></p>
+    <p><strong>Self growth:</strong> <?php echo $row_rsLSUAlascomment['selfgrowth']; ?></p>
+    <h3>Possible psychological implications of reasoning in this phase include: </h3>
+    <ul>
+      <li> <?php echo $row_rsLSUAstruggle1['struggle']; ?></li>
+      <li> <?php echo $row_rsLSUAstruggle2['struggle']; ?></li>
+      <li> <?php echo $row_rsLSUAstruggle3['struggle']; ?></li>
+      <li> <?php echo $row_rsLSUAstruggle4['struggle']; ?></li>
+      <li> <?php echo $row_rsLSUAstruggle5['struggle']; ?></li>
+    </ul>
+    <p>&nbsp;</p>
+    <div  class="boxLSUA"><p><strong>Note:</strong> We did not base your score on the particular conceptual content of your performance. We base our scores on what cognitive developmental researchers call the &quot;hierarchical&quot; (level of hierarchical integration) and &quot;horizontal&quot; (degree of elaboration within a level) complexity of  performances. The first two digits in your score denote the hierarchical integration; the second two digits denote the degree of elaboration. To read a short description of our scoring system, the Lectical Assessment System (LAS), <a href="../PDF/LAAS.pdf">click here</a>. You may find it useful to revisit your report from time to time. As we update our knowledge about learning at each phase, we add to our learning suggestions. This means that, from time to time, you may discover new resources here, even if you don't take another assessment.</p></div>
+    <p>&nbsp;</p>
+  </div>
+</div>
+<div id="CollapsiblePanel6" class="CollapsiblePanel">
+  <div class="CollapsiblePanelTab">SUGGESTIONS FOR PERSONS PERFORMING IN PHASE <?php echo $_GET['lasname']; ?></div>
+  <div class="CollapsiblePanelContent">
+    <p>As Malcolm Gladwell argues in the book, <em>Outliers</em>, it takes about 10,000 hours of constant study (10 years) to become an expert in any complex field—no matter how talented you are. We would add that no matter how much of an expert you become—on yourself, in your area of professional expertise, or in the interpersonal sphere—there is always room for growth. </p>
+    <p>Where possible, our learning resources generally are selected to be one to two phases beyond your current phase of performance. The resources in this list should make you stretch just enough to challenge your current thinking. If a resource is too easy, you should probably move on. If it is too difficult, start with something a little less challenging.</p>
+    <p>You may notice that we suggest readings representing a wide range of perspectives. We do not endorse any particular perspective except the developmental perspective—which tells us that development is more likely to occur in individuals who seek to understand a wide range of perspectives. You are likely to disagree strongly with some of the worldviews and opinions expressed in  our offerings. That's fine. We suggest only that you make a special effort to understand these views more fully.</p>
+    <h3>Personal growth resources for individuals performing in phase <?php echo $row_rsLSUA['lasname']; ?></h3>
+    <p><?php echo $row_rsLSUAresource1['resource']; ?></p>
+    <p><?php echo $row_rsLSUAresource2['resource']; ?></p>
+    <p><?php echo $row_rsLSUAresource3['resource']; ?></p>
+    <p><?php echo $row_rsLSUAresource4['resource']; ?></p>
+    <p><?php echo $row_rsLSUAresource5['resource']; ?></p>
+    <p><?php echo $row_rsLSUAresource6['resource']; ?></p>
+    <h3>Essay results vs. survey results</h3>
+    <p>Take note of any differences between our comments on your essay  and survey results. For example, if you scored high in emotional awareness on the Character Survey, but we flagged emotional awareness as an area for growth in the essay section, you may find it particularly useful to re-examine your own appraisal of your emotional awareness. This is not to say that we are right and you are wrong. In your essays, you simply may not have expanded on the emotional aspects of your relationships, leaving us with the impression that emotions do not hold a place of prominence in your thinking about yourself. This could be meaningful, but it might not. Only you can know.</p>
+    <h3 align="left"><span>Implicit versus explicit knowledge</span></h3>
+    <p align="left"><span>Some of our knowlege is readily avaialble to us. We are conscious of it and can share it with others. Psychologists refer to this kind of knowledge as <em>explicit</em>. Explicit knowledge is fairly easy to share on an assessment like this one. However, people often know more about a particular subject than they can communicate in an assessment like this one. This is because much of what we learn through experience does not automatically become part of our explicit knowledge. It's in a form that's difficult to share. We call this kind of knowledge <em>tacit</em> or <em>implicit</em>. You can also think of it as intuitive knowledge. Tacit knowledge is not a bad thing. It helps us make quick choices in familiar situations; we'd be in big trouble if we had to think through every single situation in our lives before we made a decision! But tacit knowledge has its limits.</span>    </p>
+    <p><strong>First</strong>, because we aren't able to bring it into focus, we can't share tacit knowledge with others. This is the case in businesses in which the person at the top is an &quot;intuitive&quot; leader. Because his or her leadership skills are tacit, they can't be shared. In situations like this, it is not uncommon for an institution to last only as long as its leader. </p>
+    <p><strong>Second</strong>, it is limited by our experience, which means it isn't terribly useful for dealing with novelty. Because tacit knowledge is experienced-based, it is most useful in situations that are like those we have confronted in the past. Unfortunately, the modern world is constantly providing us with new challenges. To meet these challenges, we  need conscious methods for evaluating  knowledge and experience.</p>
+    <p><strong>Third</strong>, sometimes our tacit knowledge is sub-optimal. For example, people who learn the skills required to survive on the rough side of town or in an abusive relationship often fare poorly when they try to function outside of those contexts, because their  tacit knowledge isn't useful in their new surroundings. Before they can learn more adaptive skills, they usually need to bring their tacit knowledge into consciousness. </p>
+    <p><strong>Finally</strong>, relying on tacit knowledge limits our development. When we habitually rely on our tacit knowledge, learning not only slows down, its quality is compromised. Optimal learning requires that we reflect consciously upon our own experiences and actively seek other perspectives to fill in the gaps.</p>
+    <p>&nbsp;</p>
+  </div>
+</div>
+<div id="CollapsiblePanel2" class="CollapsiblePanel">
+  <div class="CollapsiblePanelTab">YOUR SCORE RELATIVE TO OTHER MEMBERS OF THE ADULT POPULATON</div>
+  <div class="CollapsiblePanelContent">
+    <p>The figure below shows  the approximate distribution of American adults' skill levels—in areas of expertise. There is no single source for the numbers that inform this figure. They reflect the research literature, our own data, and consultations with other developmentalists. We are least clear about the ends of the distribution—especially the top end—but despite this we feel confident that the general picture is accurate. Most American adults perform in level 10 or the first phase of level 11. A much smaller percentage performs above phase 11:1.<br />
+      <br />
+    </p>
+    <p><img src="<?php echo $row_rsLasByAge['lasbyageart2']; ?>" alt="Graph of level by age" width="667" height="237" hspace="0" align="baseline" /><br />
+      <br />
+      The figure shows a symmetrical bell curve, where the average score received by adults (in an area of expertise) is  in the middle of the curve. Most people (68% of them, or 34% + 34%)  perform within one segment of the average score. Each of the second segments (to the right and left of the two middle segments) represent 14% of the population, and each of the segments on the far right and left represent 2% of the adult population. Percentages are shown on the horizontal axis. The location of your score (phase <?php echo $_GET['lasname']; ?>) is indicated by a vertical line with translucent bars on each side. Those bars represent the range in which your &quot;true&quot; score is most likely to fall.    </p>
+    <p>&nbsp;</p>
+  </div>
+</div>
+
+
+<div id="CollapsiblePanel4" class="CollapsiblePanel">
+  <div class="CollapsiblePanelTab">YOUR OPTIMISM SURVEY RESULTS</div>
+  <div class="CollapsiblePanelContent">
+    <h3>Your optimism survey score = <?php echo $row_rsOptimism['optimismaverage']; ?></h3>
+    <h3><strong>Your definition of optimism</strong></h3>
+    <p>&quot;<?php echo $row_rsOptimism['optimismcomment']; ?>&quot;</p>
+<h3>How we think about optimism</h3>
+    <p>For the purposes of this survey we have defined optimism as a relatively stable<span class="lsua">* disposition some people have that leads them to anticipate positive rather than negative events and outcomes. In this view, pessimism is the opposite of optimism. Individuals can fall anywhere on a pessimism-optimism scale. Our scale runs from  0 – 5. Higher scores reflect a more optimistic disposition than lower scores. </p>
+    <h3>Levels of optimism </h3>
+    <p><strong><img src="../images/FirmFeet.jpg" alt="feet firmly planted on the ground" width="124" height="90" align="left" class="imageleft" />A very high level of pessimism</strong>—a score lower than 1.25 on our scale—indicates that you tend to be  pessimistic about most things. It is likely that your friends or family  have complained to you about your pessimism, and you probably think that the amount of optimism expressed by others is  ridiculously unrealistic. There may be few people you are willing to trust. </p>
+    <p><strong>A moderate level of pessimism</strong>—a score between 1.25 and 2.50—indicates that you tend to be cautiously pessimistic. This is likely to mean that you are more careful than most people when it comes to making decisions or planning for the future, and you may find it difficult to trust people you do not know well. A moderate level of pessimism is likely to be associated with a low level of risk-taking.</p>
+    <p><strong>A moderate level of optimism</strong>—a score between 2.50 and 3.75—indicates that you tend to be cautiously optimistic. This could mean that you are a bit less cautious than most people when it comes to making decisions or planning for the future, and you probably find it relatively easy to trust people even before you know them well. A moderate level of optimism is likely to be associated with moderate risk-taking. </p>
+    <p><strong><img src="../images/PieInSky.jpg" alt="pie in the sky" width="124" height="90" align="left" class="imageleft" />A very high level of optimism</strong>—a score higher than 3.75 on our scale—indicates that you tend to be optimistic about most things. It is likely that your friends or family  have complained to you about your optimism. You even may have let others down when one or more of your optimism-fueled ventures failed. This is because a very high level of optimism can contribute to a high level of risk-taking, which is associated with both positive and negative outcomes. For example, many successful entrepreneurs  are optimists, but the same can be said of failed entrepreneurs (and other victims of their own high risk behavior).</p>
+    <h3>Optimism and experience</h3>
+    <p>As we mature, our   optimism (or pessimism) is likely to be tempered by  experience. We may become slower to trust others because we have experienced betrayal, or we may have experienced one or more rewarding relationships, making us more optimistic about future relationships. We may begin to regard the future as less certain due to political or economic change, or positive events like the birth of a child may have lightened our view of the future. Even though our expectations tend to affect the kind of choices we make—and our choices are almost certain to affect our experiences—life still can surprise us by  conflicting with our expectations. When it does, some people change.</p>
+    <h3>Correlates of optimism</h3>
+    <p>Higher levels of  optimism have been related to things as diverse as entrepreneurship, adjustment to stress, higher socioeconomic status, lower distress, less avoidant behavior, longer survival rates for cancer sufferers, greater immunity, better problem recognition, the propensity to search for solutions, and healthier lifestyle choices. However, these relationships are weak, none of them are causal<span class="lsua"><strong>†</strong>, and many of the findings have been contradicted in other research. Moreover, there is very little study of the negative effects of optimism. Norey and Chang, in an August 2002, <em>Journal of Clinical Psychology</em> article, suggested that researchers tend to underestimate or ignore the negative costs of optimism. We agree.</p>
+    <h3>Take home message</h3>
+    <p>Optimism, like other human qualities, has both positive and negative implications. You can use your survey results to   get  started thinking about the role your level of optimism has played in your life. We suggest that you begin by thinking about the ways in which your own level of optimism has affected your choices, relationships, and experiences. What are the advantage and disadvantages of your level of optimism? Are you satisfied or dissatisfied with your level of optimism? Do you wish you were more or less optimistic? What kind of feedback have you had from others regarding your level of optimism? Try <!--<a href="../OLD/lectical_journal_entry.php">-->journaling about these issues or discussing them with others. </p>
+    <p>&nbsp;</p>
+    <p><span class="lsua">*</span>We say &quot;relatively stable&quot; because optimism can be affected by experience. For example, researchers have shown that  stress of various kinds can reduce optimism—at least temporarily. </p>
+    <p><strong class="lsua">†</strong>It has not been shown that optimism causes any of these behaviors or outcomes.</p>
+    <p>BTW: Those feet are planted firmly on the ground.    </p>
+</div>
+</div>
+<div id="CollapsiblePanel5" class="CollapsiblePanel">
+  <div class="CollapsiblePanelTab">YOUR CHARACTER SURVEY RESULTS</div>
+  <div class="CollapsiblePanelContent">
+    <h3 class="lsua15">Your definition of character</h3>
+    <p class="lsua15"> &quot;<?php echo $row_rsCharacter['charactercomment']; ?>&quot;</p>
+<h3>How we think about character</h3>
+    <p>We think of character as  a set of interrelated qualities that help determine our general approach to  tasks, social relationships, and citizenship. It includes qualities like compassion, courage, dependability,  emotional maturity,  generosity, humility, integrity,   perseverance, responsibility, tolerance, openness to learning, and the ability to respond to challenges. In this survey, we focus on five aspects of character: </p>
+    <ol>
+      <li><em>integrity</em>,  including attributes like truthfulness, fairness, honesty, loyalty, and dependability;</li>
+      <li><em>perseverance</em>, including persistence over time and persistence in the face of adversity;</li>
+      <li><em>openness to learning</em>, including one's general attitude toward learning and development and the degree to which learning informs one's life;</li>
+      <li><em>comfort with challenge</em>, including one's general attitude to challenging situations and the degree to which one embraces challenge; and </li>
+      <li><em>emotional  awareness</em>.<br />
+      </li>
+    </ol>
+    <p>Our scale runs from  0 – 5. Higher scores reflect more of each quality than lower scores. </p>
+    <h3>Your integrity score is <?php echo $row_rsCharacter['integrityaverage']; ?></h3>
+    <p><strong>Very low:</strong> A score lower than 1.00 on our scale indicates that  behaviors like fairness, responsibility, and dependability, which are the hallmarks of personal integrity, are given almost no value. Individuals who score in this range are  likely to have a great deal of difficulty maintaining relationships, and are more likely than people with higher scores to act  in their own self-interest when it means knowingly harming others. </p>
+    <p><strong>Low:</strong> A score between 1.00 and 2.00 indicates that  behaviors like fairness, responsibility, and dependability are given little value. Individuals who score in this range are  likely to have  difficulty maintaining close relationships, and are more likely than people with higher scores to act without considering the effects of their actions upon others. </p>
+    <p><strong>Moderate: </strong>A score between 2.00 and 3.00 indicates that  behaviors like fairness, responsibility, and dependability are given some value. Although individuals who score in this range are  likely to be able to maintain close relationships,  when under duress or subjected to temptation, they are are more likely than people with higher scores to act in ways that have negative effects on others. </p>
+    <p><strong>High: </strong>A score between 3.00 and 4.00 indicates that  behaviors like fairness, responsibility, and dependability are given a high value. Individuals who score in this range are  likely to be able to maintain close relationships. And even when under duress or subjected to temptation, they are are more likely than people with lower scores to act in ways that show consideration for others. </p>
+    <p><strong>Very high: </strong>A  score higher than 4.00 on our scale indicates vigilance when it comes to behaving with fairness, responsibility, and dependability. Individuals who score in this range are more likely than people with lower scores to put integrity  first in all situations. However, when vigilance becomes hyper-vigilance or rigidity, even integrity can spawn behavior that is non-adaptive, creating problems for the self and others.</p>
+    <h3>Your perseverance score is <?php echo $row_rsCharacter['persistenceaverage']; ?></h3>
+    <p><strong>Very low: </strong>A score lower than 1.00 on our scale indicates a very low level of the propensity to persist, either over time or in the face of adversity. Individuals who score in this range are very likely to have a great deal of difficulty achieving  long-term or challenging goals, even when failure is associated with severe negative consequences. </p>
+    <p><strong>Low: </strong>A score between 1.00 and 2.00 indicates a  low level of the propensity to persist, either over time or in the face of adversity. Individuals who score in this range are very likely to  find it difficult to achieve   medium-term or challenging goals, even when failure is associated with clear-cut negative consequences. </p>
+    <p><strong>Moderate:</strong> A score between 2.00 and 3.00 indicates a  moderate level of the propensity to persist. Individuals who score in this range are likely to persist—even over relatively long periods of  time—as long as doing so   involves no more than a moderate level of challenge or adversity. They are more likely to  persist when failure is associated with  negative consequences. </p>
+    <p><strong>High:</strong> A score between 3.00 and 4.00 indicates an  optimally adaptive level of the propensity to persist. Individuals who score in this range are likely to persist over  long periods of  time and under adverse conditions. They are likely to  persist even when failure is not associated with  negative consequences. </p>
+    <p><strong>Very high:</strong> A score higher than 4.00 on our scale indicates an unusually high level of the propensity to persist. Individuals who score in this range are likely to persist over  very long periods of  time and under extreme conditions. Although this level of persistence can lead to great success, it can also lead to catastrophic failure. For example, individuals who score in this range    are more likely than those with lower scores to ignore clear evidence of failure, continuing to persevere even when the cost of doing so outweighs the benefits of success.</p>
+    <h3>Your &quot;openness to  learning&quot; score is <?php echo $row_rsCharacter['learneraverage']; ?></h3>
+    <p><strong>Very low: </strong>A score lower than 1.00 on our scale indicates a very low level of openness to learning. Individuals who score in this range are  unlikely to take advantage of learning opportunities of any kind, severely reducing the possibility of personal development.</p>
+    <p><strong>Low: </strong>A score between 1.00 and 2.00 indicates a  low level of  openness to learning. Individuals who score in this range may have one or two recreational interests that involve a degree of learning. But, for the most part, they take advantage of learning opportunities only when   required, and are unlikely to engage with any enthusiasm. This  limits the potential for personal development.</p>
+    <p><strong>Moderate: </strong>A score between 2.00 and 3.00 indicates a  moderate level of  openness to learning. Individuals who score in this range are likely to have  recreational interests that involve  learning and to  take advantage of conventional learning opportunities when   these lead to clear-cut benefits. Personal development is most likely to occur in one or two specific areas of interest or in workplace skills.</p>
+    <p><strong>High: </strong>A score between 3.00 and 4.00 indicates a  high level of  openness to learning. Individuals who score in this range are likely to pursue learning in a variety of conventional and unconventional contexts and in a  range of subject or skill areas. When learning crosses disciplines, goes deep, and involves critical reflection, transformative development—of the kind that spawns innovation—is possible. </p>
+    <p><strong>Very high:</strong> A score higher than 4.00 on our scale indicates an all-out passion for learning. Individuals who score in this range are likely to pursue learning in a wide variety of conventional and unconventional contexts and in a remarkably wide range of subject or skill areas. When learning crosses disciplines, goes deep, and involves critical reflection, transformative development—of the kind that spawns innovation—is likely. However, it is possible for  learning to become so much of a passion that it negatively influences personal development, especially when it interferes with close relationships.</p>
+    <h3>Your level of comfort with challenge score is <?php echo $row_rsCharacter['challengeaverage']; ?></h3>
+    <p><strong>Very low: </strong>A score lower than 1.00 on our scale indicates a very low level of comfort with challenging situations. Individuals who score in this range are  likely to avoid challenges of any kind.</p>
+    <p><strong>Low: </strong>A score between 1.00 and 2.00 indicates a  low level of  comfort with challenging situations. Individuals who score in this range are likely to avoid engaging in challenging activities unless they are required to do so. Even in this case, they are likely to require a  great deal of support (or supervision).</p>
+    <p><strong>Moderate: </strong>A score between 2.00 and 3.00 indicates a  moderate level of  comfort with challenging situations. Individuals who score in this range may voluntarily take on a moderately challenging activity if the stakes are not too high, but they are  likely to be more reluctant to take on a major challenge. </p>
+    <p><strong>High: </strong>A score between 3.00 and 4.00 indicates a  high level of  comfort with challenging situations. Individuals who score in this range are likely to volunteer to tackle  challenging problems and to take pleasure in the process. </p>
+    <p><strong>Very high:</strong> A score higher than 4.00 on our scale indicates a true passion for  taking on challenging situations. Individuals who score in this range are likely to  seek out challenges—and may gain a reputation as problem-solvers—or daredevils.</p>
+    <h3>Your emotional awareness score is <?php echo $row_rsCharacter['emotionaverage']; ?></h3>
+    <p><strong>Very low: </strong>A score lower than 1.00 on our scale indicates a very low level of emotional awareness. Individuals who score in this range are  very likely to be out of touch with their own and other's emotional states. They are   also more likely than those who score higher on this scale to experience destructive emotional outbursts, especially if they are emotionally intense.</p>
+    <p><strong>Low: </strong>A score between 1.00 and 2.00 indicates a  low level of  emotional awareness. Individuals who score in this range are likely to be out of touch with their own and other's emotional states and are more likely that those who score higher on this scale to experience  emotional outbursts, some of which may be destructive, especially if they are emotionally intense.</p>
+    <p><strong>Moderate: </strong>A score between 2.00 and 3.00 indicates a  moderate level of  emotional awareness. Individuals who score in this range are likely to think of themselves as being aware of their own and other's basic  emotional states, and are more likely that those who score lower on this scale to be able to keep potentially destructive emotions under control, even if they are emotionally intense. </p>
+    <p><strong>High: </strong>A score between 3.00 and 4.00 indicates a  high level  of  emotional awareness. Individuals who score in this range are likely likely to think of themselves as having a  nuanced awareness of their own and other's   emotional states, and are more likely that those who score lower on this scale to actively monitor their own and other's emotions, and to    channel or defuse potentially destructive emotions.</p>
+    <p><strong>Very high:</strong> A score higher than 4.00 on our scale indicates a very high level of emotional awareness. Individuals who score in this range are likely to think of themselves as having a  highly nuanced awareness of their own and other's   emotional states. They are  likely to actively monitor their own and other's emotions and to    channel  or defuse potentially destructive emotions. They are also more likely than individuals who score lower on the scale to take on more emotion than they can handle, especially if they are caregivers.</p>
+    <h3>Good and bad character? </h3>
+    <p>Some aspects of character can be arranged neatly on a scale, where a high score is good and a low score is bad. For example, almost everyone would  agree that a lack of integrity is a bad thing. But other aspects of character are more complex. People don't always agree on the value of being open to new knowledge or the value of emotional awareness, which makes it harder to talk about simple &quot;good&quot; and &quot;bad&quot; amounts of these qualities. To make things more complicated, very high levels of  qualities—like perseverance or thoroughness—sometimes aren't as adaptive as moderately high levels. It is not <em>always</em> good to persist, and too much thoroughness begins to look like perfectionism, which can have negative personal consequences. </p>
+    <h3>Take home message</h3>
+    <p>Character, like other human qualities, has both positive and negative implications. You can use your survey results to   get  started thinking about the role  that different aspects of your character have played in your life. We suggest that you begin by thinking about the ways in which aspects of your character have affected your choices, relationships, and experiences. What are the advantage and disadvantages of your character traits? Are you satisfied or dissatisfied with your character? What kind of feedback have you had from others regarding different aspects of your   character? Try <!--<a href="../OLD/lectical_journal_entry.php">-->journaling about these issues or discussing them with others.</p>
+    <p>&nbsp;</p>
+  </div>
+</div>
+<div id="CollapsiblePanel7" class="CollapsiblePanel">
+  <div class="CollapsiblePanelTab">YOUR ESSAYS</div>
+  <div class="CollapsiblePanelContent">
+    <div class="TabbedPanelsContent">
+      <h3>Your <?php echo $row_rsLSUA['aspect1']; ?></h3>
+      <p><?php echo $row_rsLSUA['aspect1essay']; ?></p>
+      <h3>Your <?php echo $row_rsLSUA['aspect2']; ?></h3>
+      <p><?php echo $row_rsLSUA['aspect2essay']; ?></p>
+      <h3>Your <?php echo $row_rsLSUA['aspect3']; ?></h3>
+      <p><?php echo $row_rsLSUA['aspect3essay']; ?></p>
+      <h3>Your <?php echo $row_rsLSUA['aspect4']; ?></h3>
+      <p><?php echo $row_rsLSUA['aspect4essay']; ?></p>
+      <h3>Yourself, in general</h3>
+      <p><?php echo $row_rsLSUA['generalself']; ?></p>
+      <h3>Your ideal self</h3>
+      <p><?php echo $row_rsLSUA['idealself']; ?></p>
+      <h3>Your comments</h3>
+      <p><?php echo $row_rsLSUA['comments']; ?></p>
+      <p>&nbsp;</p>
+    </div>
+  </div>
+</div>
+<p>&nbsp;</p></td>
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+var CollapsiblePanel4 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel4");
+var CollapsiblePanel5 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel5");
+var CollapsiblePanel7 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel7");
+var CollapsiblePanel8 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel8");
+var CollapsiblePanel9 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel9");
+var CollapsiblePanel6 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel6");
+//-->
+</script>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLSUA);
+
+mysql_free_result($rsLasByAge);
+
+mysql_free_result($rsLsuaAspectComment1);
+
+mysql_free_result($rsLsuaAspectComment2);
+
+mysql_free_result($rsLsuaAspectComment3);
+
+mysql_free_result($rsLsuaAspectComment4);
+
+mysql_free_result($rsLSUAlascomment);
+
+mysql_free_result($rsLSUAtrue);
+
+mysql_free_result($rsLSUAresource1);
+
+mysql_free_result($rsLSUAresource2);
+
+mysql_free_result($rsLSUAresource3);
+
+mysql_free_result($rsLSUAresource4);
+
+mysql_free_result($rsLSUAresource5);
+
+mysql_free_result($rsLSUAresource6);
+
+mysql_free_result($rsLSUAstruggle1);
+
+mysql_free_result($rsLSUAstruggle2);
+
+mysql_free_result($rsLSUAstruggle3);
+
+mysql_free_result($rsLSUAstruggle4);
+
+mysql_free_result($rsLSUAstruggle5);
+
+mysql_free_result($rsOptimism);
+
+mysql_free_result($rsCharacter);
+
+mysql_free_result($rsRecommendStrength);
+
+mysql_free_result($rsRecommendGrowth);
+
+mysql_free_result($rsGrowthlast);
+
+mysql_free_result($rsStrengthlast);
+
+mysql_free_result($rsRecommendBoilerplate1);
+
+mysql_free_result($rsRecommendBoilerplate2);
+
+mysql_free_result($rsRecommendBoilerplate3);
+
+mysql_free_result($rsLSUA2);
+
+mysql_free_result($rsRecommendboilerplate4);
+
+mysql_free_result($rsRegistrants);
+
+mysql_free_result($rsScoreComment);
+
+mysql_free_result($rsStrength_01);
+
+mysql_free_result($rsStrength_02);
+
+mysql_free_result($rsStrength_03);
+
+mysql_free_result($rsStrength_04);
+
+mysql_free_result($rsStrength_05);
+
+mysql_free_result($rsStrength_06);
+
+mysql_free_result($rsStrength_07);
+
+mysql_free_result($rsStrength_08);
+
+mysql_free_result($rsStrength_09);
+
+mysql_free_result($rsStrength_10);
+
+mysql_free_result($rsStrength_11);
+
+mysql_free_result($rsStrength_12);
+
+mysql_free_result($rsStrength_13);
+
+mysql_free_result($rsStrength_14);
+
+mysql_free_result($rsStrength_15);
+
+mysql_free_result($rsStrength_16);
+
+mysql_free_result($rsStrength_17);
+
+mysql_free_result($rsStrength_18);
+
+mysql_free_result($rsStrength_19);
+
+mysql_free_result($rsStrength_20);
+
+mysql_free_result($rsStrength_21);
+
+mysql_free_result($rsStrength_22);
+
+mysql_free_result($rsStrength_23);
+
+mysql_free_result($rsStrength_24);
+
+mysql_free_result($rsGrowth_01);
+
+mysql_free_result($rsGrowth_02);
+
+mysql_free_result($rsGrowth_03);
+
+mysql_free_result($rsGrowth_04);
+
+mysql_free_result($rsGrowth_05);
+
+mysql_free_result($rsGrowth_06);
+
+mysql_free_result($rsGrowth_07);
+
+mysql_free_result($rsGrowth_08);
+
+mysql_free_result($rsGrowth_09);
+
+mysql_free_result($rsGrowth_10);
+
+mysql_free_result($rsGrowth_11);
+
+mysql_free_result($rsGrowth_12);
+
+mysql_free_result($rsGrowth_13);
+
+mysql_free_result($rsGrowth_14);
+
+mysql_free_result($rsGrowth_15);
+
+mysql_free_result($rsGrowth_16);
+
+mysql_free_result($rsGrowth_17);
+
+mysql_free_result($rsGrowth_18);
+
+mysql_free_result($rsGrowth_19);
+
+mysql_free_result($rsGrowth_20);
+
+mysql_free_result($rsGrowth_21);
+
+mysql_free_result($rsGrowth_22);
+?>

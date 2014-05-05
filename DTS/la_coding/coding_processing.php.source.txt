@@ -1,0 +1,213 @@
+<? 
+include_once ("../includes/dts_functions.php");
+include_once ("coding_functions.php");
+
+
+
+if (!WA_Auth_RulePasses("Logged in as teacher assistant")) {
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+$userkey = $_SESSION['log_userkey']; 
+
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_base = str_replace("_JOURNAL", "", $instrument_id);
+
+$lakey = intval($_GET['lakey']);
+
+$lacodeskey = 0;
+$sql_lacodeskey = "";
+if (isset($_GET['lacodeskey'])) { 
+	$lacodeskey = $_GET['lacodeskey'];
+	$sql_lacodeskey = sprintf(" AND c.lacodeskey = %s ", SQLstr($_GET['lacodeskey'])); 
+}  
+
+
+
+// Registrant information on the scorer - this is needed for alert emails for coder commments.
+$sql = sprintf("SELECT firstname, lastname, userkey, email 
+	FROM registrants 
+	WHERE userkey = %s", 
+		SQLstr($userkey, "int"));
+$rsCoder = mysql_query($sql) or die("ERROR fetching coder info: ".mysql_error());
+$coder = mysql_fetch_assoc($rsCoder);
+
+// Figure out which coder you are, and which coding table you should be writing to
+if (isset($_GET['coder'])) { $coder['role'] = SQLstr($_GET['coder'], "int"); }
+if (isset($_GET['scorer_no'])) { $coder['role'] = 1; }
+
+$table = "la_codes_".$coder['role'];
+$table = str_replace("_1", "", $table);
+
+
+
+// Recordset: la_codes or la_codes_2-4 depending on who's viewing
+$sql = sprintf("SELECT d.lakey, d.dilemmakey, di.dilemma_name, 
+		d.assignmentkey, 
+		c.codercomment, c.code_recommend, 
+		dmg.manlevelgeneralkey, dmg.man_level_number, 
+		d.coded_1, d.coded_2, d.coded_3, c.coded_confidence, con.confidencelevel, 
+		c.strength01, c.strength02, c.strength03, 
+		c.growth01, c.growth02, c.recommend01, c.recommend02, 
+		r.firstname, r.lastname, r.email
+	FROM {$table} c 
+		JOIN la_data d ON d.lakey = c.lakey
+		JOIN registrants r ON r.userkey = %s
+		LEFT JOIN la_dilemmas di ON d.dilemmakey = di.dilemmakey
+		LEFT JOIN confidence con ON c.coded_confidence = con.confidencekey
+		LEFT JOIN demogs_man_level dm ON d.manlevelkey = dm.manlevelkey
+		LEFT JOIN demogs_man_level_general dmg ON dm.man_level_number = dmg.man_level_number
+	WHERE c.lakey = %s {$sql_lacodeskey}", 
+		SQLstr($userkey, "int"),
+		SQLstr($lakey, "int"));
+$rsLaCodes = mysql_query($sql) or die("ERROR fetching coding data: ".mysql_error());
+$codes = mysql_fetch_assoc($rsLaCodes);
+
+
+
+// 						CALCULATE LDMA SCALES
+
+if ($instrument_id_base == "LDMA") { 
+	
+	// calculate all scale scores (including p taking and seeking) for this record
+	calculate_ldma_scale_scores($table, $lakey, $lacodeskey);
+
+	// update average scores for this management level
+	calculate_ldma_scale_averages_for_man_level($codes['manlevelgeneralkey'], $codes['test_time']);
+
+}
+
+
+
+
+
+
+
+// 						MARK THIS RECORD AS CODED OR RECODED
+
+if ($codes['coded_'.$coder['role']] <> 1) {
+	$sql_trainee = ""; 
+	if ($table == 'la_codes_4') { $sql_trainee = "c.coded = 1, c.coded_date = NOW(), "; }
+	$sql_update = sprintf("UPDATE la_data d
+			JOIN {$table} c ON d.lakey = c.lakey
+		SET {$sql_trainee} d.coded_{$coder['role']}=1, d.coderkey_{$coder['role']}=%s, 
+			d.date_coded_{$coder['role']}=DATE(NOW()), d.recoded_{$coder['role']}=0 
+		WHERE c.lakey = %s {$sql_lacodeskey} ", 
+			SQLstr($userkey, "int"),
+			SQLstr($lakey, "int"));
+} 
+// if the record has already been coded, then mark it as re-coded.
+else {
+	$sql_update = sprintf("UPDATE la_data SET recoded_{$coder['role']}=1, recoderkey_{$coder['role']}=%s, date_recoded_{$coder['role']}=DATE(NOW()) WHERE lakey=%s", 
+			SQLstr($userkey, "int"),
+			SQLstr($lakey, "int"));
+}
+//topher($sql_update);
+$result = mysql_query($sql_update) or die("ERROR marking this record as coded.");
+
+
+
+
+
+// 						EMAIL THEO ANY CODER COMMENTS
+
+// (this option is skipped for scorers; they have their own email on the scoring processing page.)
+if (($codes['code_recommend'] <> "") AND !isset($_GET['scorer_no'])) {
+		// OR $codes['codercomment'] <> "" 
+	
+	$email_to = "theo@lectica.org";
+	$email_from = $coder['email'];
+	$email_cc = $coder['email']; 
+	
+	$subject = "Coder comments from ".$coder['firstname']." on ".$instrument_id." #".$lakey;
+	$body = "Date: ".date('Y-m-d')."\n".
+	"Lakey: ".$lakey."\n".
+	"Dilemma: #".$codes['dilemmakey']." - ".$codes['dilemma_name']."\n";
+	$body .= "Coder confidence: ".$codes['coded_confidence']."\n";
+	$body .= (($codes['codercomment'] <> "") ? 
+		"Coder comment: ".str_replace("<br>", "\n", $codes['codercomment'])."\n" : "");
+	$body .= (($codes['code_recommend'] <> "") ? 
+			"Code recommendations: ".str_replace("<br>", "\n", $codes['code_recommend'])."\n" : "");
+	$body .= "\nLinks:\n".
+	"Score — http://www.devtestservice.org/la_scoring/score.php?lakey=".$lakey."&scorer_no=1  \n".
+	"Code from start — http://www.devtestservice.org/la_coding/code_argumentation.php?lakey=".
+			$lakey."&scorer_no=1  \n".
+	"Code strengths — http://www.devtestservice.org/la_coding/code_strengths.php?lakey=".$lakey."&scorer_no=1  \n";
+	
+	sendEmail($email_to, $email_from, $email_cc, $subject, $body);
+}
+
+
+
+// If this was 1st-coded and if confidence is not high, send an email out to the 2nd-coder.
+
+if ($coder['role'] == 1 AND $codes['coded_confidence'] !== null AND 
+		$codes['coded_confidence'] < 3) {
+
+	// find out who just coded this.
+	$coder['name'] = $codes['firstname'];
+	
+	// Hand-entered email addresses
+	$email_theo = "theo@lectica.org";
+	$email_zak = "zak@lectica.org";
+	$email_katie = "katie@lectica.org";
+	$email_zackary = "zackvr@lectica.org";
+	$email_clint = "clint@lectica.org";
+	$email_dtsservice = "service@lectica.org";
+	
+	/* DECIDE WHO TO SEND EMAILS TO (by default, may be overwritten) */
+	// You can always add ", email2@email.com" to send the email to multiple addresses.
+	$email_to = $email_zackary;
+	$email_cc = $codes['email'].", ".$email_dtsservice;
+	$email_from = $email_dtsservice;
+	
+	// default subject line for email message
+	$subject = $instrument_id." ".$lakey." has been 1st-coded by ".$codes['firstname'];
+	
+	// decide who to email (overrides the default) - either Clint or Zack VR for now.
+	
+	if ($coder['name'] == "Zackary") { 
+		$email_to = $email_clint;
+	}
+	else if ($coder['name'] == "Clint") { 
+		$email_to = $email_zackary; 
+	}
+	
+	$body = $codes['firstname'].
+		" has finished coding this record, but confidence was not high. \n".
+		"Lakey: ".$_GET['lakey']." \n".
+		"Confidence: ".$codes['coded_confidence']." (".$codes['confidencelevel'].") \n";
+	if ($codes['codercomment'] <> "") { 
+		$body .= "Comments: \n".str_replace("<br>", "\n", $codes['codercomment'])." \n";
+	}
+	$body .= "\n Scoring select page: 
+	https://www.devtestservice.org/la_coding/coding_performance_select.php ";
+	
+	sendEmail($email_to, $email_from, $email_cc, $subject, $body);
+	
+}
+
+
+
+
+
+/* ABOUT PAGE FLOW
+
+Eventually I may want to try to set up these pages so that a scorer both scores and codes and is sent to both _processing pages. If I do so, this coding processing page will "catch" any scorers (as long as their URL status has been maintained) and will divert them to their own scoring-processing page, which sends the scorer-specific emails and marks records as scored. */
+
+$queryString = "&lakey=".$lakey;
+if (isset($_GET['coder']))      { $queryString .= "&coder=".     $_GET['coder'];      }
+if (isset($_GET['scorer_no']))  { $queryString .= "&scorer_no=". $_GET['scorer_no'];  }
+if (isset($_GET['lacodeskey'])) { $queryString .= "&lacodeskey=".$_GET['lacodeskey']; } 
+
+// send on to view the partial report.
+// For SMA, don't show the report for now.
+if (isset($_GET['scorer_no'])) { $updateGoTo = "../la_scoring/scoring_processing.php?".$queryString; } 
+else if ($instrument_id == "LIMA") { $updateGoTo = "coding_performance_select.php"; } 
+else { $updateGoTo = "../la_reports/report_individual.php?mode=checkreport&".$queryString; }
+
+header("Location: ".$updateGoTo); exit();
+?>

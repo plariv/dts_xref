@@ -1,0 +1,71 @@
+<div class="container-fluid">	
+<!-- Bottom navigation -->
+    <div class="row-fluid background-pale">
+		<ul class="thumbnails">
+        	<li class="span3">
+            	<article>
+			    	<h3> About us</h3>
+  					<p><a href="/_about/mission.php">Mission</a></p>
+<p><a href="/_about/articles.php">Literature</a></p>
+                    <p><a href="/_about/legal.php">Legal</a></p>
+                    <p><a href="http://discotest.org/index_discotest.html">DiscoTest™</a></p>
+                    <p><a href="/_about/work_with_us.php">Jobs and internships</a></p>
+                    <p><a href="/_about/bios.php?type=client">Our clients</a></p>
+                    <p><a href="/_about/bios.php?type=board">Executive Board</a></p>
+                    <p><a href="/_about/bios.php?type=advisor">Advisory Board</a></p>
+                    <p><a href="http://theodawson.net/?page_id=2">FAQ</a></p>
+	          </article>
+            </li>
+        
+        	<li class="span3">
+            	<article>
+			    	<h3>Adult Assessments</h3>
+  					<p><a href="/_about/showcase.php?instrument_id=LDMA">Decision making</a></p>
+                    <p><a href="http://lectica.org/visitors/about_lectatests.php">Reflective judgment</a></p>
+                    <p><a href="http://lectica.org/visitors/about_lectatests.php">Leadership reasoning</a></p>
+                    <p><a href="http://lectica.org/visitors/about_lectatests.php">Ethical reasoning</a></p>
+                    <p><a href="/_about/showcase.php?instrument_id=LSUA">Self understanding</a></p>
+                    <p><a href="http://lectica.org/visitors/about_lectatests.php">The Integral Model</a></p>
+                    <p><a href="/_about/showcase.php?instrument_id=LSMA">Mindfulness</a></p>
+                    <p><a href="/assessments/takingassessments.php">How to take a Lectical assessment</a></p>
+           	  </article>
+        	</li>
+ 
+        	<li class="span3">
+            	<article>
+			    	<h3>Literature</h3>
+					<p><a href="../../la_resources/resources_Results_1.php">Resources</a></p>
+  					<p><a href="/_about/articles.php">Articles</a></p>
+	  				<p><a href="/_about/mission.php">Mission</a></p>
+	  				<p><a href="/PDF/2012_0929_virtuous_cycles.pdf">Virtuous cycles (white paper)</a></p>
+	  				<p><a href="/_about/measurement.php">Measurement </a></p>
+  				  <p><a href="/_about/hierarchical_complexity.php">Cognitive complexity</a></p>
+	  				<p><a href="/_about/devmaieutics.php">Developmental maieutics </a></p>
+	  				<p><a href="/_about/las_reliability_validity.php">Validity & reliability </a></p>
+           	  </article>
+        	</li>
+ 
+        	<li class="span3">
+           	  <article>
+			    	<h3>Other</h3>
+                <p><a href="/security/profile.php">My profile</a></p>
+                <p><a href="/_about/working_with_dts.php">Working with us</a></p>
+                    <p><a href="/customers/customerpolicies.php">Policies &amp; schedules</a></p>
+                    <p><a href="/checkout/payment.php">Make a payment</a></p>
+                    <p><a href="/_about/work_with_us.php">Jobs &amp; internships</a></p>
+  					<p><a href="/_about/bios.php?type=board">Board of Directors</a></p>
+				    <p><a href="/_about/bios.php?type=advisor">Advisory Board</a></p>
+				    <p><a href="/annual_reports/reports_list.php">Annual reports</a></p>
+				    <p><a href="/_about/bios.php?type=client">Clients</a></p>
+				    <p><a href="/contactlist.php">Newsletter</a></p>
+                    <p>Click to follow us on LinkedIn</p>
+  					<p><script src="//platform.linkedin.com/in.js" type="text/javascript">
+ lang: en_US
+</script>
+<script type="IN/FollowCompany" data-id="3082955" data-counter="right"></script></p>
+
+                  </article>
+            </li>
+        </ul>    
+	</div>
+</div> <!--close container-->

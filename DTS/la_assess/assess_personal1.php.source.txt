@@ -1,0 +1,619 @@
+<?php 
+include_once ("../includes/dts_functions.php");
+
+mysql_select_db($database_Assessment, $Assessment);
+
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_base = str_replace("_JOURNAL", "", $instrument_id);
+
+
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  
+	// Update registrants with demographics info
+	
+	$updateSQL = sprintf("UPDATE registrants SET email = %s, country = %s, birth_year = %s, 
+      edukey = %s, sectorkey = %s, sexkey = %s, 
+      ethnicity1key = %s, ethnicity1other = %s, ethnicity2key = %s, ethnicity2other = %s, 
+      languagekey = %s, languageother = %s, englishqualitykey = %s, 
+      expertise1key = %s, expertise2key = %s, expertise3key = %s, expertise_other = %s, 
+      discipline1key = %s, discipline2key = %s, discipline_other = %s 
+    WHERE userkey = %s",
+			 SQLstr($_POST['email'], "text"),
+			 SQLstr($_POST['country'], "text"),
+			 SQLstr($_POST['birth_year'], "int"),
+			 SQLstr($_POST['edukey'], "int"),
+			 SQLstr($_POST['sectorkey'], "text"),
+			 SQLstr($_POST['sexkey'], "int"),
+			 SQLstr($_POST['ethnicity1key'], "int"),
+			 SQLstr($_POST['ethnicity1other'], "text"),
+			 SQLstr($_POST['ethnicity2key'], "int"),
+			 SQLstr($_POST['ethnicity2other'], "text"),
+			 SQLstr($_POST['languagekey'], "int"),
+			 SQLstr($_POST['languageother'], "text"),
+			 SQLstr($_POST['englishqualitykey'], "int"),
+			 SQLstr($_POST['expertise1key'], "int"),
+			 SQLstr($_POST['expertise2key'], "int"),
+			 SQLstr($_POST['expertise3key'], "int"),
+			 SQLstr($_POST['expertise_other'], "text"),
+			 SQLstr($_POST['discipline1key'], "int"),
+			 SQLstr($_POST['discipline2key'], "int"),
+			 SQLstr($_POST['discipline_other'], "text"),
+			 SQLstr($_POST['userkey'], "int"));
+  $Result1 = mysql_query($updateSQL) or die(mysql_error());
+	
+	// Update la_data with language quality info
+	
+	$updateSQL_ladata = sprintf("UPDATE la_data SET languagekey=%s, englishqualitykey=%s WHERE lakey=%s",
+			 SQLstr($_POST['languagekey'], "int"),
+			 SQLstr($_POST['englishqualitykey'], "int"), 
+		 	 SQLstr($_GET['lakey'], "int"));
+  $Result1 = mysql_query($updateSQL_ladata) or die(mysql_error());
+	
+	// On to the 2nd demographics page!
+	
+  $updateGoTo = "assess_personal2.php";
+	// For the Foundations course, send straight to the essay page (no 2nd page needed).
+	if ($instrument_id == "FOLA") { $updateGoTo = "assess_essay1.php"; }
+	
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));
+	
+}
+
+
+
+
+
+
+
+
+
+
+$colname_rsPersonal1 = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsPersonal1 = $_SESSION['log_userkey'];
+}
+$query_rsPersonal1 = sprintf("SELECT userkey, email, country, birth_year, sexkey, edukey, 
+    r.sectorkey, ds.sector, 
+    languagekey, languageother, 
+    expertise1key, expertise2key, expertise3key, expertise_other, 
+    discipline1key, discipline2key, discipline_other, 
+    ethnicity1key, ethnicity1other, ethnicity2key, ethnicity2other, 
+    englishqualitykey 
+  FROM registrants r
+    LEFT JOIN demogs_sector ds ON r.sectorkey = ds.sectorkey
+  WHERE userkey = %s", 
+    SQLstr($colname_rsPersonal1, "int"));
+$rsPersonal1 = mysql_query($query_rsPersonal1) or die(mysql_error());
+$row_rsPersonal1 = mysql_fetch_assoc($rsPersonal1);
+$totalRows_rsPersonal1 = mysql_num_rows($rsPersonal1);
+
+$query_rsCountry = "SELECT * FROM demogs_countries ORDER BY name ASC";
+$rsCountry = mysql_query($query_rsCountry) or die(mysql_error());
+$row_rsCountry = mysql_fetch_assoc($rsCountry);
+$totalRows_rsCountry = mysql_num_rows($rsCountry);
+
+$query_rsSex = "SELECT * FROM demogs_sex";
+$rsSex = mysql_query($query_rsSex) or die(mysql_error());
+$row_rsSex = mysql_fetch_assoc($rsSex);
+$totalRows_rsSex = mysql_num_rows($rsSex);
+
+$query_rsEdu = "SELECT * FROM demogs_edu ORDER BY edukey ASC";
+$rsEdu = mysql_query($query_rsEdu) or die(mysql_error());
+$row_rsEdu = mysql_fetch_assoc($rsEdu);
+$totalRows_rsEdu = mysql_num_rows($rsEdu);
+
+$query_rsEnglishQuality = "SELECT * FROM demogs_english_quality";
+$rsEnglishQuality = mysql_query($query_rsEnglishQuality) or die(mysql_error());
+$row_rsEnglishQuality = mysql_fetch_assoc($rsEnglishQuality);
+$totalRows_rsEnglishQuality = mysql_num_rows($rsEnglishQuality);
+
+$query_rsEthicity = "SELECT * FROM demogs_ethnicity ORDER BY ethnicity ASC";
+$rsEthicity = mysql_query($query_rsEthicity) or die(mysql_error());
+$row_rsEthicity = mysql_fetch_assoc($rsEthicity);
+$totalRows_rsEthicity = mysql_num_rows($rsEthicity);
+
+$query_rsLanguage = "SELECT * FROM demogs_languages";
+$rsLanguage = mysql_query($query_rsLanguage) or die(mysql_error());
+$row_rsLanguage = mysql_fetch_assoc($rsLanguage);
+$totalRows_rsLanguage = mysql_num_rows($rsLanguage);
+
+$query_rsExpertise = "SELECT * FROM demogs_expertise ORDER BY expertise ASC";
+$rsExpertise = mysql_query($query_rsExpertise) or die(mysql_error());
+$row_rsExpertise = mysql_fetch_assoc($rsExpertise);
+$totalRows_rsExpertise = mysql_num_rows($rsExpertise);
+
+$query_rsDiscipline = "SELECT * FROM demogs_discipline ORDER BY discipline ASC";
+$rsDiscipline = mysql_query($query_rsDiscipline) or die(mysql_error());
+$row_rsDiscipline = mysql_fetch_assoc($rsDiscipline);
+$totalRows_rsDiscipline = mysql_num_rows($rsDiscipline);
+
+$query_rsSector = "SELECT * FROM demogs_sector ORDER BY sector ASC";
+$rsSector = mysql_query($query_rsSector) or die(mysql_error());
+$row_rsSector = mysql_fetch_assoc($rsSector);
+$totalRows_rsSector = mysql_num_rows($rsSector);
+
+
+
+
+
+
+// count # of probes on this instrument
+$numPages = 2;
+$sql_numProbes = sprintf("SELECT * FROM la_probes WHERE instrument_id = %s",
+	SQLstr($instrument_id_base, 'text'));
+$rsNumProbes = mysql_query($sql_numProbes);
+if (mysql_num_rows($rsNumProbes) > 0) { $numPages += mysql_num_rows($rsNumProbes); }
+else { $numPages ++; }
+
+// any boilerplate (instructions etc.)
+$rsLaBoilerplate = mysql_query("SELECT b.* 
+	FROM la_boilerplate b WHERE type = 'assess' ") 
+	or die("rsLaBoilerplate: ".mysql_error());
+$boilerplate = array();
+while ($row_rsLaBoilerplate = mysql_fetch_assoc($rsLaBoilerplate)) {
+	$boilerplate[$row_rsLaBoilerplate['name']] = $row_rsLaBoilerplate['la_boilerplate_text'];
+}
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Personal information 1</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssetsAssess/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../SpryAssetsAssess/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../SpryAssetsAssess/SpryValidationTextarea.js" type="text/javascript"></script>
+<link href="../SpryAssetsAssess/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssetsAssess/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssetsAssess/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    
+    <h1>PERSONAL INFORMATION (1 of <?php echo $numPages; ?>)</h1>
+    
+    <?php if ($instrument_id == "SMS") { echo $boilerplate['assess_sms_demogs_instructions']; } ?>
+    <?php if ($instrument_id == "CPS") { echo $boilerplate['assess_cps_demogs_instructions']; } ?>
+    
+    <form id="form1" name="form1" method="POST" action="<?php echo $editFormAction; ?>">
+      <table class="select-b">
+      <?php if ($row_rsPersonal1['email'] == "") { ?> 
+        <tr>
+          <td width="300"><div align="right">Your email address</div></td><td width="587">	
+        <span id="sprytextfield5">
+        <input name="email" type="text" id="email" value="" size="50" />
+        <span class="textfieldInvalidFormatMsg">Please enter a valid email address.</span><span class="textfieldRequiredMsg">Please enter your email address.</span></span></td></tr>
+					<?php } else { ?>
+					<input name="email" type="hidden" id="email" value="<?php echo $row_rsPersonal1['email']; ?>" />
+      <?php } ?>
+      
+      <tr>
+        <td width="300"><div align="right">The country in which you reside<span class="red">*</span></div></td>
+        <td><span id="spryselect3">
+          <select name="country" id="country">
+            <option value="" <?php if (!(strcmp("", $row_rsPersonal1['country']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <option value="United States of America" <?php if (!(strcmp("United States of America", $row_rsPersonal1['country']))) {echo "selected=\"selected\"";} ?>>United States of America</option>
+            <?php
+do {  
+?>
+<option value="<?php echo $row_rsCountry['name']?>"<?php if (!(strcmp($row_rsCountry['name'], $row_rsPersonal1['country']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsCountry['name']?></option>
+            <?php
+} while ($row_rsCountry = mysql_fetch_assoc($rsCountry));
+  $rows = mysql_num_rows($rsCountry);
+  if($rows > 0) {
+      mysql_data_seek($rsCountry, 0);
+	  $row_rsCountry = mysql_fetch_assoc($rsCountry);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">The year of your birth (YYYY)<span class="red">*</span></div></td>
+        <td><span id="sprytextfield1">
+        <input name="birth_year" type="text" id="birth_year" value="<?php echo $row_rsPersonal1['birth_year']; ?>" size="4" />
+        <span class="textfieldRequiredMsg">A value is required.</span><span class="textfieldInvalidFormatMsg">Invalid format.</span><span class="textfieldMinCharsMsg">Minimum number of characters not met.</span><span class="textfieldMaxCharsMsg">Exceeded maximum number of characters.</span></span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">Your sex<span class="red">*</span></div></td>
+        <td><span id="spryselect4">
+          <select name="sexkey" id="sexkey">
+            <option value="" <?php if (!(strcmp("", $row_rsPersonal1['sexkey']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsSex['sexkey']?>"<?php if (!(strcmp($row_rsSex['sexkey'], $row_rsPersonal1['sexkey']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsSex['sex']?></option>
+            <?php
+} while ($row_rsSex = mysql_fetch_assoc($rsSex));
+  $rows = mysql_num_rows($rsSex);
+  if($rows > 0) {
+      mysql_data_seek($rsSex, 0);
+	  $row_rsSex = mysql_fetch_assoc($rsSex);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">Your educational level (If you don't see your educational level, choose the level that seems like the best match.)<span class="red">*</span></div></td>
+        <td><span id="spryselect5">
+          <select name="edukey" id="edukey">
+            <option value="" <?php if (!(strcmp("", $row_rsPersonal1['edukey']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsEdu['edukey']?>"<?php if (!(strcmp($row_rsEdu['edukey'], $row_rsPersonal1['edukey']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsEdu['edu_level']?></option>
+            <?php
+} while ($row_rsEdu = mysql_fetch_assoc($rsEdu));
+  $rows = mysql_num_rows($rsEdu);
+  if($rows > 0) {
+      mysql_data_seek($rsEdu, 0);
+	  $row_rsEdu = mysql_fetch_assoc($rsEdu);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+      	<td width="300"><div align="right">Your sector of work:<span class="red">*</span></div></td>
+        <td>
+          <em><?php if ($row_rsPersonal1['sector'] <> '') { 
+            echo $row_rsPersonal1['sector']; 
+          } else { echo "no sector"; } ?></em>
+          <br />
+          <input type='hidden' name='sectorkey' value='<?php echo $row_rsPersonal1['sectorkey']; ?>' />
+          (Please <a href='../contactus.php?type=problem&page=assess_personal2.php'>contact us</a> 
+          if this sector does not look correct.) 
+        </td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">Rate the quality of your writing.<span class="red">*</span></div></td>
+        <td><span id="spryselect6">
+          <select name="englishqualitykey" id="englishqualitykey">
+            <option value="" <?php if (!(strcmp("", $row_rsPersonal1['englishqualitykey']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsEnglishQuality['englishqualitykey']?>"<?php if (!(strcmp($row_rsEnglishQuality['englishqualitykey'], $row_rsPersonal1['englishqualitykey']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsEnglishQuality['english_quality']?></option>
+            <?php
+} while ($row_rsEnglishQuality = mysql_fetch_assoc($rsEnglishQuality));
+  $rows = mysql_num_rows($rsEnglishQuality);
+  if($rows > 0) {
+      mysql_data_seek($rsEnglishQuality, 0);
+	  $row_rsEnglishQuality = mysql_fetch_assoc($rsEnglishQuality);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">First ethnic affiliation<span class="red">*</span></div></td>
+        <td><span id="spryselect7">
+          <select name="ethnicity1key" id="ethnicity1key">
+            <option value="" <?php if (!(strcmp("", $row_rsPersonal1['ethnicity1key']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsEthicity['ethnicitykey']?>"<?php if (!(strcmp($row_rsEthicity['ethnicitykey'], $row_rsPersonal1['ethnicity1key']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsEthicity['ethnicity']?></option>
+            <?php
+} while ($row_rsEthicity = mysql_fetch_assoc($rsEthicity));
+  $rows = mysql_num_rows($rsEthicity);
+  if($rows > 0) {
+      mysql_data_seek($rsEthicity, 0);
+	  $row_rsEthicity = mysql_fetch_assoc($rsEthicity);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">If you answered &quot;other&quot;, please explain.</div></td>
+        <td><span id="sprytextfield2">
+          <input name="ethnicity1other" type="text" id="ethnicity1other" value="<?php echo $row_rsPersonal1['ethnicity1other']; ?>" size="50" />
+</span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">Second ethnic affiliation</div></td>
+        <td><span id="spryselect8">
+          <select name="ethnicity2key" id="ethnicity2key">
+            <option value="" <?php if (!(strcmp("", $row_rsPersonal1['ethnicity2key']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <option value="0" <?php if (!(strcmp(0, $row_rsPersonal1['ethnicity2key']))) {echo "selected=\"selected\"";} ?>>-none</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsEthicity['ethnicitykey']?>"<?php if (!(strcmp($row_rsEthicity['ethnicitykey'], $row_rsPersonal1['ethnicity2key']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsEthicity['ethnicity']?></option>
+            <?php
+} while ($row_rsEthicity = mysql_fetch_assoc($rsEthicity));
+  $rows = mysql_num_rows($rsEthicity);
+  if($rows > 0) {
+      mysql_data_seek($rsEthicity, 0);
+	  $row_rsEthicity = mysql_fetch_assoc($rsEthicity);
+  }
+?>
+          </select>
+</span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">If you answered &quot;other&quot;, please explain.</div></td>
+        <td><span id="sprytextfield3">
+          <input name="ethnicity2other" type="text" id="ethnicity2other" value="<?php echo $row_rsPersonal1['ethnicity2other']; ?>" size="50" />
+  </span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">First language <span class="red">*</span></div></td>
+        <td><span id="spryselect">
+          <select name="languagekey" id="languagekey">
+            <option value="" <?php if (!(strcmp("", $row_rsPersonal1['languagekey']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLanguage['languagekey']?>"<?php if (!(strcmp($row_rsLanguage['languagekey'], $row_rsPersonal1['languagekey']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLanguage['language']?></option>
+            <?php
+} while ($row_rsLanguage = mysql_fetch_assoc($rsLanguage));
+  $rows = mysql_num_rows($rsLanguage);
+  if($rows > 0) {
+      mysql_data_seek($rsLanguage, 0);
+	  $row_rsLanguage = mysql_fetch_assoc($rsLanguage);
+  }
+?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">If you answered &quot;other&quot;, please explain.</div></td>
+        <td><span id="sprytextfield4">
+          <input name="languageother" type="text" id="languageother" value="<?php echo $row_rsPersonal1['languageother']; ?>" size="50" />
+        </span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">First area of expertise/profession<span class="red">*</span></div></td>
+        <td><span id="spryselect9">
+          <select name="expertise1key" id="expertise1key">
+            <option value="" <?php if (!(strcmp("", $row_rsPersonal1['expertise1key']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <option value="0" <?php if (!(strcmp(0, $row_rsPersonal1['expertise1key']))) {echo "selected=\"selected\"";} ?>>-none</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsExpertise['expertisekey']?>"<?php if (!(strcmp($row_rsExpertise['expertisekey'], $row_rsPersonal1['expertise1key']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsExpertise['expertise']?></option>
+            <?php
+} while ($row_rsExpertise = mysql_fetch_assoc($rsExpertise));
+  $rows = mysql_num_rows($rsExpertise);
+  if($rows > 0) {
+      mysql_data_seek($rsExpertise, 0);
+	  $row_rsExpertise = mysql_fetch_assoc($rsExpertise);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">Second area of expertise/profession</div></td>
+        <td><span id="spryselect10">
+          <select name="expertise2key" id="expertise2key">
+            <option value="" <?php if (!(strcmp("", $row_rsPersonal1['expertise2key']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <option value="0" <?php if (!(strcmp(0, $row_rsPersonal1['expertise2key']))) {echo "selected=\"selected\"";} ?>>-none</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsExpertise['expertisekey']?>"<?php if (!(strcmp($row_rsExpertise['expertisekey'], $row_rsPersonal1['expertise2key']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsExpertise['expertise']?></option>
+            <?php
+} while ($row_rsExpertise = mysql_fetch_assoc($rsExpertise));
+  $rows = mysql_num_rows($rsExpertise);
+  if($rows > 0) {
+      mysql_data_seek($rsExpertise, 0);
+	  $row_rsExpertise = mysql_fetch_assoc($rsExpertise);
+  }
+?>
+          </select>
+</span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">Third area of expertise/profession</div></td>
+        <td><span id="spryselect11">
+          <select name="expertise3key" id="expertise3key">
+            <option value="" <?php if (!(strcmp("", $row_rsPersonal1['expertise3key']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <option value="0" <?php if (!(strcmp(0, $row_rsPersonal1['expertise3key']))) {echo "selected=\"selected\"";} ?>>-none</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsExpertise['expertisekey']?>"<?php if (!(strcmp($row_rsExpertise['expertisekey'], $row_rsPersonal1['expertise3key']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsExpertise['expertise']?></option>
+            <?php
+} while ($row_rsExpertise = mysql_fetch_assoc($rsExpertise));
+  $rows = mysql_num_rows($rsExpertise);
+  if($rows > 0) {
+      mysql_data_seek($rsExpertise, 0);
+	  $row_rsExpertise = mysql_fetch_assoc($rsExpertise);
+  }
+?>
+          </select>
+</span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">If you selected &quot;other&quot; in response to any of the last 3 items, or have something to add, please explain.</div></td>
+        <td><span id="sprytextarea1">
+          <textarea name="expertise_other" class="textarea080_400" id="expertise_other"><?php 
+						echo $row_rsPersonal1['expertise_other']; ?></textarea>
+</span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">If you are a student, teacher or researcher, please select a first discipline.</div></td>
+        <td><span id="spryselect12">
+          <select name="discipline1key" id="discipline1key">
+            <option value="" <?php if (!(strcmp("", $row_rsPersonal1['discipline1key']))) 
+						{echo "selected=\"selected\"";} ?>>-select one- </option>
+            <?php
+						do { ?>
+							<option value="<?php echo $row_rsDiscipline['disciplinekey']?>"<?php 
+							if (!(strcmp($row_rsDiscipline['disciplinekey'], $row_rsPersonal1['discipline1key']))) 
+							{echo "selected=\"selected\"";} ?>><?php echo $row_rsDiscipline['discipline']?></option>
+							<?php
+						} while ($row_rsDiscipline = mysql_fetch_assoc($rsDiscipline));
+						$rows = mysql_num_rows($rsDiscipline);
+						if($rows > 0) {
+								mysql_data_seek($rsDiscipline, 0);
+							$row_rsDiscipline = mysql_fetch_assoc($rsDiscipline);
+						}
+?>
+          </select>
+</span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">If you are a student, teacher or researcher, please select a second discipline.</div></td>
+        <td><span id="spryselect13">
+          <select name="discipline2key" id="discipline2key">
+            <option value="" <?php if (!(strcmp("", $row_rsPersonal1['discipline2key']))) {echo "selected=\"selected\"";} ?>>-select one- </option>
+            <option value="value" <?php if (!(strcmp("value", $row_rsPersonal1['discipline2key']))) {echo "selected=\"selected\"";} ?>>-none</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsDiscipline['disciplinekey']?>"<?php if (!(strcmp($row_rsDiscipline['disciplinekey'], $row_rsPersonal1['discipline2key']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsDiscipline['discipline']?></option>
+            <?php
+} while ($row_rsDiscipline = mysql_fetch_assoc($rsDiscipline));
+  $rows = mysql_num_rows($rsDiscipline);
+  if($rows > 0) {
+      mysql_data_seek($rsDiscipline, 0);
+	  $row_rsDiscipline = mysql_fetch_assoc($rsDiscipline);
+  }
+?>
+          </select>
+</span></td>
+      </tr>
+      <tr>
+        <td width="300"><div align="right">If you selected &quot;other&quot; in response to either of the last 2 questions, or have something to add, please explain.</div></td>
+        <td><span id="sprytextarea2">
+          <textarea name="discipline_other" cols="48" rows="3" class="textarea080_400" id="discipline_other"><?php echo $row_rsPersonal1['discipline_other']; ?></textarea>
+</span></td>
+      </tr>
+    </table>
+    <p align="right">
+      <input name="userkey" type="hidden" id="userkey" value="<?php echo $_SESSION['log_userkey']; ?>" />
+      <input type="submit" value="SAVE AND GO TO NEXT PAGE" />
+</p>
+    <input type="hidden" name="MM_update" value="form1" />
+</form>
+  <script type="text/javascript">
+<!--
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "integer", {validateOn:["blur", "change"], minChars:4, maxChars:4});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {validateOn:["blur", "change"], isRequired:false});
+var sprytextfield3 = new Spry.Widget.ValidationTextField("sprytextfield3", "none", {validateOn:["blur", "change"], isRequired:false});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"]});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"]});
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {validateOn:["blur", "change"]});
+var spryselect6 = new Spry.Widget.ValidationSelect("spryselect6", {validateOn:["blur", "change"]});
+var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {validateOn:["blur", "change"]});
+var spryselect8 = new Spry.Widget.ValidationSelect("spryselect8", {validateOn:["blur", "change"], isRequired:false});
+var spryselect9 = new Spry.Widget.ValidationSelect("spryselect9", {validateOn:["blur", "change"]});
+var spryselect10 = new Spry.Widget.ValidationSelect("spryselect10", {validateOn:["blur", "change"], isRequired:false});
+var spryselect11 = new Spry.Widget.ValidationSelect("spryselect11", {validateOn:["blur", "change"], isRequired:false});
+var spryselect12 = new Spry.Widget.ValidationSelect("spryselect12", {validateOn:["blur", "change"], isRequired:false});
+var spryselect13 = new Spry.Widget.ValidationSelect("spryselect13", {validateOn:["blur", "change"], isRequired:false});
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {validateOn:["blur", "change"], isRequired:false});
+var sprytextarea2 = new Spry.Widget.ValidationTextarea("sprytextarea2", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect = new Spry.Widget.ValidationSelect("spryselect", {validateOn:["blur", "change"]});
+var sprytextfield4 = new Spry.Widget.ValidationTextField("sprytextfield4", "none", {validateOn:["blur", "change"], isRequired:false});
+
+<?php if ($row_rsPersonal1['email'] == "") { ?>
+	var sprytextfield5 = new Spry.Widget.ValidationTextField("sprytextfield5", "email", {validateOn:["blur", "change"]});
+<?php } ?>
+//-->
+  </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+

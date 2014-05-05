@@ -1,0 +1,237 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>DTS: Consultants</title>
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: verdana, arial, "san serif";
+	font-size: 11px;
+	background-color: #9D9F9C;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #F6F6F6;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(https://www.devtestservice.org/images/skin/LDMAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 26px;
+	background-color: #777E79;
+	background-image: url(https://www.devtestservice.org/images/skin/DTSmenu.jpg);
+	color: #E2E2E2;
+	margin-top: 0px;
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-color: #474A47;
+	background-image: url(https://www.devtestservice.org/images/skin/DTSmenu.jpg);
+} 
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(https://www.devtestservice.org/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a {
+	color: #EAEAEA;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu1 a:active {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 a:visited {
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+h1 {
+	font-size: 17px;
+	color: #BD1F06;
+	line-height: 22px;
+	margin-top: 20px;
+	margin-bottom: 16px;
+	letter-spacing: 1px;
+	font-weight: normal;
+	font-variant: normal;
+}
+h3 {
+	font-size: 12px;
+	font-weight: bold;
+	margin-top: 24px;
+	margin-bottom: 14px;
+	letter-spacing: 0.5px;
+	line-height: 20px;
+	color: #BD1F06;
+	font-style: normal;
+}
+p {
+	font-size: 11px;
+	line-height: 22px;
+	color: #474A47;
+	margin-top: 10px;
+	margin-bottom: 10px;
+	padding-right: 0px;
+	padding-left: 0px;
+}
+a {
+	color: #474A47;
+	text-decoration: underline;
+}
+a:link {
+	color: #474A47;
+	text-decoration: underline;
+}
+a:visited {
+	text-decoration: underline;
+}
+a:active {
+	color: #474A47;
+	text-decoration: underline;
+}
+a:hover {
+	color: #000000;
+	text-decoration: underline;
+}
+li {
+	font-size: 11px;
+	line-height: 22px;
+	color: #474A47;
+	font-family: verdana, arial, "san serif";
+	margin-top: 0px;
+	margin-right: 10px;
+	margin-bottom: 6px;
+	margin-left: 0px;
+	list-style-position: outside;
+}
+ul {
+	margin-top: 0px;
+	margin-bottom: 0px;
+	margin-right: 20px;
+	margin-left: 20px;
+	padding-right: 20px;
+	padding-left: 20px;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div id="menu1">
+  <p>&nbsp;</p>
+  </div>
+  <div id="mainContent">
+    <h1>INTRODUCING THE LDMA 2.0 </h1>
+    <p> Leaders and managers in our dynamic and increasingly complex world face tremendous challenges that require 21st century leadership skills such as:</p>
+    <ul>
+      <li><em><strong>collaborative capacity:</strong></em> the ability to bring together diverse perspectives to develop innovative and effective solutions;</li>
+      <li><em><strong>cognitive complexity:</strong></em> the ability to think well about complex, multifaceted,   thorny issues; and</li>
+      
+      <li><em><strong>contextual thinking:</strong></em> the ability to consider problems in terms of the broader systems and contexts in which they are embedded.  </li>
+    </ul>
+    <p>To keep up with constantly changing conditions, today's leaders and managers must continually develop their abilities. DTS provides evidence-based, diagnostic, and educative assessments designed to optimize development. The Lectical (Leadership) Decision Making Assessment (LDMA) targets <strong>eight vital leadership skills</strong>, all of which represent aspects of collaborative capacity, cognitive complexity, and contextual thinking, and provides <strong>rich educational feedback</strong> that profiles a test taker’s <strong>current and potential strengths</strong> and provides targeted<strong> learning recommendations</strong>. </p>
+    <h3>Evidence-based assessment</h3>
+    <p>The LDMA and its reflective journaling companion (the LDMA Journal) are based on more than a decade of rigorous research and practice involving leadership consultants, coaches, researchers, and educators from all over the world.</p>
+    <p>The LDMA represents a major advance in the measurement of leadership development, and provides a powerful set of tools for optimizing leadership training and education. We are now ready to expand our network of clients working to support leaders’ learning and growth. </p>
+    <p>We invite you to explore the LDMA in more depth on our website, and welcome your inquiries. </p>
+    <p><a href="https://www.devtestservice.org/about/showcase_ldma.php?printerv=yes/"><strong>Click here</strong></a> to explore the LDMA and learn more about DTS.</p>
+    <p>&nbsp;</p>
+
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div> </div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+</body>
+</html>

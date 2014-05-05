@@ -1,0 +1,760 @@
+<?php 
+include_once '../includes/dts_functions.php';
+include_once 'report_custom_functions.php';
+
+
+$currentPage = $_SERVER["PHP_SELF"];
+$instrument_id = $_GET['instrument_id']; 
+$instrument_id_name = str_replace("_", " ", $instrument_id);
+
+$see_all = FALSE;
+$userkey = "";
+if (isset($_SESSION['log_userkey'])) { $userkey = $_SESSION['log_userkey']; } 
+else { WA_Auth_RestrictAccess("../security/logIn.php"); }
+$filter_demogs = ""; if (isset($_GET['filter_demog'])) { $filter_demogs = $_GET['filter_demog']; }
+
+// Fetch information on the logged-in client
+$query_rsBulkCustomerInfo = sprintf("SELECT bc.bulkcustomerkey, bc.username4students, 
+		r.firstname, r.lastname, r.user_level, r.email, r.company
+	FROM registrants r
+		LEFT JOIN bulkcustomerinfo bc ON bc.bulkcustomerkey = r.userkey
+	WHERE r.userkey = %s ",
+		SQLstr($userkey, "int"));
+// die($query_rsBulkCustomerInfo);
+$rsBulkCustomerInfo = mysql_query($query_rsBulkCustomerInfo, $Assessment) or die(mysql_error());
+$row_rsBulkCustomerInfo = mysql_fetch_assoc($rsBulkCustomerInfo);
+$totalRows_rsBulkCustomerInfo = mysql_num_rows($rsBulkCustomerInfo);
+$user_level = $row_rsBulkCustomerInfo['user_level'];
+// Filter_demog or filter_user should be applied to every data query on this page.
+$filter_user = " AND d.resellerkey = {$userkey} ";
+if ($user_level >= 22) { 
+	$see_all = TRUE; 
+	$filter_user = "";	
+}
+$filter_demogs .= $filter_user;
+
+
+
+
+/* 		FILTER QUERIES   */
+
+$query_surveyInstruments = sprintf("SELECT sd.instrument_id, d.instrument_id AS parent_instrument_id
+	FROM la_survey_data sd
+		LEFT JOIN la_data d ON sd.lakey = d.lakey
+	WHERE sd.completed = 1 {$filter_user}
+	GROUP BY instrument_id ORDER BY instrument_id");
+//die($query_surveyInstruments);
+$rsSurveyInstruments = mysql_query($query_surveyInstruments) or die("rsSurveyInstruments: ".mysql_error());
+$instruments = array();
+while ($row = mysql_fetch_assoc($rsSurveyInstruments)) {
+	$array = array('survey' => $row['instrument_id'], 'parent' => $row['parent_instrument_id']);
+	$survey_instruments[$row['instrument_id']] = $array;
+}
+$parent = $survey_instruments[$instrument_id]['parent'];
+$parent = str_replace("_JOURNAL", "", $parent);
+if ($parent <> '') { $_SESSION['instrument_id'] = $parent; } else { $_SESSION['instrument_id'] = $instrument_id; }
+
+
+$query_rsFilterBc = sprintf("SELECT r.bulkuserkey, COUNT(DISTINCT d.lakey) AS numpeople, 
+		IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer
+	FROM registrants r
+		JOIN la_data d ON r.userkey = d.userkey 
+		JOIN registrants rb ON r.bulkuserkey = rb.userkey
+	WHERE rb.userkey IS NOT NULL 
+	GROUP BY rb.userkey
+	ORDER BY bulkcustomer");
+$rsFilterBc = mysql_query($query_rsFilterBc) or die("rsFilterBc: ".mysql_error());
+
+$query_rsFilterProjects = sprintf("SELECT p.projectkey, p.bulkcustomerkey, p.projectid, 
+		LEFT(IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)),10) AS company, 
+		COUNT(DISTINCT d.lakey) AS numpeople
+	FROM registrants r
+		JOIN la_data d ON r.userkey = d.userkey 
+		JOIN students_projects sp ON r.userkey = sp.userkey
+		JOIN projectproject p ON sp.projectkey = p.projectkey
+		LEFT JOIN registrants rb ON p.bulkcustomerkey = rb.userkey
+	WHERE 1=1 {$filter_user} %s
+	GROUP BY projectkey
+	ORDER BY company, projectid",
+	($see_all == false ? " AND p.bulkcustomerkey = ".SQLstr($userkey, "int") : ""));
+// die($query_rsFilterProjects);
+$rsFilterProjects = mysql_query($query_rsFilterProjects) or die("rsFilterProjects: ".mysql_error());
+
+$query_rsFilterAssn = sprintf("SELECT a.assignmentkey, a.instrument_id, a.assign_group, 
+		a.date_start, a.date_end,
+		LEFT(IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)),10) AS company, 
+		COUNT(DISTINCT d.lakey) AS numpeople
+	FROM la_data d 
+		JOIN la_assignments a ON d.assignmentkey = a.assignmentkey
+		LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+	WHERE 1=1 {$filter_user} %s
+	GROUP BY assignmentkey ORDER BY company, assign_group, date_start",
+	($see_all == false ? " AND d.resellerkey = ".SQLstr($userkey, "int") : ""));
+$rsFilterAssn = mysql_query($query_rsFilterAssn) or die("rsFilterAssn: ".mysql_error());
+
+// topher($query_rsFilterProjects); topher();
+
+$query_rsFilterManLevels = sprintf("SELECT dem.man_level, dem.manlevelkey, d.lakey, 
+		COUNT(DISTINCT d.lakey) AS numpeople 
+	FROM la_data d 
+		JOIN registrants r ON d.userkey = r.userkey
+		JOIN demogs_man_level dem ON r.manlevelkey = dem.manlevelkey
+	WHERE 1=1 {$filter_user}
+	GROUP BY dem.manlevelkey ORDER BY dem.man_level_number");
+$rsFilterManLevels = mysql_query($query_rsFilterManLevels) or die("rsFilterManLevels: ".mysql_error());
+$row_rsFilterManLevels = mysql_fetch_assoc($rsFilterManLevels);
+$totalRows_rsFilterManLevels = mysql_num_rows($rsFilterManLevels);
+
+$query_rsFilterGroup = sprintf("SELECT r.`group`, COUNT(DISTINCT d.lakey) AS numpeople 
+	FROM registrants r 
+		LEFT JOIN la_data d ON d.userkey = r.userkey 
+	WHERE 1=1 {$filter_user} AND r.`group` <> '' 
+	GROUP BY r.`group`", 
+		SQLstr($userkey, "int"));
+$rsFilterGroup = mysql_query($query_rsFilterGroup, $Assessment) or die("rsFilterGroup: ".mysql_error());
+
+
+
+
+
+
+// Pull the filter query values out of $_POST if they're present there.
+
+$filter_humanReadable = " ";
+
+if (isset($_POST['management_level_select']) AND $_POST['management_level_select'] <> "") {
+	$filter_demogs .= " AND d.manlevelkey = ".SQLstr($_POST['management_level_select'], 'int');
+}
+
+if (isset($_POST['resellerkey']) AND $_POST['resellerkey'] <> "") {
+	$filter_demogs .= " AND d.resellerkey = ".SQLstr($_POST['resellerkey'], "int");
+	$filter_humanReadable .= "under the client ID <em>".$_POST['resellerkey']."</em>, ";
+}
+
+if (isset($_POST['projectkey']) AND $_POST['projectkey'] <> "") {
+	$filter_demogs .= " AND d.projectkey = ".SQLstr($_POST['projectkey'], "int");
+	$filter_humanReadable .= "under the project ID <em>".$_POST['projectkey']."</em>, ";
+}
+
+if (isset($_POST['assignmentkey']) AND $_POST['assignmentkey'] <> "") {
+	$filter_demogs .= " AND d.assignmentkey = ".SQLstr($_POST['assignmentkey'], "int");
+	$filter_humanReadable .= "in the assignment <em>".$_POST['assignmentkey']."</em>, ";
+}
+
+if (isset($_POST['date_range_1']) AND $_POST['date_range_1'] <> "") {
+	// Using SQLstr here to avoid any possible injection.
+	$filter_demogs .= " AND d.date_completed >= ".SQLstr($_POST['date_range_1'], "date");
+	$filter_humanReadable .= "after the date <em>".$_POST['date_range_1']."</em>, ";
+}
+
+if (isset($_POST['date_range_2']) AND $_POST['date_range_2'] <> "") {
+	$filter_demogs .= " AND d.date_completed <= ".SQLstr($_POST['date_range_2'], "date");
+	$filter_humanReadable .= "before the date <em>".$_POST['date_range_2']."</em>, ";
+}
+
+if (isset($_POST['group']) AND $_POST['group'] <> "") {
+	$filter_demogs .= " AND r.group = ".SQLstr($_POST['group'], "text");
+	$filter_humanReadable .= "in the group / cohort <em>".$_POST['group']."</em>, ";
+}
+
+if (isset($_POST['sexkey']) AND $_POST['sexkey'] <> "") {
+	$filter_demogs .= " AND r.sexkey = ".SQLstr($_POST['sexkey'], "text");
+	$filter_humanReadable .= "among <em>".($_POST['sexkey'] == 1 ? "males" : "females")."</em>, ";
+}
+
+if (isset($_POST['score_min']) AND $_POST['score_min'] > 0) {
+	$filter_demogs.= sprintf(" AND s.lasnumber_1 >= %s ", SQLstr($_POST['score_min'], 'double'));
+	$filter_humanReadable .= "with a score greater than <em>".$_POST['score_min']."</em>, ";
+}
+
+if (isset($_POST['score_max']) AND $_POST['score_max'] > 0) {
+	$filter_demogs.= sprintf(" AND s.lasnumber_1 <= %s ", SQLstr($_POST['score_max'], 'double'));
+	$filter_humanReadable .= "with a score less than <em>".$_POST['score_max']."</em>, ";
+}
+
+
+// snip off the ending comma for the filter description, if text is present
+$filter_humanReadable = ($filter_humanReadable == "" ? "" : substr($filter_humanReadable, 0, strlen($filter_humanReadable)-2));
+
+
+
+
+
+
+$rsLaBoilerplate = mysql_query("SELECT b.* 
+	FROM la_boilerplate b WHERE type LIKE '%report' ", $Assessment) 
+	or die("rsLaBoilerplate: ".mysql_error());
+$boilerplate = array();
+while ($row_rsLaBoilerplate = mysql_fetch_assoc($rsLaBoilerplate)) {
+	$boilerplate[$row_rsLaBoilerplate['name']] = $row_rsLaBoilerplate['la_boilerplate_text'];
+}
+
+// Query: list of items for this survey instrument
+$sql_SurveyItems = sprintf("SELECT category, stem_type, stem_menuname, stem_code, stem_name
+	FROM la_survey_stems s
+	WHERE s.instrument_id = %s 
+	ORDER BY part, stem_order",
+		SQLstr($instrument_id, 'text'));
+$rsSurveyItems = mysql_query($sql_SurveyItems) or die("rsSurveyItems: ".mysql_error());
+
+// Number of test takers
+$query_rsNumTestTakers = sprintf("SELECT sd.*
+	FROM la_survey_data sd 
+		LEFT JOIN la_data d ON sd.lakey = d.lakey
+		LEFT JOIN la_scores s ON d.lakey = s.lakey
+	WHERE sd.instrument_id = %s AND sd.completed = 1 {$filter_demogs}
+	GROUP BY sd.lasurveykey",
+		SQLstr($instrument_id, 'text'));
+// die($query_rsNumTestTakers);
+$rsNumTestTakers = mysql_query($query_rsNumTestTakers) or die("rsNumTestTakers: ".mysql_error());
+$totalRows_rsNumTestTakers = mysql_num_rows($rsNumTestTakers);
+
+// look up merged stems for this instrument
+$sql_MergedStems = sprintf("SELECT category, stem_code
+	FROM la_survey_stems WHERE instrument_id = %s AND merge_category = 1", 
+		SQLstr($instrument_id, 'text'));
+$rsMergedStems = mysql_query($sql_MergedStems) or die("rsMergedStems: ".mysql_error());
+$stems_that_are_merged = " ";
+$merged_stems = array(); // $merged_stems[category][index] = stem_code #
+$stems_to_skip = " ";
+while ($row = mysql_fetch_assoc($rsMergedStems)) {
+	$stems_that_are_merged .= " ".$row['stem_code'];
+	$merged_stems[$row['category']][] = $row['stem_code'];
+}
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: <?php echo $instrument_id_name; ?> summary report</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+<link href="../includes/js_res/jquery.ui.smoothness.css" rel="stylesheet" type="text/css" />
+<script src="../includes/jquery.dotimeout.js" type="text/javascript"></script>
+<script src="../includes/highcharts.js" type="text/javascript"></script>
+<script src="../includes/highcharts_export.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	
+	$('.date').datepicker({ 
+		dateFormat: 'yy-mm-dd', 
+		numberOfMonths: 1,
+		showOtherMonths: true,
+		selectOtherMonths: true
+	});
+	
+	$('#filter_header').click(function(){
+		$('#filter_box').toggle(200).doTimeout('animate', 250, function(){
+			$(window).scroll();
+		});
+	});
+	
+	$('.brief_row').click(function(){
+		$(this).next().toggle();
+	});
+	
+	$('.brief_row:odd').addClass('shaded').next().addClass('shaded');
+	
+	<?php if ($parent <> '') { ?>
+		// Add instrument-specific class to each <a> link
+		$('a').addClass('a-<?php echo strtolower($parent); ?>');
+	<?php } ?>
+	
+});
+</script>
+
+<style type="text/css">
+
+.brief_row { cursor: pointer; }
+.detail_row { display: none; }
+.shaded { background-color: #eee; }
+.responses_table { max-width: 800px; }
+
+</style>
+
+
+
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" --><!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+  <?php include 'bc_links.php'; ?><br />
+  <?php foreach ($survey_instruments as $i) { ?>
+		<a href="?instrument_id=<?php echo $i['survey']; ?>"><?php echo $i['survey']; ?></a> | 
+	<?php } ?>
+  <!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  
+    <h1><?php echo $instrument_id_name; ?> RESULTS FOR 
+      <?php if ($see_all) { ?>ALL CLIENTS <?php } 
+			else if ($row_rsBulkCustomerInfo['company'] <> "") 
+			{ echo strtoupper($row_rsBulkCustomerInfo['company']); } 
+			else { echo "(Unknown bulk customer)"; } ?></h1>
+    
+    <h3><a id="filter_header" style="cursor:pointer; ">FILTER RESULTS</a></h3>  
+    <div id="filter_box" style="display: none; ">
+      <table border="0">
+    <form id="form1" name="form1" method="post" action="<?php 
+			echo (isset($_GET['userkey']) ? "?userkey=".$_GET['userkey'] : ""); ?>">
+      
+      <?php // initialize all POST values to avoid errors
+			$post_items = array("resellerkey", "projectkey", "assignmentkey", 
+				"date_range_1", "date_range_2",
+				"las_range_low", "las_range_high", "test_time", "all_times_present",
+				"assessments_taken_min", "assessments_taken_max", "management_level_select",
+				"group", "sexkey");
+			for ($i = 0; isset($post_items[$i]); $i ++) { 
+				if (!isset($_POST[$post_items[$i]])) { $_POST[$post_items[$i]] = ""; }
+			} ?>
+      
+        <?php if ($see_all) { ?>
+        <tr>
+          <td>Client</td>
+          <td>
+            <select name="resellerkey" class="pulldown_width_150" id="resellerkey">
+              <option value="" <?php if($_POST['resellerkey'] == "") 
+							{ echo "selected='selected'"; } ?>> - view all - </option>
+              <?php while ($row = mysql_fetch_assoc($rsFilterBc)) { ?>
+              <option value="<?php echo $row['bulkuserkey']?>" 
+								<?php if($_POST['resellerkey'] == $row['bulkuserkey']) 
+                { echo "selected='selected'"; } ?>><?php 
+                echo $row['bulkcustomer'].
+                " &nbsp; (".$row['numpeople'].")"; ?></option>
+              <?php } ?>
+            </select>
+          </td>
+        </tr>
+        <?php } // ?>
+        <?php if (mysql_num_rows($rsFilterProjects) > 0) { ?>
+        <tr>
+          <td>Project</td>
+          <td><select name="projectkey" class="pulldown_width_150" id="projectkey">
+            <option value="" <?php if($_POST['projectkey'] == "") 
+							{ echo "selected=\"selected\""; } ?>> - view all - </option>
+            <?php while ($row = mysql_fetch_assoc($rsFilterProjects)) { ?>
+            <option value="<?php echo $row['projectkey']?>" 
+          	<?php if($_POST['projectkey'] == $row['projectkey']) 
+						{ echo "selected=\"selected\""; } ?>><?php 
+							echo $row['company']." → ".$row['projectid'].
+						" &nbsp; (".$row['numpeople'].")"; ?></option>
+            <?php } ?>
+          </select></td>
+        </tr>
+        <?php } // ?>
+        <tr>
+          <td>Assignment</td>
+          <td>
+            <select name="assignmentkey" class="pulldown_width_150" id="assignmentkey">
+              <option value="" <?php if($_POST['assignmentkey'] == "") 
+							{ echo "selected='selected'"; } ?>> - view all - </option>
+              <?php while ($row = mysql_fetch_assoc($rsFilterAssn)) { ?>
+              <option value="<?php echo $row['assignmentkey']?>" 
+								<?php if($_POST['assignmentkey'] == $row['assignmentkey']) 
+                { echo "selected='selected'"; } ?>><?php 
+                if ($see_all) { echo $row['company']." → "; }
+								$date_start = strtotime($row['date_start']);
+								$date_end = strtotime($row['date_end']);
+								echo $row['assign_group'].", ".$row['instrument_id'].
+									" from ".date('M jS', $date_start).
+									(date('Y', $date_start) <> date('Y') ? ", ".date('Y', $date_start) : "").
+									" to ".date('M jS', $date_end).
+									(date('Y', $date_end) <> date('Y') ? ", ".date('Y', $date_end) : "").
+                	" &nbsp; (".$row['numpeople'].")"; ?></option>
+              <?php } ?>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>Date range </td>
+          <td>
+          <input name="date_range_1" type="text" class='date' id="date_range_1" size="11" 
+          	value="<?php echo $_POST['date_range_1']; ?>" />
+           to 
+          <input name="date_range_2" type="text" class='date' id="date_range_2" size="11"
+          	value="<?php echo $_POST['date_range_2']; ?>" />
+          </td>
+        </tr>
+        <?php if (strpos($instrument_id, '360')) { ?>
+        <tr>
+          <td>LDMA score</td>
+          <td>
+          <input name="score_min" type="text" id="score_min" size="3" 
+          	value="<?php echo $_POST['score_min']; ?>" />
+           to 
+          <input name="score_max" type="text" id="score_max" size="3"
+          	value="<?php echo $_POST['score_max']; ?>" />
+          </td>
+        </tr>
+        <?php } ?>
+        <tr>
+          <td>Management level</td>
+          <td><span id="spryselect5">
+          <select name="management_level_select" class="pulldown_width_150" id="management_level_select">
+            <option value="">- select one -</option>
+            <?php while ($row = mysql_fetch_assoc($rsFilterManLevels)) { ?>
+            	<option value="<?php echo $row['manlevelkey']; ?>" 
+              	<?php if ($_POST['management_level_select'] == $row['manlevelkey']) 
+									{ echo "selected='selected'"; } ?>>
+								<?php echo $row['man_level']." &nbsp; (".$row['numpeople'].")";?></option>
+            <?php } ?>
+          </select>
+          </span></td>
+        </tr>
+        <tr>
+          <td>Group </td>
+          <td><span id="spryselect">
+          <select name="group" class="pulldown_width_080" id="group">
+            <option value="">---</option>
+            <?php while ($row = mysql_fetch_assoc($rsFilterGroup)) { ?>
+              <option value="<?php echo $row['group']?>"
+              	<?php if ($_POST['group'] == $row['group']) { echo "selected='selected'"; } ?>>>
+              <?php echo $row['group']." &nbsp; (".$row['numpeople'].")";?></option>
+            <?php } ?>
+          </select>
+          </span></td>
+        </tr>
+        <tr>
+          <td>Sex</td>
+          <td>
+          <select name="sexkey" class="pulldown_width_080" id="sexkey">
+            <option value="">---</option>
+            <option value="1" <?php if ($_POST['sexkey'] == 1) { echo "selected='selected'"; } ?>>
+            	male</option>
+            <option value="2" <?php if ($_POST['sexkey'] == 2) { echo "selected='selected'"; } ?>>
+            	female</option>
+          </select>
+          </td>
+        </tr>
+        <tr>
+        	<td></td>
+          <td align="right">
+						<?php if ($filter_humanReadable <> "") { ?>
+              <a href="report_bulkcustomer.php<?php echo (isset($_GET['userkey']) ? "?userkey=".$_GET['userkey'] : ""); ?>">clear search</a>&nbsp;&nbsp; 
+            <?php } ?>
+            <input type="submit" name="SUBMIT" id="SUBMIT" value="SEARCH" />
+            <input name="MM_FILTER" type="hidden" value="MM_FILTER" />
+          </td>
+        </tr>
+    </form>
+      </table>
+      </div>
+    
+    <!-- Print out filter status -->
+    <p><?php 
+		if ($totalRows_rsNumTestTakers == 0) {
+			if ($instrument_id == "") { ?>
+      	Select an instrument above to view results.
+      	<?php
+			} else if ($filter_humanReadable == "") {
+				?>You do not currently have any finalized records to view. 
+        Click on "select reports" above to view unfinalized assessments.<?php
+			} else {
+				?><em>Your search returned no results.</em> 
+				<a href="">clear search</a><?php
+			}
+		} else {
+			if ($filter_humanReadable == "") { 
+				?>You are viewing survey results for <em><?php echo $totalRows_rsNumTestTakers; ?></em> test takers.<?php 
+			} else { ?>Your search returned results for <em><?php echo $totalRows_rsNumTestTakers; ?></em> test taker<?php echo ($totalRows_rsNumTestTakers == 1 ? "" : 's'); ?>. 
+				Showing results <?php echo $filter_humanReadable; ?>.
+				<a href="">clear search</a><?php 
+			}
+		} ?></p>
+    
+		
+    <?php if (mysql_num_rows($rsSurveyItems) > 0) { ?>
+    <h3>Results for each item</h3>
+    <table class='responses_table'>
+    <?php 
+		$cur_category = "";
+		$values_this_category = array();
+		while ($item = mysql_fetch_assoc($rsSurveyItems)) { 
+			$append_stem_text = "";
+			// skip stems that have already been merged with another stem
+			if (strpos($stems_to_skip, ' '.$item['stem_code'].' ')) { continue; }
+			
+    	// change to a new category
+			if ($item['category'] <> $cur_category) {
+				if (count($values_this_category) > 0) {
+					// add summary row for this category
+					?><tr>
+						<td><strong>Average for this category</strong></td>
+						<td><?php echo round(array_sum($values_this_category) / count($values_this_category), 1); ?></td>
+					</tr><?php
+				}
+				// start a new category
+				$cur_category = $item['category'];
+				$values_this_category = array();
+				?><tr><th colspan='3' class='tablehead_knockout'><?php echo $cur_category; ?></th></tr><?php
+			}
+			
+			// build the result text for this item
+			$result_brief = "";
+			$result_detail = "";
+			$responses_exist = false;
+			
+			// text area (big text)
+			if ($item['stem_type'] == 'textarea') { 
+				$response_col = 'text'.zeropad(intval($item['stem_code']), 2);
+				// No brief view.
+				// Detail: list full comments.
+				$sql_comments = sprintf("SELECT {$response_col} AS text
+					FROM la_survey_data sd
+						LEFT JOIN la_data d ON sd.lakey = d.lakey
+						LEFT JOIN la_scores s ON d.lakey = s.lakey
+					WHERE sd.instrument_id = %s AND sd.completed = 1 AND {$response_col} <> '' {$filter_demogs}
+					ORDER BY {$response_col} ",
+						SQLstr($instrument_id, 'text'));
+				$rsComments = mysql_query($sql_comments) or die("ERROR fetching text area comments: ".mysql_error());
+				$result_detail .= "<ul>";
+				while ($row = mysql_fetch_assoc($rsComments)) {
+					$result_detail .= "<li>".$row['text']."</li>";
+					$responses_exist = true;
+				}
+				$result_detail .= "</ul>";
+				$result_brief .= "click to view";
+			} 
+			
+			// text field: brief
+			else if ($item['stem_type'] == 'textfield') {
+				$response_col = 'text'.zeropad(intval($item['stem_code']), 2);
+				// Brief view: most popular answer.
+				/* $sql_comments = sprintf("SELECT {$response_col} AS text, COUNT(sd.lasurveykey) AS count
+					FROM la_survey_data sd
+						LEFT JOIN la_data d ON sd.lakey = d.lakey
+						LEFT JOIN la_scores s ON d.lakey = s.lakey
+					WHERE sd.instrument_id = %s AND sd.completed = 1 AND {$response_col} <> '' {$filter_demogs}
+					GROUP BY text ORDER BY count DESC limit 1",
+						SQLstr($instrument_id, 'text'));
+				$rsComments = mysql_query($sql_comments) or die("ERROR fetching text area comments: ".mysql_error());
+				$row = mysql_fetch_assoc($rsComments); */
+				// $result_brief .= "Most common answer: <em>{$row['text']}</em>";
+				$result_brief .= "click to view";
+				
+				// Detail: list full comments.
+				$sql_comments = sprintf("SELECT {$response_col} AS text
+					FROM la_survey_data sd
+						LEFT JOIN la_data d ON sd.lakey = d.lakey
+						LEFT JOIN la_scores s ON d.lakey = s.lakey
+					WHERE sd.instrument_id = %s AND sd.completed = 1 AND {$response_col} <> '' {$filter_demogs}
+					ORDER BY {$response_col} ",
+						SQLstr($instrument_id, 'text'));
+				$rsComments = mysql_query($sql_comments) or die("ERROR fetching text area comments: ".mysql_error());
+				$result_detail .= "<ul>";
+				while ($row = mysql_fetch_assoc($rsComments)) {
+					$result_detail .= "<li>".$row['text']."</li>";
+					$responses_exist = true;
+				}
+				$result_detail .= "</ul>";
+			}
+			// select menus: behavior depends on whether the menu is nominal or ordinal.
+			else if ($item['stem_type'] == 'select') {
+				$sql_join_menu = " JOIN la_menus m ON 1=0 ";
+				
+				// is this stem part of a set of merged columns?
+				// Quick note: merged columns MUST 1) all be based on the same menu type, 2) be in the same category.
+				if (strpos($stems_that_are_merged, $item['stem_code'])) {
+					// find out what stems this should be merged with
+					foreach ($merged_stems[$item['category']] as $stem_code) {
+						$sql_join_menu .= sprintf(" OR sd.stem%s = m.menukey ", zeropad(intval($stem_code), 3));
+						$stems_to_skip .= ' '.$stem_code.' ';
+					}
+					$append_stem_text .= " (<em>".count($merged_stems[$item['category']])." selection slots</em>)";
+				} else { // otherwise, just include the la_menu for this single column.
+					$sql_join_menu .= sprintf(" OR sd.stem%s = m.menukey ", zeropad(intval($item['stem_code']), 3));
+				}
+				
+				// Frequency query. DRY. Slightly different usage depending on menu type.
+				$sql_frequency = sprintf("SELECT m.menukey, m.menu_item_name, m.item_value, COUNT(sd.lasurveykey) AS count
+					FROM la_survey_data sd
+						LEFT JOIN la_data d ON sd.lakey = d.lakey
+						LEFT JOIN la_scores s ON d.lakey = s.lakey
+						{$sql_join_menu}
+					WHERE sd.instrument_id = %s AND sd.completed = 1 {$filter_demogs} 
+					GROUP BY m.menukey ",
+						SQLstr($instrument_id, 'text'));
+				
+				// ordinal menus are ones where the la_menus selections have integer values.
+				if ($menu_selections_have_values) {
+					// Brief: display average of responses.
+					$sql_average = sprintf("SELECT AVG(m.item_value) AS average,
+							ROUND(AVG(m.item_value), 1) AS average_rounded, COUNT(sd.lasurveykey) AS count
+						FROM la_survey_data sd
+							LEFT JOIN la_data d ON sd.lakey = d.lakey
+							LEFT JOIN la_scores s ON d.lakey = s.lakey
+							{$sql_join_menu}
+						WHERE sd.instrument_id = %s AND sd.completed = 1 {$filter_demogs} ",
+							SQLstr($instrument_id, 'text'));
+					$rsAverage = mysql_query($sql_average) or die("rsAverage: ".mysql_error());
+					$row = mysql_fetch_assoc($rsAverage);
+					if ($row['count'] > 0) { $responses_exist = true; }
+					$result_brief .= "Average: <em>{$row['average_rounded']}</em>";
+					for ($i = $row['count']; $i > 0; $i --) { $values_this_category[] = $row['average']; }
+					
+					// Detail: Full frequency counts.
+					$rsFrequency = mysql_query($sql_frequency."ORDER BY item_value DESC") 
+						or die("ERROR building selections frequency: ".mysql_error());
+					$frequency = "";
+					while ($row = mysql_fetch_assoc($rsFrequency)) {
+						$frequency .= "<tr>
+							<td>{$row['menu_item_name']}</td>
+							<td>{$row['item_value']}</td>
+							<td>{$row['count']}</td>
+						</tr>";
+					}
+					$result_detail = "<p>Responses, sorted by the selection's value</p>
+						<table> 
+							<tr>
+								<th>Item</th>
+								<th>Value</th>
+								<th>Count</th>
+							</tr>  
+							{$frequency} 
+						</table>";
+				} else { // Nominal menu, ie a list: items aren't associated with an ordinal value.
+					// Brief: display top 2 options.
+					$sql_top = sprintf("SELECT m.menu_item_name, COUNT(sd.lasurveykey) AS count
+						FROM la_survey_data sd
+							LEFT JOIN la_data d ON sd.lakey = d.lakey
+							LEFT JOIN la_scores s ON d.lakey = s.lakey
+							{$sql_join_menu}
+						WHERE sd.instrument_id = %s AND sd.completed = 1 {$filter_demogs} 
+						GROUP BY m.menukey ORDER BY count DESC LIMIT 2",
+							SQLstr($instrument_id, 'text'));
+					$rsTop = mysql_query($sql_top) or die("rsTop: ".mysql_error());
+					if (mysql_num_rows($rsTop) > 0) { $responses_exist = true; }
+					//$result_brief .= "Top responses: <br />";
+					while ($row = mysql_fetch_assoc($rsTop)) {
+						$text = $row['menu_item_name'];
+						if (strlen($text) > 60) { $text = substr($text, 0, 60)."..."; }
+						$result_brief .= "<em>{$text}</em><br />";
+					}
+					
+					// Detail: Full frequency counts.
+					$rsFrequency = mysql_query($sql_frequency."ORDER BY count DESC") 
+						or die("ERROR building selections frequency: ".mysql_error());
+					$frequency = "";
+					while ($row = mysql_fetch_assoc($rsFrequency)) {
+						$frequency .= "<tr>
+							<td>{$row['menu_item_name']}</td>
+							<td>{$row['count']}</td>
+						</tr>";
+					}
+					$result_detail = "<p>Responses, sorted by popularity</p>
+						<table> 
+							<tr>
+								<th>Item</th>
+								<th>Count</th>
+							</tr> 
+							{$frequency} 
+						</table>";
+				}
+				
+			}
+			// other types of items don't have an entry
+			else { $result_brief = "Unknown item type '{$item['stem_type']}'. No summary information."; }
+			
+			// write out the rows for this item
+			?>
+      <tr class='brief_row'>
+      	<td class='prompt'><?php echo $item['stem_name'].' '.$append_stem_text; ?></td>
+        <?php if ($responses_exist) { ?>
+        <td><?php echo $result_brief; ?></td>
+        <?php } else { ?>
+        <td><em>no responses</em></td>
+        <?php } ?>
+      </tr>
+      <tr class='detail_row'>
+      	<td colspan='3'><?php echo $result_detail; ?></td>
+      </tr>
+			<?php
+		} ?>
+    </table>
+    <?php } // ENDIF: if results exist for $rsSurveyItems ?>
+
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

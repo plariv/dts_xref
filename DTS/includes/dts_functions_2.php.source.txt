@@ -1,0 +1,1126 @@
+<?php 
+
+require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" );
+mysql_select_db($database_Assessment, $Assessment);
+
+
+
+
+$start = ""; $count_timers = 0;
+
+function bench($name = "") {
+	/* BENCH is used to quickly run timers on how long PHP script sections take to calculate.
+	Run it twice at different points in the code. The first time, it will start the timer.
+	The second time, it will stop the timer and report how long the run took.
+	The second time you run it, it will start a second timer. (no efficiency concern here though.) */
+	
+	global $start, $count_timers;
+	
+	// If this function is being run a second time, output the timer result.
+	if ($count_timers > 0) { 
+		if ($name == "") { $name = "Timer ".$count_timers; }
+		$end=microtime(); $end=explode(" ",$end); $end=$end[1]+$end[0]; 
+		$total = round($end-$start, 2);
+		
+		echo $name." took ".$total." seconds. <br>";
+	}
+	
+	// Start the next timer
+	$count_timers ++;
+	$start=microtime(); $start=explode(" ",$start); $start=$start[1]+$start[0];
+	 
+}
+
+
+
+
+
+function topher($abort_message = "") 
+{
+	/* The act of "Tophering" involves killing a page and outputting a final death message, 
+		 but only if the logged-in viewer is named Topher. I diagnose lots of problems by killing pages
+		 with error messages, and now there's an easy way to do so which is humane to other 
+		 users of the page. 
+		 Specify a string of text and it will be printed to the page 
+		 (more useful in the pre-HTML header), and will NOT kill the page. 
+		 Then call topher() without a message to kill the page. */
+	if ($_SESSION['log_firstname'] == "Topher") { 
+		if ($abort_message <> "") { echo str_replace("\n", "<br>", $abort_message)."<br>"; } 
+		else { die("<br>Success.<br>"); }
+	}
+}
+
+
+
+if (!function_exists("SQLstr")) {
+function SQLstr($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+	// All SQL-input locations should run through this function.
+	// Note the mysql_real_escape_string text which sanitizes input against SQL injection attacks.
+	
+	// Replace tabs and newlines with <br> tag. Then on any page where text has visible <br> tags, I can manually convert it back into \n's.
+	$theValue = str_replace(array("\r\n", "\n", "\r", "\t"), "<br>", $theValue);
+	// $theValue = str_replace("<br><br>", "<br>", $theValue);
+  $theValue = function_exists("mysql_real_escape_string") ? 
+			mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'".$theValue."'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+
+
+function sendEmail($email_to = "topher@lectica.org", $email_from = "service@lectica.org", $email_cc, $subject, $body) {
+	/* Send email function. Setting it to default send email to me, so that 
+	I catch any errors. */
+	
+	// The DTS signature is added here, so all pages that call sendEmail() will have it by default. 
+	$signature = "\n\n\n
+----------------------------------------
+
+Developmental Testing Service, INC (DTS)
+Northampton, MA 01060
+http://www.devtestservice.org
+
+Our mission is to develop standardized, formative, and diagnostic developmental assessments of the knowledge and skills required to meet the challenges of the 21st century. Our aims are threefold: (1) to build engaging, educative, and feedback-rich developmental assessments and learning resources for K-18 students and their teachers, (2) to create equally rich assessments that diagnose learning needs and support the development of adults (in the workplace and beyond), and (3) to build (and share) knowledge about learning and its role in the future of society.
+
+This message contains PRIVILEGED AND CONFIDENTIAL INFORMATION intended solely for the use of the addressee(s) named above. Any disclosure, distribution, copying or use of the information by others is strictly prohibited. If you have received this message in error, please advise the sender by immediate reply and delete the original message and any and all attachments. Thank you.";
+	
+	
+	//Linecraft PHP Form mail v.1.2.0
+	// Prepares and sends email notifying other scorers that something has been scored.
+	//$mail_form="form1";
+	// if the MM_update reference seems to be giving trouble, try removing it. I think it refers to the form, which we've removed.
+	//$exception_fields = array("scored_{$_GET['scorer_no']}","MM_update","scorerkey_{$_GET['scorer_no']}");
+	$to = $email_to;
+	$from = $email_from;
+	$cc = $email_cc;
+	$bcc = "";
+	$host="";
+	$username="";
+	$password="";
+	//$subject = $subject;
+	$message_header="";
+	$message_footer="";
+	$message_body=$body.$signature;
+	$format_html="\r\nContent-type: text/plain; charset=utf-8";
+	$html="";
+	$success_page="";
+	$error_page="";
+	$o_t="";
+	$c_t="";
+	$br="\n";
+	//If HTML
+	if($html=="1"){
+		$o_t="<b>";
+		$c_t="</b>";
+		$br="<br>";
+		$format_html="\r\nContent-type: text/html; charset=utf-8";
+	}
+	
+	$message = $message_header.$br.$message_body.$br.$message_footer;
+	
+	@include_once "Mail.php";
+	@include_once "Mail/mime.php";
+	
+	if (!class_exists('Mail') || !class_exists('Mail_mime')) {
+		$headers="From:".$from.$format_html;
+		$headers.=($cc!="")?("\r\nCc: " . $cc):"";
+		$headers.=($bcc!="")?("\r\nBcc: " . $bcc):"";
+		if (mail($to, stripslashes($subject), stripslashes($message),$headers)) {
+			// And I'll assume this is the succeeded-condition.
+			// if ($success_page != "") { header("Location:".$success_page); }		
+			return 1;	// treating 1 as SENT SUCCESSFULLY
+		} else {
+			// **** TH - I'll assume this is the failed-send condition.
+			// if ($error_page != "") { header("Location:".$error_page); }
+			return 0;	// treating 0 as DID NOT SEND
+		}
+	} else {
+		if($cc!=""){$to.=", ".$cc;}
+		if($bcc!=""){$to.=", ".$bcc;}
+		if($host!="" && $username!="" && $password!=""){
+			$contructor = Mail::factory('smtp',array ('host' => $host,'auth' => true,'username' => $username,'password' => $password));
+		}else{
+			$contructor = Mail::factory('mail');
+		}
+		$headers = array ('From' => $from,'To' => $to,'Subject' => $subject);
+		if($cc!=""){$headers['Cc']=$cc;}
+		if($html=="1"){
+			$mime = new Mail_mime("\n");
+			$mime->setHTMLBody($message);
+			$message = $mime->get();
+			$headers = $mime->headers($headers);
+		}
+		$mail = $contructor->send($to, $headers, $message);
+		
+		if (PEAR::isError($mail)) {
+			// **** TH - I'll assume this is the failed-send condition.
+			// if ($error_page != "") { header("Location:".$error_page); }
+			return 0;	// treating 0 as DID NOT SEND
+		} else {
+			// And I'll assume this is the succeeded-condition.
+			// if ($success_page != "") { header("Location:".$success_page); }		
+			return 1;	// treating 1 as SENT SUCCESSFULLY
+		}
+	}
+	
+}
+
+
+
+function securityAlert($message) {
+	// Use this function as a shortcut to alert us when suspicious things happen on various pages. 
+	sendEmail( "service@lectica.org", "service@lectica.org", "",
+		 "SECURITY ALERT from page ".$_SERVER['PHP_SELF'],
+		 "The following automatic security alert was triggered by page ".$_SERVER['PHP_SELF'].": \n".
+		 $message );
+}
+
+
+
+function randomPassword($pw_length = 8) { 
+	// * depends on sendEmail to alert us if errors are found.
+	// Also depends on query functionality, which most of my other functions do not do.
+	global $database_Assessment, $Assessment;
+	
+	
+	// 									Generate a random password
+		
+	// by default, all passwords are 8 characters in length.
+	// the pw will have between 1 and (length-1) alphabetic characters,
+	$char_length = mt_rand(1, $pw_length - 1);
+	// and the rest will be numbers.
+	$num_length = $pw_length - $char_length;
+	// except there might be an initial capital letter,
+	$capital = "";
+	if (mt_rand(0,1) == 1) {
+		$capital_pool = "ABCDEFGHNJKLMNOPQRSTUVWXYZ";
+		$capital = $capital_pool[mt_rand(0, 25)];
+		$char_length --;
+	}
+	// and there also might be a final punctuation mark.
+	$punc = "";
+	if (mt_rand(0,1) == 1) {
+		$punc_pool = "!@#$%^&*?-=+";
+		$punc = $punc_pool[mt_rand(0, 11)];
+		$num_length --;
+	}
+	// choose the random letters (weighted towards the more familiar ones)
+	$chars = "";
+	while ($char_length > 0) {
+		$char_pool = "abcdefghijkmnopqrstuvwxyzabcdefghijkmnop";
+		$chars .= $char_pool[mt_rand(0, 39)];
+		$char_length --;
+	}
+	// and choose the random numbers
+	$nums = "";
+	while ($num_length > 0) {
+		$nums .= "".mt_rand(0, 9);
+		$num_length --;
+	}
+	// and put them all together
+	$pw = "";
+	$pw .= $capital;
+	// with either the letters first or the numbers first
+	if (mt_rand(0,1) == 1) { $pw .= $chars.$nums; } else { $pw .= $nums.$chars; }
+	$pw .= $punc;
+	
+	// Example passwords produced in this way include: 
+	// 496757zi, X2451whu, 023fknfn, M8ixiue
+	
+	/* This method, by my estimate, should produce passwords of roughly 35 bit-strength.
+	   (possible capital letter) + (unknown order of (unknown length of chars) + 
+	   (unknown length of nums) ) + (possible punctuation mark) = ?
+	   36 * (~18^6) * 23 */
+	
+	
+	// 									Check if this password already exists in Registrants
+		
+	$query_rsPw = sprintf("SELECT userkey, email, user_name, password 
+	FROM registrants WHERE password = %s", 
+			SQLstr($pw, "text"));
+	$rsPw = mysql_query($query_rsPw, $Assessment) or die(mysql_error());
+	$row_rsPw = mysql_fetch_assoc($rsPw);
+	$totalRows_rsPw = mysql_num_rows($rsPw);
+	
+	// If this password already exists in our system, then freak out.
+	if ($totalRows_rsPw > 0) {
+		$email_to = "service@lectica.org";
+		$email_from = "service@lectica.org";
+		$email_cc = "";
+		$subject = "ALERT - duplicate random password found in DTS.registrants table";
+		$body = "Warning!! The PHP random password generator on the password reset page has generated a password which already exists in the DTS registrants database. The offending string is: '".$pw."' Please check to ensure that your PW generator algorithm is up to snuff. This is an automated email sent by dtsservice.";
+		sendEmail($email_to, $email_from, $email_cc, $subject, $body);
+		return false;
+	}
+	
+	return $pw;
+}
+
+
+
+
+function contactUsForHelp( $title = "contact us", $extraInfo="" ) {
+	// gathers basic info on the page and prepares it in a help link to contactus.php. If the user clicks the link, info will be pre-filled-in on contactus.php.
+	
+	$thisPage = $_SERVER['PHP_SELF'];
+	$queryString = $_SERVER['QUERY_STRING'];
+	$navigator_user_agent = ( isset( $_SERVER['HTTP_USER_AGENT'] ) ) ? strtolower( $_SERVER['HTTP_USER_AGENT'] ) : '';
+	
+	$instrument_id = "";
+	if (isset($_SESSION['instrument_id'])) {
+		$instrument_id = $_SESSION['instrument_id']." ";
+	}
+	
+	?><a href="/contactus.php?type=problem&page=<?php echo $_SERVER['PHP_SELF']; ?>&query=<?php echo str_replace("&", "^", $_SERVER['QUERY_STRING']); ?>&browser=<?php echo $navigator_user_agent; ?><?php echo ($extraInfo <> "" ? "&other=".$extraInfo : "" );?>" target="_blank"><?php echo $title; ?></a><?php 
+	
+}
+
+
+
+
+function downloadData( $rsDownload, $filename="" ) {
+	// Downloads the recordset as CSV spreadsheet.
+	// $row_rsDownload should NOT have been declared before now, or you will miss a row.
+	
+	if ($filename == "") { $filename = date('Y-m-d')."_download"; }
+	
+	$row_rsDownload = mysql_fetch_assoc($rsDownload);
+	
+	$delim=",";
+	$delim_replace=";";
+	if ($delim == "") {
+		$lang=(strpos($_SERVER['HTTP_ACCEPT_LANGUAGE'],",")===false)?$_SERVER['HTTP_ACCEPT_LANGUAGE']:substr($_SERVER['HTTP_ACCEPT_LANGUAGE'],0,strpos($_SERVER['HTTP_ACCEPT_LANGUAGE'],","));
+		$semi_array=array("af","zh-hk","zh-mo","zh-cn","zh-sg","zh-tw","fr-ch","de-li","de-ch","it-ch","ja","ko","es-do","es-sv","es-gt","es-hn","es-mx","es-ni","es-pa","es-pe","es-pr","sw");
+		$delim=(in_array($lang, $semi_array) || substr_count($lang, "en")>0)?",":";";
+	}
+	
+	$output = "";
+	$include_hdr = "1";
+	
+	if ($include_hdr == "1") {
+		$totalColumns_rsDownload = mysql_num_fields($rsDownload);
+		for ( $x = 0; $x < $totalColumns_rsDownload; $x++ ) {
+			if ($x == $totalColumns_rsDownload - 1) { $comma = ""; } else { $comma = $delim; }
+			$output = $output.(str_replace("_", " ", mysql_field_name($rsDownload, $x))).$comma;
+		}
+		$output = $output."\r\n";
+	}
+	
+	do {  
+				$fixcomma=array();
+    		foreach ($row_rsDownload as $r)
+				{	array_push($fixcomma,str_replace($delim,$delim_replace,$r)); }
+				$line = join($delim, $fixcomma);
+    		$line=str_replace("\r\n", " ",$line);
+    		$line=str_replace("\r", " ",$line);
+    		$line=str_replace("\n", " ",$line);
+    		$line = "$line\n";
+    		$output=$output.$line;
+	} while ($row_rsDownload = mysql_fetch_assoc($rsDownload));
+	
+	$export_encoding="utf-8";
+	$export_encoding=($export_encoding=="")?"":("; charset=".$export_encoding);
+	header("Content-Type: application/xls".$export_encoding);
+	header("Pragma: public");
+	header("Content-Disposition: attachment; filename=".$filename.".csv");
+	header("Content-Type: application/force-download");
+	header("Cache-Control: post-check=0, pre-check=0", false);
+	
+	echo $output;
+	
+	die();
+	
+}
+
+
+
+
+
+function initializeSortSearch($urlVars = "") {
+	
+	global $_SESSION; // Need to know what the previous sort variable was, if one was present.
+	global $_POST;	// This function searches through the posted variables.
+	global $_GET;	// also checks for a "sort" $_GET variable.
+	
+	// Set SESSION[search]
+	
+	$shouldRefresh = FALSE;	// to avoid redirect loops
+	$searchContentExists = FALSE; 
+	$searchClause = "";
+	
+	
+	
+	if (isset($_POST)) {
+		$shouldRefresh = true;
+		$i = 0;
+		reset($_POST); // in case another function has already traversed it!
+		// Go through $_POST array item by array item using next() and current() and key(). 
+		while ($i < count($_POST)) {
+			// If this $_POST array item is labelled as a search column, inspect it.
+			// Also detect "HAVING" columns, but leave the label on them for now.
+			if (strpos(" ".key($_POST), "(s)") OR strpos(" ".key($_POST), "(h)")) {
+				$searchContentExists = TRUE;	// Saveworthy POST material was found! Remember this.
+				if (current($_POST) <> "") {	// if there's a value in that item, add it to search clause.
+					// get the name of this table column. DO NOT remove the prefix. 
+					$searchCol = key($_POST); // $searchCol = str_replace("(s)", "", key($_POST));
+					// If this column was given a table label with the ':' separator, convert it to a '.'
+					$searchCol = str_replace(":", ".", $searchCol);
+					// Add this search item to the search clause. Sanitized with SQLstr.
+					$searchClause .= "".$searchCol.":".mysql_real_escape_string(current($_POST)).",";
+				}
+			}
+			next($_POST); $i ++;
+		}
+		
+		// Set the $_SESSION search string to whatever was in POST, if relevant content exists.
+		// Doesn't matter what SESSION[search] previously was.
+		if ($searchContentExists) {
+			// SESSION search will be set to something like: "userkey:1050 firstname:joe "
+			$_SESSION['search'] = $searchClause;
+		}
+	}
+	
+	// Check for GET requests for a search type...
+	if (isset($_GET['search'])) {
+		// The page can request to clear the search filter with a URL variable.
+		if ($_GET['search'] == "clear") { $_SESSION['search'] = ""; }
+		else { $_SESSION['search'] = mysql_real_escape_string($_GET['search']); }
+		// Then refresh the page to get rid of the Search URL variable. (also clears other URL vars.)
+		header("Location: ".$_SERVER['PHP_SELF']); exit();
+	}
+	
+	// Set SESSION[sort] based on URL input
+	
+	if (isset($_GET['sort'])) {
+		// Is there an existing SESSION[sort] set?
+		$prevSort = "";
+		if (isset($_SESSION['sort'])) { $prevSort = $_SESSION['sort']; }
+		
+		// Add the sort column name to the sort clause. Note the SQLstr sanitization.
+		$sortClause = mysql_real_escape_string($_GET['sort']);
+		$sortClause = str_replace(":", ".", $sortClause);	// enable using ':' to specify table prefixes
+		
+		// Ascending or descending?
+		// If SESSION[sort] already sorts by the same column, then toggle the sort direction.
+		if (strpos(" ".$prevSort, $sortClause)) {
+			if (strpos($prevSort, ":ASC")) { $sortClause .= ":DESC"; }
+			else { $sortClause .= ":ASC"; }
+		}
+		// Default to ascending.
+		else { $sortClause .= ":ASC"; }
+		
+		// Set SESSION[sort] to the new sort clause. This will look something like: "finalized:ASC"
+		$_SESSION['sort'] = $sortClause;
+		
+		// After initializing, the page refreshes in order to clear crud URL variables and to prevent 
+		// the annoying warning message when you press the BACK button and the browser thinks you want to resubmit.
+		header("Location: ".$_SERVER['PHP_SELF']."?".$urlVars); exit();
+	}
+}
+
+
+
+function querySortSearch($query, $groupBy = "", $defaultSort = "", $sortActive = 1) {
+	
+	/* FUNCTION QUERYSORTSEARCH
+	This function returns the sort and search text that you add on to the end of your basic query. Run it before you add the LIMIT clause, like this: 
+	$query = "basic_query"; 
+	$query .= querySortSearch(arguments); 
+	$query_limit = $query."limit clause";
+	This function depends on $_SESSION['sort'] and $_SESSION['search'], which are set up with initializeSortSearch(). Run the init function at the topish of the page, then run this function to add the appropriate sort/search text to each query.
+	 - the first argument is a list of column names which will be accepted as search-able. Separate them with spaces. However you can also plug the entire query in as this argument, and the entire fields clause (section before the word "FROM") will be cleaned and treated as the column list.
+	 - You can specify the exact table label for validColumns, without having to specify the table labels on all the search boxes and so forth. For example if you do a search on the page for a value for "userkey", but in validColumns you specify "la_data.userkey", the text for the query will be set as " AND la_data.userkey LIKE '%val%' ".
+	 - You should specify a column to group by, even if it's just blank "".
+	 - You may optionally specify how you would like the table to sort by default, either the column name or the column name and sort order. Examples: "group" or "finalized DESC" etc.
+	 - sortActive has 3 possible states: 0 = the query will add search filters but not sort. 1 = the query will both search and sort. 2 = the query will sort, but not add search filters.
+	  */
+	 
+	global $_SESSION; // get the sort and search values from $_SESSION. initializeSortSearch() should have been called before any querySortSearch call, and it should have set $_SESSION['sort'] and $_SESSION['search'] even if just to "" empty.
+	
+	// the $groupBy is a recent addition. To avoid bugs, if it looks like the function was only called with two arguments (the query and the default sort), the query should adapt accordingly.
+	if (strpos($groupBy, "ASC") OR strpos($groupBy, "DESC")) { 
+		$defaultSort = $groupBy; $groupBy = "";
+	}
+	
+	$validColumns = $query;
+	// Anything after the word FROM should be omitted from $validColumns.
+	if (strpos($validColumns, "FROM")) {
+		$validColumns = substr($validColumns, 0, strpos($validColumns, "FROM"))." ";
+	}
+	// Remove any commas from the list. Only spaces are used to separate. 
+	// Turn commas into extra spaces to avoid crashes in case a space was not added.
+	$validColumns = str_replace(",", " ", $validColumns);
+	$validColumns = str_replace(array("\n", "\r", "`"), " ", $validColumns);
+	while (strpos(".".$validColumns, "  ")) { $validColumns = str_replace("  ", " ", $validColumns); }
+	
+	$validColumns = explode(" ", $validColumns);
+	$searchClause = "";
+	$havingClause = "";	// HAVING clause is filled in with any search terms tagged (h) instead of (s).
+	$sortClause = "";
+	
+	// If a SESSION search clause exists, then parse it.
+	if (isset($_SESSION['search']) AND $_SESSION['search'] <> "") {
+		// $_SESSION['search'] will look something like "userkey:1050 firstname:joe ".
+		// Break the search string into column-value pairs
+		
+		$sessionSearch = explode(",", $_SESSION['search']);
+		do { // loop for each sessionSearch term (separated by commas)
+			// Grab the column and value text for this column-value pairing
+			$thisSearchPair = explode(":", current($sessionSearch));
+			$thisSearchCol = $thisSearchPair[0];
+			$thisSearchVal = $thisSearchPair[1];
+			
+			// $Location is used to track whether this search condition is in the WHERE or HAVING clause.
+			// HAVING clause conditions are marked by (h) and are used to filter on complex columns and aliases.
+			$location = "";
+			if (strpos(" ".$thisSearchCol, "(s)")) { $location = "WHERE"; }
+			else if (strpos(" ".$thisSearchCol, "(h)")) { $location = "HAVING"; }
+			else { echo "Error: the search term doesn't seem properly marked. 
+				Please notify the web administration team. We apologize for the inconvenience. "; }
+			// now make sure the (s) and (h) are removed from the column name before proceeding.
+			$thisSearchCol = str_replace(array("(s)", "(h)"), "", $thisSearchCol);
+			
+			// $Comparison tracks how the values should be compared: LIKE, exact equals, or greater / less than?
+			$comparison = "LIKE";
+			// If this search term is the low or high end of a range, treat the comparison differently.
+			if (strpos($thisSearchCol, "(low)")) {
+				$comparison = ">=";
+			} else if (strpos($thisSearchCol, "(high)")) {
+				$comparison = "<=";
+			} else if (strpos($thisSearchCol, "(e)")) {
+				$comparison = "=";
+			}
+			// get rid of the comparison tags.
+			$thisSearchCol = str_replace(array("(high)", "(low)", "(e)"), "", $thisSearchCol);
+			
+			//		Check whether this column counts  
+			/* Skim through validColumns (list of columns acceptable for this query) and see if 
+			there is any match with this column name. If that match has some table-specific label 
+			on it (such as d. ), then make $thisSearchCol match that exact column name. */
+			$columnIsValid = FALSE;
+			do { // loop for each valid column, checking for this sessionSearch term
+				// IGNORE any words that have a parentheses in them, as these indicate SQL functions 
+				// and could cause an error with the sort clause.
+				if (strpos(" ".current($validColumns), "(") OR strpos(" ".current($validColumns), ")")) 
+				{ next($validColumns); }
+				// **** <-- TO TROUBLESHOOT, uncomment all of the starred lines in this section.
+				// echo " checking [".current($validColumns)."] against the search col [".$thisSearchCol."]... ";
+				// IF: 1) this search column is matched exactly, 
+				if (current($validColumns) == $thisSearchCol) { 
+					// echo " -- Column found! <br><br> ";  // ****
+					$columnIsValid = TRUE; 
+				}
+				// or 2) this search column is matched AFTER the period in one of the available columns,
+				else if (substr( current($validColumns), strpos(" ".current($validColumns), ".") )
+												  == $thisSearchCol)  {
+					// echo " -- Column found! <br><br> ";  // ****
+					$thisSearchCol = current($validColumns);
+					$columnIsValid = TRUE; 
+				}
+				// else { echo " - no <br />  "; } // ****
+			} while (next($validColumns) !== FALSE); 
+			reset($validColumns);
+			// exit(); // **** <-- TO TROUBLESHOOT, uncomment this and the line above. Outputs all parsed columns.
+			
+			// if this column-value pair references a valid column for this query, add a filter for it.
+			if ($columnIsValid) {
+				$thisCondition = " AND ".$thisSearchCol;
+				// finish the clause differently depending on the appropriate comparison.
+				if ($thisSearchVal == "NULL") { $thisCondition .= " IS NULL "; } 
+				else if ($comparison == "LIKE") { $thisCondition .= " LIKE '%".$thisSearchVal."%' "; }
+				else { $thisCondition .= " ".$comparison." '".$thisSearchVal."' "; }
+				// echo "Adding search term: ".$thisCondition." <br>"; // <-- Uncomment to troubleshoot
+				// add this condition to the WHERE or HAVING clauses, depending on $location
+				if ($location == "WHERE") { $searchClause .= $thisCondition; } 
+				else if ($location == "HAVING") { $havingClause .= $thisCondition; }
+			} 
+		} while (next($sessionSearch));
+		// produces something like: " AND userkey LIKE '%1050%' AND date_completed >= '2011-01-01' "
+		// echo "searchClause = ".$searchClause."<br />havingClause = ".$havingClause."<br />"; // **** troubleshoot
+	}
+	
+	
+	// Add sort clause to query, if that sort column is valid for this query.
+	if (isset($_SESSION['sort']) AND $_SESSION['sort'] <> "" AND $sortActive) {
+		// Get the sort column name & sort direction
+		$sortPairing = explode(":", $_SESSION['sort']);
+		$sortCol = $sortPairing[0];
+		$sortDir = $sortPairing[1];
+		
+		// Skim through validColumns (list of columns acceptable for this query) and see if there is any match with this column name. If that match has some table-specific label on it (such as d. ), then make $thisSearchCol match that exact column name.
+		// echo "search for the sorting column ".$sortCol.": "; // <-- Uncomment for troubleshooting
+		
+		do {
+			// IGNORE any words that have a parentheses in them, as these indicate SQL functions 
+			// and could cause an error with the sort clause.
+			
+			// echo "| ".current($validColumns)." "; // <-- Uncomment for troubleshooting
+			
+			if (strpos(" ".current($validColumns), "(") OR strpos(" ".current($validColumns), ")")) 
+			{ next($validColumns); }
+			// IF: 1) this sort column is matched exactly, 
+			if (current($validColumns) == $sortCol) {  
+				// The direction of sort was determined in initializeSortSearch().
+				$sortClause = " ORDER BY ".current($validColumns)." ".$sortDir." "; 
+			}
+			// OR 2) this sort column is matched with a table prefix and '.', 
+			else if (substr( current($validColumns), strpos(" ".current($validColumns), ".") ) == $sortCol) {
+				// write the WHOLE column phrase into sortCol. (NOT just the matching part, include the table prefix!)
+				$sortCol = current($validColumns);
+				$sortClause = " ORDER BY ".$sortCol." ".$sortDir." ";
+			}
+		} while (next($validColumns)); 
+		reset($validColumns);
+		
+		 // topher();	// <-- Uncomment for troubleshooting
+	}
+	// By default, sort by the default sort column / ordering, if a default was set for this query.
+	if ($sortClause == "" AND $defaultSort <> "") {
+		$sortClause = "ORDER BY ".$defaultSort." ";
+	}
+	
+	// The searchClause will usually be part of the WHERE clause, rather than the HAVING clause. 
+	// There are multiple considerations in this choice:
+	//  - I think WHERE clause limitations can improve efficiency by narrowing the conditions during, rather than after, the search.
+	//  - WHERE clause conditions can reference columns that aren't called in the SELECT field, whereas the HAVING clause requires referenced columns to be specified in the SELECT field and will generate an error whenever they aren't present. 
+	//  - WHERE clause conditions cannot reference aliases of columns, nor can they reference the result of calculations in the SELECT field. HAVING clause conditions operate upon the results of the query up to that point, so they can reference calculations and column aliases. 
+	//  - Adding more text onto the WHERE clause means that no space is left for a "GROUP BY" clause, unless I figure out a way to pass it through this sort/search function. 
+	 
+	// If sortActive = 2, then omit the search clause. 
+	// If a GROUP clause is present, the search clause should go just before it.
+	// If there were any HAVING conditions, they go just before the sort. 
+	return " ".($sortActive == 2 ? "" : $searchClause)." ".
+		($groupBy <> "" ? " GROUP BY ".$groupBy : "")." ".
+		($havingClause <> "" ? " HAVING 1=1 ".$havingClause : "")." ".
+		$sortClause." "; 
+}
+
+
+
+
+
+
+function deadlinesCalendar($currentPage, $userkey = "") {
+	/* This function encapsulates the whole deadlines calendar system. It runs 
+	the 2 big queries, processes the results, and prints out the calendar. 
+	Call the query inside a collapsible panel or 
+	whatever container you'd like the table to rest inside. */
+	
+	global $Assessment;
+	
+	
+	// By default, the links should refresh you to the scoring or coding pages. But if you aren't
+	// on either of those pages, the links should refresh you back to the same page. 
+	$page_code = "";
+	$page_score = "";
+	if (strpos($currentPage, "coding_performance_select") OR 
+			strpos($currentPage, "scoring_performance_select")) { 
+		$page_code = "la_coding/coding_performance_select.php"; 
+		$page_score = "la_scoring/scoring_performance_select.php"; 
+	} else {
+		$page_code = $currentPage;
+		$page_score = $currentPage; 
+	}
+	
+	// V-- Uncomment the below line for troubleshooting.
+	// echo "coding page = ".$page_code."<br> scoring page = ".$page_score; 
+	
+	
+	// 		Query for counts of assessment totals
+	
+	$sql = "SELECT d.instrument_id, SUM(IF(d.completed = 1, 1, 0)) AS total, 
+	SUM(IF(d.completed = 0, 1, 0)) AS started,
+	SUM(IF(d.completed = 1 AND (d.scored_1 IS NULL OR d.scored_1 = 0) 
+			AND (d.coded_1 IS NULL OR d.coded_1 = 0) 
+			AND (d.flag IS NULL OR d.flag = 0), 1, 0)) AS completed,
+	SUM(IF(d.scored_1 = 1 AND d.finalized = 0
+			AND (d.flag IS NULL OR d.flag = 0), 1, 0)) AS 1st_scored,
+	SUM(IF(d.scored_2 = 1 AND d.finalized = 0
+			AND (d.flag IS NULL OR d.flag = 0), 1, 0)) AS 2nd_scored,
+	SUM(IF(d.coded_1 = 1 AND d.finalized = 0
+			AND (d.flag IS NULL OR d.flag = 0), 1, 0)) AS coded,
+	SUM(IF(d.coded_1_complete = 1 AND d.finalized = 0
+			AND (d.flag IS NULL OR d.flag = 0), 1, 0)) AS code_completed,
+	SUM(IF(d.flag = 1, 1, 0)) AS limbo,
+	SUM(IF(d.finalized >= 1, 1, 0)) AS finalized,
+	SUM(IF(d.finalized = 1, 1, 0)) AS released
+	FROM la_data d
+	LEFT JOIN la_scores s ON d.lakey = s.lakey
+	LEFT JOIN la_codes c ON d.lakey = c.lakey 
+	WHERE 1=1 ";
+	// possible filter, depending on user
+	if ($userkey <> "") { $sql .= " AND d.resellerkey = ".SQLstr($userkey, 'int'); }
+	$sql .= " GROUP BY d.instrument_id
+	HAVING (started > 0 OR completed > 0 OR 1st_scored > 0 OR 2nd_scored > 0 
+		OR coded > 0 OR code_completed > 0 OR limbo > 0) ";
+	$rsCounts = mysql_query($sql) or die("Count of assessment totals: ".mysql_error());
+	
+	
+	
+	
+	// 		DEADLINES CALENDAR QUERIES 
+
+	/* Assignment deadlines query: 
+	figure out the number of records we HAVE TO PROCESS for a given deadline date, per instrument ID.
+	This should exclude any records which we have already finalized,
+	but should count people in the assigned group regardless of whether a partially completed la_data record exists.
+	 - The insanely long SELECT lines for the total counts, serve to pad the counts with leading 0s. */
+
+	$query_rsReleaseDates = "SELECT r.userkey, sa.userkey, 
+	IF(rb.company <> '', LEFT(rb.company, 15), CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer, 
+	a.assignmentkey, a.instrument_id, a.assign_group, a.date_release, e.status AS email_status, 
+	a.date_start, 
+	IF( LENGTH(COUNT(DISTINCT r.userkey)) < 2, RIGHT(1000 + COUNT(DISTINCT r.userkey),2), COUNT(DISTINCT r.userkey) ) AS count_assigned, 
+	IF( LENGTH(COUNT(DISTINCT d.lakey)) < 2, RIGHT(1000 + COUNT(DISTINCT d.lakey),2), COUNT(DISTINCT d.lakey) ) AS count_started, 
+	IF( LENGTH(COUNT(DISTINCT d_com.lakey)) < 2, RIGHT(1000 + COUNT(DISTINCT d_com.lakey),2), COUNT(DISTINCT d_com.lakey) ) AS count_completed, 
+	IF( LENGTH(COUNT(DISTINCT d_co.lakey)) < 2, RIGHT(1000 + COUNT(DISTINCT d_co.lakey),2), COUNT(DISTINCT d_co.lakey) ) AS count_coded, 
+	IF( LENGTH(COUNT(DISTINCT d_sc.lakey)) < 2, RIGHT(1000 + COUNT(DISTINCT d_sc.lakey),2), COUNT(DISTINCT d_sc.lakey) ) AS count_scored, 
+	IF( LENGTH(COUNT(DISTINCT d_fin.lakey)) < 2, RIGHT(1000 + COUNT(DISTINCT d_fin.lakey),2), COUNT(DISTINCT d_fin.lakey) ) AS count_fin, 
+	CASE 
+		WHEN DATE_FORMAT(a.date_release, '%w') = 0 THEN (a.date_release + INTERVAL -2 DAY)
+		WHEN DATE_FORMAT(a.date_release, '%w') = 6 THEN (a.date_release + INTERVAL -1 DAY)
+		ELSE (a.date_release)
+	END releasedate
+	
+	FROM la_assignments a 
+	LEFT JOIN students_assignments sa ON a.assignmentkey = sa.assignmentkey
+	LEFT JOIN registrants r ON sa.userkey = r.userkey
+	LEFT JOIN registrants rb ON r.bulkuserkey = rb.userkey 
+	LEFT JOIN emails e ON a.assignmentkey = e.assignmentkey AND e.status = 3
+	LEFT JOIN la_data d ON r.userkey = d.userkey AND d.assignmentkey = a.assignmentkey
+	LEFT JOIN la_codes c ON d.lakey = c.lakey 
+	LEFT JOIN la_scores s ON d.lakey = s.lakey
+	LEFT JOIN la_data d_com ON d_com.lakey = d.lakey AND d_com.completed = 1 
+		AND (d_com.flag IS NULL OR d_com.flag = 0)
+	LEFT JOIN la_data d_co ON d_co.lakey = d.lakey AND d.coded_1 = 1
+	LEFT JOIN la_data d_sc ON d_sc.lakey = d.lakey AND d.scored_1 = 1 
+	LEFT JOIN la_data d_fin ON d_fin.lakey = d.lakey AND d_fin.finalized >= 1
+	
+	WHERE a.date_release IS NOT NULL  ";
+	
+	if ($userkey <> "") { $query_rsReleaseDates .= " AND a.bulkcustomerkey = ".SQLstr($userkey, "int"); }
+	$query_rsReleaseDates .= querySortSearch($query_rsReleaseDates, 
+		"a.assignmentkey", 
+		"a.instrument_id ASC, releasedate ASC ", 2);
+	$rsReleaseDates = mysql_query($query_rsReleaseDates, $Assessment) or die("rsReleaseDates: ".mysql_error());
+	$totalRows_rsReleaseDates = mysql_num_rows($rsReleaseDates);
+	
+	// topher($query_rsReleaseDates); topher();
+	
+	/* Completion-date deadlines query: 
+	figure out the number of no-assignment-attached records we have to process, based on our promise of turnaround by 10 business days after their completion date.
+	This query relies on la_data, and only references la_assignments in order to require that NO suitable assignment exist. */
+	
+	$query_rsCompletionDates = "SELECT d.instrument_id, r.bulkuserkey, r.group, 
+	IF(rb.company <> '', LEFT(rb.company, 15), CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer, 
+	COUNT(DISTINCT d.lakey) AS `count`, d.date_completed, 
+	CASE 
+		WHEN DATE_FORMAT(d.date_completed, '%w') = 0 THEN (d.date_completed + INTERVAL 12 DAY)
+		WHEN DATE_FORMAT(d.date_completed, '%w') = 6 THEN (d.date_completed + INTERVAL 13 DAY)
+		ELSE (d.date_completed + INTERVAL 14 DAY)
+	END duedate
+	FROM la_data d 
+	JOIN registrants r ON d.userkey = r.userkey
+	LEFT JOIN registrants rb ON r.bulkuserkey = rb.userkey 
+	LEFT JOIN la_assignments a ON d.assignmentkey = a.assignmentkey
+	WHERE a.assignmentkey IS NULL AND d.date_completed IS NOT NULL
+		AND d.completed = 1 AND d.finalized = 0 ";
+	if ($userkey <> "") { $query_rsCompletionDates .= " AND r.bulkuserkey = ".SQLstr($userkey, "int"); }
+	$query_rsCompletionDates .= querySortSearch($query_rsCompletionDates, 
+		"d.instrument_id, duedate, bulkcustomer", 
+		"d.instrument_id ASC, duedate ASC ", 2);
+	$rsCompletionDates = mysql_query($query_rsCompletionDates, $Assessment) or die("rsCompletionDates: ".mysql_error());
+	$totalRows_rsCompletionDates = mysql_num_rows($rsCompletionDates);
+
+	
+	
+	
+	
+	// 		PROCESSING THE DEADLINE DATES 
+	
+	/* Release due dates will be defined in a calendar.
+	 - fetch all deadlines from the recordsets and put them into arrays, to be added to the calendar
+	 */
+	
+	$entryText = array();
+	$entryDate = array();
+	$entryLink = array();
+	
+	while ($row_rsReleaseDates = mysql_fetch_assoc($rsReleaseDates)) {
+		
+		// Add this event's RELEASE DATE
+		
+		// If the deadline is Thursday or Friday, the searchable date range should extend to the weekend.
+		if (date('w', strtotime($assnDate)) >= 4) {
+			$assnDateEnd = date('Y-m-d', strtotime($row_rsReleaseDates['releasedate'].' +2 days'));
+		} else { $assnDateEnd = $assnDate; }
+		$assnInstr = str_replace("_JOURNAL", " Jo", $row_rsReleaseDates['instrument_id']);
+		$assnLink = "";
+		if (strpos($assnInstr, "Jo")) { $assnLink = $page_code; }
+		else 													{ $assnLink = $page_score; }
+		
+		$entryDate[] = strtotime($row_rsReleaseDates['releasedate']);
+		$entryText[] = "".$assnInstr." (".$row_rsReleaseDates['assign_group'].") ".
+			// The formula for numbers: #assigned | #taken : #in_queue | #processed | #finalized 
+			$row_rsReleaseDates['count_assigned']."|".$row_rsReleaseDates['count_started']."|".
+			$row_rsReleaseDates['count_completed'].":".
+			$row_rsReleaseDates['count_coded']."|".$row_rsReleaseDates['count_scored']."|".
+			$row_rsReleaseDates['count_fin'].
+			($row_rsReleaseDates['email_status'] == 3 ? " (e)" : "");
+		$entryLink[] = "../set_session_var_instrument.php?link_id=".$assnLink.
+			"&sessionVarName=instrument_id&sessionVarValue=".$row_rsReleaseDates['instrument_id'].
+			"&search=(s)a.assignmentkey(=):".$row_rsReleaseDates['assignmentkey'].",";
+		
+		// Add this event's START DATE
+		
+		$entryDate[] = strtotime($row_rsReleaseDates['date_start']);
+		$entryText[] = "Start ".$assnInstr." for ".$row_rsReleaseDates['assign_group'].
+			($row_rsReleaseDates['email_status'] == 3 ? " (e)" : "");
+		$entryLink[] = "../set_session_var_instrument.php?link_id=".$assnLink.
+			"&sessionVarName=instrument_id&sessionVarValue=".$row_rsReleaseDates['instrument_id'].
+			"&search=(s)a.assignmentkey(=):".$row_rsReleaseDates['assignmentkey'].",";
+		
+		
+	} // end WHILE: for each row of the deadlines recordset
+	// Reset the recordset 
+	if (mysql_num_rows($rsReleaseDates) > 0) { mysql_data_seek($rsReleaseDates, 0); }
+	
+	
+	// 					COMPLETION DATES FOR CALENDAR
+	
+	while ($row_rsCompletionDates = mysql_fetch_assoc($rsCompletionDates)) {
+		
+		$complDateStart = $row_rsCompletionDates['date_completed'];
+		// If the deadline is Thursday or Friday, the searchable date range should extend to the weekend.
+		if (date('w', strtotime($complDateStart)) >= 4) {
+			$complDateEnd = date('Y-m-d', strtotime($row_rsCompletionDates['date_completed'].' +2 days'));	
+		} else { $complDateEnd = $complDateStart; } 
+		$assnBc = $row_rsCompletionDates['bulkcustomer'];
+		$assnInstr = str_replace("_JOURNAL", " Jo", $row_rsCompletionDates['instrument_id']);
+		$assnLink = "";
+		if (strpos($assnInstr, "Jo")) { $assnLink = $page_code; }
+		else 													{ $assnLink = $page_score; }
+		$assnCount = $row_rsCompletionDates['count'];
+		
+		$entryDate[] = strtotime($row_rsCompletionDates['duedate']);
+		$entryText[] = ($assnBc <> "" ? $assnBc.", " : "").$assnInstr.": ".$assnCount;
+		$entryLink[] = "../set_session_var_instrument.php?link_id=".$assnLink.
+			"&sessionVarName=instrument_id&sessionVarValue=".$row_rsCompletionDates['instrument_id'].
+			"&search=(s)date_completed(low):".$complDateStart.",(s)date_completed(high):".$complDateEnd.
+			",(s)finalized:0,(s)assignmentkey:NULL,";
+		
+	} // end WHILE: for each row of the deadlines recordset
+	// Reset the recordset 
+	if (mysql_num_rows($rsCompletionDates) > 0) { mysql_data_seek($rsCompletionDates, 0); }
+	
+	
+	
+	
+	
+	
+	
+	// 						OVERDUE RELEASE DATES
+	
+	// Overdue records get their own table, first. Only appears if overdue records are present.
+	$str_overdue = "";
+	
+	while ($row_rsReleaseDates = mysql_fetch_assoc($rsReleaseDates)) {
+		
+		$assnDate = $row_rsReleaseDates['releasedate'];
+		// If the deadline is Thursday or Friday, the searchable date range should extend to the weekend.
+		if (date('w', strtotime($assnDate)) >= 4) {
+			$assnDateEnd = date('Y-m-d', strtotime($assnDate.' +2 days'));
+		} else { $assnDateEnd = $assnDate; }
+		$assnInstr = str_replace("_JOURNAL", " Jo", $row_rsReleaseDates['instrument_id']);
+		$assnLink = "";
+		if (strpos($assnInstr, "Jo")) { $assnLink = $page_code; }
+		else 													{ $assnLink = $page_score; }
+		
+		if ($assnDate <= date('Y-m-d')  
+				AND $row_rsReleaseDates['count_completed'] > $row_rsReleaseDates['count_fin']) {
+			$str_overdue .= "<tr>
+				<td>".$assnInstr."</td>
+				<td>".$row_rsReleaseDates['bulkcustomer']."</td>
+				<td align=\"center\">".$row_rsReleaseDates['assign_group']."</td>
+				<td align=\"center\">".$assnDate."</td>
+				<td align=\"center\">".
+					$row_rsReleaseDates['count_assigned']."|".$row_rsReleaseDates['count_started']."|".
+					$row_rsReleaseDates['count_completed'].":".
+					$row_rsReleaseDates['count_coded']."|".$row_rsReleaseDates['count_scored']."|".
+					$row_rsReleaseDates['count_fin'].
+				($row_rsReleaseDates['email_status'] == 3 ? ":e" : "").
+				"</td>
+				<td align=\"center\"><a href=\"../set_session_var_instrument.php?link_id=".$assnLink.
+				"&sessionVarName=instrument_id&sessionVarValue=".$row_rsReleaseDates['instrument_id'].
+				"&search=(s)a.assignmentkey(=):".$row_rsReleaseDates['assignmentkey'].",\">view</a></td>
+				</tr>";
+		}
+	}
+	
+	
+	
+	//	 			OVERDUE COMPLETION DATES 
+	
+	$str_overdue_compl = "";
+	
+	while ($row_rsCompletionDates = mysql_fetch_assoc($rsCompletionDates)) {
+		
+		$assnDate = $row_rsCompletionDates['duedate'];
+		$complDateStart = $row_rsCompletionDates['date_completed'];
+		// If the deadline is Thursday or Friday, the searchable date range should extend to the weekend.
+		if (date('w', strtotime($complDateStart)) >= 4) {
+			$complDateEnd = date('Y-m-d', strtotime($complDateStart.' +2 days'));
+		} else { $complDateEnd = $complDateStart; } 
+		$assnInstr = str_replace("_JOURNAL", " Jo", $row_rsCompletionDates['instrument_id']);
+		$assnLink = "";
+		if (strpos($assnInstr, "Jo")) { $assnLink = $page_code; }
+		else 													{ $assnLink = $page_score; }
+		
+		if ($assnDate <= date('Y-m-d')) {
+			$str_overdue_compl .= "<tr>
+				<td>".$assnInstr."</td>
+				<td>".$row_rsCompletionDates['bulkcustomer']."</td>
+				<td> </td>
+				<td align=\"center\">".$assnDate."</td>
+				<td align=\"center\">".$row_rsCompletionDates['count']."</td>
+				<td align=\"center\"><a href=\"../set_session_var_instrument.php?link_id=".$assnLink.
+				"&sessionVarName=instrument_id&sessionVarValue=".$row_rsCompletionDates['instrument_id'].
+				"&search=(s)date_completed(low):".$complDateStart.",(s)date_completed(high):".$complDateEnd.
+				",(s)finalized:0,(s)assignmentkey:NULL,\">view</a></td>
+				</tr>";
+		}
+	}
+	
+	// If there's overdue completion dates present, add them to the list of overdues.
+	if ($str_overdue_compl <> "") { 
+		// spacer column between the assignments and un-assigned
+		$str_overdue .= "<tr><td align=\"center\"><strong>Unassigned</strong></td><td></td></tr>";	
+		$str_overdue .= $str_overdue_compl;
+	}
+	
+	
+	
+	
+	//						PRINT OUT THE OVERDUES AND THE COUNTS
+	
+	?>
+  <table>
+  	<tr>
+    	<td>
+  
+	<?php if ($str_overdue <> "") {  ?>
+	
+  <h4 class="red">OVERDUE</h4>
+	<table>
+		<tr class="tablehead_knockout">
+			<td width="120"><div align="center">
+				<a href="<?php echo $currentPage; ?>?sort=instrument_id&showOpen=yes">
+        	Instrument</a></div></td>
+			<td><div align="center">
+				<a href="<?php echo $currentPage; ?>?sort=bulkcustomer&showOpen=yes">
+        	Bulk customer</a></div></td>
+			<td><div align="center">Group</div></td>
+			<td width="120"><div align="center">Date due</div></td>
+			<td width="140"><div align="center">Assignment</div></td>
+			<td width="60"><div align="center">View</div></td>
+		</tr> <?php
+		echo $str_overdue; 
+		?> 
+	</table> 
+	
+	<?php }
+	
+	// End of the OVERDUE table. Now display the ASSESSMENT TOTALS table.
+	?>
+			</td>
+      <td>&nbsp;</td>
+    	<td>
+      
+		<h4>TOTALS</h4>
+    <table>
+    	<tr class="tablehead_knockout">
+      	<td align="center">Instrument</td>
+        <td align="center">Started</td>
+        <td align="center">Compl</td>
+        <td align="center">1st-s</td>
+        <td align="center">2nd-s</td>
+        <td align="center">Coded</td>
+        <td align="center">C-compl</td>
+        <td align="center">Limbo</td>
+        <td align="center">Finalized</td>
+        <td align="center">Released</td>
+        <td align="center">Total</td>
+      </tr>
+    <?php 
+    while ($row_rsCounts = mysql_fetch_assoc($rsCounts)) { ?>
+      <tr>
+      	<td align="right"><?php 
+					echo str_replace("_", " ", $row_rsCounts['instrument_id']); ?></td>
+      	<td align="right" <?php 
+					if ($row_rsCounts['started'] == 0) { ?>class="gray"<?php } ?>>
+					<?php echo $row_rsCounts['started']; ?></td>
+      	<td align="right" <?php 
+					if ($row_rsCounts['completed'] == 0) { ?>class="gray"<?php } ?>>
+					<?php echo $row_rsCounts['completed']; ?></td>
+      	<td align="right" <?php 
+					if ($row_rsCounts['1st_scored'] == 0) { ?>class="gray"<?php } ?>>
+					<?php echo $row_rsCounts['1st_scored']; ?></td>
+      	<td align="right" <?php 
+					if ($row_rsCounts['2nd_scored'] == 0) { ?>class="gray"<?php } ?>>
+					<?php echo $row_rsCounts['2nd_scored']; ?></td>
+      	<td align="right" <?php 
+					if ($row_rsCounts['coded'] == 0) { ?>class="gray"<?php } ?>>
+					<?php echo $row_rsCounts['coded']; ?></td>
+      	<td align="right" <?php 
+					if ($row_rsCounts['code_completed'] == 0) { ?>class="gray"<?php } ?>>
+					<?php echo $row_rsCounts['code_completed']; ?></td>
+      	<td align="right" <?php 
+					if ($row_rsCounts['limbo'] == 0) { ?>class="gray"<?php } ?>>
+					<?php echo $row_rsCounts['limbo']; ?></td>
+      	<td align="right" <?php 
+					if ($row_rsCounts['finalized'] == 0) { ?>class="gray"<?php } ?>>
+					<?php echo $row_rsCounts['finalized']; ?></td>
+      	<td align="right" <?php 
+					if ($row_rsCounts['released'] == 0) { ?>class="gray"<?php } ?>>
+					<?php echo $row_rsCounts['released']; ?></td>
+      	<td align="right" <?php 
+					if ($row_rsCounts['total'] == 0) { ?>class="gray"<?php } ?>>
+					<?php echo $row_rsCounts['total']; ?></td>
+      </tr>
+      <?php
+    } ?>
+    </table>
+    
+      </td>
+    </tr>
+  </table>
+  <?php
+	
+	
+	
+	//						PRINTING OUT THE CALENDAR
+	
+	?>
+  
+  <div id="calendar">
+    <!-- Filled in by the Jquery FullCalendar code -->
+  </div>
+  
+  <p>Assignment numbers: assigned|started|completed: coded|scored|finalized</p>
+  
+  <script type="text/javascript">
+		
+	//$(document).ready(function() {
+		
+		$('#calendar').fullCalendar({
+			header: {
+				left: 'prev,next today',
+				center: 'title',
+				right: ''
+			},
+			default: 'month',
+			editable: false,
+			events: [
+				{
+					title: '',
+					start: <?php echo strtotime('2011-01-01'); ?>
+				}<?php
+				
+				$i = 0;
+				while (isset($entryDate[$i])) {
+					?>,
+					{
+						title: "<?php echo $entryText[$i]; ?>",
+						start: "<?php echo $entryDate[$i]; ?>",
+						url: "<?php echo $entryLink[$i]; ?>",
+					} <?php
+					$i ++;
+				} ?>
+			]
+		});
+		
+	//});
+	
+	
+	</script>
+  
+  <br class="clearfloat" />
+  
+	<?php
+	
+	// print_r($dueDates);
+	
+	$currentMonth = 1;
+	
+	while ($currentMonth <= 3) 
+	{	
+		?>
+		
+		<tr>
+			<?php 
+			
+			// cycle through each day of this month. If an entry exists in that array cell, then add it.
+			while ($dayOfMonth <= $daysInMonth) { 
+				// are we at the end of the week? if so start a new row.
+				if ($dayOfWeek > 7) {  ?> </tr> <tr> <?php  $dayOfWeek = 1;  }
+				// prepare the cell to be highlighted if it is today.
+				$highlight = "";
+				if (date('d') == $dayOfMonth AND $currentMonth == 1) 
+				{ $highlight = " class=\"background_gray_light\""; }
+				// Create the table cell, with a little number marking the day.
+				?><td width="120" <?php echo $highlight; ?>>
+				<span class="copyright"><?php echo $dayOfMonth; ?> </span><?php 
+				// is there text for this day? if so, output it.
+				$dayOfMonth = str_pad($dayOfMonth, 2, '0', STR_PAD_LEFT);
+					if (isset($dueDates[$currentMonth][$dayOfMonth])) 
+					{ echo $dueDates[$currentMonth][$dayOfMonth]; }
+				?></td><?php 
+				// shift to the next day of week (next column) and next day of month, then cycle the WHILE loop.
+				$dayOfWeek ++;  $dayOfMonth ++; 
+			} // END WHILE loop which cycles through each day of the mnoth. ?>
+		</tr>
+	</table>
+	<?php // increment to the NEXT month calendar and re-cycle the WHILE loop 
+	$currentMonth ++;
+	} // end WHILE loop which cycles through each month in the future 
+	
+	
+	
+	?>
+	
+	<p>&nbsp;</p>
+	
+	
+	<?php 
+	
+	
+}
+
+
+
+
+
+
+?>

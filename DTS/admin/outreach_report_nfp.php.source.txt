@@ -1,0 +1,977 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="../Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title><?php echo $_SESSION['instrument_id']; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+td p {
+	padding: 0px;
+	margin-bottom: 10px;
+	margin-top: -3px;
+}
+.minimalist-a td {
+	border-bottom: 1px solid #CCC;
+}
+.twoColFixRtHdr #container #mainContent .minimalist-a tbody tr:hover td {
+	color: #8A8A8A;
+}
+</style>
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>OUTREACH PIPELINE</h1>
+    <h2>DiscoTests</h2>
+    <table class="minimalist-a">
+      <tr>
+        <th style='width:15%;'>Project</th>
+        <th>Name</th>
+        <th style='width:15%;'>Action items</th>
+        <th>Dates</th>
+        <th style='width:40%;'>Notes</th>
+      </tr>
+      <tr>
+        <td><p>Australian Independent Schools</p></td>
+        <td><a href="mailto:mgriffiths@CornerstoneIntegral.com.au">Mike Griffiths</a></td>
+        <td></td>
+        <td></td>
+        <td><p>Mike Griffiths (Cornerstone Consulting) offered to introduce us to several connections at Independent Schools in AUS.</p>
+          <p>2013_1228: Emailed DiscoTest brochure and fact sheet</p></td>
+      </tr>
+      <tr>
+        <td><p>Bennington Rutland Supervisory Union</p></td>
+        <td><p>Dan French</p></td>
+        <td></td>
+        <td></td>
+        <td><p>Denny put us in touch with the head of this group of 12 schools</p>
+          <p>Zak has sent materials and is waiting hear back</p>
+          <p>Bryan has a connection here (Uncle and Aunt are administrators/teachers) so we can reach out there as well.</p>
+          <p>No update</p>
+          <p>Bryan reached out to Uncle regarding a potential teacher who might be interested in Rowland Foundation Fellowship</p></td>
+      </tr>
+      <tr>
+        <td><p>Buckingham Brown &amp; Nichols School</p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td></td>
+        <td><p>Part of NAIS, multiple campuses with different directors</p>
+          <p>Zak gave a presentation at BB&amp;N fall 2012; followed up with contacts there, but no response.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p><a href="mailto:kcpeace@gmail.com">Karen Clayton</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td>2013/12/28</td>
+        <td><p>Attended DiscoTest webinar and discussed with principal</p>
+          <p>AZ public school, in charge of their teaching and assessment</p>
+          <p>Jennifer and Carol met with Karen 7/18; she continues to be enthusiastic; potential for some collaboration on a grant around bullying program the school has launched.</p>
+          <p>2013_0911: Jennifer wrote to Karen Clayton</p>
+          <p>Participating in TAB group.</p>
+          <p>2013_1228: Emailed DiscoTest brochure and fact sheet</p></td>
+      </tr>
+      <tr>
+        <td><p>Cloud Institute</p>
+</td>
+        <td><p>Jaimie Cloud</p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Sylvia Stein recommended that we check out Jaimie Cloud at the Cloud Institute for Sustainability Education. CIS provides PD, coaching, consulting, curriculum design, assessment, mapping, alignment for schools around sustainability education.</p>
+          <p>2013_1228: Emailed DiscoTest brochure and fact sheet</p></td>
+      </tr>
+      <tr>
+        <td><p>Charter School Network</p></td>
+        <td><p><a href="mailto:tdickson@valorcollegiate.org">Todd Dickson</a></p></td>
+        <td></td>
+        <td></td>
+        <td><p>Charter School Network Founder. Currently in Nashville, successful charter history in San Francisco. Potential to act as a connector and funding collaborator as well as a client. New Schools Network and Gates Foundation connections. 6seconds organization.</p>
+          <p>Bryan and Zak met with Todd 6/27/2013.</p>
+          <p>Zak emailed him to check in 7/24.</p>
+          <p>Todd emailed 10/26 to indicate that they will be discussing curriculum and assessment with his team in Dec.-Jan. and will be in touch soon.</p></td>
+      </tr>
+      <tr>
+        <td><p>Extera Charter School</p></td>
+        <td><p><a href="mailto:daverodriguez@gmail.com">David Rodriguez</a></p></td>
+        <td></td>
+        <td></td>
+        <td><p>Ed West connection; very interested, reflective, articulate</p>
+          <p>Zak met with him several times spring, 2013; sent a FOLA session</p>
+          <p>Forming a non-profit that will do curriculum development.</p>
+          <p>Met with Zak on 7/9/2013; he will keep us in the loop about his curricular materials.</p>
+          <p>Has been invited to participate in the Teacher Advisory Board (TAB) meeting;</p>
+          <p>David and Jennifer are planning on presenting to his school administration in November or early December, 2013. Extera has a full time grant writer if we move forward.</p></td>
+      </tr>
+      <tr>
+        <td><p>GLEAN: Global education and action network</p></td>
+        <td><p><a href="mailto:sll044@mail.harvard.edu">Suzanne Lettrick</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Feast, interested in learning more about DiscoTest. <a href="http://www.gleansworld.org/">http://www.gleansworld.org/</a>Suzanne Lettrick is an MBE grad, knows Zak and Jennifer. The Global Education and Action Network is a 501(c)3 that arranges a support network and expeditions to remote places in the world where young people interview, film, photograph, record, and learn from people living traditional lifestyles.</p></td>
+      </tr>
+      <tr>
+        <td><p>Khan Academy</p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td></td>
+        <td><p>Our contact there was a bit unusual, he did a 5 minute introduction, sort of on the spectrum, with no background in education. He read and loved our materials and seemed to get them fairly quickly. Openly questioned idea that research based stuff would be better than expert built materials.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p><a href="mailto:emilylauer86@gmail.com">Emily Lauer</a></p></td>
+        <td></td>
+        <td><p>2013/05/32</p>
+          <p>2013/09</p>
+        <p>&nbsp;</p></td>
+        <td><p>Michael Cox connection; teacher in Denver.</p>
+          <p>Political connections, potential advisory board member.</p>
+          <p>Zak and Bryan met with her 5/31/2013.</p>
+          <p>She will learn to code in the fall.</p>
+          <p>Participating in TAB.</p></td>
+      </tr>
+      <tr>
+        <td><p>Marin County Day School </p></td>
+        <td><p><a href="mailto:llkatz@mcds.org">Lucinda Lee Katz</a></p></td>
+        <td></td>
+        <td><p>2013/07/24</p>
+        <p>2013/10/24</p>
+        <p>2013/11/07</p>
+        <p>2014/01/28</p></td>
+        <td><p>Head of MCDS and President of Board of CA-AIS; We may invite her to be on the Advisory Board</p>
+          <p>Lucinda took the LDMA; Was scored 7/24; Sam debriefed Lucinda and reported that she had a positive experience and saw the potential for Lectical Assessment; He will be continuing to work with her and will keep us posted. Sam introduced Zak and Theo via email 8/16.</p>
+          <p>Zak emailed Lucinda 10/24/2013 to suggest a meeting with Theo. Sam suggested we try one more time via email to contact her and then he will nudge her.  Zak emailed her 11/7/2013.</p>
+          <p>Is part of Mission Skills Assessment presentation at NAIS (Amy Claire Rosche)</p>
+          <p>Theo sent: materials, links</p></td>
+      </tr>
+      <tr>
+        <td><p>MIT Media Lab <a href="mailto:ericr@media.mit.edu"></a></p></td>
+        <td><p><a href="mailto:ericr@media.mit.edu">Eric Rosenbaum</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Feast, Eric Rosenbaum, a doctoral student in the <a href="http://llk.media.mit.edu/">Lifelong Kindergarten</a>group at <a href="http://www.media.mit.edu/">MIT Media Lab</a>. His current research explores the intersection of music, play and improvisation. MakeyMakey doing very cool learning materials, see videos <a href="http://makeymakey.com/">http://makeymakey.com/</a></p></td>
+      </tr>
+      <tr>
+        <td><p>NAIS</p></td>
+        <td><p><a href="mailto:chubb@nais.org">John Chubb</a></p>
+          <p><a href="mailto:Burnett@nais.org">Jefferson Burnett</a></p>
+        <p><a href="mailto:torres@nais.org">Amada Torres</a> (research division)</p></td>
+        <td></td>
+        <td><p>2013/09/16</p>
+        <p>2013/10/24</p></td>
+        <td><p>New leadership at the NAIS has decided to go in a different direction; we need to build a new relationship with this administrative team.</p>
+          <p>Steven Dear will be co-presenting with us at the NAIS conference in February, 2014.</p>
+          <p>Theo and Jennifer presented to John, Jefferson, and Amada 9/16/2013. They were engaged and enthusiastic.</p>
+          <p>Jennifer emailed John to follow up 10/24/2013. Amada replied that they have allocated all of their research funding for this year but that they are eager to see our presentation in February.</p></td>
+      </tr>
+      <tr>
+        <td><p>NEASC</p>
+          <p>&nbsp;</p></td>
+        <td><p><a href="mailto:jmooney@NEASC.ORG">Jim Mooney</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/08/26</p>
+        <p>2013/08/27</p></td>
+        <td><p>NAISC is the New England Association of Independent Schools and Colleges; Jim is the Deputy Director.</p>
+          <p>Jennifer, Theo and Zak met with Jim in Northampton 8/26. He was extremely interested and spoke with Theo for several hours about possible avenues for further funding and research. Theo followed up with him 8/27. We learned a lot about the NEASC, and there are uses that Jim saw for our assessments in the accrediting process.</p></td>
+      </tr>
+      <tr>
+        <td><p>New Heights Charter School, </p></td>
+        <td><p><a href="mailto:aberfield@newheightscharter.org">Amy Berfield</a></p>
+        <p> <a href="mailto:aberfield@newheightscharter.org"></a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Amy is the Principal of this LA charter school. She submitted an inquiry and is interested in learning more about the RFJ. Connected to David Rodriguez at Extera Public School.</p>
+          <p>Jennifer and Amy have been attempting to meet, but have had scheduling issues.</p></td>
+      </tr>
+      <tr>
+        <td><p>OLPC</p></td>
+        <td><p>Antonio Battro</p></td>
+        <td></td>
+        <td><p>2013/03</p>
+        <p>&nbsp;</p></td>
+        <td><p>Zak and Theo met with Antonio in March. Nothing short term. Connecting us to his network (MIT- woman met Theo in Erice). This relationship will continue to develop over time.</p>
+          <p>&quot;Big Science&quot; human genome project, Obama brain initiative. Talking about what we are doing is also &quot;big science&quot; in area of assessment.</p></td>
+      </tr>
+      <tr>
+        <td><p>Putney School</p></td>
+        <td><p><a href="mailto:ejones@putneyschool.org">Emily Jones</a></p>
+        <p> <a href="mailto:ejones@putneyschool.org"></a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Sylvia Stein recommended that we check out Emily Jones, the head of the Putney school ( <a href="http://en.wikipedia.org/wiki/The_Putney_School">http://en.wikipedia.org/wiki/The_Putney_School</a>).</p>
+          <p>Putney participates in something called the Progressive Education Lab ( <a href="http://www.progressiveeducationlab.org/home/">http://www.progressiveeducationlab.org/home/</a>) who we should also look at as potential users of the LDPA.</p></td>
+      </tr>
+      <tr>
+        <td><p>Progressive Education Lab</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Putney participates in something called the Progressive Education Lab ( <a href="http://www.progressiveeducationlab.org/home/">http://www.progressiveeducationlab.org/home/</a>) who we should also look at as potential users of the LDPA.</p></td>
+      </tr>
+      <tr>
+        <td><p>State of CT</p></td>
+        <td><p><a href="mailto:gilbert.andrada@ct.gov">Gil Andrada</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>In charge of assessment implementation for CT; Invited us to speak to Council of Chief State Schools Officers</p>
+          <p>Other connection is Veronica Boix-Mansilla, who works with them on interdisciplinary assessments</p>
+          <p>Gil replied to an inquiry by Zak that there had been some staffing changes at the CCSSO and that he will continue to keep us in mind and stay in touch with us; His position is shifting as well, some uncertainty, but will still be in testing;</p>
+          <p>Has been added to email list. Zak emailed him 8/15.</p>
+          <p>Theo would like to be brought into any further conversations with the CCSSO.</p></td>
+      </tr>
+      <tr>
+        <td><p>Warm Springs Elementary</p></td>
+        <td><p>Clyde Mann</p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Brenda Oster recommended us to <strong>Clyde Mann</strong>in Fremont CA, 650-861-7809 Warm Springs Elementary (may be interested in assessments) Clyde Mann teaches science, Warm Springs is Grades 3-6. <a href="http://www.fremont.k12.ca.us/Page/5513">http://www.fremont.k12.ca.us/Page/5513</a></p></td>
+      </tr>
+      <tr>
+        <td><p>World Savvy</p></td>
+        <td><p>Dana Morentson</p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Elizabeth Werbe suggested contacting World Savvy (K-12 reform, focus on global competence) <a href="http://worldsavvy.org/">http://worldsavvy.org/</a>. World Savvy prepares the next generation of leaders to learn, work and thrive as responsible global citizens in the 21st century. We support systemic change in K-12 education to provide every student in every classroom with the content knowledge, skills, values and attitudes to be leaders and change-makers in their diverse communities, locally and globally. Dana Morentson, Co-Founder and Executive Director or Charmagne Campbell-Patton (Evaluation and Assessment Specialist) could be contacts</p></td>
+      </tr>
+    </table>
+    <p>&nbsp;</p>
+    <h2>LectaTest</h2>
+    <table class="minimalist-a">
+      <tr>
+        <th style='width:15%;'>Project</th>
+        <th>Contact</th>
+        <th style='width:15%;'>Action items</th>
+        <th>Target</th>
+        <th style='width:40%;'>Notes</th>
+      </tr>
+      <tr>
+        <td><p>Norwegian University of Science and Technology</p>
+          <p>&nbsp;</p></td>
+        <td><p><a href="mailto:jonathan.reams@svt.ntnu.no">Jonathan Reams</a></p>
+        <p> <a href="mailto:jonathan.reams@svt.ntnu.no"></a></p></td>
+        <td></td>
+        <td><p>2013/09</p>
+        <p>2013/12/15</p></td>
+        <td><p>Associate Professor, Department of Adult Education for a master's program in Norway.</p>
+          <p>Met with Jennifer, Zak 8/05/2013; he is interested in introducing Lectical Assessment to the Master's in Counseling program. He will be working on achieving buy-in with faculty members and securing funding for a pilot project.</p>
+          <p>Potential he could self-fund a project of pre-posts with 6 students this year.</p>
+          <p>Zak sent materials Jonathan requested to assist in his pitch 08/07/2013</p>
+          <p>Jonathan has enrolled in FOLA.</p>
+          <p>Jennifer notified Jonathan of new price structure 9/12/13. Jonathan wrote back prices will make easier, but that he is waiting until after the FOLA to move on anything.</p></td>
+      </tr>
+      <tr>
+        <td><p>Next Step Integral</p></td>
+        <td><p><a href="mailto:abigaillynam@mac.com">Abigail Lynam</a></p>
+        <p></p></td>
+        <td><p class="a-ldma">Send sales materials</p></td>
+        <td></td>
+        <td><p>Abigail is Director at Next Step Integral, completing her PhD at Prescott, teaching in higher ed. <a href="http://www.linkedin.com/pub/abigail-lynam/11/557/583">www.linkedin.com/pub/abigail-lynam/11/557/583</a></p></td>
+      </tr>
+      <tr>
+        <td><p>Presencing Foundation</p></td>
+        <td><p><a href="mailto:scharmer@mit.edu">Otto Scharmer</a></p>
+        <p><a href="mailto:yukelson@presencing.com">Adam Yukelson</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/05/01</p>
+        <p>2013/09/12</p></td>
+        <td><p>It is likely that Otto will become a customer, but the size and scope of the project is yet to be determined</p>
+          <p>Last contact 5/1/2013 indicated that Adam and Otto are tied up with current programming. They would like to touch base in the fall.</p>
+          <p>Jennifer sent a check in email 9/12/13 notifying Otto and Adam about our new pricing structure and requesting a meeting.</p>
+          <p>Communication with Jennifer that will be in touch next month, some concerns about &quot;high maintenance&quot;.</p></td>
+      </tr>
+      <tr>
+        <td><p>Sonoma State HUB</p></td>
+        <td><p><a href="mailto:dustindiperna@gmail.com">Dustin DiPerna</a></p>
+        <p><a href="mailto:mark.fabionar@sonoma.edu">Mark Fabionar</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/012/15</p></td>
+        <td><p>They are working on pitches for Sonoma State Hub project.</p>
+          <p>Still pitching his project at Sonoma State, we will be supporting with materials and potentially a webinar.</p>
+          <p>Jennifer sent an email re new price structure 9/12/13.</p>
+          <p>Theo spoke with them to plan January 2014 assessments.</p></td>
+      </tr>
+      <tr>
+        <td><p>Stanford Law School</p>
+          <p>&nbsp;</p></td>
+        <td><p><a href="mailto:jbeckersf@gmail.com">Jeanine Becker</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/08/07</p>
+        <p>2013/09/12</p></td>
+        <td><p>Adjunct professor at Stanford Law and teaches classes which center around decision-making, conflict resolution and ethical reasoning.</p>
+          <p>Has around 20-25 students per class per semester</p>
+          <p>Wants to implement LDMA (possibly LERA) in her classrooms.</p>
+          <p>Wondered about the pricing (student discount?)</p>
+          <p>Interested in FOLA and becoming a LectaTest Coder in the future.</p>
+          <p>Jennifer and Zak met with her 08/07/2013.</p>
+          <p>Jennifer sent an email re new price structure 9/12/13.</p></td>
+      </tr>
+      <tr>
+        <td><p>University of Adelaide</p>
+          <p>&nbsp;</p></td>
+        <td>Simon Divecha</td>
+        <td></td>
+        <td></td>
+        <td><p>Business Manager for the Environmental Institute</p>
+          <p>Sent follow up.</p></td>
+      </tr>
+      <tr>
+        <td><p>University of California, Sacramento</p>
+          <p>&nbsp;</p></td>
+        <td><p><a href="mailto:leesam@saclink.csus.edu">Lynette Lee</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/08/05</p>
+        <p>2013/09/12</p></td>
+        <td><p>Professor at UC Sacramento of criminal justice; has been in touch with Zak and Theo before, very keen to get LTs into her department and ultimately UC system. Will be on sabbatical 2013-2014 and interested in collaborating on research and proposals.</p>
+          <p>Lynette and her director of assessment Amy Liu both attendied webinars. Lynette followed up with requests for materials and Jennifer sent those to her 08/05/2013.</p>
+          <p>Jennifer sent an email re new price structure 9/12/13.</p></td>
+      </tr>
+      <tr>
+        <td><p>University of Florida</p>
+          <p>&nbsp;</p></td>
+        <td>Sabine Grunwald</td>
+        <td></td>
+        <td></td>
+        <td><p>Professor of Soil and Water Sciences.</p>
+          <p>Sent follow up.</p></td>
+      </tr>
+    </table>
+    <h2>&nbsp;</h2>
+    <h2>Fundrasining</h2>
+    <table class="minimalist-a">
+      <tr>
+        <th style='width:15%;'>Project</th>
+        <th>Contact</th>
+        <th style='width:15%;'>Action items</th>
+        <th>Target</th>
+        <th style='width:40%;'>Notes</th>
+      </tr>
+      <tr>
+        <td><p>AQAL Capital</p>
+          </td>
+        <td><p><a href="mailto:mbozesan@AQALcapital.com">Mariana Bozesan</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Very well connected; potential funder and fundraising advisor.</p>
+          <p>Also on DTS pipeline as potential client.</p>
+          <p>Works closely with Stuart Valentine. Independently wealthy, PHD from IEP/Sofia University; interested in empowering women. Hazel Henderson is a client.</p>
+          <p>Mariana and Jennifer scheduled to discuss fundraising December 5th at 9 am EST.</p></td>
+      </tr>
+      <tr>
+        <td><p>Center for World Spirtuality (likely change to for Global Wisdom)</p>
+          <p>&nbsp;</p></td>
+        <td><p>Marc Gafni</p></td>
+        <td></td>
+        <td></td>
+        <td><p>Zak has a call on 6/14. Continuing this relationship, with the idea of pursuing connections that could lead to fundraising or sales.</p>
+          <p>Zak saw Marc at ITC, with board members. His organization wants to do some research, program evaluation. Zak also made a fundraising pitch.</p>
+          <p>No current plans to solicit directly.</p></td>
+      </tr>
+      <tr>
+        <td><p>Centerpointe Investment Strategies</p>
+          <p>&nbsp;</p></td>
+        <td><p>Stuart T. Valentine</p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Working with Sam through Ecologix (DTS pipeline)</p>
+          <p>Both Sam and Ed West have mentioned Stuart as a potential donor; Possibly treat him as an advisor on fundraising strategy. Aim to include in Capital campaign.</p>
+          <p>Interested in research collaborations around transcendental meditation at the higher education level;</p>
+          <p>Zak emailed and has not heard anything back. Will pursue a conversation with Sam. Also re: Ecologix</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p>
+          <p> <a href="mailto:barbtchang@gmail.com"></a> </p></td>
+        <td><p><a href="mailto:barbtchang@gmail.com">Barbara Chang</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Daniel Goldman suggested that Barbara and Lectica ought to meet to discuss a project she is working on; he also suggested that she might be willing to help us with our fundraising strategy.</p>
+          <p>On DTS pipeline.</p>
+          <p>As the relationship develops, we may also explore as a thought partner for fundraising.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p>
+          <p> <a href="mailto:mjcox08@gmail.com"></a> </p></td>
+        <td><p><a href="mailto:mjcox08@gmail.com">Michael Cox</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Angel networker; Well connected in non-profit and start-up sectors. Focused on leadership as the means to organizational change.</p>
+          <p>Taking an LDMA to better be able to pitch us to others. Has not taken it yet. Zak checked in with him about the LDMA and he has just been very busy.</p>
+          <p>Zak and Jennifer had dinner with Michael 5/23 and he invited two colleagues from Deloitte to join us (Ross)</p>
+          <p>Zak emailed him; he is extremely busy right now.</p>
+          <p>Explore these connections he has mentioned in the past: Global Hub Network, Sandbox Network, World Economic Forum of World Changers, Rockwood, Benkana (Consulting Firms), National Center for Service and Innovation Leadership. Tony Hsieh's Downtown Project</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p><a href="mailto:daniel@danielgoldman.com">Daniel Goldman</a></p>
+        <p> <a href="mailto:daniel@danielgoldman.com"></a></p></td>
+        <td><p>2013/08/06</p></td>
+        <td></td>
+        <td><p>Both a potential client and a connector advising us on fundraising and relationship building. Works with venture capitalists and philanthropists; Very excited about our work.</p>
+          <p>Interested in the LDMA for startups</p>
+          <p>He sent our materials recently to Dennis Whittle, running ChangeMakers at Ashoka and David Hodgson at the Global Leadership Lab.</p>
+          <p>Daniel emailed us 8/06/2013 to introduce us to Barbara Chang; Jennifer replied with a request for additional context and a meeting.</p>
+          <p>Daniel replied that he is happy to meet, no time through first week of September. Jennifer sent some dates for mid-September. No response as of 8/21.</p>
+          <p>Jennifer: poked re meeting, new non-profit price structure</p></td>
+      </tr>
+      <tr>
+        <td><p>Edmodo</p></td>
+        <td>Greg Mauro</td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Daniel Goldman suggested we look at Greg as a potential funding source.</p>
+          <p>We will be investigating this possibility and may ask Daniel for an introduction.</p></td>
+      </tr>
+      <tr>
+        <td><p>Entertainment Industry Foundation</p></td>
+        <td><p><a href="mailto:nkislinger@eifoundation.org">Nick Kislinger</a></p>
+        <p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>EIF is starting a new education initiative and Nick is heading it.</p>
+          <p>Zak, Topher met with Nick 02/2013 and he was very enthusiastic and invited us to participate in planning conference for the initiative tentatively scheduled for 05/2013.</p>
+          <p>He was chief of staff to CA Secretary of Education;</p>
+          <p>Michael Cox connection; we have heard that he is experiencing delays getting the conference planned but that he will follow up with us once he is ready to do so. Michael recommended continuing to check in periodically.</p>
+          <p>Nick accepted Zak's LinkedIn connection request, but has not been in touch</p>
+          <p>Jennifer emailed 8/15 with FOLA announcement, August newsletter, etc. No reply.</p></td>
+      </tr>
+      <tr>
+        <td><p>Ford Foundation</p></td>
+        <td><p>Fiona Guthrie</p></td>
+        <td><p class="a-ldma">Email from Theo to Fiona</p></td>
+        <td></td>
+        <td><p>Feast attendee; Fiona Guthrie (public engagement and multimedia) asked a lot of questions about our assessments, no clear connection to her work, but worth asking her if we can add her to our mailing list or suggest someone at Ford who might be interested in alternative forms of assessment. Jennifer looked at Ford Foundation and none of their current initiatives seem to clearly align, but Fiona may be able to put is in contact with someone who knows more.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p><a href="mailto:jordan.greenhall@gmail.com">Jordan Greenhall</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Trustee at the Santa Fe Institute. Former CEO of DivX; Ed West connected Jordan to us.</p>
+          <p>Game B is trying to determine their procedures for how to involve people; we remain cautious about our proposed level of participation and what collaboration might look like.</p>
+          <p>Jennifer and Zak made an ask of Jordan on 11/06/2013. He agreed to help us through connections and consultation on campaign materials but indicated that he had depleted his ability to engage in philanthropy.</p></td>
+      </tr>
+      <tr>
+        <td><p>Texas Christian University, Fort Worth</p></td>
+        <td>Steve Palko </td>
+        <td><p class="a-ldma">Write him a letter about donating.</p></td>
+        <td></td>
+        <td><p>Multimillionaire professor, well-connected, already knows about our work and likes it, is going through a marriage breakup. I think we should snail mail him about the campaign. Marc says he will raise the issue of donating to DiscoTest with him after the letter goes out.</p></td>
+      </tr>
+      <tr>
+        <td><p>Institute of Play</p></td>
+        <td><p><a href="mailto:daniel@instituteofplay.org">Daniel O'Keefe</a></p>
+        <p> <a href="mailto:daniel@instituteofplay.org"></a></p></td>
+        <td><p class="a-ldma">Draft email to Daniel O'Keefe following up.</p></td>
+        <td></td>
+        <td><p>Feast, expressed interestin working with us.The Institute ( <a href="http://www.instituteofplay.org/">http://www.instituteofplay.org/</a>) pioneers new models of learning and engagement as a not-for-profit design studio. First project was the design and implementation of an innovative New York City public school, called <a href="http://www.instituteofplay.org/work/projects/quest-to-learn">Quest to Learn</a>.</p>
+          <p>Daniel is responsible for the implementation and ongoing refinement of the Institute's unique game-based integrated learning model, with a focus on developing multi-dimensional teachers and learning designers, meaningfully integrating technology, and developing blended collaborative spaces. Former middle school mathematics teacher.</p>
+          <p>Jennifer Humke mentioned a program called <strong>Glasslab</strong>, which is an initiative of Institute of play. Thought we might have some synergy. <a href="http://www.instituteofplay.org/work/projects/glasslab/">http://www.instituteofplay.org/work/projects/glasslab/</a>GlassLab is exploring the potential for existing, commercially successful digital games to serve both as potent learning environments and real-time assessments of student learning. By integrating learning and assessment in a single engaging, data-rich experience, the Lab aims to deliver students and teachers powerful, pioneering tools to improve the process of learning and accelerate progress on the path toward college and career. Partner with ETS and Pearson.</p></td>
+      </tr>
+      <tr>
+        <td><p>MacArthur Foundation </p></td>
+        <td><p><a href="mailto:jhumke@macfound.org">Jennifer Humke</a></p>
+        <p>&nbsp;</p></td>
+        <td><p class="a-ldma">Follow up.</p></td>
+        <td></td>
+        <td><p>Jennifer joined the Digital Media and Learning Program in January 2012 after nine years in the Foundation's Public Affairs office. As Associate Director for Public Affairs at MacArthur, Jennifer provided strategic communications support to the Foundation's grant-making programs and was responsible for the Foundation's online profile. interested in badges. ( <a href="http://www.macfound.org/press/publications/digital-badges-help-young-people-adults-demonstrate-skills/">http://www.macfound.org/press/publications/digital-badges-help-young-people-adults-demonstrate-skills/</a>). The RFJ could be useful to them as a way of attaching meaning to their badges.</p></td>
+      </tr>
+      <tr>
+        <td><p>Rockefeller Foundation</p></td>
+        <td><p>Claudia Juech</p></td>
+        <td><p class="a-ldma">Follow up.</p></td>
+        <td></td>
+        <td><p>Feast, Claudia Juech, Managing Director, leads the Foundation's Strategic Research Department, a strategy function that aims to identify and assess the impact potential of intervention opportunities across all four of the Foundation's thematic priority areas. She was very interested, asked lots of questions, not clear how we can help them. We need to do some research to find out. One possibility is in their current initiative on Impact Investing, another is on Innovation. <a href="http://www.rockefellerfoundation.org/our-work/learning">http://www.rockefellerfoundation.org/our-work/learning</a></p></td>
+      </tr>
+      <tr>
+        <td><p>TONIIC</p></td>
+        <td>Morgan Simon</td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>Ed West connection.</p>
+          <p>CEO of TONIIC, Ed sent an email to Morgan about our work in early May, 2013.</p></td>
+      </tr>
+      <tr>
+        <td><p>Deep change</p></td>
+        <td><p><a href="mailto:cindy@deepchange.com">Cindy Wigglesworth</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/03/13</p>
+        <p>2013/12/28</p></td>
+        <td><p>Has some history with Lectica; working on building an argument for spiritual intelligence; approached us years ago to work with her instrument, but nothing happened.</p>
+          <p>Zak had a call with Cindy on 03/13/13. Talked with her about assessment and potential friends who could be donors. On adult side, LDMA. She feels like she has built an assessment of spiritual development.</p>
+          <p>Long term sale/cultivation cycle. She is not really thinking about public education but she got excited once she got on board.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p>Elizabeth Werbe</p></td>
+        <td><p>Email from Theo</p></td>
+        <td></td>
+        <td><p>Feast attendee. Elizabeth Werbe is a creative catalyst, educational innovator, and dynamic leader with a track record of developing and implementing transformative experiences that help motivated individuals discover their passions and use their talents to strengthen communities. In her current role, she is re-defining the vision and strategic direction of Arts of Citizenship at the University of Michigan. This program brings graduate students in the arts, design, and humanities together with community partners to develop collaborative projects that advance new knowledge and enrich civic life.</p></td>
+      </tr>
+      <tr>
+        <td>Ivy Bridge College</td>
+        <td><a href="mailto:Paul.Freedman@ivybridge.com">Paul Freedman</a></td>
+        <td>&nbsp;</td>
+        <td>2014/01/20</td>
+        <td>Met with Paul, an investor in the education sector introduced by Sam Roberts. He  plans to connect us with two contacts at the Gates Foundation.</td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p><a href="mailto:edwardwest@gmail.com">Edward West</a></p>
+        </td>
+        <td><p>&nbsp;</p></td>
+        <td></td>
+        <td><p>A supporter who has connected us with many people.</p>
+          <p>We need to understand the Angel issue and venture capitalists.</p>
+          <p>Sent us list of foundations we are currently researching.</p>
+          <p>Offered to connect us to Center for the Edge, a think tank linked to Deloitte. (also add to DTS pipeline). Jennifer wrote indicating Lauren should be connection there, and requesting a meeting to update Ed and introduce him to Jennifer, Lauren.</p></td>
+      </tr>
+      <![if !supportMisalignedColumns]>
+      <![endif]>
+    </table>
+    <h2>&nbsp;</h2>
+    <h2>Social media and public relations</h2>
+    <table class="minimalist-a">
+      <tr>
+        <th style='width:15%;'>Project</th>
+        <th>Contact</th>
+        <th style='width:15%;'>Action items</th>
+        <th>Due</th>
+        <th style='width:40%;'>Notes</th>
+      </tr>
+      <tr>
+        <td><p>Anya Kamenetz</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p></p></td>
+        <td><p></p></td>
+        <td><p>Journalist at Fast Company. Will potentially be interviewing Theo.</p></td>
+      </tr>
+      <tr>
+        <td><p>LinkedIn</p></td>
+        <td><p>&nbsp;</p>
+          <p></p></td>
+        <td><p></p></td>
+        <td><p>Monthly</p>
+          <p></p></td>
+        <td><p>Selected updates from newsletter are regularly added</p>
+          <p>99 Followers</p>
+          <p>Successfully garnered endorsements and recommendations</p></td>
+      </tr>
+      <tr>
+        <td><p>Success in Education Films</p></td>
+        <td><p>Anne Shoemaker</p></td>
+        <td><p></p></td>
+        <td><p></p></td>
+        <td><p>Documentarian doing a series on what's working in education. Initial meeting with Theo 10/3/2013.</p></td>
+      </tr>
+      <tr>
+        <td><p>Newsletter</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p></p></td>
+        <td><p> Monthly</p></td>
+        <td><p>November topics: Announcing Campaign; Adult side: ? K-12 side: CA assessment freeze?</p>
+          <p>Jennifer sent an email to staff and interns 11/07 requesting ideas.</p></td>
+      </tr>
+      <tr>
+        <td><p>Idealist.org</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p class="a-ldma">Investigate possible uses</p></td>
+        <td><p></p></td>
+        <td><p>Amy set up an account for us some time ago, but we need to decide what, if anything, we want to do with the account.</p></td>
+      </tr>
+      <tr>
+        <td><p></p></td>
+        <td><p></p></td>
+        <td><p></p></td>
+        <td><p></p></td>
+        <td><p></p></td>
+      </tr>
+    </table>
+    <h2>&nbsp;</h2>
+    <h2>Research</h2>
+    <table class="minimalist-a">
+      <tr>
+        <th style='width:15%;'>Project</th>
+        <th>Contact</th>
+        <th style='width:15%;'>Action items</th>
+        <th>Target</th>
+        <th style='width:40%;'>Notes</th>
+      </tr>
+      <tr>
+        <td><p>USNA</p></td>
+        <td><p>David Smith</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+      </tr>
+      <tr>
+        <td><p>Garrison Institute</p></td>
+        <td><p>Adi Fleschler</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p></p></td>
+        <td><p>Conference in November that we should consider towards marketing LSMA.</p>
+          <p>The goal is to gather a group of researchers to go out and seek funding to do mindfulness related research. We will have to be a strong organizer in this effort.</p>
+          <p>Adi provided us with a mailing list for meditation and mindfulness contacts.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p>Bob Kegan</p></td>
+        <td><p></p></td>
+        <td><p></p></td>
+        <td><p>LDMA, LSUA, and LSMA showcase pages are up. The rest will follow.</p>
+          <p>We want to set up a time to give Bob a tour.</p>
+          <p>Zak presented in Bob's class on 03/25/2013</p>
+          <p>Need a new strategy, fall likely time to move on this.</p>
+          <p>Jennifer saw Bob at a PPE, he acknowledged having heard about Lectica, but did not engage in a larger conversation; Zak checked in with Katie and she has brought it up, but he has not expressed interest.</p>
+          <p>Zak will try to set up a meeting in the fall, when he is on campus with Metta and Katie.&quot;</p></td>
+      </tr>
+      <tr>
+        <td><p>NYU</p></td>
+        <td><p> David Petrie </p>
+        <p>Martin Pusick</p></td>
+        <td><p></p></td>
+        <td><p>&nbsp;</p>
+          <p></p></td>
+        <td><p>NYU project is looking at critical-thinking skills; interested in using the LDMA with medical dilemmas</p>
+          <p>McMaster (medical program focused on problem-solving) is looking to join the NYU project</p>
+          <p>Jennifer and Theo will meet with a group of David's colleagues 6/14/2013</p>
+          <p>Conference opportunity in Ottawa 4/14. Potential workshop on using assessment in medical education. Deadline 9/13.</p>
+          <p>Call on 6/14/2013 lead to discussion of proposal, waiting to hear</p>
+          <p>Jennifer and Theo met with David. This year's Ottawa conference does not look to be a good match/timing, but David and potentially Theo will attend. David is teaching a course this fall that he thinks it may be possible to use LectaTests; may administer and then score contingent on funding.</p>
+          <p>Jennifer sent David the price calculator and grant proposal models.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p>Steve Schein</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p></p></td>
+        <td><p>Dana Carmen connection</p>
+          <p>B school professor; potential research collaborator?</p>
+          <p>Zak met with him 5/17/2013</p>
+          <p>Attended LDMA webinar on 5/22/2013</p>
+          <p>Emailed Zak after webinar to schedule meeting;</p>
+          <p>Network connection.</p>
+          <p>Saw him at ITC;</p></td>
+      </tr>
+      <tr>
+        <td><p></p></td>
+        <td><p></p></td>
+        <td><p></p></td>
+        <td><p></p></td>
+        <td><p></p></td>
+      </tr>
+    </table>
+    <h2>&nbsp;</h2>
+    <h2>Research Reports</h2>
+    <table class="minimalist-a">
+      <tr>
+        <th style='width:15%;'>Project</th>
+        <th>Contact</th>
+        <th>Email</th>
+        <th style='width:15%;'>Action items</th>
+        <th>Due</th>
+        <th style='width:40%;'>Notes</th>
+      </tr>
+      <tr>
+        <td><p>Clear Impact: LEI</p></td>
+        <td><p>&nbsp;</p></td>
+        <td>&nbsp;</td>
+        <td><p>Analyze complete data</p></td>
+        <td><p>2014/01/31
+          </p>
+          <p></p></td>
+        <td><p>Includes psychometric analyses of scales, 360 analysis.</p></td>
+      </tr>
+      <tr>
+        <td><p>Glastonbury</p></td>
+        <td><p>&nbsp;</p></td>
+        <td>&nbsp;</td>
+        <td><p></p></td>
+        <td><p>2013/08/15</p></td>
+        <td><p>Theo completed the report and submitted to Glastonbury.</p></td>
+      </tr>
+      <tr>
+        <td><p>USNA: 2012-2013</p></td>
+        <td><p>&nbsp;</p></td>
+        <td>&nbsp;</td>
+        <td><p>Comparison of 3 interventions</p></td>
+        <td><p>2013/07/01</p></td>
+        <td><p>Cross-condition comparisons and report with methods. An increase in reflective activity predicted increased scores on Lectical scale and all of the content scales. Report is complete. 2013_0629_USNA_final_report.pdf</p></td>
+      </tr>
+      <tr>
+        <td><p>UNH: POE &amp; RFJ</p></td>
+        <td><p>&nbsp;</p></td>
+        <td>&nbsp;</td>
+        <td><p>Analyze results, analyze curriculum task demands</p></td>
+        <td><p>2014/01/31</p></td>
+        <td><p>Compare G 13 students performances with task demands of freshman curricula.</p></td>
+      </tr>
+      <tr>
+        <td><p>UNH: RFJ longitudinal analysis</p></td>
+        <td><p>&nbsp;</p></td>
+        <td>&nbsp;</td>
+        <td><p>Analysis 1</p></td>
+        <td><p>2014/01/31</p></td>
+        <td><p>Analysis of grades 4-13 conceptions of inquiry and evidence, comparison of Science standards and reality (Carmela is researching science standards). Two publications are planned for the fall of 2013.</p></td>
+      </tr>
+    </table>
+    <h2>&nbsp;</h2>
+    <h2>Publications</h2>
+    <table class="minimalist-a">
+      <tr>
+        <th style='width:15%;'>Project</th>
+        <th>Lead(s)</th>
+        <th style='width:15%;'>Action items</th>
+        <th>Due</th>
+        <th style='width:40%;'>Notes</th>
+      </tr>
+      <tr>
+        <td><p>From ought to is: At the intersection of academic standards and learning</p></td>
+        <td><p>Theo</p></td>
+        <td><p></p></td>
+        <td><p>2014/01/31</p>
+          <p></p></td>
+        <td><p>Paper to be published in tandem with A bridge too far? in MBE journal (winter or spring)</p>
+          <p>We are all familiar with the naturalistic fallacy-concluding that because something is, it also should be. This article responds to a related fallacy that operates in our thinking about educational standards. This might be called the idealistic fallacy-the idea that because something is valued, it can be mandated. We ask if the recently developed Next Generation Science Standards are well enough aligned with the current reality-how actual students understand science concepts-to avoid the idealistic fallacy. The authors of the Next Generation Science Standards point out that, &quot;The framework and subsequent standards will not lead to improvements in K-12 science education unless other components of the system-curriculum, instruction, professional development, and assessment-change so that they are aligned with the framework's vision.&quot; We agree. However, we also argue that the Standards themselves should be informed by strong empirical evidence about the development of STEM skills and concepts. We propose a much-needed developmental taxonomy of STEM learning that could inform the science standards and help educators achieve them.</p></td>
+      </tr>
+      <tr>
+        <td><p>A bridge too far? Academic standards and developmental realities</p></td>
+        <td><p>Theo</p></td>
+        <td><p></p></td>
+        <td><p> 2013/09/31</p></td>
+        <td><p>Paper to be published in tandem with From Ought to Is in MBE journal (winter or spring)</p>
+          <p>With the advent of the Next Generation Science Standards (NGSS), students will increasingly be expected to achieve certain levels of skill and knowledge in key content areas. For example, the NGSS suggest that by the end of high school, students should have a sophisticated understanding of evidence and inquiry. In this article, we will describe the research behind a set of learning sequences for conceptions of evidence and inquiry (covering grades 3-13), then examine how understanding of these constructs-in a diverse sample of over 4000 students in grades 4-13-aligns with requirements in the Next Generation Science Standards. We will show that even in the best schools, only a small percentage of students in each grade demonstrated the mandated level of comprehension. Findings point to several pressing needs, including the need for: <br />
+            · developmental taxonomies of learning that can inform standards, curricula, and assessments; <br />
+            · a close examination of curricular assumptions, particularly as students enter college or university; <br />
+            · diagnostic assessments, that can be used to identify students' specific learning needs; and <br />
+            · curricula that are customized for the learning needs of individual students-delivering the right learning experiences to individual students at the optimal moment.</p></td>
+      </tr>
+      <tr>
+        <td><p>Rasch Analysis</p></td>
+        <td><p>Theo</p></td>
+        <td><p></p></td>
+        <td><p>2013/11/31</p></td>
+        <td><p>Initial version to be presented at the IOMW conference (Philadelphia, April 2014)</p></td>
+      </tr>
+      <tr>
+        <td><p>ITC Papers</p></td>
+        <td><p>Zak</p></td>
+        <td><p></p></td>
+        <td><p>2013/9/15</p></td>
+        <td><p>All Lectica papers presented at the ITC conference received awards and have been invited for publication.</p>
+          <p>Theo, Zak, Joel and Sandra will decide together where to seek publication.</p></td>
+      </tr>
+      <tr>
+        <td><p>Virtuous Cycles of Learning in Practice</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p></p></td>
+        <td><p>2013/10/31</p></td>
+        <td><p>Denny has been corresponding with Zak and Jennifer to discuss ways of modifying the Virtuous Cycles White Paper for publication.</p></td>
+      </tr>
+    </table>
+    <h2>&nbsp;</h2>
+    <h2>Public Education</h2>
+    <table class="minimalist-a">
+      <tr>
+        <th style='width:15%;'>Project</th>
+        <th>Lead(s)</th>
+        <th style='width:15%;'>Action items</th>
+        <th>Due
+        </th>
+        <th style='width:40%;'>Notes</th>
+      </tr>
+      <tr>
+        <td><p>Foundations of Lectical Assessment 2013</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p></p></td>
+        <td><p>FOLA certificates</p>
+          <p>2014/01/15</p>
+          <p></p>
+        <p></p></td>
+        <td><p>Successfully completed</p></td>
+      </tr>
+      <tr>
+        <td><p>Applications of Lectical Assessment 2014</p></td>
+        <td><p>Zachary</p>
+        <p>Aiden</p>
+        <p>Matthew</p></td>
+        <td><p></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>A new course, 4-6 weeks, using the LDMA and the LSUA as guiding through-lines; all applied, practical, grounded. Ideas include having them watch pre-recorded webinars, and do hands on work such as: taking and debriefing the assessments, designing a pitch to clients about the benefits and value of LectaTests, reliability and validity issues, comparisons to other assessment systems.</p></td>
+      </tr>
+    </table>
+    <h2>&nbsp;</h2>
+    <h2>Fundraising Campaigns (pending 501c3 status)</h2>
+    <table class="minimalist-a">
+      <tr>
+        <th style='width:15%;'>Project</th>
+        <th>Lead(s)</th>
+        <th style='width:15%;'>Action items</th>
+        <th>Due</th>
+        <th style='width:40%;'>Notes</th>
+      </tr>
+      <tr>
+        <td><p>Steering Campaign</p></td>
+        <td><p>Theo</p></td>
+        <td><p>Launch materials</p></td>
+        <td><p></p>
+          <p></p></td>
+        <td><p>Goal: $640 K ($500K capacity and $140K first discotest released)</p>
+          <p>What a gift can do: immediate increase in capacity as we bring part time employees to full time; Money to travel (fundraising, public relations, conferences); Scale up training for existing analysts to launch assessments under development; Capacity to launch a full fundraising campaign (with materials); Hire an analyst and an IT professional</p>
+          <p>Reach goal: Release the first assessment to the public (POE) (requires an additional $140K)</p>
+          <p></p></td>
+      </tr>
+      <tr>
+        <td><p>Capital Campaign</p></td>
+        <td><p>Theo</p></td>
+        <td><p></p></td>
+        <td><p></p></td>
+        <td><p>$10M</p>
+          <p>Building Discotests: Sponsor an assessment or contribute to the completion of an assessment under development or to the creation of curricular materials to support the use of DiscotTests in improving teaching and learning.</p>
+          <p>Building the argument: All of our assessments are developed through rigorous research in real schools with real people. Sponsor a school that wants to use DiscoTests and help us build more evidence about the power of formative assessments for teaching and learning. It's a win-win.</p></td>
+      </tr>
+    </table>
+    <h2>&nbsp;</h2>
+    <h2>Conferences</h2>
+    <table class="minimalist-a">
+      <tr>
+        <th style='width:15%;'>Project</th>
+        <th>Lead(s)</th>
+        <th style='width:15%;'>Action items</th>
+        <th>Due</th>
+        <th style='width:40%;'>Notes</th>
+      </tr>
+      <tr>
+        <td><p>NAIS Conference</p></td>
+        <td><p>Theo</p></td>
+        <td><p>Decide who will present</p>
+          <p>Collaborate with Steven on presentation planning</p></td>
+        <td><p>2014/02/26</p>
+          <p></p></td>
+        <td><p>02/26-28/ 2014 in Orlando, FL.</p>
+          <p>Presentation accepted.</p>
+          <p>Jennifer emailed Steven Dear suggesting a visit to LTS to begin planning, among other things.</p>
+          <p></p></td>
+      </tr>
+    </table>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrants);
+?>

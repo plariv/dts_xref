@@ -1,0 +1,3 @@
+        <p><a href="/_about/working_with_dts.php">Working with us</a></p>
+        <p><a href="/customers/customerpolicies.php">Policies &amp; schedules</a></p>
+        <p><a href="/checkout/payment.php">Make a payment</a></p>

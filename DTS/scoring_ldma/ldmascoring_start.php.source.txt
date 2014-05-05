@@ -1,0 +1,72 @@
+<?php
+  ob_start();
+?>
+
+
+<?php   // SetSessionVar.php
+// Sessiom start & error reporting requred for session variables code
+if (!isset($_SESSION)) {
+  session_start();
+}
+error_reporting(E_ALL); 
+?>
+
+
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php  require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+	$insertSQL = sprintf("insert into ldmascores (ldmascoringkey, ldmakey, scored) values (%s, %s, %s)",
+                       GetSQLValueString("", "int"),
+                       GetSQLValueString($_GET['ldmakey'], "int"),
+                       GetSQLValueString(1, "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($insertSQL, $Assessment) or die(mysql_error());
+  $insert_ID = mysql_insert_id();
+  
+  $insertGoTo = "ldmascoring1.php?ldmascoringkey=$insert_ID";
+  if (isset($_SERVER['query_string'])) {
+    $insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+    $insertGoTo .= $_SERVER['query_string'];
+  }
+
+
+
+  header(sprintf("location: %s", $insertGoTo));
+
+?>

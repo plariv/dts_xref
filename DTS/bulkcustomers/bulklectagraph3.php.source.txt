@@ -1,0 +1,385 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+$colname_rsLasartRJ = "-1";
+if (isset($_GET['userkey'])) {
+  $colname_rsLasartRJ = $_GET['userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasartRJ = sprintf("SELECT lasart.lasartkey, lasart.lasname, lasart.stars, lrja.userkey, lrja.lrjakey, lrjascores.lrjakey, lrjascores.lasname, lrja.testtime FROM lasart, lrjascores, lrja WHERE lrja.userkey=%s AND lasart.lasname = lrjascores.lasname and lrjascores.lrjakey=lrja.lrjakey and lrja.testtime = 3", GetSQLValueString($colname_rsLasartRJ, "int"));
+$rsLasartRJ = mysql_query($query_rsLasartRJ, $Assessment) or die(mysql_error());
+$row_rsLasartRJ = mysql_fetch_assoc($rsLasartRJ);
+$totalRows_rsLasartRJ = mysql_num_rows($rsLasartRJ);
+
+$colname_rsLasartEthics = "-1";
+if (isset($_GET['userkey'])) {
+  $colname_rsLasartEthics = $_GET['userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasartEthics = sprintf("SELECT lasart.lasartkey, lasart.lasname, lasart.stars, lera.userkey, lera.lerakey, lerascores.lerakey, lerascores.lasname, lera.testtime FROM lasart, lerascores, lera WHERE lera.userkey=%s AND lasart.lasname = lerascores.lasname and lerascores.lerakey=lera.lerakey and lera.testtime = 3", GetSQLValueString($colname_rsLasartEthics, "int"));
+$rsLasartEthics = mysql_query($query_rsLasartEthics, $Assessment) or die(mysql_error());
+$row_rsLasartEthics = mysql_fetch_assoc($rsLasartEthics);
+$totalRows_rsLasartEthics = mysql_num_rows($rsLasartEthics);
+
+$colname_rsLasartSelf = "-1";
+if (isset($_GET['userkey'])) {
+  $colname_rsLasartSelf = $_GET['userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasartSelf = sprintf("SELECT lasart.lasartkey, lasart.lasname, lasart.stars, lsuascores.lsuakey, lsuascores.lasname, lsua.testtime, lsua.userkey, lsua.lsuakey FROM lasart, lsuascores, lsua WHERE lsua.userkey=%s AND lasart.lasname = lsuascores.lasname and lsuascores.lsuakey=lsua.lsuakey and lsua.testtime = 3", GetSQLValueString($colname_rsLasartSelf, "int"));
+$rsLasartSelf = mysql_query($query_rsLasartSelf, $Assessment) or die(mysql_error());
+$row_rsLasartSelf = mysql_fetch_assoc($rsLasartSelf);
+$totalRows_rsLasartSelf = mysql_num_rows($rsLasartSelf);
+
+$colname_rsLasartDM = "-1";
+if (isset($_GET['userkey'])) {
+  $colname_rsLasartDM = $_GET['userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasartDM = sprintf("SELECT lasart.lasartkey, lasart.lasname, lasart.stars, ldma.userkey, ldma.ldmakey, ldmascores.lasname, ldmascores.ldmakey, ldma.testtime FROM lasart, ldma, ldmascores WHERE ldma.userkey=%s AND lasart.lasname = ldmascores.lasname and ldmascores.ldmakey=ldma.ldmakey and ldma.testtime = 3", GetSQLValueString($colname_rsLasartDM, "int"));
+$rsLasartDM = mysql_query($query_rsLasartDM, $Assessment) or die(mysql_error());
+$row_rsLasartDM = mysql_fetch_assoc($rsLasartDM);
+$totalRows_rsLasartDM = mysql_num_rows($rsLasartDM);
+
+$colname_rsLasartLL = "-1";
+if (isset($_GET['userkey'])) {
+  $colname_rsLasartLL = $_GET['userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasartLL = sprintf("SELECT lasart.lasartkey, lasart.lasname, lasart.stars, llra.userkey, llra.llrakey, llrascores.lasname, llrascores.llrakey, llra.testtime FROM lasart, llra, llrascores WHERE llra.userkey=%s AND lasart.lasname = llrascores.lasname and llrascores.llrakey=llra.llrakey and llra.testtime = 3", GetSQLValueString($colname_rsLasartLL, "int"));
+$rsLasartLL = mysql_query($query_rsLasartLL, $Assessment) or die(mysql_error());
+$row_rsLasartLL = mysql_fetch_assoc($rsLasartLL);
+$totalRows_rsLasartLL = mysql_num_rows($rsLasartLL);
+
+$colname_rsLasartIR = "-1";
+if (isset($_GET['userkey'])) {
+  $colname_rsLasartIR = $_GET['userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasartIR = sprintf("SELECT lasart.lasartkey, lasart.lasname, lasart.stars, lima.userkey, lima.limakey, limascores.lasname, limascores.limakey, lima.testtime FROM lasart, lima, limascores WHERE lima.userkey=%s AND lasart.lasname = limascores.lasname and limascores.limakey=lima.limakey and lima.testtime = 3", GetSQLValueString($colname_rsLasartIR, "int"));
+$rsLasartIR = mysql_query($query_rsLasartIR, $Assessment) or die(mysql_error());
+$row_rsLasartIR = mysql_fetch_assoc($rsLasartIR);
+$totalRows_rsLasartIR = mysql_num_rows($rsLasartIR);
+
+$colname_rsRegistrant = "-1";
+if (isset($_GET['userkey'])) {
+  $colname_rsRegistrant = $_GET['userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrant = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrant, "int"));
+$rsRegistrant = mysql_query($query_rsRegistrant, $Assessment) or die(mysql_error());
+$row_rsRegistrant = mysql_fetch_assoc($rsRegistrant);
+$totalRows_rsRegistrant = mysql_num_rows($rsRegistrant);
+?>
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template2php.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Lectagraph time 3</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+.left {
+	float: left;
+	width: 370px;
+}
+.right {
+	float: right; /* since this element is floated, a width must be given */
+	width: 300px;
+	margin: 0px;
+	padding: 0px;
+}
+-->
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #9D9F9C;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #F6F6F6;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/DTSheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 26px;
+	background-image: url(/images/skin/menu.png);
+	color: #E2E2E2;
+	margin-top: 0px;
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	height: 19px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a {
+	color: #EAEAEA;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu1 a:active {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 a:visited {
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div id="menu1">
+  <p><a href="/landing.php">home</a>&nbsp;&nbsp;&nbsp;<a href="/security/registration.php">register</a>&nbsp;&nbsp;&nbsp;<a href="/security/logIn.php">log in</a>&nbsp;&nbsp;&nbsp;<a href="/contactus.php">contact us</a>&nbsp;&nbsp;&nbsp;<a href="/security/logout.php">log out</a>&nbsp;&nbsp;
+  <!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->
+  <span class="logintext">
+  <?php if (isset($_SESSION['log_firstname'])) {  ?>
+  You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></span></p>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>Psychograph for  <?php echo $row_rsRegistrant['firstname']; ?> <?php echo $row_rsRegistrant['lastname']; ?> </h1>
+    <p>More lectagraphs: <a href="bulklectagraph1.php?userkey=<?php echo $_GET['userkey']; ?>">test time 1</a> | <a href="bulklectagraph2.php?userkey=<?php echo $_GET['userkey']; ?>">test time 2</a> | <a href="bulklectagraph3.php?userkey=<?php echo $_GET['userkey']; ?>">test time 3</a></p>
+    <h3>Test time 3</h3>
+<div class="left">
+      <img src="../images/stars/ScaleNos.gif" width="38" height="430" hspace="0" align="top" />
+      <?php if ($totalRows_rsLasartLL > 0) { // Show if recordset not empty ?>
+      <img src="<?php echo $row_rsLasartLL['stars']; ?>" alt="" width="38" height="430" hspace="0" align="top" class="scalellra" />
+      <?php } // Show if recordset not empty ?>
+      <?php if ($totalRows_rsLasartDM > 0) { // Show if recordset not empty ?>
+      <img src="<?php echo $row_rsLasartDM['stars']; ?>" alt="" width="38" height="430" hspace="0" border="0" align="top" class="scaleldma" />
+      <?php } // Show if recordset not empty ?>
+      <?php if ($totalRows_rsLasartEthics > 0) { // Show if recordset not empty ?>
+      <img src="<?php echo $row_rsLasartEthics['stars']; ?>" alt="" width="38" height="430" hspace="0" border="0" align="top" class="scalelera" />
+      <?php } // Show if recordset not empty ?>
+      <?php if ($totalRows_rsLasartRJ > 0) { // Show if recordset not empty ?>
+      <img src="<?php echo $row_rsLasartRJ['stars']; ?>" alt="" width="38" height="430" hspace="0" align="top" class="scalelrja" />
+      <?php } // Show if recordset not empty ?>
+      <?php if ($totalRows_rsLasartSelf > 0) { // Show if recordset not empty ?>
+      <img src="<?php echo $row_rsLasartSelf['stars']; ?>" alt="" width="38" height="430" hspace="0" align="top" class="scalelsua" />
+      <?php } // Show if recordset not empty ?>
+      <?php if ($totalRows_rsLasartIR > 0) { // Show if recordset not empty ?>
+      <img src="<?php echo $row_rsLasartIR['stars']; ?>" alt="" width="38" height="430" hspace="0" align="top" class="scalelima" />
+      <?php } // Show if recordset not empty ?>
+</div>
+<div class="right">    <h3>Reports</h3>
+    <p>Select one of the following links to view the report associated with a given score: </p>
+    <p><a href="../scoring_ldma/ldmareport.php?ldmakey=<?php echo $row_rsLasartDM['ldmakey']; ?>&amp;manlevel=<?php echo $row_rsLasartDM['manlevel']; ?>&amp;lasname=<?php echo $row_rsLasartDM['lasname']; ?>">LDMA</a> | <a href="../scoring_lera/lerareport.php?lerakey=<?php echo $row_rsLasartEthics['lerakey']; ?>&amp;lasname=<?php echo $row_rsLasartEthics['lasname']; ?>">LERA</a> | <a href="../scoring_llra/llrareport.php?llrakey=<?php echo $row_rsLasartLL['lllakey']; ?>&amp;lasname=<?php echo $row_rsLasartLL['lasname']; ?>">LLRA</a> | <a href="../scoring_lrja/lrjareport.php?lrjakey=<?php echo $row_rsLasartRJ['lrjakey']; ?>&amp;manlevel=<?php echo $row_rsLasartRJ['managerstatus']; ?>&amp;lasname=<?php echo $row_rsLasartRJ['lasname']; ?>">LRJA</a> | <a href="../scoring_lsua/lsuareport.php?lsuakey=<?php echo $row_rsLasartSelf['lsuakey']; ?>&amp;lasname=<?php echo $row_rsLasartSelf['lasname']; ?>">LSUA</a> | <a href="../scoring_lima/limareport.php?limakey=<?php echo $row_rsLasartIR['limakey']; ?>&amp;lasname=<?php echo $row_rsLasartIR['lasname']; ?>">LIMA</a></p>
+	</div>
+<br class="clearfloat" />   
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLasartSelf);
+
+mysql_free_result($rsLasartLL);
+
+mysql_free_result($rsLasartIR);
+
+mysql_free_result($rsRegistrant);
+
+mysql_free_result($rsLasartRJ);
+
+mysql_free_result($rsLasartEthics);
+
+mysql_free_result($rsRegistrants);
+
+mysql_free_result($rsLasartDM);
+?>

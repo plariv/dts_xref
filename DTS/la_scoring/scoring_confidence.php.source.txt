@@ -1,0 +1,445 @@
+<?php 
+include_once '../includes/dts_functions.php';
+
+
+
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+$userkey = $_SESSION['log_userkey'];
+
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+$instrument_id = $_SESSION['instrument_id']; 
+$instrument_id_base = str_replace("_JOURNAL", "", $instrument_id);
+
+$lakey = "-1"; if (isset($_GET['lakey'])) { $lakey = $_GET['lakey']; } 
+$scorer_no = $_GET['scorer_no']; 
+
+
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+
+
+// get logged-in scorer's name
+$query_rsScorer = "SELECT firstname, lastname, email FROM registrants WHERE userkey=".
+	SQLstr($userkey, "int");
+$rsScorer = mysql_query($query_rsScorer, $Assessment) or die(mysql_error());
+$row_rsScorer = mysql_fetch_assoc($rsScorer);
+
+// get score data
+$query_rsLaData = sprintf("SELECT d.lakey, d.instrument_id, d.assignmentkey, d.dilemmakey, 
+		d.scored_{$scorer_no}, d.date_scored_{$scorer_no}, d.scorerkey_{$scorer_no}, 
+		s.confidencekey_{$scorer_no}, 
+		s.lasnumber_1, s.lasnumber_1_orig, s.lasnumber_2, s.lasnumber_2_orig, 
+		s.lasnumber_3, s.lasnumber_3_orig,
+		c.special_comment
+	FROM la_data d 
+	JOIN la_scores s ON d.lakey = s.lakey
+	LEFT JOIN la_codes c ON d.lakey = c.lakey
+	WHERE d.lakey = %s ", 
+		SQLstr($lakey, "int"));
+$rsLaData = mysql_query($query_rsLaData, $Assessment) or die(mysql_error());
+$row_rsLaData = mysql_fetch_assoc($rsLaData);
+
+// get scores per part. No real reason to have this as a separate query, just being lazy. 
+$query_rsScores = sprintf("SELECT lakey, instrument_id, scored_{$scorer_no}, date_scored_{$scorer_no}, probe01las_{$scorer_no}, probe02las_{$scorer_no}, probe03las_{$scorer_no}, probe04las_{$scorer_no}, probe05las_{$scorer_no}, probe06las_{$scorer_no}, probe07las_{$scorer_no}, lasnumber_{$scorer_no}, probe08las_{$scorer_no}, probe09las_{$scorer_no}, probe10las_{$scorer_no}, confidencekey_{$scorer_no}, confidencecommentkey_{$scorer_no}, confidence_comment_other_{$scorer_no} 
+FROM la_scores 
+WHERE lakey = %s", 
+		SQLstr($lakey, "int"));
+$rsScores = mysql_query($query_rsScores, $Assessment) or die(mysql_error());
+$row_rsScores = mysql_fetch_assoc($rsScores);
+$totalRows_rsScores = mysql_num_rows($rsScores);
+
+
+
+
+
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+	
+	//									MARK THE RECORD AS SCORED
+	// The scorer doesn't always go past this confidence page. So there's some redundancy of updates
+	// made on this page, and on the scoring_processing page (which doesn't come until after coding).
+	$also_update = "";
+	// If this record has not been scored yet (by this role), mark it as scored.
+	if ($row_rsLaData['scored_'.$scorer_no] == 0) { 
+		$also_update .= sprintf(" d.scored_{$scorer_no}=1, d.date_scored_{$scorer_no}=%s, 
+			d.scorerkey_{$scorer_no}=%s, ",
+				SQLstr(date("Y-m-d"), "date"),
+				SQLstr($userkey, "int"));
+	} else { // If this already has been scored, mark as re-scored.
+		$also_update .= sprintf(" d.rescored_{$scorer_no}=1, d.date_rescored_{$scorer_no}=%s, 
+			d.rescorerkey_{$scorer_no}=%s, ",
+				SQLstr(date("Y-m-d"), "date"),
+				SQLstr($userkey, "int"));
+	}
+	
+	//									BACK UP THE ORIGINAL SCORE (if relevant)
+	// by default, the average score is written to the lasnumber_1 (or 2, 3) column. 
+	// but IF there already is a lasnumber which was entered yesterday or earlier, 
+	// AND if the _orig column is empty, 
+	if ($row_rsLaData['lasnumber_'.$scorer_no] > 0 AND 
+			$row_rsLaData['date_scored_'.$scorer_no] < date('Y-m-d') AND
+			$row_rsLaData['lasnumber_'.$scorer_no.'_orig'] == "") { 
+		// THEN also add the previous score to the _orig column.
+		$also_update .= " s.lasnumber_{$scorer_no}_orig=".$row_rsLaData['lasnumber_'.$scorer_no].", ";
+	}
+	
+	//									UPDATE CONFIDENCE
+  $updateSQL = sprintf("UPDATE la_scores s 
+		JOIN la_data d ON s.lakey = d.lakey 
+		LEFT JOIN la_codes c ON s.lakey = c.lakey 
+		SET ".$also_update."
+			s.lasnumber_{$scorer_no}=%s, s.confidencekey_{$scorer_no}=%s, 
+			s.confidencecommentkey_{$scorer_no}=%s, s.confidence_comment_other_{$scorer_no}=%s, 
+			c.special_comment = %s 
+		WHERE s.lakey=%s",
+			 SQLstr($_POST['lasnumber_average'], 'double'),
+			 SQLstr($_POST["confidencekey_{$scorer_no}"], 'int'),
+			 SQLstr($_POST["confidencecommentkey_{$scorer_no}"], 'int'),
+			 SQLstr($_POST["confidence_comment_other_{$scorer_no}"], 'text'),
+			 SQLstr($_POST['special_comment'], 'int'),
+			 SQLstr($_POST["lakey"], "int"));
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+	
+	
+	
+	//							SEND OUT SCORER ALERT EMAIL
+	
+	// refresh score information (now that has been updated)
+	$query_rsLaData = sprintf("SELECT d.lakey, d.instrument_id, 
+	d.scored_{$scorer_no}, d.date_scored_{$scorer_no}, d.scorerkey_{$scorer_no}, 
+	s.confidencekey_{$scorer_no}, 
+	s.lasnumber_1, s.lasnumber_1_orig, s.lasnumber_2, s.lasnumber_2_orig, 
+	s.lasnumber_3, s.lasnumber_3_orig
+	FROM la_data d 
+	JOIN la_scores s ON d.lakey = s.lakey
+	WHERE d.lakey = %s ", 
+			SQLstr($lakey, "int"));
+	$rsLaData = mysql_query($query_rsLaData, $Assessment) or die(mysql_error());
+	$row_rsLaData = mysql_fetch_assoc($rsLaData);
+		
+	/* EMAIL NOTIFICATION THAT THE PERFORMANCE HAS BEEN SCORED */
+	// Hand-entered email addresses
+	$email_theo = "theo@lectica.org";
+	$email_zak = "zak@lectica.org";
+	$email_katie = "katie@lectica.org";
+	$email_zachary = "zackvr@lectica.org";
+	$email_dtsservice = "service@lectica.org";
+	
+	// find out who just scored
+	$scorer = $row_rsScorer['firstname'];
+	
+	// default subject line for email message
+	$subject = $instrument_id." ".$lakey." has been scored by scorer {$scorer_no} (".$row_rsScorer['firstname'].")";
+	
+	/* DECIDE WHO TO SEND EMAILS TO (by default, may be overwritten) */
+	// You can always add ", email2@email.com" to send the email to multiple addresses.
+	// Theo doesn't want to get multiple copies of the email, so instead of her address, 
+	// I am making the dtsservice account the default "to" address. 
+	$email_to = "service@lectica.org";
+	$email_cc = "";
+	$email_from = $email_dtsservice;
+	
+	// decide who to email
+	
+	if ($scorer_no == 1) {
+		
+		if ($scorer == "Theo") { 
+			$email_to .= ", ".$email_katie;
+		}
+		if ($scorer == "Zak") { 
+			// $email_to .= ", ".$email_theo; 
+		}
+		
+		$email_to .= ", ".$email_zachary;
+	}
+	
+	$diff_message = "";
+	if ($scorer_no == 2) {
+		
+		$diff_message = "Difference between scores = ".
+			round($row_rsLaData['lasnumber_1']-$row_rsLaData['lasnumber_2'], 2)."\n";
+		
+		if ($scorer == "Theo") { 
+			$email_to .= ", ".$email_zak; 
+		}
+		if ($scorer == "Katie") { 
+			// $email_to .= ", ".$email_theo; 
+		}
+	}
+	
+	$body = "Lakey = ".$_GET['lakey']."\n".
+		"Confidence = ".$row_rsLaData["confidencekey_{$scorer_no}"]."\n".
+		$diff_message."\n\n".
+		"Scoring select page: https://www.devtestservice.org/la_scoring/scoring_performance_select.php ";
+	
+	sendEmail($email_to, $email_from, $email_cc, $subject, $body);
+	
+	
+
+	
+	
+
+	// LDMA scorers should be sent to at least 1 coding page. 
+	//Others should just be sent to the scoring_processing page.
+	
+	$updateGoTo = "";
+	if ($scorer_no >= 2) { $updateGoTo = "scoring_processing.php"; }
+	else if ($instrument_id_base == "LDMA") { $updateGoTo = "../la_coding/coding_start.php";	} 
+	else if ($instrument_id_base == "FOLA") { $updateGoTo = "../la_coding/coding_start.php";	} 
+	else if ($instrument_id_base == "LLRA") { $updateGoTo = "../la_coding/coding_start.php";	} 
+	else if ($instrument_id_base == "LRJA") { $updateGoTo = "../la_coding/coding_start.php";	} 
+	else { $updateGoTo = "scoring_processing.php"; }
+	
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo)); exit();
+}
+
+
+
+
+
+
+$query_rsConfidence = "SELECT * FROM confidence ORDER BY confidencekey ASC";
+$rsConfidence = mysql_query($query_rsConfidence, $Assessment) or die(mysql_error());
+$row_rsConfidence = mysql_fetch_assoc($rsConfidence);
+$totalRows_rsConfidence = mysql_num_rows($rsConfidence);
+
+$query_rsConfidenceComment = "SELECT * FROM confidencecomment ORDER BY confidencecommentkey ASC";
+$rsConfidenceComment = mysql_query($query_rsConfidenceComment, $Assessment) or die(mysql_error());
+$row_rsConfidenceComment = mysql_fetch_assoc($rsConfidenceComment);
+$totalRows_rsConfidenceComment = mysql_num_rows($rsConfidenceComment);
+
+$sql_rsSpecialComment = "SELECT * FROM la_menus 
+	WHERE type = 'coding' AND menu = 'special_comment' AND menu_item_name <> ''";
+$rsSpecialComment = mysql_query($sql_rsSpecialComment) or die(mysql_error());
+
+
+
+
+
+//		CALCULATE AVERAGE SCORE
+
+$scores = array();
+for ($p = 1; $p <= 7; $p ++) { 
+	if ($row_rsScores['probe0'.$p.'las_'.$scorer_no] > 0) { 
+		$scores[] = $row_rsScores['probe0'.$p.'las_'.$scorer_no];
+	}
+}
+$score_avg = 0;
+if (count($scores) > 0) { $score_avg = (array_sum($scores) / count($scores)); }
+$score_average_default = $score_avg;
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Scoring confidence</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+
+-->
+</style>
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+    <?php include '../la_coding/code_quickmenu.php'; ?>
+<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+<h1>CONFIDENCE IN  SCORES FOR <?php echo $row_rsScores['instrument_id']; ?> NUMBER <?php echo $_GET['lakey']; ?> (SCORER <?php echo $scorer_no; ?>) </h1>
+
+<form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+  <table>
+      <tr>
+        <td>Confidence</td>
+        <td><span id="spryselect1">
+          <select name="confidencekey_<?php echo $scorer_no?>" class="menu_300">
+            <option value="" <?php if (!(strcmp("", htmlentities($row_rsScores["confidencekey_{$scorer_no}"], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsConfidence['confidencekey']?>"<?php if (!(strcmp($row_rsConfidence['confidencekey'], htmlentities($row_rsScores["confidencekey_{$scorer_no}"], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsConfidence['confidencelevel']?></option>
+            <?php
+} while ($row_rsConfidence = mysql_fetch_assoc($rsConfidence));
+  $rows = mysql_num_rows($rsConfidence);
+  if($rows > 0) {
+      mysql_data_seek($rsConfidence, 0);
+	  $row_rsConfidence = mysql_fetch_assoc($rsConfidence);
+  }
+?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td>Confidence comment</td>
+        <td><span id="spryselect2">
+          <select name="confidencecommentkey_<?php echo $scorer_no?>" class="menu_300">
+            <option value="" <?php if (!(strcmp("", htmlentities($row_rsScores["confidencecommentkey_{$scorer_no}"], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsConfidenceComment['confidencecommentkey']?>"<?php if (!(strcmp($row_rsConfidenceComment['confidencecommentkey'], htmlentities($row_rsScores["confidencecommentkey_{$scorer_no}"], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsConfidenceComment['confidencecomment']?></option>
+            <?php
+} while ($row_rsConfidenceComment = mysql_fetch_assoc($rsConfidenceComment));
+  $rows = mysql_num_rows($rsConfidenceComment);
+  if($rows > 0) {
+      mysql_data_seek($rsConfidenceComment, 0);
+	  $row_rsConfidenceComment = mysql_fetch_assoc($rsConfidenceComment);
+  }
+?>
+          </select>
+</span></td>
+      </tr>
+      <tr>
+        <td>Confidence comment other</td>
+        <td><span id="sprytextfield1">
+          <input type="text" name="confidence_comment_other_<?php echo $scorer_no?>" value="<?php echo htmlentities($row_rsScores["confidence_comment_other_{$scorer_no}"], ENT_COMPAT, 'UTF-8'); ?>" size="60" />
+</span></td>
+      </tr>
+      <tr>
+      	<td>Special comment</td>
+      	<td><span id="spryselect2">
+      	  <select name="special_comment" class="pulldown_width_400">
+      	    <option value="" <?php 
+						if ($row_rsLaData['special_comment'] == "") 
+						{ echo "selected='selected'"; } 
+						?>>-select one-</option>
+      	    <?php
+						while ($row_rsSpecialComment = mysql_fetch_assoc($rsSpecialComment)) { ?>
+      	    <option value="<?php echo $row_rsSpecialComment['menukey']?>" <?php 
+							if ($row_rsLaData['special_comment'] == $row_rsSpecialComment['menukey']) 
+							{ echo "selected='selected'"; } ?>>
+      	      <?php 
+							echo $row_rsSpecialComment['menu_item_name']?>
+      	      </option>
+      	    <?php
+						} ?>
+    	    </select></span>
+        </td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td><div align="right">
+          <input type="submit" value="SUBMIT" />
+        </div></td>
+      </tr>
+    </table>
+    <!-- Form element takes the score average, calculated in the PHP above, and posts back the result. -->
+    <input type="hidden" name="MM_update" value="form1" />
+    <input type="hidden" name="lakey" value="<?php echo $row_rsScores['lakey']; ?>" />
+    <input type="hidden" name="lasnumber_average" value="<?php echo $score_average_default; ?>" />
+</form>
+  <p>&nbsp;</p>
+  <script type="text/javascript">
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"], isRequired:false});
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "none", {isRequired:false, validateOn:["blur", "change"]});
+  </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsScores);
+
+mysql_free_result($rsConfidence);
+
+mysql_free_result($rsConfidenceComment);
+?>

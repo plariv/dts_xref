@@ -1,0 +1,131 @@
+/* CSS Document */
+.WADAClearRight {
+	margin: 0px;
+	padding: 0px;
+	height: 0px;
+	clear: right;
+}
+.WADAClearLeft {
+	margin: 0px;
+	padding: 0px;
+	height: 0px;
+	clear: left;
+}
+.WADAClearBoth {
+	margin: 0px;
+	padding: 0px;
+	height: 0px;
+	clear: both;
+}
+
+
+.WADAHorizLine {
+  height: 1px;
+  background-image: url(../images/Pacifica/Refined_hline.gif);
+  background-repeat: repeat-x;
+}
+
+.WADADataTable {
+	padding-top: 3px;
+	padding-left: 10px;
+	padding-right: 5px;
+	padding-bottom: 3px;
+	font-size: 11px;
+	vertical-align: top;
+}
+
+.WADADataTableHeader {
+	font-size: 11px;
+	font-weight: normal;
+	text-align: left;
+	padding-left: 10px;
+	padding-top: 2px;
+	padding-right: 5px;
+	padding-bottom: 3px;
+	font-family: Verdana, Geneva, sans-serif;
+	line-height: 15px;
+	vertical-align: top;
+}
+
+.WADADataTableCell {
+	font-size: 11px;
+	padding-top: 3px;
+	padding-right: 5px;
+	padding-bottom: 3px;
+	padding-left: 10px;
+	line-height: 15px;
+	vertical-align: top;
+	border-bottom-width: thin;
+	border-bottom-style: none;
+	border-bottom-color: #FFF;
+}
+
+.WADADataNavButtonCell {
+  padding: 2px;
+}
+
+.WADAHeaderText, .WADAHeader {
+	font-size: 12px;
+	font-weight: bold;
+}
+
+.WADAButtonRow {
+  padding-top: 5px;
+}
+
+.WADANoResultsMessage, .WADAMessage {
+	font-size: 11px;
+}
+
+.WADAHeader {
+	font-size: 12px;
+	padding-bottom: 10px;
+}
+
+
+.WADAButton_Table {
+  height: 17px;
+}
+
+#WADADeleteForm{
+	padding:0px;
+	margin:0px;
+}
+
+#WADADeleteForm #Delete{
+	vertical-align:middle;
+}
+
+.WADAButton_Left {
+  width: 3px;
+  height: 17px;
+  background-image: url(../images/Pacifica/Refined_lg-cap-L.gif);
+	background-repeat: no-repeat;
+}
+
+.WADAButton_Right {
+  width: 3px;
+  height: 17px;
+  background-image: url(../images/Pacifica/Refined_lg-cap-R.gif);
+	background-repeat: no-repeat;
+}
+
+.WADAButton_Middle {
+  vertical-align: middle; 
+  height: 17px;
+	text-align: center;
+  background-image: url(../images/Pacifica/Refined_lg-BG.gif);
+	background-repeat: repeat-x;
+}
+
+.WADATextButton {
+  vertical-align: middle;
+  padding-left: 6px;
+  padding-right: 6px;
+	font-size: 11px;
+}
+
+.WADAButton_Middle a {
+  color: #003366;
+	text-decoration: none;
+}

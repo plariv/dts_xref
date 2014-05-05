@@ -1,0 +1,631 @@
+<?php require_once('includes/dts_functions.php'); 
+$boilerplate = prepBoilerplate('register');
+
+$userkey = ''; if (isset($_SESSION['log_userkey'])) { $userkey = $_SESSION['log_userkey']; }
+
+$type = ''; if (isset($_GET['type'])) { $type = $_GET['type']; }
+
+if (isset($_POST["submit"])) {
+  $updateSQL = sprintf("INSERT INTO emailus 
+		(firstname, lastname, email, country, professionkey, other_profession, subject, content, browser) 
+		VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) ",
+		 SQLstr($_POST['firstname'], "text"),
+		 SQLstr($_POST['lastname'], "text"),
+		 SQLstr($_POST['email'], "text"),
+		 SQLstr($_POST['country'], "text"),
+		 SQLstr($_POST['profession'], "int"),
+		 SQLstr($_POST['other_profession'], "text"),
+		 SQLstr($_POST['subject'], "text"),
+		 SQLstr($_POST['content'], "text"),
+		 SQLstr(strtolower($_SERVER['HTTP_USER_AGENT']), 'text'));
+  $result = mysql_query($updateSQL) or die(mysql_error());
+	
+	// find the the subject key for this inquiry
+	$matches = array();
+	preg_match("/\[(\d+)\]/", $_POST['subject'], $matches);
+	$subjectkey = $matches[1];
+	
+	// remove from mailing list
+	if ($subjectkey == 29) {
+		$sql_remove = sprintf("DELETE FROM maillist WHERE email = %s", SQLstr($_POST['email'], 'text'));
+		$result = mysql_query($sql_remove);
+		if (mysql_affected_rows() == 1) { header("Location: contactlist_removed.php?m=success"); }
+		else { header("Location: contactlist_removed.php?m=failure"); }
+		exit();
+	}
+	
+	// decide who this inquiry should be routed to
+	$to = 'inquiries@lectica.org'; // default
+	$from = $_POST['email'];
+	$cc = array('outreach@lectica.org' => 'Jennifer Worden'); // default
+	
+	$sql_subject = sprintf("SELECT send_to_email FROM contact_us_subjects WHERE `key` = %s", SQLstr($subjectkey, 'int'));
+	$rsSubject = mysql_query($sql_subject) or die(mysql_error());
+	$row = mysql_fetch_assoc($rsSubject);
+	if ($row['send_to_email'] <> '') { $to = $row['send_to_email']; }
+	if ($subjectkey == 26) { $cc = ''; }
+	
+	// send us the inquiry email
+	$subject = "Inquiry: ".$_POST['subject'];
+	$body = sprintf("Inquiry from %s %s <%s> \nProfession: %s\nCountry: %s\nSubject: %s\nContent: %s", 
+		$_POST['firstname'], 
+		$_POST['lastname'], 
+		$_POST['email'], 
+		lookup_profession($_POST['profession'], $_POST['other_profession']),
+		$_POST['country'],
+		$_POST['subject'], 
+		$_POST['content']);
+	sendEmail($to, $from, $cc, $subject, $body);
+	
+	// send confirmation email
+	$to = $_POST['email'];
+	$from = array('outreach@lectica.org' => 'Jennifer Worden');
+	$cc = '';
+	$subject = "Thank you for your inquiry to Lectica";
+	$body = $boilerplate['contact_us_email_confirm'];
+	$body = str_replace('[NAME]', $_POST['firstname'], $body);
+	$body = str_replace('[DATE]', date('M jS'), $body);
+	$body = str_replace('[SUBJECT]', $_POST['subject'], $body);
+	$body = str_replace('[CONTENT]', $_POST['content'], $body);
+	sendEmail($to, $from, $cc, $subject, $body);
+	
+	// If you signed up for the newsletter
+	if (isset($_POST['register_newsletter']) AND $_POST['register_newsletter'] == 1) {
+		$_POST['url'] = "contactus_thanks.php";
+		unset($_POST['subject']);
+		unset($_POST['content']);
+		$posts = serialize($_POST);
+		header("Location: contactlist.php?posts={$posts}"); exit();
+	}
+	
+	// forward
+  header("Location: contactus_thanks.php"); exit();
+}
+
+
+
+$query_Registrant = sprintf("SELECT * FROM registrants WHERE userkey = %s", SQLstr($userkey, "int"));
+$rsRegistrant = mysql_query($query_Registrant) or die(mysql_error());
+$registrant = mysql_fetch_assoc($rsRegistrant);
+
+$rsProfessions = mysql_query("SELECT * FROM demogs_professions ORDER BY profession");
+
+$rsCountries = mysql_query("SELECT * FROM demogs_countries ORDER BY name");
+
+$rsSubjects = mysql_query("SELECT * FROM contact_us_subjects ORDER BY `order`") or die(mysql_error());
+
+$rsPrivacy = mysql_query("SELECT privacy FROM legal");
+$row = mysql_fetch_assoc($rsPrivacy);
+$privacy = $row['privacy'];
+
+
+
+// Select a default subject line based on this context
+$default_subjects = array(
+	'lectatest_indiv' => 1, // take a lectatest
+	'lectatest_client' => 2, // using lectatests
+	'inquiries_lectatest' => 2,
+	'inquiries_discotest' => 12,
+	'inquiries_webinar' => 25,
+	'get_involved' => 22,
+	'donors' => 23,
+	'problem' => 26,
+	'newsletter_unsubscribe' => 29,
+	'fola' => 17
+);
+$default_subject = '';
+if ($type <> '') { $default_subject = $default_subjects[$type]; }
+
+
+
+// Prepare website diagnostics (for troubleshooting messages)
+$troubleshoot = "";
+$instrument_id = (isset($_SESSION['instrument_id']) ? $_SESSION['instrument_id'] : "none");
+$page = (isset($_GET['page']) ? $_GET['page'] : "unknown");
+$query = (isset($_GET['query']) ? str_replace("^", "&", $_GET['query']) : "");
+$browser = strtolower( $_SERVER['HTTP_USER_AGENT'] );
+$other = (isset($_GET['other']) ? $_GET['other'] : "");
+
+$troubleshoot .= "Please describe the problem you are having: \r\r\r\r\r\r\r".
+	" - - - DIAGNOSTIC INFORMATION - - - \r".
+	"The webpage: ".$page."\r".
+	"URL query: ".$query."\r".
+	"Instrument: ".$instrument_id."\r".
+	"Browser info: ".$browser."\r".
+	$other."\r";
+
+
+?>
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: Contact us</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+
+<script src="SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="SpryAssets/SpryValidationTextarea.js" type="text/javascript"></script>
+<link href="SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="SpryAssets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+
+/* tooltip styling. by default the element to be styled is .tooltip  */
+.tooltip {
+	display:none;
+	font-size:90%;
+	font-weight: 400;
+	line-height:140%;
+	width: 150px;
+	background: #F1F7F6;
+	padding-right: 20px;
+	padding-left: 20px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-left: 10px;
+	-moz-box-shadow: 2px 2px 5px #888;
+	-webkit-box-shadow: 2px 2px 5px #888;
+	box-shadow: 2px 2px 5px #888;
+	z-index: 999;
+}
+
+.hotspot {
+	cursor: pointer; 
+	cursor: hand;	
+	height:100%; 
+	width:100%; 
+	position:relative;
+}
+
+.collapse_tab {
+	cursor: pointer;
+	position: relative;
+}
+.collapse_content {
+	display: none;
+	width: 100%;
+}
+.missing { border: 1px solid red; }
+
+#privacy_div {
+	height: 190px; 
+	width: 100%; 
+	padding: 5px; 
+	overflow: auto; 
+	background-color:#ededed;
+}
+#contact_table { width: 90%; }
+
+input {
+	font-size: 110%;
+}
+
+.inner_container .column1 p a {
+	color: #373737;
+	text-decoration: underline;
+}
+.inner_container .column1 p {
+	font-size: 110%;
+	line-height: 160%;
+	font-weight: 400;
+	padding-right: 30px;
+}
+.inner_container .column1 h3 {
+	margin-top: 20px;
+	font-size: 180%;
+	color: #007376;
+}
+.inner_container .column1 h4 {
+	margin-top: 10px;
+	font-size: 120%;
+}
+.inner_container .column1 ul li {
+	font-size: 110%;
+	font-weight: 400;
+	padding-right: 30px;
+	line-height: 160%;
+	padding:top: 0px;
+}
+.inner_container .column1 ol li {
+	font-size: 110%;
+	font-weight: 400;
+	padding-right: 30px;
+	line-height: 160%;
+	padding:top: 0px;
+}
+.inner_container .column1 #form1 #contact_table {
+	margin-top: 10px;
+	Width: 90%;
+}
+.inner_container .column1 #form1 #contact_table tr td {
+	font-size: 100%;
+	font-weight: 400;
+	padding-top: 3px;
+	padding-bottom: 3px;
+}
+.inner_container .column1 #form1 #contact_table tr td p {
+	font-size: 100%;
+	font-weight: 400;
+	line-height: 130%;
+}
+.inner_container .column1 #form1 #contact_table tr td input {
+	font-size: 100%;
+}
+.inner_container .column1 #form1 #contact_table tr td #submit {
+	font-size: 110%;
+}
+.inner_container .column1 #form1 #contact_table tr td select {
+	font-size: 100%;
+}
+.inner_container .column1 #form1 #contact_table tr td textarea {
+	width: 100%;
+}
+.inner_container .column1 #CollapsiblePanel4 .CollapsiblePanelTab p {
+	font-size: 90%;
+	margin-top: 0px;
+	font-weight: 400;
+	color: #007376;
+}
+.inner_container .column1 #CollapsiblePanel4 .CollapsiblePanelContent .collapse .collapse_tab h4 {
+	margin-top: 8px;
+}
+.inner_container .column1 #form1 #contact_table .privacy_rows td #privacy_div p {
+	font-size: 100%;
+	line-height: 140%;
+}
+</style>
+
+<script type='text/javascript'>
+
+$(document).ready(function(){
+	
+	$('.hotspot').tooltip({
+		position: 'bottom center', 
+		effect: 'fade', 
+		fadeInSpeed: 100,
+		fadeOutSpeed: 100,
+		delay:300,
+		layout: '<span/>',
+		events: {
+			def: 'mouseover, mouseleave'
+		}
+	}); 
+	
+	$('.collapse_tab').click(function(){
+		var content = $(this).parent().find('.collapse_content');
+		content.slideToggle(200);
+	});
+	
+	 // Validate confidence field on submit
+	$('#form1').submit(function(){
+		$('.missing').removeClass('missing');
+		// check for required elements
+		var required = $('.required').filter('[value=""]');
+		if (required.length > 0) {
+			required.addClass('missing').filter(':first').focus();
+			var name = required.attr('name');
+			name = name.replace('_', ' ');
+			alert("Please enter information on "+name+".");
+			return false;
+		} 
+		// enforce privacy checkbox, if required
+		if ($('.required').filter('#privacyaccept').length > 0) {
+			if ($('#privacyaccept:checked').length == 0) {
+				$('#privacyaccept').focus().parent().addClass('missing');
+				alert("Please review and accept our privacy policy.");
+				return false;
+			}
+		}
+	});
+	
+	// specify your own profession
+	$('#profession').change(function(){
+		if ($(this).val() == 1) { 
+			$('#other_profession').show(200).addClass('required').focus();
+		}
+	});
+	
+	// require privacy policy if newsletter is selected
+	$('#register_newsletter').click(function(){
+		$('.privacy_rows').toggle(200);
+		$('#privacyaccept').toggleClass('required');
+	});
+
+	// show the subjects list
+	$('#subject_canned').change(function(){
+		// $(this).addClass('pulldown_width_100').removeClass('pulldown_width_250');
+		var subject_text = '[' + $(this).val() + '] ' + $(this).find('option:selected').text();
+		$('#subject').val(subject_text);
+		// for problems, add troubleshooting diagnostics info
+		if ($(this).val() == 26) {
+			$('#content').val($('#troubleshoot').val());
+		}
+		if ($(this).val() == 29) { 
+			$('#content').val("Please remove me from your mailing list. \r\rI'm unsubscribing because...");
+			// $('#content_row').hide(200);
+			$('.hide_for_unsubscribe').html(''); // completely delete rows
+		}
+	});
+	
+	// The newsletter is opt-out
+	$('#register_newsletter').attr('checked', false).click();
+	
+	// select a default subject, if a context was selected
+	<?php if ($default_subject > 0) { ?>
+		$('#subject_canned').val(<?php echo $default_subject; ?>).change();
+	<?php } ?>
+	
+});
+
+</script>
+
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+    <?php 
+		$link_download = "";
+		$allowed_userkeys = array( 1000001019 ); // Jennifer
+		if (in_array($userkey, $allowed_userkeys) OR WA_Auth_RulePasses("Logged in as admin")) { 
+			$link_download = " href='contacts_download.php' "; 
+		} ?>
+    
+<!--
+<a class="hotspot"><img src="_images/employees/theo_dawson.jpg" width="9%" class="max-width-125" alt="Theo Dawson" /></a> <span class="tooltip">Theo Dawson, Ph.D., Founder, Executive Director (rigorously pragmatic idealist&mdash;virtuoso maker of lemonade) </span>
+	<a class="hotspot"><img src="_images/employees/zak_stein.jpg" width="9%" class="max-width-125"alt="Zak Stein" /></a> <span class="tooltip">Zak Stein, Ed.M., Ed.D. candidate, Co-founder, Senior Outreach Liason, philosopher of education (Since when do philosophers have to do paperwork?)</span>
+	<a class="hotspot"><img src="_images/employees/amy_briggs.jpg" width="9%" class="max-width-125" alt="Amy Briggs" /></a> <span class="tooltip">Amy Briggs, BA, Co-founder, Senior Project Manager (chief multitasker and self-proclaimed mother hen)</span>
+	<a class="hotspot"><img src="_images/employees/topher_hunt.jpg" width="9%" class="max-width-125" alt="Topher Hunt" /></a> <span class="tooltip">Topher Hunt, BA, Senior Web Developer (our boy genius&mdash;and the Lectalite most likely to be seen with a milk moustache)</span>
+	<a class="hotspot"><img src="_images/employees/carol_bennet_dessereau.jpg" width="9%" class="max-width-125" alt="Carol Bennet Dessereau" /></a> <span class="tooltip">Carol Bennet Dessereau, Ed.M., Lectical Analyst, DiscoTest Coding Manager (least likely to complain) </span> 
+	<a class="hotspot"><img src="_images/employees/clint_fuhs.jpg" width="9%" class="max-width-125" alt="Clint Fuhs" /></a> <span class="tooltip">Clint Fuhs, MA, Lectical Analyst (top cheerleader&mdash;and least likely to equivocate)</span>
+	<a class="hotspot"><img src="_images/employees/zachary_van_rossum.jpg" width="9%" class="max-width-125" alt="Zachary Van Rossum" /></a> <span class="tooltip">Zachary Van Rossum, Ph.D., Lectical Analyst, DTS Coding Manager, Outreach Liason (best listener&mdash;and first Ph.D.!)</span>
+    <a class="hotspot" <?php echo $link_download; ?>><img src="_images/employees/jennifer_worden.jpg" width="9%" class="max-width-125" alt="Jennifer Worden" /></a> <span class="tooltip">Jennifer Worden, Ed.M., Ed.D. candidate, Outreach Coordinator (fears no challenge)</span> 
+	<a class="hotspot"><img src="_images/employees/lauren_tenney.jpg" width="9%" class="max-width-125" alt="Lauren Tenney" /></a> <span class="tooltip">Lauren Tenney, MA, Outreach Liason, Junior Analyst (wordsmithing strategist and unofficial PR rep)</span> 
+    <a class="hotspot"><img src="_images/employees/bryan_flewelling.jpg" width="9%" class="max-width-125" alt="Bryan Flewelling" /></a> <span class="tooltip">Bryan Flewelling, MA Outreach Liason, Junior Analyst (Lectica’s Pied Piper and resident epicurean)</span>       
+-->
+		
+			<?php if ($type <> "") { echo $boilerplate['contact_us_'.$type]; }
+				else { echo $boilerplate['contact_us_default']; } ?>
+      <form id="form1" method="post" action="">
+        <table id="contact_table">
+        <tr>
+          <td width="150" align='right'><label for="firstname">First name</label></td>
+          <td>
+            <input name="firstname" type="text" class='required' id="firstname" 
+            	value="<?php echo $registrant['firstname']; ?>" size="20" />
+          </td>
+				</tr>
+        <tr>
+          <td width="150" align='right'><label for="lastname">Last name</label></td>
+          <td>
+            <input name="lastname" type="text" class='required' id="lastname" 
+            	value="<?php echo $registrant['lastname']; ?>" size="20" />
+          </td>
+				</tr>
+        <tr>
+          <td width="150" align='right'><label for="email">Email</label></td>
+          <td>
+          	<input type="text" name="email" class='required' id="email" 
+            	value="<?php echo $registrant['email']; ?>" size="20" />
+          </td>
+				</tr>
+        <tr class='hide_for_unsubscribe'>
+          <td width="150"><label for="profession">
+            <div align="right">Profession</div>
+          </label></td>
+          <td>
+            <select name="profession" id="profession" class='required pulldown_width_150'>
+              <option value="">- select one -</option>
+              <?php while ($row = mysql_fetch_assoc($rsProfessions)) { ?>
+                <option value="<?php echo $row['professionkey']; ?>"><?php echo $row['profession']; ?></option>
+              <?php } ?>
+            </select>
+          </td>
+        </tr>
+        <tr class='hide_for_unsubscribe'>
+          <td width="150" align="right"></td>
+          <td>
+            <input type="text" name="other_profession" id='other_profession' size="30" style='display: none' />
+          </td>
+        </tr>
+        <tr class='hide_for_unsubscribe'>
+          <td><div align="right">Country</div></td>
+          <td>
+            <select name="country" id="country" class='pulldown_width_150'>
+              <option value="">- select one -</option>
+              <option value="United States">United States</option>
+              <?php while ($row = mysql_fetch_assoc($rsCountries)) { ?>
+                <option value="<?php echo $row['name']; ?>"><?php echo $row['name']; ?></option>
+              <?php } ?>
+            </select>
+          </td>
+        </tr>
+        <tr <?php if ($type <> '') { ?>style='display:none'<?php } ?>>
+          <td width="150" align='right'><label for="subject">Topic</label></td>
+          <td>
+            <select id="subject_canned" name="topic" class='required pulldown_width_400'>
+              <option value="">- select a topic -</option>
+              <?php while ($row = mysql_fetch_assoc($rsSubjects)) { ?>
+                <option value="<?php echo $row['key']; ?>"><?php echo $row['subject']; ?></option>
+              <?php } ?>
+            </select>
+            <input name="subject" type="hidden" id="subject" class='required' 
+            	size="60" value="" />
+          </td>
+				</tr>
+        <tr id='content_row'>
+          <td width="150" align='right'><label for="content">Message</label></td>
+          <td>
+          	<input type='hidden' id='troubleshoot' value="<?php echo $troubleshoot; ?>" />
+            <textarea name="content" id="content" class="required textarea-140-400"></textarea>
+          </td>
+				</tr>
+        
+        <tr class='hide_for_unsubscribe'>
+          <td align="right"></td>
+          <td>
+            <input type="checkbox" name="register_newsletter" id='register_newsletter' value="1" />
+            I'd like join Lectica's mailing list</td>
+        </tr>
+        <tr style='display:none' class='privacy_rows hide_for_unsubscribe'>
+          <td width="150" align='right'></td>
+          <td colspan="1"><div id="privacy_div"><?php echo $privacy; ?></div></td>
+        </tr>
+        <tr style='display:none' class='privacy_rows hide_for_unsubscribe'>
+          <td></td>
+          <td>
+            <input type="checkbox" class='' name="privacyaccept" id="privacyaccept" value="1" />
+            I accept the privacy policy.</td>
+        </tr>
+        <tr style='display:none' class='privacy_rows hide_for_unsubscribe'>
+          <td></td>
+          <td class="teal">To help ensure that you receive our response to your inquiry, 
+       	  please add &quot;@lectica.org&quot; to your address book before submitting.</td>
+        </tr>
+        
+        <tr>
+          <td colspan="2">
+            <p align="left">&nbsp;</p>
+            <p align="right"><input type="submit" name="submit" id="submit" value="SUBMIT" /></p>
+          </td>
+        </tr>
+    </table>
+  </form>
+
+      <p>&nbsp;</p>
+      <p>&nbsp;</p>
+	  <p>&nbsp;</p>
+
+  <!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+		<!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" -->
+		<!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsEmailaddresses);
+
+mysql_free_result($Registrant);
+?>

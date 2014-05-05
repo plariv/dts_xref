@@ -1,0 +1,45 @@
+<?php
+  $MailAttachments = "";
+  $MailBCC         = "";
+  $MailCC          = "";
+  $MailTo          = "";
+  $MailBodyFormat  = "";
+  $MailBody        = "";
+  $MailImportance  = "";
+  $MailFrom        = "Service at DTS|WA|".$row_rsLSUA['scored']  ."";
+  $MailSubject     = "LSUA# ".$row_rsLSUA['lsuakey']  ."";
+  $_SERVER["QUERY_STRING"] = "";
+
+  //Global Variables
+
+  $WA_MailObject = WAUE_Definition("mail.lectica.org","25","service@lectica.org","Developmental Testing Service","","");
+
+  if ($RecipientEmail)     {
+    $WA_MailObject = WAUE_AddRecipient($WA_MailObject,$RecipientEmail);
+  }
+  else      {
+    //To Entries
+  }
+
+  //Attachment Entries
+
+  //BCC Entries
+
+  //CC Entries
+
+  //Body Format
+  $WA_MailObject = WAUE_BodyFormat($WA_MailObject,0);
+
+  //Set Importance
+  $WA_MailObject = WAUE_SetImportance($WA_MailObject,"3");
+
+  //Start Mail Body
+$MailBody = $MailBody . "LSUA ";
+$MailBody = $MailBody .  $row_rsLSUA['lsuakey'];
+$MailBody = $MailBody . " has been scored.";
+  //End Mail Body
+
+  $WA_MailObject = WAUE_SendMail($WA_MailObject,$MailAttachments,$MailBCC,$MailCC,$MailTo,$MailImportance,$MailFrom,$MailSubject,$MailBody);
+
+  $WA_MailObject = null;
+?>

@@ -1,0 +1,293 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? "'" . doubleval($theValue) . "'" : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$maxRows_rsCpsw = 40;
+$pageNum_rsCpsw = 0;
+if (isset($_GET['pagenum_rscpsw'])) {
+  $pageNum_rsCpsw = $_GET['pagenum_rscpsw'];
+}
+$startRow_rsCpsw = $pageNum_rsCpsw * $maxRows_rsCpsw;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCpsw = "SELECT userkey, `date`, cscore, age, edu, profession FROM creativepotential ORDER BY creativitykey desc";
+$query_limit_rsCpsw = sprintf("%s limit %d, %d", $query_rsCpsw, $startRow_rsCpsw, $maxRows_rsCpsw);
+$rsCpsw = mysql_query($query_limit_rsCpsw, $Assessment) or die(mysql_error());
+$row_rsCpsw = mysql_fetch_assoc($rsCpsw);
+
+if (isset($_GET['totalrows_rscpsw'])) {
+  $totalRows_rsCpsw = $_GET['totalrows_rscpsw'];
+} else {
+  $all_rsCpsw = mysql_query($query_rsCpsw);
+  $totalRows_rsCpsw = mysql_num_rows($all_rsCpsw);
+}
+$totalPages_rsCpsw = ceil($totalRows_rsCpsw/$maxRows_rsCpsw)-1;
+
+$queryString_rsCpsw = "";
+if (!empty($_SERVER['query_string'])) {
+  $params = explode("&", $_SERVER['query_string']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsCpsw") == false && 
+        stristr($param, "totalRows_rsCpsw") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsCpsw = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsCpsw = sprintf("&totalrows_rscpsw=%d%s", $totalRows_rsCpsw, $queryString_rsCpsw);
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template2.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: </title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" --><!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	background-image: url();
+	background-repeat: repeat;
+	background-color: #EDEEE9;
+}
+#apDiv1 {
+	position:absolute;
+	left:0;
+	top:0px;
+	width:780px;
+	height:110;
+	z-index:15;
+}
+#apDiv2 {
+	position:absolute;
+	left:43px;
+	top:122px;
+	width:780px;
+	height:17px;
+	z-index:4;
+}
+#apDiv3 {
+	position:absolute;
+	left:168px;
+	top:295px;
+	width:539px;
+	height:17px;
+	z-index:8;
+}
+#apDiv4 {
+	position:absolute;
+	left:704px;
+	top:122px;
+	width:42px;
+	height:17px;
+	z-index:3;
+}
+#apDiv5 {
+	position:absolute;
+	left:122px;
+	top:113px;
+	width:753px;
+	z-index:5;
+}
+#apDiv6 {
+	position:absolute;
+	left:260px;
+	top:135px;
+	width:522px;
+	z-index:6;
+}
+#apDiv7 {
+	position:absolute;
+	left:127px;
+	top:941px;
+	width:625px;
+	height:15px;
+	z-index:7;
+}
+#apDiv8 {
+	position:absolute;
+	left:83px;
+	top:257px;
+	width:147px;
+	height:269px;
+	z-index:8;
+}
+#apDiv9 {
+	position:absolute;
+	left:83px;
+	top:586px;
+	width:146px;
+	z-index:9;
+	background-color: #FFFFFF;
+	height: 233px;
+}
+#apDiv10 {
+	position:absolute;
+	left:83px;
+	top:134px;
+	width:146px;
+	height:107px;
+	z-index:10;
+}
+#apDiv11 {
+	position:absolute;
+	left:84px;
+	top:926px;
+	width:145px;
+	height:45px;
+	z-index:11;
+}
+#apDiv12 {
+	position:absolute;
+	left:83px;
+	top:836px;
+	width:146px;
+	height:54px;
+	z-index:12;
+}
+-->
+</style>
+<link href="../css/styles1.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+<!--
+#apDiv13 {
+	position:absolute;
+	left:82px;
+	top:806px;
+	width:147px;
+	height:3px;
+	z-index:13;
+	background-color: #627ECF;
+}
+.style11 {
+	font-size: 10px
+}
+.style4 {	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10px;
+}
+#apDiv16 {	position:absolute;
+	left:4px;
+	top:3px;
+	width:30px;
+	height:28px;
+	z-index:14;
+}
+#apDiv17 {
+	position:absolute;
+	left:647px;
+	top:62px;
+	width:232px;
+	height:21px;
+	z-index:16;
+	padding-top: 4px;
+}
+-->
+</style>
+<script src="../SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+#apDiv14 {
+	position:absolute;
+	left:315px;
+	top:68px;
+	width:351px;
+	height:17px;
+	z-index:17;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="apDiv1"><img src="../images/dtsskinold/DTSheader1.gif" alt="DTS masthead" width="1000" height="66" /></div>
+<div id="apDiv5"><!-- InstanceBeginEditable name="main" -->
+      <td valign="top"><h1>CPS-W RESULTS</h1>
+        <p><a href="../creativity/c-download.php">Download</a></p>
+        <p class="copyright"><a href="<?php printf("%s?pageNum_rsCpsw=%d%s", $currentPage, 0, $queryString_rsCpsw); ?>">First</a> | <a href="<?php printf("%s?pageNum_rsCpsw=%d%s", $currentPage, max(0, $pageNum_rsCpsw - 1), $queryString_rsCpsw); ?>">Previous</a> | <a href="<?php printf("%s?pageNum_rsCpsw=%d%s", $currentPage, min($totalPages_rsCpsw, $pageNum_rsCpsw + 1), $queryString_rsCpsw); ?>">Next</a> | <a href="<?php printf("%s?pageNum_rsCpsw=%d%s", $currentPage, $totalPages_rsCpsw, $queryString_rsCpsw); ?>">Last</a></p>
+        <p class="copyright">From <?php echo ($startRow_rsCpsw + 1) ?> to <?php echo min($startRow_rsCpsw + $maxRows_rsCpsw, $totalRows_rsCpsw) ?> of <?php echo $totalRows_rsCpsw ?></p>
+        <table width="100%">
+          <tr>
+            <td width="18%" class="tablehead"><div align="center">User No</div></td>
+            <td width="130" class="tablehead"><div align="center">Date</div></td>
+            <td width="50" class="tablehead"><div align="center">Score</div></td>
+            <td width="50" class="tablehead"><div align="center">Age</div></td>
+            <td width="50" class="tablehead"><div align="center">Edu</div></td>
+            <td width="220" class="tablehead"><div align="center">Profession</div></td>
+          </tr>
+          <?php do { ?>
+            <tr>
+              <td><div align="center"><?php echo $row_rsCpsw['userkey']; ?></div></td>
+              <td width="130"><?php echo $row_rsCpsw['date']; ?></td>
+              <td width="50"><div align="center"><?php echo $row_rsCpsw['cscore']; ?></div></td>
+              <td width="50"><div align="center"><?php echo $row_rsCpsw['age']; ?></div></td>
+              <td width="50"><div align="center"><?php echo $row_rsCpsw['edu']; ?></div></td>
+              <td width="220"><?php echo $row_rsCpsw['profession']; ?></td>
+            </tr>
+            <?php } while ($row_rsCpsw = mysql_fetch_assoc($rsCpsw)); ?>
+        </table>
+      <p>&nbsp;</p></td>
+      <!-- InstanceEndEditable -->
+  <p>&nbsp;</p>
+  <div align="center" class="copyright"> </div>
+</div>
+<div id="apDiv17">
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="../security/logIn.php">log in</a></li>
+    <li><a href="../index.html">home</a></li>
+    <li><a href="../contactus.php">contact</a></li>
+  </ul>
+</div>
+<div id="apDiv14">
+<p class="copyright">©2010, Developmental Testing Service, INC. All rights reserved.
+    </p>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"../SpryAssets/SpryMenuBarDownHover.gif", imgRight:"../SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsCpsw);
+?>

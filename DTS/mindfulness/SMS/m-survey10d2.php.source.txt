@@ -1,0 +1,96 @@
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsMindfulness = "-1";
+if (isset($_GET['mindfulkey'])) {
+  $colname_rsMindfulness = (get_magic_quotes_gpc()) ? $_GET['mindfulkey'] : addslashes($_GET['mindfulkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulness = sprintf("SELECT * FROM mindfulness WHERE mindfulkey = %s", GetSQLValueString($colname_rsMindfulness, "int"));
+$rsMindfulness = mysql_query($query_rsMindfulness, $Assessment) or die(mysql_error());
+$row_rsMindfulness = mysql_fetch_assoc($rsMindfulness);
+$totalRows_rsMindfulness = mysql_num_rows($rsMindfulness);
+
+
+// calculate total
+$sms10_sum = 0;
+$sms10_sum += $row_rsMindfulness['sms09transanger'];
+$sms10_sum += $row_rsMindfulness['sms09seethoughts'];
+$sms10_sum += $row_rsMindfulness['sms09joy'];
+$sms10_sum += $row_rsMindfulness['sms09examine'];
+$sms10_sum += $row_rsMindfulness['sms09lifeinsight'];
+$sms10_sum += $row_rsMindfulness['sms09control'];
+$sms10_sum += $row_rsMindfulness['sms09observe1'];
+$sms10_sum += $row_rsMindfulness['sms09attention1'];
+$sms10_sum += $row_rsMindfulness['sms09fresh'];
+$sms10_sum += $row_rsMindfulness['sms09peace'];
+$sms10_sum += $row_rsMindfulness['sms09hurt'];
+$sms10_sum += $row_rsMindfulness['sms09nojudgment'];
+$sms10_sum += $row_rsMindfulness['sms09body'];
+$sms10_sum += $row_rsMindfulness['sms09listen'];
+$sms10_sum += $row_rsMindfulness['sms09stress'];
+$sms10_sum += $row_rsMindfulness['sms09observe2'];
+
+// calc average
+
+$sms10_mean = $sms10_sum / 16;
+
+
+
+$updateSQL = sprintf("UPDATE mindfulness SET sms10mean=%s, sms10sum=%s WHERE mindfulkey=%s",
+                       GetSQLValueString($sms10_mean, "double"),
+                       GetSQLValueString($sms10_sum, "int"),
+                       GetSQLValueString($row_rsMindfulness['mindfulkey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "m-survey10e.php?";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+
+
+
+  header(sprintf("Location: %s", $updateGoTo));
+
+?>
+<?php
+mysql_free_result($rsMindfulness);
+?>

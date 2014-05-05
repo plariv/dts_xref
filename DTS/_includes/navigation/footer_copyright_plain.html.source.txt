@@ -1,0 +1,5 @@
+<div id="footer span12">
+      <div class="container-fluid">
+        <p class="muted credit"><small>©2010-2014 Lectica, Inc. All rights reserved.</small> Lectica is a tax exempt 501(c)(3) organization.</p>
+      </div> 
+</div> 

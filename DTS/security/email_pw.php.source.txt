@@ -1,0 +1,265 @@
+<?php 
+require_once('../Connections/Assessment.php');
+require_once( "../WA_SecurityAssist/Helper_PHP.php" );
+include_once('../includes/dts_functions.php');
+mysql_select_db($database_Assessment, $Assessment);
+
+
+
+
+if (isset($_POST["Send"])) {
+
+	$query_rsEmailAddress = sprintf("SELECT userkey, email, user_name, password 
+	FROM registrants WHERE email = %s", 
+			SQLstr($_POST["emailAddress"], "text"));
+	$rsEmailAddress = mysql_query($query_rsEmailAddress, $Assessment) or die("We encountered an error when trying to access your account information. We apologize for the inconvenience. Please contact us for help using our 'contact us' link. ".mysql_error()." The query: ".$query_rsEmailAddress);
+	$row_rsEmailAddress = mysql_fetch_assoc($rsEmailAddress);
+	$totalRows_rsEmailAddress = mysql_num_rows($rsEmailAddress);
+	
+	// If that email address wasn't found, show rejection message.
+	if ($totalRows_rsEmailAddress == 0) {
+		header("Location: email_pw.php?message=rejected");
+		exit();
+	}
+	
+	if ($totalRows_rsEmailAddress == 1) {
+		
+		// 									Generate a random password
+		
+		$pw = randomPassword();
+		if (!$pw) { // if the password generator failed or found a duplicate, the function will return FALSE.
+			header("Location: email_pw.php?message=rejected");
+			exit();
+		}
+		
+		// 									Set the user's password to this new one
+		
+		// and set the "reset" column to '1', to force the user to change their password on next login.
+		$updateSQL = sprintf("UPDATE registrants SET password=%s, reset=1 WHERE userkey=%s",
+					 SQLstr($pw, "text"),
+					 SQLstr($row_rsEmailAddress['userkey'], "int"));
+		$Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+		
+		// 									Email the user their new login info
+		
+		$email_to = $row_rsEmailAddress['email'];
+		$email_from = "service@lectica.org";
+		$email_cc = "service@lectica.org";
+		
+		$subject = ""; 
+		if (strpos($email_to, "@edmonton.ca")) { $subject .= "City of Edmonton LEI: "; }
+		$subject .= "Your login information for www.lectica.org";
+		
+		$body = "Thank you for using our 'Forgot Password' form. Your password has been reset to ensure your privacy. Please log in to our website using the following username and password. When you log in, you will be required to choose a new password.\n
+		Your username: ".$row_rsEmailAddress['user_name']."
+		Your password: ".$pw."\n
+		The link to our login page: https://dts.lectica.org/security/logIn.php";
+		sendEmail($email_to, $email_from, $email_cc, $subject, $body);
+		
+		// 									Send the user to the success page
+		
+		header("Location: email_pw.php?message=accepted");
+		exit();
+		
+	}
+}	// END the section for $_POST update (for IF the reset form has been submitted).
+
+
+
+$query_rsEmailAddress = "SELECT * FROM emailaddresses WHERE emailkey = 4";
+$rsEmailAddress = mysql_query($query_rsEmailAddress, $Assessment) or die(mysql_error());
+$row_rsEmailAddress = mysql_fetch_assoc($rsEmailAddress);
+$totalRows_rsEmailAddress = mysql_num_rows($rsEmailAddress);
+
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Email Password</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<link href="../WA_SecurityAssist/styles/Refined_Pacifica.css" rel="stylesheet" type="text/css" />
+<link href="../WA_SecurityAssist/styles/Verdana.css" rel="stylesheet" type="text/css" />
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+      <h1>FORGOT PASSWORD</h1>
+      <p>If you have forgotten your password or are unable to log in, enter the email address that you used when you registered on this site. We will reset your password and email you a temporary password that you can use to log in.</p>
+    <?php 
+		// Messages for the user
+		$message = "";
+		if (isset($_GET['message'])) { $message = $_GET['message']; }
+    if ($message == "") { ?>
+      <div class="boxred">Before you retrieve a forgotten password or user name, please make sure that our email address is in your address book. <a href="../about/spam_undo.html">Click here</a> to learn how.
+   	</div>
+    <?php }
+		if ($message == "accepted") { ?>
+    	<div class="boxgreen">
+    	  <strong>Your login information has been sent to your email address</strong>. Please check your email. <a href="logIn.php">Click here</a> to log in.<br />
+    	If you do not receive an email message with your login information, please <a href="../contactus.php">click here</a> to contact us for help.</div>
+    <?php } 
+		if ($message == "rejected") { ?>
+    	<div class="boxred"><strong>Sorry</strong><br />
+      <strong>The email address you provided was not in our system</strong>. Please enter another email address below to try again.<br />
+    	<a href="../contactus.php">contact us for help</a></div>
+    <?php } ?>
+    
+    
+  <?php if ($message <> "accepted") { ?> 
+   
+  <div id="ForgotPWContainer">
+    <form action="email_pw.php" method="post" name="WAATKForgotPWForm" id="WAATKForgotPWForm">
+      <table class="WAATKDataTable" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <th>Email</th>
+          <td><span id="sprytextfield1">
+            <input name="emailAddress" type="text" value="" size="34" />
+            <span class="textfieldRequiredMsg">A value is required.</span></span></td>
+          </tr>
+        </table>
+      <div class="WAATKButtonRow">
+        <input type="Submit" name="Send" id="Send" value="SEND" />
+        </div>
+      </form>
+  </div>
+  
+  <?php } ?>
+  
+  <p>&nbsp;</p>
+  
+  <script type="text/javascript">
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "email", {validateOn:["blur", "change"], useCharacterMasking:true});
+  </script>
+  <!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+  <!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" --><!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsEmailAddress);
+?>

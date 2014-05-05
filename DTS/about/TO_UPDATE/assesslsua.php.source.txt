@@ -1,0 +1,333 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUArelationships = "SELECT aspectkey, aspect FROM LSUAaspects";
+$rsLSUArelationships = mysql_query($query_rsLSUArelationships, $Assessment) or die(mysql_error());
+$row_rsLSUArelationships = mysql_fetch_assoc($rsLSUArelationships);
+$totalRows_rsLSUArelationships = mysql_num_rows($rsLSUArelationships);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelsua1.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LSUA</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryAccordion.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryAccordion.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	background-image: url(/images/skin/LSUAcontainer1.jpg);
+	border: 1px solid #767A76;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LSUAheader1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 596px;
+	height: 19px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #sidebar1 {
+	float: right; /* since this element is floated, a width must be given */
+	width: 157px;
+	margin: 0px;
+	padding: 0px;
+}
+
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 158px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/LSUAfooter1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="sidebar1">
+    <!-- InstanceBeginEditable name="graphic" --><img src="../images/corner/blue.jpg" width="157" height="117" alt="BLUE" /><!-- InstanceEndEditable -->
+    <!-- end #sidebar1 -->
+    <br />
+    <br />
+    <br />
+  <!-- InstanceBeginEditable name="sidebar2" -->
+  <div align="center">
+    <table>
+      <tr>
+        <td><a href="assessldma.php"><img src="../images/logos/LDMA.gif" width="82" height="32" alt="ldma" /></a></td>
+        </tr>
+      <tr>
+        <td><a href="assesslima.php"><img src="../images/logos/LIMA.gif" width="82" height="32" alt="lsua" /></a></td>
+        </tr>
+      <tr>
+        <td><a href="assessllra.php"><img src="../images/logos/LLRA.gif" width="82" height="32" alt="lera" /></a></td>
+        </tr>
+      <tr>
+        <td><a href="assesslsua.php"><img src="../images/logos/LSUA.gif" width="82" height="32" alt="lrja" /></a></td>
+        </tr>
+      <tr>
+        <td><a href="assesslrja.php"><img src="../images/logos/LRJA.gif" width="82" height="32" alt="llra" /></a></td>
+        </tr>
+      <tr>
+        <td><a href="assesslera.php"><img src="../images/logos/LERA.gif" width="82" height="32" alt="lima" /></a></td>
+        </tr>
+    </table>
+  </div>
+  <p align="center"><br />
+  <!-- InstanceEndEditable --><br />
+  <!-- InstanceBeginEditable name="sidebar3" -->
+  <p>&nbsp;</p><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>ABOUT THE LECTICAL SELF UNDERSTANDING ASSESSMENT*<br />
+  </h1>
+<p>The LSUA is an assessment of self in relationships. It examines how individuals think about the self in a range of relationships, and how these relate to their current self-conception and the self they would like to be.</p>
+  <h3>General information</h3>
+  <p><em>or adolescents (12+) and adults</em></p>
+  <p>The LSUA asks  test-takers to write short essays about four self-chosen roles/relationships. It then asks them to discuss their conceptions of their current self and ideal self in light of what they have written about these relationships. </p>
+  <p>The LSUA can be custiomized by specifying the roles and relationships test-takers will write about. For example, if you are a business consultant or coach, you could ask clients to write about themselves in their roles as leaders, business partners, peers, and employees. <a href="../contactus.php">Contact us</a> if you are interested in using a customized version of the LERA.</p>
+  <p>The LSUA must be completed in a single sitting. Please ask clients to set aside at least an hour to complete the assessment. They should also carefully read the assessment instructions before they begin writing to ensure that they receive their best score and don't accidentally lose their work due to a lost internet connection.</p>
+  <h3>List of relationships</h3>
+  <p>Your clients will be asked to choose 4 relationships to discuss, from the following list. You can specify which relationships you would like them to discuss or allow them to choose on their own. If you would like to add relationships to the list, <a href="../contactus.php">contact us</a>.</p>
+  <table border="0">
+    <tr>
+      <td class="tablehead">Number</td>
+      <td class="tablehead">aspect</td>
+    </tr>
+    <?php do { ?>
+    <tr>
+      <td><div align="center"><?php echo $row_rsLSUArelationships['aspectkey']; ?></div></td>
+      <td><?php echo $row_rsLSUArelationships['aspect']; ?></td>
+    </tr>
+    <?php } while ($row_rsLSUArelationships = mysql_fetch_assoc($rsLSUArelationships)); ?>
+  </table>
+  <h3>Check it out</h3>
+  <p>You can examine the LSUA by logging on to the DTS site and choosing <a href="../landing.php">select an assessment</a>, under the &quot;take an assessment&quot; item in the main menu on the left. You will need to enter information into the starred fields before you will be allowed to move from one page of the assessment to the next. Feel free to cut and paste blocks of random text into the essay fields.</p>
+  <h3>Reliability and validity</h3>
+  <p>The LSUA, like all Lectical Assessments, reliably distinguishes 8–10 adult developmental phases, where each phase represents 1/4 of a developmental level. All Lectical Assessments have very similar levels of reliability, because they are scored with the same developmental assessment system, the <a href="../PDF/LAS.pdf">LAS</a>.</p>
+  <p>Lectical assessments address two broad forms of validity: <strong><em>construct</em></strong> validity and <strong><em>ecological</em></strong> validity. First, like all Lectical Assessments, the LSUA is scored with the LAS, which is (1) based on a strong theory of development called <a href="http://www.gse.harvard.edu/~ddl/publication.htm">Dynamic Skill Theory</a>, and (2) has been submitted to a number of rigorous tests of its ability to capture the developmental construct described in that theory. These tests have shown that the LAS does a very good job capturing this dimension. To view the evidence, see the refereed papers under the articles tab on the <a href="../_about/articles.php">articles</a> page and articles by our colleagues on the self-understanding <a href="referencesself.html">references</a> page.</p>
+  <p>Second, the ecological validity of the LSUA is apparent in the relevance of (1)  its content—its questions are about  the self in relationships; (2) the skills required to complete it—skills for perspective-taking, clear thinking, communicating, and self-reflection; and (3) the scores and feedback provided in its reports.</p>
+  <p>To learn more about <a href="http://theodawson.net/?tag=statistical-reliability">reliability</a> and <a href="http://theodawson.net/?tag=validity">validity</a>, see Dr. Dawson's <a href="http://theodawson.net/">blog</a>.</p>
+  <h3>Reports</h3>
+  <p>Lectical assessments are distinguished by the accuracy of LAS scores and the quality of our feedback. Before we launch a Lectical Assessment, we carefully review the relevant research literature, then study how the skills and concepts targeted by the assessment develop over time, using a research methodology called <a href="../_about/devmaieutics.php">developmental maieutics</a>. The approach allows us to describe what  targeted skills and concepts &quot;look like&quot; in each developmental phase, and to craft feedback and learning suggestions that are specific to each phase of performance. </p>
+  <p>In addition to general feedback related to the phase of a given performance, each LSUA report includes personal feedback, including comments on strengths and areas for growth and suggestions for learning and development.</p>
+  <p>Reports are generally delivered within 5–7 business days. We send an email notification each time an assessment is finalized. </p>
+  <p><a href="http://devtestservice.org/bulkcustomers/guestselectreport.php?bulkcustomerkey=1000000090">View  sample reports.</a></p>
+  <h3>Resellers</h3>
+  <p>If you are interested in using the LSUA in your business or practice, please <a href="../contactus.php">contact us</a> for more information.</p>
+  <p>&nbsp;</p>
+  <p><em>*It is best to take this assessment under the guidance of a mentor, teacher, counselor, or physician who is registered with DTS.</em></p>
+  <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLSUArelationships);
+?>

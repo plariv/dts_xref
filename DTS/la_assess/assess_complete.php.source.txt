@@ -1,0 +1,448 @@
+<?php 
+include_once '../includes/dts_functions.php';
+
+if (!WA_Auth_RulePasses("Logged in to registrants")){ WA_Auth_RestrictAccess("../security/logIn.php"); }
+$userkey = $_SESSION['log_userkey'];
+
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_name = str_replace("_", " ", $_SESSION['instrument_id']);
+$instrument_id_base = str_replace("_JOURNAL", "", $_SESSION['instrument_id']);
+
+$lakey = $_GET['lakey']; 
+$editFormAction = $_SERVER['PHP_SELF']."?".$_SERVER['QUERY_STRING'];
+
+
+
+$sql = sprintf("SELECT d.lakey, d.userkey, d.test_time, d.completed, d.date_completed, 
+		d.test_taker_comments, d.questions, d.resellerkey, d.manlevelkey, 
+		d.probe01, d.probe02, d.probe03, d.probe04, d.probe05, 
+		d.probe06, d.probe07, d.probe08, d.probe09, d.probe10, 
+		d.choicekey01, d.choicekey02, d.choicekey03, 
+		d.choicekey04, d.choicekey05, d.choicekey06, 
+		r.firstname, r.lastname, 
+		rb.firstname AS bulk_firstname, rb.lastname AS bulk_lastname, rb.email AS bulk_email, 
+		d.hours_to_complete, d.minutes_to_complete, d.best_effort, d.followed_recom, a.date_release 
+	FROM la_data d 
+		JOIN registrants r ON d.userkey = r.userkey 
+		LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+		LEFT JOIN la_assignments a ON d.assignmentkey = a.assignmentkey
+	WHERE d.lakey = %s ", 
+		SQLstr($lakey, "int"));
+$rsLaData = mysql_query($sql) or die(mysql_error());
+$data = mysql_fetch_assoc($rsLaData);
+$test_time = $data['test_time'];
+$resellerkey = $data['resellerkey'];
+
+// menu options for best_effort selection
+$sql = "SELECT * FROM la_menus WHERE type = 'assess' AND menu = 'agree_general' ";
+$rsBestEffort = mysql_query($sql) or die(mysql_error());
+
+// menu options for followed_recom selection ("I have followed the learning recommendations")
+$sql = "SELECT * FROM la_menus 
+	WHERE type = 'assess' AND menu = 'followed_learning_recommendations' ";
+$rsFollowedRec = mysql_query($sql) or die(mysql_error());
+
+// any boilerplate (instructions etc.)
+$rsLaBoilerplate = mysql_query("SELECT b.* 
+	FROM la_boilerplate b WHERE type = 'assess' ") 
+	or die("rsLaBoilerplate: ".mysql_error());
+$boilerplate = array();
+while ($row_rsLaBoilerplate = mysql_fetch_assoc($rsLaBoilerplate)) {
+	$boilerplate[$row_rsLaBoilerplate['name']] = $row_rsLaBoilerplate['la_boilerplate_text'];
+}
+
+
+
+
+
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  
+	$word_count = 0;
+	for ($p = '01'; $p <= 10; $p = zeropad($p+1, 2)) { 
+		$word_count += str_word_count($data['probe'.$p]); 
+	}
+	
+	$timetocomplete_clause = "";
+	if (isset($_GET['starttime']) AND $_GET['starttime'] > 0) {
+		$timetocomplete_clause = " time_to_complete = ".(time()-$_GET['starttime']).", ";
+	}
+	
+	$updateSQL = sprintf("UPDATE la_data SET {$timetocomplete_clause} 
+			completed = %s, date_completed = NOW(), word_count = %s, 
+			hours_to_complete = %s, minutes_to_complete = %s, 
+			best_effort = %s, followed_recom = %s, test_taker_comments = %s, questions = %s 
+		WHERE lakey = %s", 
+		  SQLstr($_POST['completed'], 'int'), 
+		  SQLstr($word_count, 'int'), 
+		  SQLstr($_POST['hours_to_complete'], 'int'), 
+		  SQLstr($_POST['minutes_to_complete'], 'int'), 
+		  SQLstr($_POST['best_effort'], 'int'), 
+		  (isset($_POST['followed_recom']) ? SQLstr($_POST['followed_recom'], 'int') : 'NULL'), 
+		  SQLstr($_POST['test_taker_comments'], 'text'), 
+		  (isset($_POST['questions']) ? SQLstr($_POST['questions'], 'text') : 'NULL' ),
+		  SQLstr($_POST['lakey'], 'int'));
+  $Result1 = mysql_query($updateSQL) or die(mysql_error());
+  
+	
+
+  // If this LSMA is being completed but has a choicekey missing, something's wrong. Send Topher an email alert. Hopefully this will provide extra clues to why themes might be missing from completed records.
+  if ($instrument_id == 'SMA') {
+  	if ($data['choicekey01'] == 0 OR $data['choicekey02'] == 0 OR $data['choicekey03'] == 0 OR 
+  			$data['choicekey04'] == 0 OR $data['choicekey05'] == 0 OR $data['choicekey06'] == 0) {
+  		sendEmail('topher@lectica.org', 'service@lectica.org', '', 
+  			"Alert: missing themes on LSMA {$lakey}",
+  			"LSMA {$lakey} was just completed, but one or more themes are missing. Please check on it to try to figure out why.");
+  	}
+  }
+
+	/* Send email notification to scorer */
+	
+	// email to = Zak as 1st scorer. CC the dtsservice account.
+	// Journal entries should be emailed to Zachary instead.
+	
+	if ($instrument_id == "LDMA") { $email_to = "zackvr@lectica.org"; } 
+	if (!strpos($instrument_id, "JOURNAL")) { $email_to = "zak@lectica.org"; } 
+	else { $email_to = "zackvr@lectica.org"; }
+	if ($_SESSION['instrument_id'] == "SMA" OR $_SESSION['instrument_id'] == "SMJ") { 
+		$email_to = "";
+	}
+	$email_from = "service@lectica.org";
+	$email_cc = "service@lectica.org";
+	// CC the client, too, when a user completes an assessment.
+	if ($data['bulk_email'] <> "") { $email_cc .= ", ".$data['bulk_email']; }
+	
+	$subject = $_SESSION['log_firstname'] . " " . $_SESSION['log_lastname'] . "'s " .  
+		$_SESSION['instrument_id'] . " is ready to ".
+		(!strpos($_SESSION['instrument_id'], "JOURNAL") ? "score" : "code");
+	
+	$message = $_SESSION['log_firstname']." ".$_SESSION['log_lastname']." has finished taking the " .  
+		$_SESSION['instrument_id'].".\n";
+	$message .= "Lakey: ".$lakey."\r\n";
+	$bulkusername = ($data['bulk_lastname'] <> "") ? 
+		$data['bulk_firstname']." ".$data['bulk_lastname'] : "(none)";
+	$message .= "Bulk customer: ".$bulkusername."\r\n";
+	if ($data['date_release'] <> "") { 
+		$message .= "Assignment will be released on: ".$data['date_release']."\r\n"; 
+	} else { 
+		$message .= "(No assignment found for this record!) "."\r\n";
+	} 
+	$message .= "\n\nLink to scoring page:
+		https://www.devtestservice.org/la_scoring/scoring_performance_select.php ";
+	
+	if ($email_to <> "")  {
+		sendEmail($email_to, $email_from, $email_cc, $subject, $message);
+	}
+	
+	
+	
+	// alert Topher if an Edmonton person completes an assessment with no manlevelkey marked
+	// (DISABLED)
+	if ($data['resellerkey'] == 1000001053 AND $data['manlevelkey'] == '' AND false) {
+		$message = "Test taker {$data['firstname']} {$data['lastname']} just completed lakey {$data['lakey']} with a missing manlevelkey. This shouldn't be possible, please check on it.";
+		sendEmail("topher@lectica.org", "service@lectica.org", "", "Missing manlevelkey caught", $message);
+	}
+	
+	
+	
+	
+	// Decide where to send the test taker now
+	$updateGoTo = "";
+	if ($instrument_id_base == "LSUA" AND !isset($_POST['finish'])) { 
+		$updateGoTo = "../assessment_LSUA/assess__lsua01_optimism.php?lsuakey=".$lakey; 
+	}
+	// ONLY proceed to surveys if the user hasn't opted to skip them.
+	else if ($instrument_id_base == "LERA" AND !isset($_POST['finish'])) { 
+		$updateGoTo = "assess_survey.php?lakey=".$lakey;
+	}
+	else if ($instrument_id == "LDMA" AND $test_time == 1 AND $resellerkey == 1000001053) { 
+		$updateGoTo = "assess_survey.php?lakey={$lakey}&instrument_id=LDMA_360_PRE";
+	}
+	else if ($instrument_id == "LDMA" AND $test_time >= 4 AND $resellerkey == 1000001053) { 
+		$updateGoTo = "assess_survey.php?lakey={$lakey}&instrument_id=LDMA_360";
+	}
+	else if ($instrument_id_base == "SMJ") { 
+		$updateGoTo = "../la_coding/coding_start.php?lakey={$lakey}&coder=1";
+	}
+	else { $updateGoTo = "assess_thanks.php"; }
+	
+  header("Location: ".$updateGoTo); exit();
+}
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Complete the <?php echo ($instrument_id_base == "FOLA" ? "reaction paper" : $instrument_id_name); ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../DTSassets/SpryValidationCheckbox.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextarea.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../DTSassets/SpryMasterDetail.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript">
+<!--
+ //-->
+</script>
+<link href="../DTSassets/SpryValidationCheckbox.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  
+	<?php 
+	$title = "COMPLETE YOUR ".$instrument_id_name;
+	$introtext = "<p>Farewell, ".$_SESSION['log_firstname'].". Yes, this is the final page! 
+	Once you click 'SAVE AND FINISH', you will not be able to change your responses.</p>";
+	
+	if ($instrument_id_base == "LSUA") { 
+		$title = ""; 
+		$introtext = $boilerplate['assess_complete_essays_lsua'];
+	}
+	if ($instrument_id_base == "LERA") { 
+		$title = ""; 
+		$introtext = $boilerplate['assess_complete_essays_lera'];
+	}
+	if ($instrument_id == "LDMA" AND $test_time == 1 AND $resellerkey == 1000001053) { 
+		$title = ""; 
+		$introtext = $boilerplate['assess_complete_essays_ldma_360_pre'];
+	}
+	if ($instrument_id == "LDMA" AND $test_time >= 4 AND $resellerkey == 1000001053) { 
+		$title = ""; 
+		$introtext = $boilerplate['assess_complete_essays_ldma_360'];
+	}
+	if ($instrument_id_base == "FOLA") { 
+		$title = "COMPLETE YOUR REACTION PAPER"; 
+		$instrument_id_name = "reaction paper";
+	}
+	if ($instrument_id_base == "SMJ") { 
+		$title = ""; 
+		$introtext = $boilerplate['assess_complete_essays_smj_coding'];
+	}
+	
+	if ($title <> "") { ?><h1><?php echo $title; ?></h1><?php } 
+  echo $introtext; ?>
+  
+  <form action="<?php echo $editFormAction; ?>" id="form1" name="form1" method="POST">
+    <table>
+    	<tr>
+      	<td>Roughly how long did it take you to complete the <?php echo $instrument_id_name; ?>?
+          <br /></td>
+        <td>
+        	Hours: <span id="sprytextfield1">
+          <input name="hours_to_complete" type="text" id="hours_to_complete" size="5" value="<?php 
+            echo $data['hours_to_complete']; ?>" />
+          <span class="textfieldInvalidFormatMsg">
+            Enter time as hours:minutes, for example 1:35</span></span> 
+            Minutes: <span id="sprytextfield2">
+          <input name="minutes_to_complete" type="text" id="minutes_to_complete" size="5" value="<?php 
+            echo $data['minutes_to_complete']; ?>" />
+          <span class="textfieldInvalidFormatMsg">
+            Enter time as hours:minutes, for example 1:35</span></span>
+        </td>
+      </tr>
+      <tr>
+      	<td>This was my best effort.</td>
+        <td>
+        	<span id="spryselect1">
+        	<select name="best_effort" id="best_effort">
+          	<option value="">- select one -</option>
+            <?php while ($row_rsBestEffort = mysql_fetch_assoc($rsBestEffort)) { ?>
+            	<option value="<?php echo $row_rsBestEffort['menukey']; ?>"
+              	<?php if ($row_rsBestEffort['menukey'] == $data['best_effort']) 
+								{ ?>selected="selected"<?php } ?>
+              	><?php echo $row_rsBestEffort['menu_item_name']; ?></option>
+            <?php } ?>
+      	  </select>
+        	<span class="selectRequiredMsg">Please select an item.</span></span>
+        </td>
+      </tr>
+      
+    <?php 
+		// An "I've cooperated" question for the final, but not first, Clear Impact test time.
+		if ($instrument_id == "LDMA" AND $test_time >= 4 AND $resellerkey == 1000001053) { ?>
+      <tr>
+      	<td>I have followed the learning recommendations 
+        	on the assessments I have taken for this course:</td>
+        <td><p>&nbsp;</p>
+        	<span id="spryselect2">
+        	<select name="followed_recom" id="followed_recom">
+          	<option value="">- select one -</option>
+            <?php while ($row_rsFollowedRec = mysql_fetch_assoc($rsFollowedRec)) { ?>
+            	<option value="<?php echo $row_rsFollowedRec['menukey']; ?>"
+              	<?php if ($row_rsFollowedRec['menukey'] == $data['followed_recom']) 
+								{ ?>selected="selected"<?php } ?>
+              	><?php echo $row_rsFollowedRec['menu_item_name']; ?></option>
+            <?php } ?>
+      	  </select>
+        	<span class="selectRequiredMsg">Please select an item.</span></span>
+        </td>
+      </tr>
+      <script type="text/javascript">	
+			var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", 
+				{validateOn:["blur", "change"]});
+			</script>
+    <?php } ?>
+      
+    <?php 
+		if ($instrument_id_base == "FOLA") { ?>
+    	<tr>
+      	<td>Please provide at least 1 question or comment for discussion.</td>
+        <td><span id="sprytextarea2">
+        <textarea name="questions" cols="60" rows="10" class="textarea080_500" id="questions"><?php 
+					echo $data['questions']; ?></textarea>
+        <span class="textareaRequiredMsg"><br />
+				Please offer at least one question or comment.</span></span></td>
+      </tr>
+      
+      <script type="text/javascript">
+			var sprytextarea2 = new Spry.Widget.ValidationTextarea("sprytextarea2", 
+						{validateOn:["blur", "change"]});
+			</script>
+      
+      <?php
+		} ?>
+    
+    	<tr>
+        <td><?php 
+					if ($instrument_id_base == "FOLA") { ?>
+          	Any other thoughts, reflections, or suggestions you have
+            <?php
+					} else { ?>
+          	Your comments<?php 
+					} ?>
+        </td>
+        <td><span id="sprytextarea1">
+          <textarea name="test_taker_comments" cols="60" rows="10" class="textarea080_500" id="test_taker_comments"><?php echo $data['test_taker_comments']; ?></textarea>
+  </span></td>
+      </tr>
+      
+  	</table>
+    <p align="right">
+      <input name="completed" type="hidden" id="completed" value="1" />
+      <input name="date_completed" type="hidden" id="date_completed" value="<?php echo date("Y-m-d")?>" />
+      <input name="lakey" type="hidden" id="lakey" value="<?php echo $lakey; ?>" />
+      
+			<?php $buttonText = "";
+			if ($instrument_id_base == "LSUA") { 
+				$buttonText = "GO TO SURVEYS"; 
+				// and add another button in this case, which skips the survey
+				?><input type="submit" name="finish" id="finish" value="FINISH" /> &nbsp; <?php 
+			} 
+			else if ($instrument_id_base == "LERA") { 
+				$buttonText = "GO TO SURVEY"; 
+				// and add another button in this case, which skips the survey
+				?><input type="submit" name="finish" id="finish" value="FINISH" /> &nbsp; <?php 
+			}
+			else if ($instrument_id == "LDMA" AND $test_time == 1 AND $resellerkey == 1000001053) { 
+				$buttonText = "GO TO SURVEY"; 
+			}
+			else if ($instrument_id == "LDMA" AND $test_time >= 4 AND $resellerkey == 1000001053) { 
+				$buttonText = "GO TO SURVEY"; 
+			}
+			else if ($instrument_id_base == "SMJ") { 
+				$buttonText = "FINISH AND CODE"; 
+			} 
+			else { $buttonText = "SAVE AND FINISH!"; } ?>
+      <input type="submit" name="button" id="button" value="<?php echo $buttonText; ?>" />
+    </p>
+    <div align="right"></div>
+    <input type="hidden" name="MM_update" value="form1" />
+</form>
+  <script type="text/javascript">
+<!--
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {validateOn:["blur", "change"], isRequired:false});
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "none", {validateOn:["blur", "change"], isRequired:false});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {validateOn:["blur", "change"], isRequired:false});
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]});
+//-->
+  </script>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLaData);
+
+?>

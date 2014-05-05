@@ -1,0 +1,250 @@
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? "'" . doubleval($theValue) . "'" : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+$maxRows_rsMindfulness = 20;
+$pageNum_rsMindfulness = 0;
+if (isset($_GET['pageNum_rsMindfulness'])) {
+  $pageNum_rsMindfulness = $_GET['pageNum_rsMindfulness'];
+}
+$startRow_rsMindfulness = $pageNum_rsMindfulness * $maxRows_rsMindfulness;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulness = "SELECT Mindfulness.mindfulkey, Mindfulness.sexkey, Mindfulness.age, Mindfulness.edukey, Mindfulness.ethnicitykey, Mindfulness.timekey, Mindfulness.sms08sum, Mindfulness.`timestamp`, Sex.sex, Sex.sexkey, EduAttainment.EduLevel, EduAttainment.edukey, Ethnicity.Ethnicity, Ethnicity.ethnicitykey, `Time`.timekey, `Time`.`time`, Registrants.user_name, Registrants.userkey, Mindfulness.userkey FROM Mindfulness , Sex, EduAttainment, Ethnicity, `Time`, Registrants WHERE Sex.sexkey = Mindfulness.sexkey AND Mindfulness.edukey = EduAttainment.edukey AND Mindfulness.ethnicitykey = Ethnicity.ethnicitykey AND Mindfulness.timekey = `Time`.timekey AND Mindfulness.userkey = Registrants.userkey";
+$query_limit_rsMindfulness = sprintf("%s LIMIT %d, %d", $query_rsMindfulness, $startRow_rsMindfulness, $maxRows_rsMindfulness);
+$rsMindfulness = mysql_query($query_limit_rsMindfulness, $Assessment) or die(mysql_error());
+$row_rsMindfulness = mysql_fetch_assoc($rsMindfulness);
+
+if (isset($_GET['totalRows_rsMindfulness'])) {
+  $totalRows_rsMindfulness = $_GET['totalRows_rsMindfulness'];
+} else {
+  $all_rsMindfulness = mysql_query($query_rsMindfulness);
+  $totalRows_rsMindfulness = mysql_num_rows($all_rsMindfulness);
+}
+$totalPages_rsMindfulness = ceil($totalRows_rsMindfulness/$maxRows_rsMindfulness)-1;
+
+$queryString_rsMindfulness = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsMindfulness") == false && 
+        stristr($param, "totalRows_rsMindfulness") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsMindfulness = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsMindfulness = sprintf("&totalRows_rsMindfulness=%d%s", $totalRows_rsMindfulness, $queryString_rsMindfulness);
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mindfulness1.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Mindfulness survey: Summary</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" --><!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+	background-color: #93B3C8;
+}
+.oneColFixCtrHdr #container {
+	width: 780px;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #7799B8;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+	background-image: url(/images/mindful/m-background.gif);
+}
+.oneColFixCtrHdr #header {
+	background-color: #DDDDDD;
+	background-image: url(/images/mindful/m-header.gif);
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+	height: 104px;
+}
+.oneColFixCtrHdr #menu {
+	background-color: #8AB3C4;
+	padding-top: 0;
+	padding-right: 40px;
+	padding-bottom: 0;
+	height: 20px;
+	background-image: url(/images/skin/SMSmenu.jpg);
+}
+.oneColFixCtrHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0;
+	vertical-align: text-bottom;
+}
+.oneColFixCtrHdr #mainContent {
+	padding-top: 30;
+	padding-right: 45px;
+	padding-bottom: 0;
+	padding-left: 45px;
+}
+.oneColFixCtrHdr #footer {
+	padding: 0 10px;
+}
+.oneColFixCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+-->
+</style>
+<link href="/css/styles3.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssets/SpryMenuBarHorizontalmind.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="oneColFixCtrHdr">
+
+<div id="container">
+  <div id="header">
+    <h1>&nbsp;</h1>
+  <!-- end #header --></div>
+  <div id="menu">
+       <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/landing.php">home</a></li>
+<li><a href="/mindfulness/SMS/m-articles.html">articles</a></li>
+        <li><a href="/mindfulness/SMS/m-intro.html">intro</a></li>
+        <li><a href="/mindfulness/SMS/m-start.php">survey</a></li>
+        <li><a href="/mindfulness/SMS/m-suggestions.php">ideas</a></li>
+        <li><a href="/mindfulness/SMS/m-teacherinfo.php" class="MenuBarItemSubmenu">teachers</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/bc_viewsms.php">view SMS results</a></li>
+            <li><a href="/mindfulness/SMJ/teacher_viewjournalentries.php">view SMS journal</a></li>
+            <li><a href="/bulkcustomers/bulkpolicies.php">policies &amp; schedules</a></li>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+        <li><a href="#" class="MenuBarItemSubmenu">research</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+    </ul>
+    <!-- end #menu --></div>
+  <div id="mainContent">
+    <!-- InstanceBeginEditable name="Main" -->
+<h1>Summary</h1>
+<p><a href="m-summary2.php">download summary</a>, <a href="m-summary3.php">download all data</a></p>
+<div align="center">
+  <table border="0" align="center" cellpadding="4">
+    <tr class="insertupdatetable">
+      <td><?php if ($pageNum_rsMindfulness > 0) { // Show if not first page ?>
+        <a href="<?php printf("%s?pageNum_rsMindfulness=%d%s", $currentPage, 0, $queryString_rsMindfulness); ?>">First</a>
+        <?php } // Show if not first page ?>      </td>
+      <td><?php if ($pageNum_rsMindfulness > 0) { // Show if not first page ?>
+        <a href="<?php printf("%s?pageNum_rsMindfulness=%d%s", $currentPage, max(0, $pageNum_rsMindfulness - 1), $queryString_rsMindfulness); ?>">Previous</a>
+        <?php } // Show if not first page ?>        </td>
+      <td><?php if ($pageNum_rsMindfulness < $totalPages_rsMindfulness) { // Show if not last page ?>
+        <a href="<?php printf("%s?pageNum_rsMindfulness=%d%s", $currentPage, min($totalPages_rsMindfulness, $pageNum_rsMindfulness + 1), $queryString_rsMindfulness); ?>">Next</a>
+        <?php } // Show if not last page ?>        </td>
+      <td><?php if ($pageNum_rsMindfulness < $totalPages_rsMindfulness) { // Show if not last page ?>
+        <a href="<?php printf("%s?pageNum_rsMindfulness=%d%s", $currentPage, $totalPages_rsMindfulness, $queryString_rsMindfulness); ?>">Last</a>
+        <?php } // Show if not last page ?>        </td>
+      </tr>
+  </table>
+</div>
+<p align="center">Records <?php echo ($startRow_rsMindfulness + 1) ?> to <?php echo min($startRow_rsMindfulness + $maxRows_rsMindfulness, $totalRows_rsMindfulness) ?> of <?php echo $totalRows_rsMindfulness ?> <br />
+</p>
+<h2>
+  <table width="100%" border="0" cellpadding="4" cellspacing="0">
+    <tr>
+      <td><div align="left"><strong>User name</strong></div></td>
+        <td><div align="left"><strong>Score</strong></div></td>
+        <td><div align="left"><strong>Sex</strong></div></td>
+        <td><div align="left"><strong>Age</strong></div></td>
+        <td><div align="left"><strong>Education</strong></div></td>
+        <td><div align="left"><strong>Ethnicity</strong></div></td>
+        <td><div align="left"><strong>Time</strong></div></td>
+      </tr>
+    <?php do { ?>
+      <tr>
+        <td><div align="left"><?php echo $row_rsMindfulness['user_name']; ?></div></td>
+          <td><div align="left"><?php echo $row_rsMindfulness['sms08sum']; ?></div></td>
+          <td><div align="left"><?php echo $row_rsMindfulness['sex']; ?></div></td>
+          <td><div align="left"><?php echo $row_rsMindfulness['age']; ?></div></td>
+          <td><div align="left"><?php echo $row_rsMindfulness['EduLevel']; ?></div></td>
+          <td><div align="left"><?php echo $row_rsMindfulness['Ethnicity']; ?></div></td>
+          <td><div align="left"><?php echo $row_rsMindfulness['timekey']; ?></div></td>
+        </tr>
+      <?php } while ($row_rsMindfulness = mysql_fetch_assoc($rsMindfulness)); ?>
+  </table>
+  </h2>
+<div align="center">
+  <table border="0" align="center" cellpadding="4">
+    <tr class="insertupdatetable">
+      <td><?php if ($pageNum_rsMindfulness > 0) { // Show if not first page ?>
+        <a href="<?php printf("%s?pageNum_rsMindfulness=%d%s", $currentPage, 0, $queryString_rsMindfulness); ?>">First</a>
+        <?php } // Show if not first page ?>      </td>
+      <td><?php if ($pageNum_rsMindfulness > 0) { // Show if not first page ?>
+        <a href="<?php printf("%s?pageNum_rsMindfulness=%d%s", $currentPage, max(0, $pageNum_rsMindfulness - 1), $queryString_rsMindfulness); ?>">Previous</a>
+        <?php } // Show if not first page ?>      </td>
+      <td><?php if ($pageNum_rsMindfulness < $totalPages_rsMindfulness) { // Show if not last page ?>
+        <a href="<?php printf("%s?pageNum_rsMindfulness=%d%s", $currentPage, min($totalPages_rsMindfulness, $pageNum_rsMindfulness + 1), $queryString_rsMindfulness); ?>">Next</a>
+        <?php } // Show if not last page ?>      </td>
+      <td><?php if ($pageNum_rsMindfulness < $totalPages_rsMindfulness) { // Show if not last page ?>
+        <a href="<?php printf("%s?pageNum_rsMindfulness=%d%s", $currentPage, $totalPages_rsMindfulness, $queryString_rsMindfulness); ?>">Last</a>
+        <?php } // Show if not last page ?>      </td>
+      </tr>
+  </table>
+</div>
+<p align="center">Records <?php echo ($startRow_rsMindfulness + 1) ?> to <?php echo min($startRow_rsMindfulness + $maxRows_rsMindfulness, $totalRows_rsMindfulness) ?> of <?php echo $totalRows_rsMindfulness ?> </p>
+<h2><br />
+</h2>
+<!-- InstanceEndEditable -->
+	<!-- end #mainContent --></div>
+  <div id="footer">
+    <p align="center">©2010-2011 Sharon Solloway. All rights reserved.</p>
+  <!-- end #footer --></div>
+<!-- end #container --></div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsMindfulness);
+?>

@@ -1,0 +1,155 @@
+<!--
+	HTML EDITOR
+
+	Instructions to install.
+	1) Include this file in your header, below jquery.js. Note that you should include it using a PHP tag, even though this contains no PHP.
+	2) Any text area that should have HTML editing power, should be given the class 'html_editor'.
+	3) Refresh the page and try it out!
+
+-->
+
+<script type='text/javascript'>
+
+$(function(){
+
+	$('.html_editor').after(
+		"<div><a class='html_editor_cheat_hotspot'>Cheatsheet</a>"+
+			" &nbsp; <a class='html_editor_check'>Check HTML</a>"+
+			" &nbsp; <span class='html_editor_validity'></span>"+
+		"</div>"+
+		"<div class='html_editor_cheat_div'>Loading...</div>"+
+		"<div class='html_editor_preview'>"+
+			"<h3 class='fltlft'>Preview</h3><a class='fltrt close_preview'>close</a>"+
+			"<br class='clearfloat' /><div></div>"+
+		"</div>");
+
+	$('.html_editor_cheat_hotspot').click(function(){
+		$(this).parent().parent().find('.html_editor_cheat_div').load('https://dts.lectica.org/includes/html_editor/cheatsheet.html').fadeIn(200);
+	});
+
+	$('.html_editor').addClass('virgin');
+
+	$('.html_editor').click(function(){
+		if ($(this).hasClass('virgin')) {
+			$(this).animate({'height': '300'}).removeClass('virgin');
+		}
+		$(this).parent().find('.html_editor_preview').show(200);
+	});
+
+	$('.html_editor_preview .close_preview').click(function(){
+		$(this).parent().hide(200);
+	});
+
+	$('.html_editor').keyup(function(){
+		$(this).parent().find('.html_editor_preview div').html($(this).val());
+	}).keyup();
+
+
+	$('.html_editor').blur(function(){
+		$(this).parent().find('.html_editor_validity').text('not checked').css('color', 'orange');
+	});
+
+	$('.html_editor_check').click(function(){
+		var html = $(this).parent().parent().find('.html_editor').val();
+
+		// Define common regexes
+		var starts_with_chaff = /^[^<>]+/;
+		var ends_with_chaff = /[^<>]+$/;
+		// parsing the opening_tag regex: 
+			// at the start of the string
+			// opening tag 
+			// 1+ letters (captured)
+			// 0 or more of:
+				// a space followed by
+				// 1+ letters followed by
+				// an = sign followed by
+				// either a single-quoted or double-quoted alphanumeric string,
+				// which can also contain . and /
+			// ending with a closing bracket
+		var opening_tag = /^<(\w+\d?)(\s+\w+=('[\w\d\s\.\/%]+'|"[\w\d\s\.\/%]+"))*>/;
+		var self_contained_tag = /^<(\w+\d?)(\s+\w+=('[\w\d\s\.\/%]+'|"[\w\d\s\.\/%]+"))*\s?\/>/;
+
+		var error_short = "";
+		var error_full = "";
+
+		// Strategy: look at each piece of HTML and, if it's understandable and valid, remove it. Keep going until nothing is left, or you hit something you don't understand.
+		while (error_full == "") {
+			// alert(html);
+
+			// nothing to parse? 
+			if (html == "") { error_full = "none"; }
+			// if there's non-tags at the beginning or end of the string, cut them out
+			else if (html.search(starts_with_chaff) >= 0 || html.search(ends_with_chaff) >= 0) {
+				html = html.replace(starts_with_chaff, '').replace(ends_with_chaff, '');
+			}
+			// if an opening tag starts the string
+			else if (html.search(opening_tag) >= 0) {
+				// get the opening tag
+				var tag_full = html.match(opening_tag)[0];
+				var tag_text = html.match(opening_tag)[1];
+				var this_closing_tag = new RegExp("</"+tag_text+">");
+				// the matching closing tag should be at the end of the string.
+				if (html.search(this_closing_tag) == -1) {
+					error_short = "Missing a closing tag: </"+tag_text+">";
+					error_full = "I expected to find a closing tag </"+tag_text+">.";
+				}
+				// remove both tags. Should only do so once.
+				html = html.replace(opening_tag, '').replace(this_closing_tag, '');
+			} 
+			// if the string starts with a self-contained tag
+			else if (html.search(self_contained_tag) >= 0) {
+				html = html.replace(self_contained_tag, '');
+			} 
+			// Otherwise, the parser doesn't understand the next bit of HTML.
+			else {
+				error_short = "Invalid html near '"+html.substring(0, 40)+"'";
+				error_full = "It looks like you have invalid HTML near the text '"+html.substring(0, 40)+"'.";
+			}
+
+		}
+		
+		// display error message, if any
+		if (error_full == "none") {
+			$(this).parent().find('.html_editor_validity').text('Valid!').css('color', 'green');
+		} else {
+			alert(error_full);
+			$(this).parent().find('.html_editor_validity').text(error_short).css('color', 'red');
+		} 
+
+	});
+
+});
+
+</script>
+
+<!-- -->
+
+<style type="text/css">
+
+	.html_editor { 
+		font-family: "Lucida Console", Monaco, monospace;
+		width: 600px;
+		height: 80px; 
+	}
+
+	.html_editor_cheat_div { 
+		display: none; 
+		background-color: #eee;
+		padding: 20px;
+		position: fixed; 
+		width: 80%; 
+		height: 80%; 
+		top: 10%; 
+		left: 10%;
+		overflow: auto;
+		border: 3px solid #666;
+	}
+
+	.html_editor_preview { 
+		display: none;
+		background-color: #9fc;
+		padding: 20px;
+		padding-bottom: 40px;
+	}
+
+</style>

@@ -1,0 +1,55 @@
+/**
+ * @license Copyright (c) 2003-2013, CKSource - Frederico Knabben. All rights reserved.
+ * For licensing, see LICENSE.html or http://ckeditor.com/license
+ */
+
+CKEDITOR.editorConfig = function( config ) {
+	// Define changes to default configuration here. For example:
+	// config.language = 'fr';
+	// config.uiColor = '#AADC6E';
+	
+  config.height = '500px';
+  config.extraPlugins = 'sourcedialog';
+  config.removePlugins = 'sourcearea, forms';
+
+  /* 
+	  ABOUT TOOLBAR CONFIGURATION
+
+		It turns out configuring the toolbar is more frustrating than I thought, mainly because 
+			a) CKeditor relies on a "configureless default" for easy installation, and 
+			b) you have to know the name of every single button in order to configure them.
+
+		It's generally much easier to remove a plugin altogether, than to just remove (or reorder) its button.
+		When I wanted to add the "view source" dialog box plugin, I had to remove the old Source button in order to prevent breakage. Removing this button was not easy, but removing the entire old 'sourcearea' plugin was trivial, once I found out the name of the original "view source" plugin -- which was not trivial.
+
+		The best way to find out the name of a PLUGIN is to go to ckeditor plugins website, find the plugin, and download it. The name of the ZIP file you download (minus the version stuff) is the name of the plugin.
+
+		The best way to find out the name of a BUTTON, as far as I can tell, is:
+			1) download the plugin responsible for it
+			2) unpack the zip and look in 'plugin.js'
+			3) find the (CamelCase) name of the button, usually in a command like:
+				editor.ui.addButton('SpellChecker');
+		
+		Good luck.
+		 - TH
+	*/
+
+  /* config.toolbar = [
+		{ name: 'document', groups: [ 'mode', 'document', 'doctools' ], items: [ 'Sourcedialog', '-', 'Save', 'NewPage', 'Preview', 'Print', '-', 'Templates' ] },
+		{ name: 'clipboard', groups: [ 'clipboard', 'undo' ], items: [ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo' ] },
+		{ name: 'editing', groups: [ 'find', 'selection', 'spellchecker' ], items: [ 'Find', 'Replace', '-', 'SelectAll', 'wsc' ] },
+		//{ name: 'forms', items: [ 'Form', 'Checkbox', 'Radio', 'TextField', 'Textarea', 'Select', 'Button', 'ImageButton', 'HiddenField' ] },
+		'/',
+		{ name: 'basicstyles', groups: [ 'basicstyles', 'cleanup' ], items: [ 'Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript', '-', 'RemoveFormat' ] },
+		{ name: 'paragraph', groups: [ 'list', 'indent', 'blocks', 'align', 'bidi' ], items: [ 'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', 'CreateDiv', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock', '-', 'BidiLtr', 'BidiRtl' ] },
+		{ name: 'links', items: [ 'Link', 'Unlink', 'Anchor' ] },
+		{ name: 'insert', items: [ 'Image', 'Flash', 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar', 'PageBreak', 'Iframe' ] },
+		'/',
+		{ name: 'styles', items: [ 'Styles', 'Format', 'Font', 'FontSize' ] },
+		{ name: 'colors', items: [ 'TextColor', 'BGColor' ] },
+		{ name: 'tools', items: [ 'Maximize', 'ShowBlocks' ] },
+		{ name: 'others', items: [ '-' ] },
+		{ name: 'about', items: [ 'About' ] }
+	]; 
+	// */
+};

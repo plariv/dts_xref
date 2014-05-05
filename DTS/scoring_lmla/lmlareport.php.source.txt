@@ -1,0 +1,1841 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsManlasartLeader = "-1";
+if (isset($_GET['lasnameLeader'])) {
+  $colname_rsManlasartLeader = $_GET['lasnameLeader'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlasartLeader = sprintf("SELECT lasname, manlas, manlasleader, manlasvert, manlaspie FROM Manlasart WHERE lasname = %s", GetSQLValueString($colname_rsManlasartLeader, "text"));
+$rsManlasartLeader = mysql_query($query_rsManlasartLeader, $Assessment) or die(mysql_error());
+$row_rsManlasartLeader = mysql_fetch_assoc($rsManlasartLeader);
+$totalRows_rsManlasartLeader = mysql_num_rows($rsManlasartLeader);
+
+$colname_rsLMLA = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsLMLA = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLMLA = sprintf("SELECT LMLA.lmlakey, LMLA.userkey, LMLA.user_name, LMLA.bulkcustomer, LMLA.username4clients, LMLA.manlevel, LMLA.quality1, LMLA.essay1, LMLA.quality2, LMLA.essay2, LMLA.quality3, LMLA.essay3, LMLA.quality4, LMLA.essay4, LMLA.essay5, LMLA.suggestions, LMLA.ThinkOf, LMLA.DifferentConclusions, LMLA.IdealProcess, LMLA.Certainty, LMLA.Truth, LMLA.IdentifyTruth, LMLA.AbsoluteTruth, LMLA.perspectives1, LMLA.perspectives2, LMLA.response1, LMLA.response2, LMLA.process, LMLA.comments, LMLAscores.lmlakey, LMLAscores.lasnameLeader, LMLAscores.commentLeader, LMLAscores.lasnameRJ, LMLAscores.commentRJ, LMLAscores.lasnameDM, LMLAscores.commentDM, Registrants.userkey, LMLAscores.coherence, LMLA.`date`, LMLAscores.lasinterpersonal FROM LMLA, LMLAscores, Registrants WHERE LMLA.lmlakey = %s and LMLAscores.lmlakey = %s AND Registrants.userkey = LMLA.userkey", GetSQLValueString($colname_rsLMLA, "int"),GetSQLValueString($colname_rsLMLA, "int"));
+$rsLMLA = mysql_query($query_rsLMLA, $Assessment) or die(mysql_error());
+$row_rsLMLA = mysql_fetch_assoc($rsLMLA);
+$totalRows_rsLMLA = mysql_num_rows($rsLMLA);
+
+$colname_rsManlasartRJ = "-1";
+if (isset($_GET['lasnameRJ'])) {
+  $colname_rsManlasartRJ = $_GET['lasnameRJ'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlasartRJ = sprintf("SELECT lasname, manlas, manlasrj, manlasvert, manlaspie FROM Manlasart WHERE lasname = %s", GetSQLValueString($colname_rsManlasartRJ, "text"));
+$rsManlasartRJ = mysql_query($query_rsManlasartRJ, $Assessment) or die(mysql_error());
+$row_rsManlasartRJ = mysql_fetch_assoc($rsManlasartRJ);
+$totalRows_rsManlasartRJ = mysql_num_rows($rsManlasartRJ);
+
+$colname_rsLRJAintroman = "-1";
+if (isset($_GET['lasnameRJ'])) {
+  $colname_rsLRJAintroman = $_GET['lasnameRJ'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAintroman = sprintf("SELECT * FROM LRJAintroman WHERE lasname = %s", GetSQLValueString($colname_rsLRJAintroman, "text"));
+$rsLRJAintroman = mysql_query($query_rsLRJAintroman, $Assessment) or die(mysql_error());
+$row_rsLRJAintroman = mysql_fetch_assoc($rsLRJAintroman);
+$totalRows_rsLRJAintroman = mysql_num_rows($rsLRJAintroman);
+
+$colname_rsLRJAmanlasgendescrip = "-1";
+if (isset($_GET['lasnameRJ'])) {
+  $colname_rsLRJAmanlasgendescrip = $_GET['lasnameRJ'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAmanlasgendescrip = sprintf("SELECT rjmanlasgendescripkey, lasname, rjmanlasgendescrip, rjmanlasperspec, rjmanlaslearn, rjmanlasinquiry FROM LRJAmanlasgendescrip WHERE lasname = %s", GetSQLValueString($colname_rsLRJAmanlasgendescrip, "text"));
+$rsLRJAmanlasgendescrip = mysql_query($query_rsLRJAmanlasgendescrip, $Assessment) or die(mysql_error());
+$row_rsLRJAmanlasgendescrip = mysql_fetch_assoc($rsLRJAmanlasgendescrip);
+$totalRows_rsLRJAmanlasgendescrip = mysql_num_rows($rsLRJAmanlasgendescrip);
+
+$colname_rsRJManlevelcomment = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsRJManlevelcomment = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRJManlevelcomment = sprintf("SELECT Manlevelcomment.manlevelkey, Manlevelcomment.manlevelcomment, LMLA.manlevel, LMLA.lmlakey FROM Manlevelcomment, LMLA WHERE LMLA.manlevel=Manlevelcomment.manlevelkey AND LMLA.lmlakey=%s", GetSQLValueString($colname_rsRJManlevelcomment, "int"));
+$rsRJManlevelcomment = mysql_query($query_rsRJManlevelcomment, $Assessment) or die(mysql_error());
+$row_rsRJManlevelcomment = mysql_fetch_assoc($rsRJManlevelcomment);
+$totalRows_rsRJManlevelcomment = mysql_num_rows($rsRJManlevelcomment);
+
+$colname_rsRJManleveljuxtapose = "-1";
+if (isset($_GET['lasnameRJ'])) {
+  $colname_rsRJManleveljuxtapose = $_GET['lasnameRJ'];
+}
+$colname2_rsRJManleveljuxtapose = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname2_rsRJManleveljuxtapose = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRJManleveljuxtapose = sprintf("SELECT Manleveljuxtapose.lasname, Manleveljuxtapose.manlevelkey, Manleveljuxtapose.manleveljuxtapose, LMLA.manlevel, LMLA.lmlakey FROM Manleveljuxtapose, LMLA WHERE Manleveljuxtapose.lasname = %s AND Manleveljuxtapose.manlevelkey=LMLA.manlevel AND LMLA.lmlakey=%s", GetSQLValueString($colname_rsRJManleveljuxtapose, "text"),GetSQLValueString($colname2_rsRJManleveljuxtapose, "int"));
+$rsRJManleveljuxtapose = mysql_query($query_rsRJManleveljuxtapose, $Assessment) or die(mysql_error());
+$row_rsRJManleveljuxtapose = mysql_fetch_assoc($rsRJManleveljuxtapose);
+$totalRows_rsRJManleveljuxtapose = mysql_num_rows($rsRJManleveljuxtapose);
+
+$colname_rsLRJAgrowth = "-1";
+if (isset($_GET['lasnameRJ'])) {
+  $colname_rsLRJAgrowth = $_GET['lasnameRJ'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAgrowth = sprintf("SELECT * FROM LRJAgrowth WHERE lasname = %s", GetSQLValueString($colname_rsLRJAgrowth, "text"));
+$rsLRJAgrowth = mysql_query($query_rsLRJAgrowth, $Assessment) or die(mysql_error());
+$row_rsLRJAgrowth = mysql_fetch_assoc($rsLRJAgrowth);
+$totalRows_rsLRJAgrowth = mysql_num_rows($rsLRJAgrowth);
+
+$colname_rsManlasartDM = "-1";
+if (isset($_GET['lasnameDM'])) {
+  $colname_rsManlasartDM = $_GET['lasnameDM'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlasartDM = sprintf("SELECT lasname, manlas, manlasdm, manlasvert, manlaspie FROM Manlasart WHERE lasname = %s", GetSQLValueString($colname_rsManlasartDM, "text"));
+$rsManlasartDM = mysql_query($query_rsManlasartDM, $Assessment) or die(mysql_error());
+$row_rsManlasartDM = mysql_fetch_assoc($rsManlasartDM);
+$totalRows_rsManlasartDM = mysql_num_rows($rsManlasartDM);
+
+$colname_rsRJstrengths = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsRJstrengths = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRJstrengths = sprintf("SELECT LMLAscores.lmlakey, LMLAscores.ThinkOf, LMLAscores.DifferentConclusions, LMLAscores.IdealProcess, LMLAscores.Certainty, LMLAscores.Truth, LMLAscores.IdentifyTruth, LMLAscores.AbsoluteTruth, LMLAscores.lasnameRJ, LRJAcodecertainty.lasname, LRJAcodecertainty.rjcodecertainty, LRJAcodecomplexity.lasname, LRJAcodecomplexity.rjcodecomplexity, LRJAcodeevaluate.lasname, LRJAcodeevaluate.rjcodeevaluate, LRJAcodeinquiry.lasname, LRJAcodeinquiry.rjcodeinquiry, LRJAcoderelative.lasname, LRJAcoderelative.rjcoderelative, LRJAcodetruth.lasname, LRJAcodetruth.rjcodetruth FROM LMLAscores, LRJAcodecertainty, LRJAcodecomplexity, LRJAcodeevaluate, LRJAcodeinquiry, LRJAcoderelative, LRJAcodetruth WHERE LMLAscores.lmlakey = %s AND LRJAcodecertainty.lasname = LMLAscores.Truth AND LRJAcodecomplexity.lasname = LMLAscores.DifferentConclusions AND LRJAcodeevaluate.lasname = LMLAscores.Certainty AND LRJAcodeinquiry.lasname = LMLAscores.IdealProcess AND LRJAcoderelative.lasname = LMLAscores.AbsoluteTruth AND LRJAcodetruth.lasname = LMLAscores.IdentifyTruth", GetSQLValueString($colname_rsRJstrengths, "int"));
+$rsRJstrengths = mysql_query($query_rsRJstrengths, $Assessment) or die(mysql_error());
+$row_rsRJstrengths = mysql_fetch_assoc($rsRJstrengths);
+$totalRows_rsRJstrengths = mysql_num_rows($rsRJstrengths);
+
+$colname_rsLLRAintroman = "-1";
+if (isset($_GET['lasnameLeader'])) {
+  $colname_rsLLRAintroman = $_GET['lasnameLeader'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAintroman = sprintf("SELECT * FROM LLRAintroman WHERE lasname = %s", GetSQLValueString($colname_rsLLRAintroman, "text"));
+$rsLLRAintroman = mysql_query($query_rsLLRAintroman, $Assessment) or die(mysql_error());
+$row_rsLLRAintroman = mysql_fetch_assoc($rsLLRAintroman);
+$totalRows_rsLLRAintroman = mysql_num_rows($rsLLRAintroman);
+
+$colname_rsLLRAqualities1 = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsLLRAqualities1 = $_GET['lmlakey'];
+}
+$colname2_rsLLRAqualities1 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname2_rsLLRAqualities1 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAqualities1 = sprintf("SELECT LMLA.lmlakey, LMLA.quality1, LLRAqualities.lasname, LLRAqualities.quality, LLRAqualities.`description`, LMLAscores.essay1las, LMLAscores.lmlascoringkey, LMLAscores.lmlakey FROM LMLA, LLRAqualities, LMLAscores WHERE LMLA.lmlakey = %s AND LMLAscores.lmlascoringkey = %s AND LLRAqualities.lasname = LMLAscores.essay1las AND LMLA.quality1 = LLRAqualities.quality AND LMLAscores.lmlakey = LMLA.lmlakey", GetSQLValueString($colname_rsLLRAqualities1, "int"),GetSQLValueString($colname2_rsLLRAqualities1, "int"));
+$rsLLRAqualities1 = mysql_query($query_rsLLRAqualities1, $Assessment) or die(mysql_error());
+$row_rsLLRAqualities1 = mysql_fetch_assoc($rsLLRAqualities1);
+$totalRows_rsLLRAqualities1 = mysql_num_rows($rsLLRAqualities1);
+
+$colname_rsLEManlevelcomment = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsLEManlevelcomment = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLEManlevelcomment = sprintf("SELECT Manlevelcomment.manlevelkey, Manlevelcomment.manlevelcomment, LMLA.manlevel, LMLA.lmlakey FROM Manlevelcomment, LMLA WHERE LMLA.manlevel=Manlevelcomment.manlevelkey AND LMLA.lmlakey=%s", GetSQLValueString($colname_rsLEManlevelcomment, "int"));
+$rsLEManlevelcomment = mysql_query($query_rsLEManlevelcomment, $Assessment) or die(mysql_error());
+$row_rsLEManlevelcomment = mysql_fetch_assoc($rsLEManlevelcomment);
+$totalRows_rsLEManlevelcomment = mysql_num_rows($rsLEManlevelcomment);
+
+$colname_rsLEManleveljuxtapose = "-1";
+if (isset($_GET['lasnameLeader'])) {
+  $colname_rsLEManleveljuxtapose = $_GET['lasnameLeader'];
+}
+$colname2_rsLEManleveljuxtapose = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname2_rsLEManleveljuxtapose = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLEManleveljuxtapose = sprintf("SELECT Manleveljuxtapose.lasname, Manleveljuxtapose.manlevelkey, Manleveljuxtapose.manleveljuxtapose, LMLA.manlevel, LMLA.lmlakey FROM Manleveljuxtapose, LMLA WHERE Manleveljuxtapose.lasname = %s AND Manleveljuxtapose.manlevelkey=LMLA.manlevel  AND LMLA.lmlakey=%s", GetSQLValueString($colname_rsLEManleveljuxtapose, "text"),GetSQLValueString($colname2_rsLEManleveljuxtapose, "int"));
+$rsLEManleveljuxtapose = mysql_query($query_rsLEManleveljuxtapose, $Assessment) or die(mysql_error());
+$row_rsLEManleveljuxtapose = mysql_fetch_assoc($rsLEManleveljuxtapose);
+$totalRows_rsLEManleveljuxtapose = mysql_num_rows($rsLEManleveljuxtapose);
+
+$colname_rsLLRAgrowthaffect = "-1";
+if (isset($_GET['lasnameLeader'])) {
+  $colname_rsLLRAgrowthaffect = $_GET['lasnameLeader'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAgrowthaffect = sprintf("SELECT LLRAgrowthareas.llragrowthkey, LLRAgrowthareas.las, LLRAgrowthareas.growtharea, LLRAgrowthareas.growthcomment FROM LLRAgrowthareas WHERE las = %s AND LLRAgrowthareas.growtharea = 'affect'", GetSQLValueString($colname_rsLLRAgrowthaffect, "text"));
+$rsLLRAgrowthaffect = mysql_query($query_rsLLRAgrowthaffect, $Assessment) or die(mysql_error());
+$row_rsLLRAgrowthaffect = mysql_fetch_assoc($rsLLRAgrowthaffect);
+$totalRows_rsLLRAgrowthaffect = mysql_num_rows($rsLLRAgrowthaffect);
+
+$colname_rsLLRAgrowthethics = "-1";
+if (isset($_GET['lasnameLeader'])) {
+  $colname_rsLLRAgrowthethics = $_GET['lasnameLeader'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAgrowthethics = sprintf("SELECT LLRAgrowthareas.llragrowthkey, LLRAgrowthareas.las, LLRAgrowthareas.growtharea, LLRAgrowthareas.growthcomment FROM LLRAgrowthareas WHERE las = %s AND LLRAgrowthareas.growtharea = 'ethics'", GetSQLValueString($colname_rsLLRAgrowthethics, "text"));
+$rsLLRAgrowthethics = mysql_query($query_rsLLRAgrowthethics, $Assessment) or die(mysql_error());
+$row_rsLLRAgrowthethics = mysql_fetch_assoc($rsLLRAgrowthethics);
+$totalRows_rsLLRAgrowthethics = mysql_num_rows($rsLLRAgrowthethics);
+
+$colname_rsLLRAgrowthnutsandbolts = "-1";
+if (isset($_GET['lasnameLeader'])) {
+  $colname_rsLLRAgrowthnutsandbolts = $_GET['lasnameLeader'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAgrowthnutsandbolts = sprintf("SELECT LLRAgrowthareas.llragrowthkey, LLRAgrowthareas.las, LLRAgrowthareas.growtharea, LLRAgrowthareas.growthcomment FROM LLRAgrowthareas WHERE las = %s AND LLRAgrowthareas.growtharea = 'nuts and bolts'", GetSQLValueString($colname_rsLLRAgrowthnutsandbolts, "text"));
+$rsLLRAgrowthnutsandbolts = mysql_query($query_rsLLRAgrowthnutsandbolts, $Assessment) or die(mysql_error());
+$row_rsLLRAgrowthnutsandbolts = mysql_fetch_assoc($rsLLRAgrowthnutsandbolts);
+$totalRows_rsLLRAgrowthnutsandbolts = mysql_num_rows($rsLLRAgrowthnutsandbolts);
+
+$colname_rsLLRAgrowthstyle = "-1";
+if (isset($_GET['lasnameLeader'])) {
+  $colname_rsLLRAgrowthstyle = $_GET['lasnameLeader'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAgrowthstyle = sprintf("SELECT LLRAgrowthareas.llragrowthkey, LLRAgrowthareas.las, LLRAgrowthareas.growtharea, LLRAgrowthareas.growthcomment FROM LLRAgrowthareas WHERE las = %s AND LLRAgrowthareas.growtharea = 'style'", GetSQLValueString($colname_rsLLRAgrowthstyle, "text"));
+$rsLLRAgrowthstyle = mysql_query($query_rsLLRAgrowthstyle, $Assessment) or die(mysql_error());
+$row_rsLLRAgrowthstyle = mysql_fetch_assoc($rsLLRAgrowthstyle);
+$totalRows_rsLLRAgrowthstyle = mysql_num_rows($rsLLRAgrowthstyle);
+
+$colname_rsLLRAgrowthcognition = "-1";
+if (isset($_GET['lasnameLeader'])) {
+  $colname_rsLLRAgrowthcognition = $_GET['lasnameLeader'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAgrowthcognition = sprintf("SELECT LLRAgrowthareas.llragrowthkey, LLRAgrowthareas.las, LLRAgrowthareas.growtharea, LLRAgrowthareas.growthcomment FROM LLRAgrowthareas WHERE las = %s AND LLRAgrowthareas.growtharea = 'cognition'", GetSQLValueString($colname_rsLLRAgrowthcognition, "text"));
+$rsLLRAgrowthcognition = mysql_query($query_rsLLRAgrowthcognition, $Assessment) or die(mysql_error());
+$row_rsLLRAgrowthcognition = mysql_fetch_assoc($rsLLRAgrowthcognition);
+$totalRows_rsLLRAgrowthcognition = mysql_num_rows($rsLLRAgrowthcognition);
+
+$colname_rsLLRAlessons = "-1";
+if (isset($_GET['lasnameLeader'])) {
+  $colname_rsLLRAlessons = $_GET['lasnameLeader'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAlessons = sprintf("SELECT * FROM LLRAlessons WHERE lasname = %s", GetSQLValueString($colname_rsLLRAlessons, "text"));
+$rsLLRAlessons = mysql_query($query_rsLLRAlessons, $Assessment) or die(mysql_error());
+$row_rsLLRAlessons = mysql_fetch_assoc($rsLLRAlessons);
+$totalRows_rsLLRAlessons = mysql_num_rows($rsLLRAlessons);
+
+$colname_rsRegistrant = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsRegistrant = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrant = sprintf("SELECT Registrants.FirstName, Registrants.LastName, Registrants.userkey, LMLA.userkey, LMLA.lmlakey FROM Registrants, LMLA WHERE Registrants.userkey = LMLA.userkey  AND LMLA.lmlakey = %s", GetSQLValueString($colname_rsRegistrant, "int"));
+$rsRegistrant = mysql_query($query_rsRegistrant, $Assessment) or die(mysql_error());
+$row_rsRegistrant = mysql_fetch_assoc($rsRegistrant);
+$totalRows_rsRegistrant = mysql_num_rows($rsRegistrant);
+
+$colname_rsLLRAgeneral = "-1";
+if (isset($_GET['lasnameLeader'])) {
+  $colname_rsLLRAgeneral = $_GET['lasnameLeader'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAgeneral = sprintf("SELECT * FROM LLRAgeneraldescriptions WHERE lasname = %s", GetSQLValueString($colname_rsLLRAgeneral, "text"));
+$rsLLRAgeneral = mysql_query($query_rsLLRAgeneral, $Assessment) or die(mysql_error());
+$row_rsLLRAgeneral = mysql_fetch_assoc($rsLLRAgeneral);
+$totalRows_rsLLRAgeneral = mysql_num_rows($rsLLRAgeneral);
+
+$colname_rsDMStrengths = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsDMStrengths = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMStrengths = sprintf("SELECT LMLAscores.lmlakey, LMLAscores.perspectives1, LMLAscores.perspectives2, LMLAscores.response1, LMLAscores.response2, LMLAscores.process, LMLAscores.lasnameDM, Dmcode1perspectives.lasname1, Dmcode1perspectives.dmcode1perspectives, Dmcode2perspectives.lasname2, Dmcode2perspectives.dmcode2perspectives, Dmcode3response.lasname3, Dmcode3response.dmcode3response, Dmcode4response.lasname4, Dmcode4response.dmcode4response, Dmcode5process.lasname5, Dmcode5process.dmcode5process FROM LMLAscores, Dmcode1perspectives, Dmcode2perspectives, Dmcode3response, Dmcode4response, Dmcode5process WHERE LMLAscores.lmlakey= %s AND Dmcode5process.lasname5=LMLAscores.process AND Dmcode1perspectives.lasname1=LMLAscores.perspectives1 AND Dmcode2perspectives.lasname2=LMLAscores.perspectives2 AND Dmcode3response.lasname3=LMLAscores.response1 AND Dmcode4response.lasname4=LMLAscores.response2", GetSQLValueString($colname_rsDMStrengths, "int"));
+$rsDMStrengths = mysql_query($query_rsDMStrengths, $Assessment) or die(mysql_error());
+$row_rsDMStrengths = mysql_fetch_assoc($rsDMStrengths);
+$totalRows_rsDMStrengths = mysql_num_rows($rsDMStrengths);
+
+$colname_rsDmintroman = "-1";
+if (isset($_GET['lasnameDM'])) {
+  $colname_rsDmintroman = $_GET['lasnameDM'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmintroman = sprintf("SELECT * FROM Dmintroman WHERE lasname = %s", GetSQLValueString($colname_rsDmintroman, "text"));
+$rsDmintroman = mysql_query($query_rsDmintroman, $Assessment) or die(mysql_error());
+$row_rsDmintroman = mysql_fetch_assoc($rsDmintroman);
+$totalRows_rsDmintroman = mysql_num_rows($rsDmintroman);
+
+$colname_rsDmmanlasgendescrip = "-1";
+if (isset($_GET['lasnameDM'])) {
+  $colname_rsDmmanlasgendescrip = $_GET['lasnameDM'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmmanlasgendescrip = sprintf("SELECT Dmmanlasgendescrip.lasname, Dmmanlasgendescrip.dmmanlasgendescrip, Dmmanlasgendescrip.dmmanlasperspec, Dmmanlasgendescrip.dmmanlasresponse, Dmmanlasgendescrip.dmmanlasprocess FROM Dmmanlasgendescrip WHERE lasname = %s", GetSQLValueString($colname_rsDmmanlasgendescrip, "text"));
+$rsDmmanlasgendescrip = mysql_query($query_rsDmmanlasgendescrip, $Assessment) or die(mysql_error());
+$row_rsDmmanlasgendescrip = mysql_fetch_assoc($rsDmmanlasgendescrip);
+$totalRows_rsDmmanlasgendescrip = mysql_num_rows($rsDmmanlasgendescrip);
+
+$colname_rsDMManlevelcomment = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsDMManlevelcomment = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMManlevelcomment = sprintf("SELECT Manlevelcomment.manlevelkey, Manlevelcomment.manlevelcomment, LMLA.manlevel, LMLA.lmlakey FROM Manlevelcomment, LMLA WHERE LMLA.manlevel=Manlevelcomment.manlevelkey AND LMLA.lmlakey=%s", GetSQLValueString($colname_rsDMManlevelcomment, "int"));
+$rsDMManlevelcomment = mysql_query($query_rsDMManlevelcomment, $Assessment) or die(mysql_error());
+$row_rsDMManlevelcomment = mysql_fetch_assoc($rsDMManlevelcomment);
+$totalRows_rsDMManlevelcomment = mysql_num_rows($rsDMManlevelcomment);
+
+$colname_rsDMManleveljuxtapose = "-1";
+if (isset($_GET['lasnameDM'])) {
+  $colname_rsDMManleveljuxtapose = $_GET['lasnameDM'];
+}
+$colname2_rsDMManleveljuxtapose = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname2_rsDMManleveljuxtapose = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMManleveljuxtapose = sprintf("SELECT Manleveljuxtapose.lasname, Manleveljuxtapose.manlevelkey, Manleveljuxtapose.manleveljuxtapose, LMLA.manlevel, LMLA.lmlakey FROM Manleveljuxtapose, LMLA WHERE Manleveljuxtapose.lasname = %s AND Manleveljuxtapose.manlevelkey=LMLA.manlevel  AND LMLA.lmlakey=%s", GetSQLValueString($colname_rsDMManleveljuxtapose, "text"),GetSQLValueString($colname2_rsDMManleveljuxtapose, "int"));
+$rsDMManleveljuxtapose = mysql_query($query_rsDMManleveljuxtapose, $Assessment) or die(mysql_error());
+$row_rsDMManleveljuxtapose = mysql_fetch_assoc($rsDMManleveljuxtapose);
+$totalRows_rsDMManleveljuxtapose = mysql_num_rows($rsDMManleveljuxtapose);
+
+$colname_rsDmgrowth = "-1";
+if (isset($_GET['lasnameDM'])) {
+  $colname_rsDmgrowth = $_GET['lasnameDM'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmgrowth = sprintf("SELECT Dmgrowth.dmgrowthperspectives, Dmgrowth.dmgrowthresponse, Dmgrowth.dmgrowthprocess, Dmgrowth.lasname FROM Dmgrowth WHERE lasname = %s", GetSQLValueString($colname_rsDmgrowth, "text"));
+$rsDmgrowth = mysql_query($query_rsDmgrowth, $Assessment) or die(mysql_error());
+$row_rsDmgrowth = mysql_fetch_assoc($rsDmgrowth);
+$totalRows_rsDmgrowth = mysql_num_rows($rsDmgrowth);
+
+$colname_rsDmlessons = "-1";
+if (isset($_GET['lasnameDM'])) {
+  $colname_rsDmlessons = $_GET['lasnameDM'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDmlessons = sprintf("SELECT Dmlessons.lasname, Dmlessons.dmlesson1, Dmlessons.dmlesson2, Dmlessons.dmlesson3, Dmlessons.dmlesson4, Dmlessons.dmlesson5, Dmlessons.dmlesson6 FROM Dmlessons WHERE lasname = %s", GetSQLValueString($colname_rsDmlessons, "text"));
+$rsDmlessons = mysql_query($query_rsDmlessons, $Assessment) or die(mysql_error());
+$row_rsDmlessons = mysql_fetch_assoc($rsDmlessons);
+$totalRows_rsDmlessons = mysql_num_rows($rsDmlessons);
+
+$colname_rsManlevelart = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsManlevelart = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlevelart = sprintf("SELECT LMLA.lmlakey, LMLA.manlevel FROM Manlevelart, LMLA WHERE manlevelkey = LMLA.manlevel AND LMLA.lmlakey = %s", GetSQLValueString($colname_rsManlevelart, "int"));
+$rsManlevelart = mysql_query($query_rsManlevelart, $Assessment) or die(mysql_error());
+$row_rsManlevelart = mysql_fetch_assoc($rsManlevelart);
+$totalRows_rsManlevelart = mysql_num_rows($rsManlevelart);
+
+$colname_rsCoherence = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsCoherence = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherence = sprintf("SELECT LMLAscores.lmlakey, LMLAscores.coherence, CoherenceInfer.quality, CoherenceInfer.lasname, CoherenceInfer.implication, LMLAscores.lasname, CoherenceInfer.coherenceinfer FROM LMLAscores, CoherenceInfer WHERE LMLAscores.coherence = CoherenceInfer.quality and lmlakey = %s AND CoherenceInfer.lasname  = LMLAscores.lasname", GetSQLValueString($colname_rsCoherence, "int"));
+$rsCoherence = mysql_query($query_rsCoherence, $Assessment) or die(mysql_error());
+$row_rsCoherence = mysql_fetch_assoc($rsCoherence);
+$totalRows_rsCoherence = mysql_num_rows($rsCoherence);
+
+
+$colname_rsCoherenceOverall = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsCoherenceOverall = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceOverall = sprintf("SELECT LMLAscores.lmlakey, LMLAscores.coherenceoverallkey, LMLAscores.lasname, CoherenceOverallInfer.lasname, CoherenceOverallInfer.coherencekey, CoherenceOverallInfer.implication, CoherenceOverallInfer.cohereoverinfer FROM LMLAscores, CoherenceOverallInfer WHERE LMLAscores.coherenceoverallkey = CoherenceOverallInfer.coherencekey AND LMLAscores.lmlakey = %s AND CoherenceOverallInfer.lasname = LMLAscores.lasname", GetSQLValueString($colname_rsCoherenceOverall, "int"));
+$rsCoherenceOverall = mysql_query($query_rsCoherenceOverall, $Assessment) or die(mysql_error());
+$row_rsCoherenceOverall = mysql_fetch_assoc($rsCoherenceOverall);
+$totalRows_rsCoherenceOverall = mysql_num_rows($rsCoherenceOverall);
+
+$colname_rsCoherenceConcise = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsCoherenceConcise = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceConcise = sprintf("SELECT CoherenceConcise.coherencekey, CoherenceConcise.coherencconcise, LMLAscores.coherenceconcisekey, LMLAscores.lmlakey FROM CoherenceConcise, LMLAscores WHERE LMLAscores.coherenceconcisekey = CoherenceConcise.coherencekey AND LMLAscores.lmlakey = %s", GetSQLValueString($colname_rsCoherenceConcise, "int"));
+$rsCoherenceConcise = mysql_query($query_rsCoherenceConcise, $Assessment) or die(mysql_error());
+$row_rsCoherenceConcise = mysql_fetch_assoc($rsCoherenceConcise);
+$totalRows_rsCoherenceConcise = mysql_num_rows($rsCoherenceConcise);
+
+$colname_rsRelevanceArg = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsRelevanceArg = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRelevanceArg = sprintf("SELECT CoherenceRelevanceArg.coherencekey, CoherenceRelevanceArg.coherencerelevancearg, LMLAscores.coherencerelevanceargkey, LMLAscores.lmlakey FROM CoherenceRelevanceArg, LMLAscores WHERE LMLAscores.coherencerelevanceargkey = CoherenceRelevanceArg.coherencekey AND LMLAscores.lmlakey = %s", GetSQLValueString($colname_rsRelevanceArg, "int"));
+$rsRelevanceArg = mysql_query($query_rsRelevanceArg, $Assessment) or die(mysql_error());
+$row_rsRelevanceArg = mysql_fetch_assoc($rsRelevanceArg);
+$totalRows_rsRelevanceArg = mysql_num_rows($rsRelevanceArg);
+
+$colname_rsRelevanceExamp = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsRelevanceExamp = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRelevanceExamp = sprintf("SELECT CoherenceRelevanceExamp.coherenceno, CoherenceRelevanceExamp.coherencerelevexamp, LMLAscores.coherencerelevanceexampkey, LMLAscores.lmlakey, CoherenceRelevanceExamp.coherenceno, CoherenceRelevanceExamp.coherencerelevexamp FROM CoherenceRelevanceExamp, LMLAscores WHERE LMLAscores.coherencerelevanceexampkey = CoherenceRelevanceExamp.coherenceno AND LMLAscores.lmlakey = %s", GetSQLValueString($colname_rsRelevanceExamp, "int"));
+$rsRelevanceExamp = mysql_query($query_rsRelevanceExamp, $Assessment) or die(mysql_error());
+$row_rsRelevanceExamp = mysql_fetch_assoc($rsRelevanceExamp);
+$totalRows_rsRelevanceExamp = mysql_num_rows($rsRelevanceExamp);
+
+$colname_rsCoherenceFragment = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsCoherenceFragment = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceFragment = sprintf("SELECT CoherenceFragment.coherencekey, CoherenceFragment.coherencefragment, LMLAscores.coherencefragmentkey, LMLAscores.lmlakey FROM CoherenceFragment, LMLAscores WHERE LMLAscores.coherencefragmentkey = CoherenceFragment.coherencekey AND LMLAscores.lmlakey = %s", GetSQLValueString($colname_rsCoherenceFragment, "int"));
+$rsCoherenceFragment = mysql_query($query_rsCoherenceFragment, $Assessment) or die(mysql_error());
+$row_rsCoherenceFragment = mysql_fetch_assoc($rsCoherenceFragment);
+$totalRows_rsCoherenceFragment = mysql_num_rows($rsCoherenceFragment);
+
+$colname_rsCoherenceFraming = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsCoherenceFraming = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceFraming = sprintf("SELECT CoherenceFraming.coherencekey, CoherenceFraming.coherenceframing, LMLAscores.coherenceframingkey, LMLAscores.lmlakey FROM CoherenceFraming, LMLAscores WHERE LMLAscores.coherenceframingkey = CoherenceFraming.coherencekey AND LMLAscores.lmlakey = %s", GetSQLValueString($colname_rsCoherenceFraming, "int"));
+$rsCoherenceFraming = mysql_query($query_rsCoherenceFraming, $Assessment) or die(mysql_error());
+$row_rsCoherenceFraming = mysql_fetch_assoc($rsCoherenceFraming);
+$totalRows_rsCoherenceFraming = mysql_num_rows($rsCoherenceFraming);
+
+$colname_rsCoherenceEnglish = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsCoherenceEnglish = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceEnglish = sprintf("SELECT LMLAscores.lmlakey, LMLAscores.coherenceenglishkey, LMLAscores.lasname, CoherenceEnglishInfer.coherencekey, CoherenceEnglishInfer.lasname, CoherenceEnglishInfer.coherenceenglishinfer, CoherenceEnglishInfer.implication FROM LMLAscores, CoherenceEnglishInfer WHERE LMLAscores.coherenceenglishkey = CoherenceEnglishInfer.coherencekey AND LMLAscores.lmlakey = %s AND LMLAscores.lasname = CoherenceEnglishInfer.lasname", GetSQLValueString($colname_rsCoherenceEnglish, "int"));
+$rsCoherenceEnglish = mysql_query($query_rsCoherenceEnglish, $Assessment) or die(mysql_error());
+$row_rsCoherenceEnglish = mysql_fetch_assoc($rsCoherenceEnglish);
+$totalRows_rsCoherenceEnglish = mysql_num_rows($rsCoherenceEnglish);
+
+$colname_rsCoherencePersuade = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsCoherencePersuade = $_GET['lmlakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherencePersuade = sprintf("SELECT CoherencePersuade.persuasivekey, CoherencePersuade.persuasiveness, LMLAscores.lmlakey, LMLAscores.coherencepersuadekey  FROM CoherencePersuade, LMLAscores WHERE LMLAscores.coherencepersuadekey = CoherencePersuade.persuasivekey AND LMLAscores.lmlakey = %s", GetSQLValueString($colname_rsCoherencePersuade, "int"));
+$rsCoherencePersuade = mysql_query($query_rsCoherencePersuade, $Assessment) or die(mysql_error());
+$row_rsCoherencePersuade = mysql_fetch_assoc($rsCoherencePersuade);
+$totalRows_rsCoherencePersuade = mysql_num_rows($rsCoherencePersuade);
+
+$colname_rsPerspectiveOrienting = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsPerspectiveOrienting = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveOrienting = sprintf("SELECT LMLAscores.lmlascoringkey, LMLAscores.perspectiveorientingkey, LDMAperspective_orienting.perspectivekey, LDMAperspective_orienting.perspective FROM LMLAscores, LDMAperspective_orienting WHERE lmlascoringkey = %s AND LDMAperspective_orienting.perspectivekey = LMLAscores.perspectiveorientingkey", GetSQLValueString($colname_rsPerspectiveOrienting, "int"));
+$rsPerspectiveOrienting = mysql_query($query_rsPerspectiveOrienting, $Assessment) or die(mysql_error());
+$row_rsPerspectiveOrienting = mysql_fetch_assoc($rsPerspectiveOrienting);
+$totalRows_rsPerspectiveOrienting = mysql_num_rows($rsPerspectiveOrienting);
+
+$colname_rsPerspectiveSought = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsPerspectiveSought = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveSought = sprintf("SELECT LMLAscores.lmlascoringkey, LMLAscores.perspectivesoughtkey, LDMAperspective_sought.LDMAsoughtkey, LDMAperspective_sought.LDMAsought FROM LMLAscores, LDMAperspective_sought WHERE lmlascoringkey = %s AND LDMAperspective_sought.LDMAsoughtkey = LMLAscores.perspectivesoughtkey", GetSQLValueString($colname_rsPerspectiveSought, "int"));
+$rsPerspectiveSought = mysql_query($query_rsPerspectiveSought, $Assessment) or die(mysql_error());
+$row_rsPerspectiveSought = mysql_fetch_assoc($rsPerspectiveSought);
+$totalRows_rsPerspectiveSought = mysql_num_rows($rsPerspectiveSought);
+
+$colname_rsPerspectiveYou1 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsPerspectiveYou1 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveYou1 = sprintf("SELECT LMLAscores.lmlascoringkey, LMLAscores.perspectivesoughtkey, LMLAscores.perspectiveyou1, LDMAperspective_taken.LDMAtakenkey, LDMAperspective_taken.LDMAtaken FROM LMLAscores, LDMAperspective_taken WHERE lmlascoringkey = %s AND LDMAperspective_taken.LDMAtakenkey =  LMLAscores.perspectiveyou1", GetSQLValueString($colname_rsPerspectiveYou1, "int"));
+$rsPerspectiveYou1 = mysql_query($query_rsPerspectiveYou1, $Assessment) or die(mysql_error());
+$row_rsPerspectiveYou1 = mysql_fetch_assoc($rsPerspectiveYou1);
+$totalRows_rsPerspectiveYou1 = mysql_num_rows($rsPerspectiveYou1);
+
+$colname_rsPerspectiveEmployee2 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsPerspectiveEmployee2 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveEmployee2 = sprintf("SELECT LMLAscores.lmlascoringkey, LMLAscores.perspectivesoughtkey, LMLAscores.perspectiveyou1, LMLAscores.perspectiveemployees2, LMLAscores.perspectivemanager3, LMLAscores.perspectivesenior4, LMLAscores.perspectivecompany5, LMLAscores.perspectivecompany5, LMLAscores.perspectivecustomers6, LMLAscores.perspectiveshareholders7, LMLAscores.perspectivesociety8, LDMAperspective_taken.LDMAtakenkey, LDMAperspective_taken.LDMAtaken FROM LMLAscores, LDMAperspective_taken WHERE lmlascoringkey = %s AND LDMAperspective_taken.LDMAtakenkey =  LMLAscores.perspectiveemployees2", GetSQLValueString($colname_rsPerspectiveEmployee2, "int"));
+$rsPerspectiveEmployee2 = mysql_query($query_rsPerspectiveEmployee2, $Assessment) or die(mysql_error());
+$row_rsPerspectiveEmployee2 = mysql_fetch_assoc($rsPerspectiveEmployee2);
+$totalRows_rsPerspectiveEmployee2 = mysql_num_rows($rsPerspectiveEmployee2);
+
+$colname_rsPerspectiveManager3 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsPerspectiveManager3 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveManager3 = sprintf("SELECT LMLAscores.lmlascoringkey, LMLAscores.perspectivesoughtkey, LMLAscores.perspectiveyou1, LMLAscores.perspectiveemployees2, LMLAscores.perspectivemanager3, LMLAscores.perspectivesenior4, LMLAscores.perspectivecompany5, LMLAscores.perspectivecompany5, LMLAscores.perspectivecustomers6, LMLAscores.perspectiveshareholders7, LMLAscores.perspectivesociety8, LDMAperspective_taken.LDMAtakenkey, LDMAperspective_taken.LDMAtaken FROM LMLAscores, LDMAperspective_taken WHERE lmlascoringkey = %s AND LDMAperspective_taken.LDMAtakenkey =  LMLAscores.perspectivemanager3", GetSQLValueString($colname_rsPerspectiveManager3, "int"));
+$rsPerspectiveManager3 = mysql_query($query_rsPerspectiveManager3, $Assessment) or die(mysql_error());
+$row_rsPerspectiveManager3 = mysql_fetch_assoc($rsPerspectiveManager3);
+$totalRows_rsPerspectiveManager3 = mysql_num_rows($rsPerspectiveManager3);
+
+$colname_rsPerspectiveSenior4 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsPerspectiveSenior4 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveSenior4 = sprintf("SELECT LMLAscores.lmlascoringkey, LMLAscores.perspectivesoughtkey, LMLAscores.perspectiveyou1, LMLAscores.perspectiveemployees2, LMLAscores.perspectivemanager3, LMLAscores.perspectivesenior4, LMLAscores.perspectivecompany5, LMLAscores.perspectivecompany5, LMLAscores.perspectivecustomers6, LMLAscores.perspectiveshareholders7, LMLAscores.perspectivesociety8, LDMAperspective_taken.LDMAtakenkey, LDMAperspective_taken.LDMAtaken FROM LMLAscores, LDMAperspective_taken WHERE lmlascoringkey = %s AND LDMAperspective_taken.LDMAtakenkey =  LMLAscores.perspectivesenior4", GetSQLValueString($colname_rsPerspectiveSenior4, "int"));
+$rsPerspectiveSenior4 = mysql_query($query_rsPerspectiveSenior4, $Assessment) or die(mysql_error());
+$row_rsPerspectiveSenior4 = mysql_fetch_assoc($rsPerspectiveSenior4);
+$totalRows_rsPerspectiveSenior4 = mysql_num_rows($rsPerspectiveSenior4);
+
+$colname_rsPerspectiveCompany5 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsPerspectiveCompany5 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveCompany5 = sprintf("SELECT LMLAscores.lmlascoringkey, LMLAscores.perspectivesoughtkey, LMLAscores.perspectiveyou1, LMLAscores.perspectiveemployees2, LMLAscores.perspectivemanager3, LMLAscores.perspectivesenior4, LMLAscores.perspectivecompany5, LMLAscores.perspectivecompany5, LMLAscores.perspectivecustomers6, LMLAscores.perspectiveshareholders7, LMLAscores.perspectivesociety8, LDMAperspective_taken.LDMAtakenkey, LDMAperspective_taken.LDMAtaken FROM LMLAscores, LDMAperspective_taken WHERE lmlascoringkey = %s AND LDMAperspective_taken.LDMAtakenkey =  LMLAscores.perspectivecompany5", GetSQLValueString($colname_rsPerspectiveCompany5, "int"));
+$rsPerspectiveCompany5 = mysql_query($query_rsPerspectiveCompany5, $Assessment) or die(mysql_error());
+$row_rsPerspectiveCompany5 = mysql_fetch_assoc($rsPerspectiveCompany5);
+$totalRows_rsPerspectiveCompany5 = mysql_num_rows($rsPerspectiveCompany5);
+
+$colname_rsPerspectiveCustomer6 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsPerspectiveCustomer6 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveCustomer6 = sprintf("SELECT LMLAscores.lmlascoringkey, LMLAscores.perspectivesoughtkey, LMLAscores.perspectiveyou1, LMLAscores.perspectiveemployees2, LMLAscores.perspectivemanager3, LMLAscores.perspectivesenior4, LMLAscores.perspectivecompany5, LMLAscores.perspectivecompany5, LMLAscores.perspectivecustomers6, LMLAscores.perspectiveshareholders7, LMLAscores.perspectivesociety8, LDMAperspective_taken.LDMAtakenkey, LDMAperspective_taken.LDMAtaken FROM LMLAscores, LDMAperspective_taken WHERE lmlascoringkey = %s AND LDMAperspective_taken.LDMAtakenkey =  LMLAscores.perspectivecustomers6", GetSQLValueString($colname_rsPerspectiveCustomer6, "int"));
+$rsPerspectiveCustomer6 = mysql_query($query_rsPerspectiveCustomer6, $Assessment) or die(mysql_error());
+$row_rsPerspectiveCustomer6 = mysql_fetch_assoc($rsPerspectiveCustomer6);
+$totalRows_rsPerspectiveCustomer6 = mysql_num_rows($rsPerspectiveCustomer6);
+
+$colname_rsPerspectiveStakeholder7 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsPerspectiveStakeholder7 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveStakeholder7 = sprintf("SELECT LMLAscores.lmlascoringkey, LMLAscores.perspectivesoughtkey, LMLAscores.perspectiveyou1, LMLAscores.perspectiveemployees2, LMLAscores.perspectivemanager3, LMLAscores.perspectivesenior4, LMLAscores.perspectivecompany5, LMLAscores.perspectivecompany5, LMLAscores.perspectivecustomers6, LMLAscores.perspectiveshareholders7, LMLAscores.perspectivesociety8, LDMAperspective_taken.LDMAtakenkey, LDMAperspective_taken.LDMAtaken FROM LMLAscores, LDMAperspective_taken WHERE lmlascoringkey = %s AND LDMAperspective_taken.LDMAtakenkey =  LMLAscores.perspectiveshareholders7", GetSQLValueString($colname_rsPerspectiveStakeholder7, "int"));
+$rsPerspectiveStakeholder7 = mysql_query($query_rsPerspectiveStakeholder7, $Assessment) or die(mysql_error());
+$row_rsPerspectiveStakeholder7 = mysql_fetch_assoc($rsPerspectiveStakeholder7);
+$totalRows_rsPerspectiveStakeholder7 = mysql_num_rows($rsPerspectiveStakeholder7);
+
+$colname_rsPerspectiveSociety8 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsPerspectiveSociety8 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPerspectiveSociety8 = sprintf("SELECT LMLAscores.lmlascoringkey, LMLAscores.perspectivesoughtkey, LMLAscores.perspectiveyou1, LMLAscores.perspectiveemployees2, LMLAscores.perspectivemanager3, LMLAscores.perspectivesenior4, LMLAscores.perspectivecompany5, LMLAscores.perspectivecompany5, LMLAscores.perspectivecustomers6, LMLAscores.perspectiveshareholders7, LMLAscores.perspectivesociety8, LDMAperspective_taken.LDMAtakenkey, LDMAperspective_taken.LDMAtaken FROM LMLAscores, LDMAperspective_taken WHERE lmlascoringkey = %s AND LDMAperspective_taken.LDMAtakenkey =  LMLAscores.perspectivesociety8", GetSQLValueString($colname_rsPerspectiveSociety8, "int"));
+$rsPerspectiveSociety8 = mysql_query($query_rsPerspectiveSociety8, $Assessment) or die(mysql_error());
+$row_rsPerspectiveSociety8 = mysql_fetch_assoc($rsPerspectiveSociety8);
+$totalRows_rsPerspectiveSociety8 = mysql_num_rows($rsPerspectiveSociety8);
+
+$colname_rsDMemphasis = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMemphasis = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMemphasis = sprintf("SELECT LDMAdm_emphasis.LDMA_emphasizekey, LDMAdm_emphasis.LDMAemphasis, LMLAscores.lmlascoringkey, LMLAscores.dmemphasizekey, LMLAscores.dmbykey, LMLAscores.dmreview, LMLAscores.dmreflect FROM LDMAdm_emphasis, LMLAscores WHERE LDMAdm_emphasis.LDMA_emphasizekey = LMLAscores.dmemphasizekey AND LMLAscores.lmlascoringkey = %s", GetSQLValueString($colname_rsDMemphasis, "int"));
+$rsDMemphasis = mysql_query($query_rsDMemphasis, $Assessment) or die(mysql_error());
+$row_rsDMemphasis = mysql_fetch_assoc($rsDMemphasis);
+$totalRows_rsDMemphasis = mysql_num_rows($rsDMemphasis);
+
+$colname_rsDMby = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMby = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMby = sprintf("SELECT LMLAscores.lmlascoringkey, LMLAscores.dmemphasizekey, LMLAscores.dmbykey, LMLAscores.dmreview, LMLAscores.dmreflect, LDMAdm_by.LDMAbykey, LDMAdm_by.LDMAby FROM LMLAscores, LDMAdm_by WHERE LDMAdm_by.LDMAbykey = LMLAscores.dmbykey AND LMLAscores.lmlascoringkey = %s", GetSQLValueString($colname_rsDMby, "int"));
+$rsDMby = mysql_query($query_rsDMby, $Assessment) or die(mysql_error());
+$row_rsDMby = mysql_fetch_assoc($rsDMby);
+$totalRows_rsDMby = mysql_num_rows($rsDMby);
+
+$colname_rsDMreview = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMreview = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMreview = sprintf("SELECT LMLAscores.lmlascoringkey, LMLAscores.dmemphasizekey, LMLAscores.dmbykey, LMLAscores.dmreview, LMLAscores.dmreflect, LDMAdm_review.LDMAreviewkey, LDMAdm_review.LDMAreview FROM LMLAscores, LDMAdm_review WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_review.LDMAreviewkey = LMLAscores.dmreview AND LMLAscores.dmreview = 1", GetSQLValueString($colname_rsDMreview, "int"));
+$rsDMreview = mysql_query($query_rsDMreview, $Assessment) or die(mysql_error());
+$row_rsDMreview = mysql_fetch_assoc($rsDMreview);
+$totalRows_rsDMreview = mysql_num_rows($rsDMreview);
+
+$colname_rsDMreflect = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMreflect = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMreflect = sprintf("SELECT LMLAscores.lmlascoringkey, LMLAscores.dmemphasizekey, LMLAscores.dmbykey, LMLAscores.dmreview, LMLAscores.dmreflect, LDMAdm_reflect.LDMAreflectkey, LDMAdm_reflect.LDMAreflect FROM LMLAscores, LDMAdm_reflect WHERE LMLAscores.lmlascoringkey = %s AND LMLAscores.dmreflect = LDMAdm_reflect.LDMAreflectkey", GetSQLValueString($colname_rsDMreflect, "int"));
+$rsDMreflect = mysql_query($query_rsDMreflect, $Assessment) or die(mysql_error());
+$row_rsDMreflect = mysql_fetch_assoc($rsDMreflect);
+$totalRows_rsDMreflect = mysql_num_rows($rsDMreflect);
+
+$colname_rsDMpersonalgoals1 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMpersonalgoals1 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMpersonalgoals1 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmpersonalgoals1", GetSQLValueString($colname_rsDMpersonalgoals1, "int"));
+$rsDMpersonalgoals1 = mysql_query($query_rsDMpersonalgoals1, $Assessment) or die(mysql_error());
+$row_rsDMpersonalgoals1 = mysql_fetch_assoc($rsDMpersonalgoals1);
+$totalRows_rsDMpersonalgoals1 = mysql_num_rows($rsDMpersonalgoals1);
+
+$colname_rsDMmanagementgoals2 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMmanagementgoals2 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMmanagementgoals2 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmmanagementgoals2", GetSQLValueString($colname_rsDMmanagementgoals2, "int"));
+$rsDMmanagementgoals2 = mysql_query($query_rsDMmanagementgoals2, $Assessment) or die(mysql_error());
+$row_rsDMmanagementgoals2 = mysql_fetch_assoc($rsDMmanagementgoals2);
+$totalRows_rsDMmanagementgoals2 = mysql_num_rows($rsDMmanagementgoals2);
+
+$colname_rsDMstrategicgoals3 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMstrategicgoals3 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMstrategicgoals3 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmstrategicgoals3", GetSQLValueString($colname_rsDMstrategicgoals3, "int"));
+$rsDMstrategicgoals3 = mysql_query($query_rsDMstrategicgoals3, $Assessment) or die(mysql_error());
+$row_rsDMstrategicgoals3 = mysql_fetch_assoc($rsDMstrategicgoals3);
+$totalRows_rsDMstrategicgoals3 = mysql_num_rows($rsDMstrategicgoals3);
+
+$colname_rsDMrules4 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMrules4 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMrules4 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmrules4", GetSQLValueString($colname_rsDMrules4, "int"));
+$rsDMrules4 = mysql_query($query_rsDMrules4, $Assessment) or die(mysql_error());
+$row_rsDMrules4 = mysql_fetch_assoc($rsDMrules4);
+$totalRows_rsDMrules4 = mysql_num_rows($rsDMrules4);
+
+$colname_rsDMpriorities5 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMpriorities5 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMpriorities5 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmpriorities5", GetSQLValueString($colname_rsDMpriorities5, "int"));
+$rsDMpriorities5 = mysql_query($query_rsDMpriorities5, $Assessment) or die(mysql_error());
+$row_rsDMpriorities5 = mysql_fetch_assoc($rsDMpriorities5);
+$totalRows_rsDMpriorities5 = mysql_num_rows($rsDMpriorities5);
+
+$colname_rsDMprinciples6 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMprinciples6 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMprinciples6 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmprinciples6", GetSQLValueString($colname_rsDMprinciples6, "int"));
+$rsDMprinciples6 = mysql_query($query_rsDMprinciples6, $Assessment) or die(mysql_error());
+$row_rsDMprinciples6 = mysql_fetch_assoc($rsDMprinciples6);
+$totalRows_rsDMprinciples6 = mysql_num_rows($rsDMprinciples6);
+
+$colname_rsDMvalues7 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMvalues7 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMvalues7 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmvalues7", GetSQLValueString($colname_rsDMvalues7, "int"));
+$rsDMvalues7 = mysql_query($query_rsDMvalues7, $Assessment) or die(mysql_error());
+$row_rsDMvalues7 = mysql_fetch_assoc($rsDMvalues7);
+$totalRows_rsDMvalues7 = mysql_num_rows($rsDMvalues7);
+
+$colname_rsDMinformation13 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMinformation13 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMinformation13 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dminformation13", GetSQLValueString($colname_rsDMinformation13, "int"));
+$rsDMinformation13 = mysql_query($query_rsDMinformation13, $Assessment) or die(mysql_error());
+$row_rsDMinformation13 = mysql_fetch_assoc($rsDMinformation13);
+$totalRows_rsDMinformation13 = mysql_num_rows($rsDMinformation13);
+
+$colname_rsDMclarification14 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMclarification14 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMclarification14 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmclarification14", GetSQLValueString($colname_rsDMclarification14, "int"));
+$rsDMclarification14 = mysql_query($query_rsDMclarification14, $Assessment) or die(mysql_error());
+$row_rsDMclarification14 = mysql_fetch_assoc($rsDMclarification14);
+$totalRows_rsDMclarification14 = mysql_num_rows($rsDMclarification14);
+
+$colname_rsDMexperience15 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMexperience15 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMexperience15 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmexperience15", GetSQLValueString($colname_rsDMexperience15, "int"));
+$rsDMexperience15 = mysql_query($query_rsDMexperience15, $Assessment) or die(mysql_error());
+$row_rsDMexperience15 = mysql_fetch_assoc($rsDMexperience15);
+$totalRows_rsDMexperience15 = mysql_num_rows($rsDMexperience15);
+
+$colname_rsDMintuition16 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMintuition16 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMintuition16 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmintuition16", GetSQLValueString($colname_rsDMintuition16, "int"));
+$rsDMintuition16 = mysql_query($query_rsDMintuition16, $Assessment) or die(mysql_error());
+$row_rsDMintuition16 = mysql_fetch_assoc($rsDMintuition16);
+$totalRows_rsDMintuition16 = mysql_num_rows($rsDMintuition16);
+
+$colname_rsDMtwoway17 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMtwoway17 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMtwoway17 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmtwoway17", GetSQLValueString($colname_rsDMtwoway17, "int"));
+$rsDMtwoway17 = mysql_query($query_rsDMtwoway17, $Assessment) or die(mysql_error());
+$row_rsDMtwoway17 = mysql_fetch_assoc($rsDMtwoway17);
+$totalRows_rsDMtwoway17 = mysql_num_rows($rsDMtwoway17);
+
+$colname_rsDMstakeholderinput18 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMstakeholderinput18 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMstakeholderinput18 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmstakeholderinput18", GetSQLValueString($colname_rsDMstakeholderinput18, "int"));
+$rsDMstakeholderinput18 = mysql_query($query_rsDMstakeholderinput18, $Assessment) or die(mysql_error());
+$row_rsDMstakeholderinput18 = mysql_fetch_assoc($rsDMstakeholderinput18);
+$totalRows_rsDMstakeholderinput18 = mysql_num_rows($rsDMstakeholderinput18);
+
+$colname_rsDMbestpractices19 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMbestpractices19 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMbestpractices19 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmbestpractices19", GetSQLValueString($colname_rsDMbestpractices19, "int"));
+$rsDMbestpractices19 = mysql_query($query_rsDMbestpractices19, $Assessment) or die(mysql_error());
+$row_rsDMbestpractices19 = mysql_fetch_assoc($rsDMbestpractices19);
+$totalRows_rsDMbestpractices19 = mysql_num_rows($rsDMbestpractices19);
+
+$colname_rsDMcorporateculture20 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMcorporateculture20 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMcorporateculture20 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmcorporateculture20", GetSQLValueString($colname_rsDMcorporateculture20, "int"));
+$rsDMcorporateculture20 = mysql_query($query_rsDMcorporateculture20, $Assessment) or die(mysql_error());
+$row_rsDMcorporateculture20 = mysql_fetch_assoc($rsDMcorporateculture20);
+$totalRows_rsDMcorporateculture20 = mysql_num_rows($rsDMcorporateculture20);
+
+$colname_rsDMpsychology21 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMpsychology21 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMpsychology21 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmpsychology21", GetSQLValueString($colname_rsDMpsychology21, "int"));
+$rsDMpsychology21 = mysql_query($query_rsDMpsychology21, $Assessment) or die(mysql_error());
+$row_rsDMpsychology21 = mysql_fetch_assoc($rsDMpsychology21);
+$totalRows_rsDMpsychology21 = mysql_num_rows($rsDMpsychology21);
+
+$colname_rsDMethics22 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMethics22 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMethics22 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmethics22", GetSQLValueString($colname_rsDMethics22, "int"));
+$rsDMethics22 = mysql_query($query_rsDMethics22, $Assessment) or die(mysql_error());
+$row_rsDMethics22 = mysql_fetch_assoc($rsDMethics22);
+$totalRows_rsDMethics22 = mysql_num_rows($rsDMethics22);
+
+$colname_rsDManalysis25 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDManalysis25 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDManalysis25 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmanalysis25", GetSQLValueString($colname_rsDManalysis25, "int"));
+$rsDManalysis25 = mysql_query($query_rsDManalysis25, $Assessment) or die(mysql_error());
+$row_rsDManalysis25 = mysql_fetch_assoc($rsDManalysis25);
+$totalRows_rsDManalysis25 = mysql_num_rows($rsDManalysis25);
+
+$colname_rsDMproscons26 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMproscons26 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMproscons26 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmproscons26", GetSQLValueString($colname_rsDMproscons26, "int"));
+$rsDMproscons26 = mysql_query($query_rsDMproscons26, $Assessment) or die(mysql_error());
+$row_rsDMproscons26 = mysql_fetch_assoc($rsDMproscons26);
+$totalRows_rsDMproscons26 = mysql_num_rows($rsDMproscons26);
+
+$colname_rsDMrisksbenefits27 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMrisksbenefits27 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMrisksbenefits27 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmrisksbenefits27", GetSQLValueString($colname_rsDMrisksbenefits27, "int"));
+$rsDMrisksbenefits27 = mysql_query($query_rsDMrisksbenefits27, $Assessment) or die(mysql_error());
+$row_rsDMrisksbenefits27 = mysql_fetch_assoc($rsDMrisksbenefits27);
+$totalRows_rsDMrisksbenefits27 = mysql_num_rows($rsDMrisksbenefits27);
+
+$colname_rsDMalternatives28 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMalternatives28 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMalternatives28 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmalternatives28", GetSQLValueString($colname_rsDMalternatives28, "int"));
+$rsDMalternatives28 = mysql_query($query_rsDMalternatives28, $Assessment) or die(mysql_error());
+$row_rsDMalternatives28 = mysql_fetch_assoc($rsDMalternatives28);
+$totalRows_rsDMalternatives28 = mysql_num_rows($rsDMalternatives28);
+
+$colname_rsDMbuyin33 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMbuyin33 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMbuyin33 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmbuyin33", GetSQLValueString($colname_rsDMbuyin33, "int"));
+$rsDMbuyin33 = mysql_query($query_rsDMbuyin33, $Assessment) or die(mysql_error());
+$row_rsDMbuyin33 = mysql_fetch_assoc($rsDMbuyin33);
+$totalRows_rsDMbuyin33 = mysql_num_rows($rsDMbuyin33);
+
+$colname_rsDMexplain34 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMexplain34 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMexplain34 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34 FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmexplain34", GetSQLValueString($colname_rsDMexplain34, "int"));
+$rsDMexplain34 = mysql_query($query_rsDMexplain34, $Assessment) or die(mysql_error());
+$row_rsDMexplain34 = mysql_fetch_assoc($rsDMexplain34);
+$totalRows_rsDMexplain34 = mysql_num_rows($rsDMexplain34);
+
+$colname_rslmlascores = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rslmlascores = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rslmlascores = sprintf("SELECT LMLAscores.lmlakey, LMLAscores.lasname, LMLAscores.perspectiveintro, LMLAscores.perspectivesprotag, LMLAscores.stepsinprocess, LMLAscores.dmimplement FROM LMLAscores WHERE lmlascoringkey = %s", GetSQLValueString($colname_rslmlascores, "int"));
+$rslmlascores = mysql_query($query_rslmlascores, $Assessment) or die(mysql_error());
+$row_rslmlascores = mysql_fetch_assoc($rslmlascores);
+$totalRows_rslmlascores = mysql_num_rows($rslmlascores);
+
+$colname_rsDMstructures40 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsDMstructures40 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDMstructures40 = sprintf("SELECT LDMAdm_include.LDMAincludekey, LDMAdm_include.LDMAinclude, LMLAscores.lmlascoringkey, LMLAscores.dmpersonalgoals1, LMLAscores.dmmanagementgoals2, LMLAscores.dmstrategicgoals3, LMLAscores.dmrules4, LMLAscores.dmpriorities5, LMLAscores.dmprinciples6, LMLAscores.dmvalues7, LMLAscores.dminformation13, LMLAscores.dmclarification14, LMLAscores.dmexperience15, LMLAscores.dmintuition16, LMLAscores.dmtwoway17, LMLAscores.dmstakeholderinput18, LMLAscores.dmbestpractices19, LMLAscores.dmcorporateculture20, LMLAscores.dmpsychology21, LMLAscores.dmethics22, LMLAscores.dmanalysis25, LMLAscores.dmproscons26, LMLAscores.dmrisksbenefits27, LMLAscores.dmalternatives28, LMLAscores.dmbuyin33, LMLAscores.dmexplain34, LMLAscores.dmstructures FROM LMLAscores, LDMAdm_include WHERE LMLAscores.lmlascoringkey = %s AND LDMAdm_include.LDMAincludekey = LMLAscores.dmstructures", GetSQLValueString($colname_rsDMstructures40, "int"));
+$rsDMstructures40 = mysql_query($query_rsDMstructures40, $Assessment) or die(mysql_error());
+$row_rsDMstructures40 = mysql_fetch_assoc($rsDMstructures40);
+$totalRows_rsDMstructures40 = mysql_num_rows($rsDMstructures40);
+
+$colname_rsLRJAresources1 = "-1";
+if (isset($_GET['lasnameRJ'])) {
+  $colname_rsLRJAresources1 = $_GET['lasnameRJ'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAresources1 = sprintf("SELECT * FROM LRJAresources WHERE las = %s AND resourcename = 'resource 1'", GetSQLValueString($colname_rsLRJAresources1, "text"));
+$rsLRJAresources1 = mysql_query($query_rsLRJAresources1, $Assessment) or die(mysql_error());
+$row_rsLRJAresources1 = mysql_fetch_assoc($rsLRJAresources1);
+$totalRows_rsLRJAresources1 = mysql_num_rows($rsLRJAresources1);
+
+$colname_rsLRJAresources2 = "-1";
+if (isset($_GET['lasnameRJ'])) {
+  $colname_rsLRJAresources2 = $_GET['lasnameRJ'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAresources2 = sprintf("SELECT * FROM LRJAresources WHERE las = %s AND resourcename = 'resource 2'", GetSQLValueString($colname_rsLRJAresources2, "text"));
+$rsLRJAresources2 = mysql_query($query_rsLRJAresources2, $Assessment) or die(mysql_error());
+$row_rsLRJAresources2 = mysql_fetch_assoc($rsLRJAresources2);
+$totalRows_rsLRJAresources2 = mysql_num_rows($rsLRJAresources2);
+
+$colname_rsLRJAresources3 = "-1";
+if (isset($_GET['lasnameRJ'])) {
+  $colname_rsLRJAresources3 = $_GET['lasnameRJ'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAresources3 = sprintf("SELECT * FROM LRJAresources WHERE las = %s AND resourcename = 'resource 3'", GetSQLValueString($colname_rsLRJAresources3, "text"));
+$rsLRJAresources3 = mysql_query($query_rsLRJAresources3, $Assessment) or die(mysql_error());
+$row_rsLRJAresources3 = mysql_fetch_assoc($rsLRJAresources3);
+$totalRows_rsLRJAresources3 = mysql_num_rows($rsLRJAresources3);
+
+$colname_rsLRJAresources4 = "-1";
+if (isset($_GET['lasnameRJ'])) {
+  $colname_rsLRJAresources4 = $_GET['lasnameRJ'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAresources4 = sprintf("SELECT * FROM LRJAresources WHERE las = %s AND resourcename = 'resource 4'", GetSQLValueString($colname_rsLRJAresources4, "text"));
+$rsLRJAresources4 = mysql_query($query_rsLRJAresources4, $Assessment) or die(mysql_error());
+$row_rsLRJAresources4 = mysql_fetch_assoc($rsLRJAresources4);
+$totalRows_rsLRJAresources4 = mysql_num_rows($rsLRJAresources4);
+
+$colname_rsLRJAresources5 = "-1";
+if (isset($_GET['lasnameRJ'])) {
+  $colname_rsLRJAresources5 = $_GET['lasnameRJ'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAresources5 = sprintf("SELECT * FROM LRJAresources WHERE las = %s AND resourcename = 'resource 5'", GetSQLValueString($colname_rsLRJAresources5, "text"));
+$rsLRJAresources5 = mysql_query($query_rsLRJAresources5, $Assessment) or die(mysql_error());
+$row_rsLRJAresources5 = mysql_fetch_assoc($rsLRJAresources5);
+$totalRows_rsLRJAresources5 = mysql_num_rows($rsLRJAresources5);
+
+$colname_rsLasByAgeRJ = "-1";
+if (isset($_GET['lasnameRJ'])) {
+  $colname_rsLasByAgeRJ = $_GET['lasnameRJ'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasByAgeRJ = sprintf("SELECT lasname, lasbyageart, lasbyageart2 FROM LasByAge WHERE lasname = %s", GetSQLValueString($colname_rsLasByAgeRJ, "text"));
+$rsLasByAgeRJ = mysql_query($query_rsLasByAgeRJ, $Assessment) or die(mysql_error());
+$row_rsLasByAgeRJ = mysql_fetch_assoc($rsLasByAgeRJ);
+$totalRows_rsLasByAgeRJ = mysql_num_rows($rsLasByAgeRJ);
+
+$colname_rsLasByAgeDM = "-1";
+if (isset($_GET['lasnameDM'])) {
+  $colname_rsLasByAgeDM = $_GET['lasnameDM'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasByAgeDM = sprintf("SELECT lasname, lasbyageart, lasbyageart2 FROM LasByAge WHERE lasname = %s", GetSQLValueString($colname_rsLasByAgeDM, "text"));
+$rsLasByAgeDM = mysql_query($query_rsLasByAgeDM, $Assessment) or die(mysql_error());
+$row_rsLasByAgeDM = mysql_fetch_assoc($rsLasByAgeDM);
+$totalRows_rsLasByAgeDM = mysql_num_rows($rsLasByAgeDM);
+
+$colname_rsLasByAgeL = "-1";
+if (isset($_GET['lasnameLeader'])) {
+  $colname_rsLasByAgeL = $_GET['lasnameLeader'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasByAgeL = sprintf("SELECT lasname, lasbyageart, lasbyageart2 FROM LasByAge WHERE lasname = %s", GetSQLValueString($colname_rsLasByAgeL, "text"));
+$rsLasByAgeL = mysql_query($query_rsLasByAgeL, $Assessment) or die(mysql_error());
+$row_rsLasByAgeL = mysql_fetch_assoc($rsLasByAgeL);
+$totalRows_rsLasByAgeL = mysql_num_rows($rsLasByAgeL);
+
+
+$colname_rsLLRAqualities2 = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsLLRAqualities2 = $_GET['lmlakey'];
+}
+$colname2_rsLLRAqualities2 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname2_rsLLRAqualities2 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAqualities2 = sprintf("SELECT LMLA.lmlakey, LMLA.quality2, LLRAqualities.lasname, LLRAqualities.quality, LLRAqualities.`description`, LMLAscores.essay2las, LMLAscores.lmlascoringkey, LMLAscores.lmlakey FROM LMLA, LLRAqualities, LMLAscores WHERE LMLA.lmlakey = %s AND LMLAscores.lmlascoringkey = %s AND LLRAqualities.lasname = LMLAscores.essay2las AND LMLA.quality2 = LLRAqualities.quality AND LMLAscores.lmlakey = LMLA.lmlakey", GetSQLValueString($colname_rsLLRAqualities2, "int"),GetSQLValueString($colname2_rsLLRAqualities2, "int"));
+$rsLLRAqualities2 = mysql_query($query_rsLLRAqualities2, $Assessment) or die(mysql_error());
+$row_rsLLRAqualities2 = mysql_fetch_assoc($rsLLRAqualities2);
+$totalRows_rsLLRAqualities2 = mysql_num_rows($rsLLRAqualities2);
+
+$colname_rsLLRAqualities3 = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsLLRAqualities3 = $_GET['lmlakey'];
+}
+$colname2_rsLLRAqualities3 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname2_rsLLRAqualities3 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAqualities3 = sprintf("SELECT LMLA.lmlakey, LMLA.quality3, LLRAqualities.lasname, LLRAqualities.quality, LLRAqualities.`description`, LMLAscores.essay3las, LMLAscores.lmlascoringkey, LMLAscores.lmlakey FROM LMLA, LLRAqualities, LMLAscores WHERE LMLA.lmlakey = %s AND LMLAscores.lmlascoringkey = %s AND LLRAqualities.lasname = LMLAscores.essay3las AND LMLA.quality3 = LLRAqualities.quality AND LMLAscores.lmlakey = LMLA.lmlakey", GetSQLValueString($colname_rsLLRAqualities3, "int"),GetSQLValueString($colname2_rsLLRAqualities3, "int"));
+$rsLLRAqualities3 = mysql_query($query_rsLLRAqualities3, $Assessment) or die(mysql_error());
+$row_rsLLRAqualities3 = mysql_fetch_assoc($rsLLRAqualities3);
+$totalRows_rsLLRAqualities3 = mysql_num_rows($rsLLRAqualities3);
+
+$colname_rsLLRAqualities4 = "-1";
+if (isset($_GET['lmlakey'])) {
+  $colname_rsLLRAqualities4 = $_GET['lmlakey'];
+}
+$colname2_rsLLRAqualities4 = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname2_rsLLRAqualities4 = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAqualities4 = sprintf("SELECT LMLA.lmlakey, LMLA.quality4, LLRAqualities.lasname, LLRAqualities.quality, LLRAqualities.`description`, LMLAscores.essay4las, LMLAscores.lmlascoringkey, LMLAscores.lmlakey FROM LMLA, LLRAqualities, LMLAscores WHERE LMLA.lmlakey = %s AND LMLAscores.lmlascoringkey = %s AND LLRAqualities.lasname = LMLAscores.essay4las AND LMLA.quality4 = LLRAqualities.quality AND LMLAscores.lmlakey = LMLA.lmlakey", GetSQLValueString($colname_rsLLRAqualities4, "int"),GetSQLValueString($colname2_rsLLRAqualities4, "int"));
+$rsLLRAqualities4 = mysql_query($query_rsLLRAqualities4, $Assessment) or die(mysql_error());
+$row_rsLLRAqualities4 = mysql_fetch_assoc($rsLLRAqualities4);
+$totalRows_rsLLRAqualities4 = mysql_num_rows($rsLLRAqualities4);
+
+$colname_rsLLRAlascomment = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsLLRAlascomment = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRAlascomment = sprintf("SELECT LMLAscores.lmlakey, LMLAscores.lasnameLeader, LLRAgeneraldescriptions.lascomment, LLRAgeneraldescriptions.lasname FROM LMLAscores, LLRAgeneraldescriptions WHERE lmlascoringkey = %s AND LLRAgeneraldescriptions.lasname = LMLAscores.lasnameLeader", GetSQLValueString($colname_rsLLRAlascomment, "int"));
+$rsLLRAlascomment = mysql_query($query_rsLLRAlascomment, $Assessment) or die(mysql_error());
+$row_rsLLRAlascomment = mysql_fetch_assoc($rsLLRAlascomment);
+$totalRows_rsLLRAlascomment = mysql_num_rows($rsLLRAlascomment);
+
+$colname_rsLDMAlascomment = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsLDMAlascomment = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMAlascomment = sprintf("SELECT LMLAscores.lmlakey, LMLAscores.lasnameDM, LLRAgeneraldescriptions.lascomment, LLRAgeneraldescriptions.lasname FROM LMLAscores, LLRAgeneraldescriptions WHERE lmlascoringkey = %s AND LLRAgeneraldescriptions.lasname = LMLAscores.lasnameDM", GetSQLValueString($colname_rsLDMAlascomment, "int"));
+$rsLDMAlascomment = mysql_query($query_rsLDMAlascomment, $Assessment) or die(mysql_error());
+$row_rsLDMAlascomment = mysql_fetch_assoc($rsLDMAlascomment);
+$totalRows_rsLDMAlascomment = mysql_num_rows($rsLDMAlascomment);
+
+$colname_rsLRJAlascomment = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsLRJAlascomment = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAlascomment = sprintf("SELECT LMLAscores.lmlakey, LMLAscores.lasnameRJ, LLRAgeneraldescriptions.lascomment, LLRAgeneraldescriptions.lasname FROM LMLAscores, LLRAgeneraldescriptions WHERE lmlascoringkey = %s AND LLRAgeneraldescriptions.lasname = LMLAscores.lasnameRJ", GetSQLValueString($colname_rsLRJAlascomment, "int"));
+$rsLRJAlascomment = mysql_query($query_rsLRJAlascomment, $Assessment) or die(mysql_error());
+$row_rsLRJAlascomment = mysql_fetch_assoc($rsLRJAlascomment);
+$totalRows_rsLRJAlascomment = mysql_num_rows($rsLRJAlascomment);
+
+$colname_rsLDMAstrength = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsLDMAstrength = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMAstrength = sprintf("SELECT LDMAstrength.strengthkey, LDMAstrength.strength, LMLAscores.strengthkey, LMLAscores.lmlascoringkey FROM LDMAstrength, LMLAscores WHERE LMLAscores.strengthkey = LDMAstrength.strengthkey AND LMLAscores.lmlascoringkey = %s", GetSQLValueString($colname_rsLDMAstrength, "int"));
+$rsLDMAstrength = mysql_query($query_rsLDMAstrength, $Assessment) or die(mysql_error());
+$row_rsLDMAstrength = mysql_fetch_assoc($rsLDMAstrength);
+$totalRows_rsLDMAstrength = mysql_num_rows($rsLDMAstrength);
+
+$colname_rsLDMAcaveat = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsLDMAcaveat = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMAcaveat = sprintf("SELECT LDMAcaveat.caveatkey, LDMAcaveat.caveat, LMLAscores.caveatkey, LMLAscores.lmlascoringkey FROM LDMAcaveat, LMLAscores WHERE LMLAscores.caveatkey = LDMAcaveat.caveatkey AND LMLAscores.lmlascoringkey=%s", GetSQLValueString($colname_rsLDMAcaveat, "int"));
+$rsLDMAcaveat = mysql_query($query_rsLDMAcaveat, $Assessment) or die(mysql_error());
+$row_rsLDMAcaveat = mysql_fetch_assoc($rsLDMAcaveat);
+$totalRows_rsLDMAcaveat = mysql_num_rows($rsLDMAcaveat);
+
+$colname_rsLDMArecommend = "-1";
+if (isset($_GET['lmlascoringkey'])) {
+  $colname_rsLDMArecommend = $_GET['lmlascoringkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMArecommend = sprintf("SELECT LDMArecommend.recommendkey, LDMArecommend.recommend, LMLAscores.recommendkey, LMLAscores.lmlascoringkey FROM LDMArecommend, LMLAscores WHERE LMLAscores.recommendkey = LDMArecommend.recommendkey AND LMLAscores.lmlascoringkey = %s", GetSQLValueString($colname_rsLDMArecommend, "int"));
+$rsLDMArecommend = mysql_query($query_rsLDMArecommend, $Assessment) or die(mysql_error());
+$row_rsLDMArecommend = mysql_fetch_assoc($rsLDMArecommend);
+$totalRows_rsLDMArecommend = mysql_num_rows($rsLDMArecommend);
+?>
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateassess.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LMLA report</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.style14 {	font-size: 10px;
+	line-height: normal;
+}
+.style14 {	font-size: 10px
+}
+-->
+</style>
+<style type="text/css">
+<!--
+.style16 {	font-size: 10px;
+	line-height: normal;
+}
+.style16 {	font-size: 10px
+}
+-->
+</style>
+<style type="text/css">
+<!--
+.style17 {	font-size: 10px;
+	line-height: normal;
+}
+.style17 {	font-size: 10px
+}
+-->
+</style>
+<style type="text/css">
+<!--
+.style18 {	font-size: 10px;
+	line-height: normal;
+}
+.style18 {	font-size: 10px
+}
+-->
+</style>
+<style type="text/css">
+<!--
+.style19 {	font-size: 10px;
+	line-height: normal;
+}
+.style19 {	font-size: 10px
+}
+-->
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	background-image: url();
+	background-repeat: repeat;
+	background-color: #EDEEE9;
+}
+#apDiv1 {
+	position:absolute;
+	left:0;
+	top:0px;
+	width:780px;
+	height:110;
+	z-index:15;
+}
+#apDiv2 {
+	position:absolute;
+	left:43px;
+	top:122px;
+	width:780px;
+	height:17px;
+	z-index:4;
+}
+#apDiv3 {
+	position:absolute;
+	left:168px;
+	top:295px;
+	width:539px;
+	height:17px;
+	z-index:8;
+}
+#apDiv4 {
+	position:absolute;
+	left:704px;
+	top:122px;
+	width:42px;
+	height:17px;
+	z-index:3;
+}
+#apDiv5 {
+	position:absolute;
+	left:124px;
+	top:113px;
+	width:753px;
+	z-index:5;
+	height: 2000px;
+}
+#apDiv6 {
+	position:absolute;
+	left:260px;
+	top:135px;
+	width:522px;
+	z-index:6;
+}
+#apDiv7 {
+	position:absolute;
+	left:127px;
+	top:941px;
+	width:625px;
+	height:15px;
+	z-index:7;
+}
+#apDiv8 {
+	position:absolute;
+	left:83px;
+	top:257px;
+	width:147px;
+	height:269px;
+	z-index:8;
+}
+#apDiv9 {
+	position:absolute;
+	left:83px;
+	top:586px;
+	width:146px;
+	z-index:9;
+	background-color: #FFFFFF;
+	height: 233px;
+}
+#apDiv10 {
+	position:absolute;
+	left:83px;
+	top:134px;
+	width:146px;
+	height:107px;
+	z-index:10;
+}
+#apDiv11 {
+	position:absolute;
+	left:84px;
+	top:926px;
+	width:145px;
+	height:45px;
+	z-index:11;
+}
+#apDiv12 {
+	position:absolute;
+	left:83px;
+	top:836px;
+	width:146px;
+	height:54px;
+	z-index:12;
+}
+-->
+</style>
+<link href="../css/styleassess.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+<!--
+#apDiv13 {
+	position:absolute;
+	left:82px;
+	top:806px;
+	width:147px;
+	height:3px;
+	z-index:13;
+	background-color: #627ECF;
+}
+.style11 {
+	font-size: 10px
+}
+.style4 {	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10px;
+}
+#apDiv16 {	position:absolute;
+	left:4px;
+	top:3px;
+	width:30px;
+	height:28px;
+	z-index:14;
+}
+#apDiv17 {
+	position:absolute;
+	left:667px;
+	top:62px;
+	width:232px;
+	height:21px;
+	z-index:16;
+	padding-top: 4px;
+}
+-->
+</style>
+<script src="../SpryAssetsAssessments/SpryMenuBar.js" type="text/javascript"></script>
+<link href="../SpryAssetsAssessments/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssetsAssessments/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+#apDiv14 {
+	position:absolute;
+	left:324px;
+	top:68px;
+	width:362px;
+	height:17px;
+	z-index:17;SpryAssetsAssessments
+}
+#apDiv15 {
+	position:absolute;
+	left:0px;
+	top:158px;
+	width:1000px;
+	z-index:18;
+	height: 200px;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="apDiv1"><img src="../images/dtsskinold/DTSheader1.gif" alt="DTS masthead" width="1000" height="66" /></div>
+<div id="apDiv5"><!-- InstanceBeginEditable name="main" -->
+  <td valign="top"><h1> <img src="../images/logos/LMLA.gif" alt="lmla" width="72" height="29" align="absmiddle" /> report for <span class="emphasis"><?php echo $row_rsRegistrant['FirstName']; ?> <?php echo $row_rsRegistrant['LastName']; ?></span> </h1>
+<p>You may find it useful to revisit your r<span class="pspaced">eport from time to time. As we update our knowledge about learning at each phase, we add to our learning suggestions. This means that, from time to time, you may discover new resources here, even if you don't take another assessment.</span></p>
+<div id="TabbedPanels1" class="TabbedPanels">
+          <ul class="TabbedPanelsTabGroup">
+            <li class="TabbedPanelsTab">Lectagraph™</li>
+            <li class="TabbedPanelsTab">LR 1</li>
+            <li class="TabbedPanelsTab">LR 2</li>
+<li class="TabbedPanelsTab">LR 3</li>
+            <li class="TabbedPanelsTab">LR 4</li>
+            <li class="TabbedPanelsTab">RJ 1</li>
+            <li class="TabbedPanelsTab">RJ 2</li>
+            <li class="TabbedPanelsTab">RJ 3</li>
+            <li class="TabbedPanelsTab">DM 1</li>
+            <li class="TabbedPanelsTab">DM 2</li>
+            <li class="TabbedPanelsTab">DM 3</li>
+            <li class="TabbedPanelsTab">Essays</li>
+          </ul>
+          <div class="TabbedPanelsContentGroup">
+            <div class="TabbedPanelsContent">
+              <div align="left">
+                <table width="100%" border="0" cellspacing="0" cellpadding="4">
+                  <tr>
+                    <td colspan="2" valign="top"><h2><strong>Your LMLA Lectagraph™</strong></h2>                      </td>
+                  </tr>
+                  <tr>
+                    <td width="38%" valign="top"><div align="left">                      
+                      <p><img src="<?php echo $row_rsManlasartLeader['../codingLMLA/manlas']; ?>" alt="Graph of level versus management levels" width="135" height="432" hspace="0" align="top" /><img src="<?php echo $row_rsManlasartLeader['../codingLMLA/manlasleader']; ?>" alt="Graph of level versus management levels" width="38" height="432" hspace="0" align="top" /><img src="<?php echo $row_rsManlasartRJ['../codingLMLA/manlasrj']; ?>" alt="Graph of level versus management levels" width="38" height="432" hspace="0" align="top" /><img src="<?php echo $row_rsManlasartDM['../codingLMLA/manlasdm']; ?>" alt="Graph of level versus management levels" width="38" height="432" hspace="0" align="top" /></p>
+                    </div></td>
+                    <td width="62%" valign="top"><div align="left">
+                      <p class="pspaced">The figure on the left shows the distribution of your scores in the three knowledge areas targeted by the LMLA. We call this figure a Lectagraph™. </p>
+                      <p class="pspaced">Good leaders require knowledge and skills that span a wide range of knowledge areas. These include the ability to conceptualize good leadership, and general skills for seeking, evaluating, and working with information. They also include domain knowledge, contextual knowledge, interpersonal skills, psychological and sociological knowledge, ethical reasoning, and skills  for problem finding and  framing. The three subject areas of the LMLA tap into most of these skills and concepts.</p>
+                      <p class="pspaced">The majority of people perform at different levels in the three areas represented in the LMLA. This is normal. However, because people are more likely to reach their full developmental potential if their development across knowledge areas is relatively synchronous, we encourage you to work first and hardest on the areas in which you receive lower scores.                    </p>
+                    </div></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" valign="top"><h3 class="pspaced">Areas of weakness</h3>
+                      <p class="pspaced">We  encourge you to take seriously any comments we make about areas of weakness. Development from one level to the next cannot occur until there is adequate elaboration of concepts and skills within  one's current level. Moreover, the adequacy of one's skills and concepts at a new level is contingent upon the breadth and depth of elaboration at the previous level. Unless you are on the verge of transitioning into a new level, most of our comments are intended to promote optimal elaboration of skills and concepts at your current level. </p>
+                      <p class="pspaced"><strong>Helpful hint:</strong> There is a limit to what you can write in an assessment essay. Occasionally, something is missing just because you did not think about it the day you wrote your responses. We may label the omission as an area of weakness. If you find yourself disagreeing with any of our observations, seek a second opinion from a mentor or counselor who knows you well. </p>
+                      <h3 class="pspaced">The rate of development</h3>
+                      <p class="pspaced">As Malcolm Gladwell argues in the book, <em>Outliers</em>, it takes about 10,000 hours of  study (10 years) to become an expert in any complex field—no matter how talented you are. We would add that no matter how much of an expert you become—on yourself, in your area of professional expertise, or in the interpersonal sphere—there is always room for growth. </p>
+                      <p class="pspaced">The learning suggestions in this report are targeted one to two phases beyond your current phase of performance. The ideal resource should make you stretch just enough to challenge your current thinking. If a resource is too easy, you should probably move on. If it is too difficult, start with something a little less challenging.                      </p>
+                      <h3 class="pspaced">Argumentation</h3>
+                      <p class="pspaced">We  encourage you to pay attention to our comments about the coherence of your argumentation (in the decision-making section), because the skills required to make coherent arguments, like all other skills, are reconstructed at each developmental level and should be allowed to develop fully before you attempt to push forward. In general, we will not recommend activities designed to promote development to a new level until argumentation at your current level has matured.</p>
+<h3 class="pspaced">Task demands and human limitations</h3>
+                    <p class="pspaced">The task demands of the highest levels of management/leadership in most large (and many smaller) institutions are far beyond the reach of individual leaders. At these levels, leaders must work with others to identify and integrate a wide range of knowledge, information, and perspectives. In these cases, the performance level of the group can be a full level higher than the performance levels of the individuals who make up the group.                    </p>
+                    <h3 align="left"><span>Implicit versus explicit knowledge</span></h3>
+                    <p align="left"><span>Some of our knowlege is readily avaialble to us. We are conscious of it and can share it with others. Psychologists refer to this kind of knowledge as <em>explicit</em>. Explicit knowledge is fairly easy to share on an assessment like this one. However, people often know more about a particular subject than they can communicate in an assessment like this one. This is because much of what we learn through experience does not automatically become part of our explicit knowledge. It's in a form that's difficult to share. We call this kind of knowledge &quot;tacit&quot; or &quot;implicit&quot;. You can also think of it as intuitive knowledge. Tacit knowledge is not a bad thing. It helps us make quick choices in familiar situations; we'd be in big trouble if we had to think through every single situation in our lives before we made a decision! But tacit knowledge has its limits. </span></p>
+                    <p class="pspaced"><strong>First</strong>, because we aren't able to bring it into focus, we can't share tacit knowledge with others. This is the case in businesses in which the person at the top is an &quot;intuitive&quot; leader. Because his or her leadership skills are tacit, they can't be shared. In situations like this, it is not uncommon for an institution to last only as long as its leader. </p>
+                    <p class="pspaced"><strong>Second</strong>, it is limited by our experience, which means it isn't terribly useful for dealing with novelty. Because tacit knowledge is experienced-based, it is most useful in situations that are like those we have confronted in the past. Unfortunately, the modern world is constantly providing us with new challenges. To meet these challenges, we  need conscious methods for evaluating  knowledge and experience.</p>
+                    <p class="pspaced"><strong>Third</strong>, sometimes our tacit knowledge is sub-optimal. For example, people who learn the skills required to survive on the rough side of town or in an abusive relationship often fare poorly when they try to function outside of those contexts, because their  tacit knowledge isn't useful in their new surroundings. Before they can learn more adaptive skills, they usually need to bring their tacit knowledge into consciousness. </p>
+                    <p><span class="pspaced"><strong>Fourth</strong>, relying on tacit knowledge limits our development. When we habitually rely on our tacit knowledge, learning not only slows down, it's quality is compromised. Optimal learning requires that we reflect consciously upon our own experiences and actively seek other perspectives to</span> fill in the gaps.                    </p>
+                    <p><strong>Finally</strong>, relying upon tacit knowledge limits our ability to collaborate with others. </p>
+                    <h3><strong>Our learning recomme<span class="pspaced">ndations</span></strong></h3>
+                    <p class="pspaced">As Malcolm Gladwell argues in the book, <em>Outliers</em>, it takes about 10,000 hours of constant study (10 years) to become an expert in any complex field—no matter how talented you are. We would add that no matter how much of an expert you become—on yourself, in your area of professional expertise, or in the interpersonal sphere—there is always room for growth. </p>
+                    <p class="pspaced">Our  learning suggestions are targeted one to two phases beyond your current phase of performance. They should make you stretch just enough to challenge your current thinking. If a resource is too easy, you should probably move on. If it is too difficult, start with something a little less challenging.</p>
+                    <p><span class="pspaced">As you work with the resources suggested on the following tabs, keep in mind that deep learning requires practice. You are far more likely to incorporate new knowledge into your skill repertoire if you take every opportunity to (1) put it to work, and (2) reflect upon outcomes. Putting knowledge to work means applying it in real-world contexts. Try out new skills in low-stakes situations first, then gradually begin to apply them in higher-stakes situations until you've mastered them. Reflecting on outcomes means evaluating  the results of  your efforts. This works best if you keep a record—such as a journal—and share your experiences with other members of your community of practice. If you are a senior manager or CEO, you may want to think about how you</span>r corporate culture supports or prevents this kind of discourse.                    </p>
+                    <div align="left"></div></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" valign="top"><p><strong>Assessment date</strong><span class="emphasis">:</span> <?php echo $row_rsLMLA['date']; ?>                      </p>                      <div align="left" class="emphasis"></div></td>
+                  </tr>
+                  
+                  <tr>
+                    <td colspan="2" valign="top">
+                      <p><span class="privacy"><img src="../images/skin/Star.gif" alt="Star" width="21" height="20" align="left" /></span><span class="psmall">The size of the star relative to the scales in this report indicates the range in which the respondent’s “true” score is most likely to fall. The center of the star represents our best estimate, and the points represent the margin of error. Specifically, we are about 65% sure that your true score falls within the range of these points. Add half a star in either direction, and our confidence goes up to about 85%. </span></p>
+                      <p class="psmall">It is important to keep in mind that all Lectical assessments are assessments of performances, not people. All individuals function in a developmental range, and a single assessment cannot represent that range. Further, our assessments are discipline-specific. Individuals generally function at different levels in different disciplines. Consequently, performance on one assessment in any one domain cannot be taken as a general assessment of cognitive ability.</p></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" valign="top">&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" valign="top"><div align="left">
+                      <p><span class="emphasis">Note:</span> We did not base yo<span class="pspaced">ur score on the  particular conceptual content of your performance. We base our scores on what researchers call the &quot;hierarchical&quot; and &quot;horizontal&quot; complexity of  performances. To read a short description of our scoring system, the Lectical Asses</span>sment System (LAS), <a href="../PDF/LAAS.pdf">click here</a>.</p>
+                    </div>                      <div align="left"></div></td>
+                  </tr>
+                </table>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p>
+              </div>
+              <p>&nbsp;</p>
+            </div>
+            <div class="TabbedPanelsContent">
+              <table border="0" cellspacing="0" cellpadding="4">
+                <tr>
+                  <td align="left" valign="top">
+                    <h3><img src="<?php echo $row_rsManlasartLeader['../codingLMLA/manlasvert']; ?>" alt="Graph of level versus management levels" hspace="0" align="left" class="imageleft" /></h3>
+                    <h3><strong>Lectical phase:</strong> <?php echo $_GET['lasnameLeader']; ?></h3>
+                    <p><span class="pspaced"><?php echo $row_rsLLRAintroman['introman']; ?></span></p>
+                    <h3 class="pspaced">Your performance indicates that you think a good leader...</h3>
+                    <p class="pspaced">…<?php echo $row_rsLMLA['quality1']; ?>.&nbsp;<?php echo $row_rsLLRAqualities1['description']; ?></p>
+                    <p class="pspaced">…<?php echo $row_rsLMLA['quality2']; ?>.&nbsp;<?php echo $row_rsLLRAqualities2['description']; ?></p>
+                    <p class="pspaced">…<?php echo $row_rsLMLA['quality3']; ?>.&nbsp;<?php echo $row_rsLLRAqualities3['description']; ?></p>
+                    <p class="pspaced">…<?php echo $row_rsLMLA['quality4']; ?>.&nbsp;<?php echo $row_rsLLRAqualities4['description']; ?></p>
+                    <h3 class="pspaced">In general</h3>
+                    <p class="pspaced"><?php echo $row_rsLLRAgeneral['description']; ?></p>
+                    <h3 class="pspaced">Personal remarks</h3>
+                  <p class="pspaced"><?php echo $row_rsLMLA['commentLeader']; ?></p>
+                  <p class="pspaced"><strong><span class="redbold"><img src="<?php echo $row_rsManlasartLeader['../codingLMLA/manlaspie']; ?>" alt="Pie chart showing the distribution of managers across levels" hspace="6" vspace="6" align="right" class="imageright" /></span></strong></p></td>
+                </tr>
+              </table>
+            </div>
+            <div class="TabbedPanelsContent">
+              <table border="0" cellspacing="0" cellpadding="4">
+                <tr>
+                  <td><h3 class="pspaced">Approximate distribution of skill levels in the adult population</h3>
+                    <p class="pspaced">The figure below shows the approximate distribution of American adults' skill levels—in areas of expertise. There is no single source for the numbers that inform this figure. They are informed by the research literature, our own data, and consultations with other developmentalists. We are least clear about the ends of the distribution—especially the top end—but despite this we feel confident that the general picture is accurate. Most American adults perform in level 10 or the first phase of level 11. A much smaller percentage performs above phase 11:1.</p>
+                    <p class="pspaced">The figure shows a symmetrical bell curve, in which the average score adults receive in an area of expertise is  in the middle of the curve. Most people (68% of them, or 34% + 34%)  perform within one segment of the average score. Each of the second segments (to the right and left of the two middle segments) represent 14% of the population, and each of the segments on the far right and left represent 2% of the adult population. Percentages are shown on the horizontal axis. The location of your score (phase <?php echo $_GET['lasnameLeader']; ?>) is indicated by a vertical line with translucent bars on each side. Those bars represent the range in which your &quot;true&quot; score is most likely to fall. </p>
+                    <p class="pspaced"></p>
+<p class="pspaced"><img src="<?php echo $row_rsLasByAgeL['../codingLMLA/lasbyageart2']; ?>" alt="Pie chart showing the distribution of managers across levels" hspace="6" vspace="6" align="left" /></p>
+                    <p>&nbsp;</p>
+                    <h3>Leadership reasoning  in phase <?php echo $_GET['lasnameLeader']; ?></h3>
+                    <p class="pspaced">We have found that  people performing in phase&nbsp;<?php echo $_GET['lasnameLeader']; ?> are likely to think about leadership skills and attributes in the following ways:<span class="redbold">*</span></p>
+                    <p class="pspaced"><strong>Emotion:</strong>&nbsp;<?php echo $row_rsLLRAgeneral['emotion']; ?></p>
+                    <p class="pspaced"><strong>Mental functioning:</strong>&nbsp;<?php echo $row_rsLLRAgeneral['cognition']; ?></p>
+                    <p class="pspaced"><strong>Communication:</strong>&nbsp;<?php echo $row_rsLLRAgeneral['communication']; ?></p>
+                    <p class="pspaced"><strong>Social skills:</strong>&nbsp;<?php echo $row_rsLLRAgeneral['socialskills']; ?></p>
+                    <p class="pspaced"><strong>Ethics:</strong>&nbsp;<?php echo $row_rsLLRAgeneral['ethics']; ?></p>
+                    <p class="pspaced"><strong>Personality:</strong>&nbsp;<?php echo $row_rsLLRAgeneral['personality']; ?></p>
+                    <p class="pspaced"><strong>Style:</strong>&nbsp;<?php echo $row_rsLLRAgeneral['style']; ?></p>
+                    <p class="pspaced">&nbsp;</p>
+<p><span class="redbold">*</span><span class="psmall"><em>We did not base your score on the particular concepts and ideas in your performance. We base our scores on what researchers call the &quot;hierarchical&quot; and &quot;horizontal&quot; complexity of  performances. (To read a short description of our scoring system—the Lectical Assessment System—<a href="../PDF/LAAS.pdf">click here</a>.) Don't be surprised if the ideas represented in the above descriptions are not identical with your own. Two people can reason in the same phase and use quite different concepts in their arguments. Because your continued development requires that you  expand the range and depth of your knowledge, we suggest that you deliberately seek out ideas in these descriptions that are different from your own, and take some time to explore them. Many of these ideas are represented in the articles and books we list under  the &quot;suggestions&quot; tab.</em></span><br />
+                  </p></td>
+                </tr>
+              </table>
+            </div>
+<div class="TabbedPanelsContent">
+      <form id="form" name="form2" method="post" action="">
+                <table width="100%" border="0" cellspacing="0" cellpadding="4">
+                  <tr>
+                    <td colspan="3"><p class="pspaced">On this page we provide you with  suggestions  designed to help you move  toward the next phase in your development as a leader. These suggestions are based on extensive research into the sequences through which leaders commonly learn particular leadership skills. However, your own development  is likely to progress at somewhat different rates on different skills, and you may find that some  learning resources  seem more challenging than others. If you think you already have a good grasp of concepts presented in a given text, you are probably ready to move to the next level in the skill area represented in that text. If this happens, move to the next topic.* </p>
+<p class="pspaced">If you are an employee, keep in mind that your employer will base promotion decisions on your performance in the workplace. For this reason, we encourage you to work on your leadership skills with the support of a mentor who can provide feedback on your success  translating what you learn into action.</p>                      
+                      <h3 class="pspaced">Areas for growth</h3>                      
+                      <p class="pspaced"><?php echo $row_rsLLRAgrowthnutsandbolts['growthcomment']; ?></p>
+                      <p class="pspaced"><?php echo $row_rsLLRAgrowthcognition['growthcomment']; ?></p>
+                      <p class="pspaced"><?php echo $row_rsLLRAgrowthaffect['growthcomment']; ?></p>                      
+                      <p class="pspaced"><?php echo $row_rsLLRAgrowthethics['growthcomment']; ?></p>
+                      <p class="pspaced"><?php echo $row_rsLLRAgrowthstyle['growthcomment']; ?></p>
+<h3 class="pspaced">Learning  resources</h3>                    
+                      <p class="pspaced"><?php echo $row_rsLLRAlessons['lesson1']; ?></p>                    
+                      <p class="pspaced"><?php echo $row_rsLLRAlessons['lesson2']; ?></p>                    
+                      <p class="pspaced"><?php echo $row_rsLLRAlessons['lesson3']; ?></p>                    
+                      <p class="pspaced"><?php echo $row_rsLLRAlessons['lesson4']; ?></p>                    
+                      <p class="pspaced"><?php echo $row_rsLLRAlessons['lesson5']; ?></p>                      <p class="pspaced"><?php echo $row_rsLLRAlessons['lesson6']; ?></p></td>
+                  </tr>
+                  <tr>
+                    <td colspan="3"><p class="pspaced"><span class="redbold">*</span> <em>If many of the suggested resources seem too easy, your assessment score is probably lower than your true ability. This can happen if you don't adequately explain your reasoning in your responses to test questions. Determining your true level of ability would require retesting.</em></p></td>
+                  </tr>
+                  <tr>
+                    <td colspan="3" align="center" valign="middle"><div align="center" class="style17"></div></td>
+                  </tr>
+                  <tr>
+                    <td colspan="3" align="center" valign="middle"><div align="center"></div></td>
+                  </tr>
+                </table>
+        </form>
+            </div>
+            <div class="TabbedPanelsContent">
+              <form id="form4" name="form3" method="post" action="">
+                <table width="100%" border="0" cellspacing="0" cellpadding="4">
+                  <tr>
+                    <td><p class="pspaced">An appropriate level of decision-making skill is necessary but not sufficient for managerial success. Other skills, such as strategic thinking and reasoning about the leadership role, along with interpersonal awareness, emotional maturity, motivation, and personality contribute to predictions of performance. The figure below portrays our evolving research-based model of the skills and conditions that contribute to the development of good leadership. </p></td>
+                  </tr>
+                  <tr>
+                    <td><div align="center"><img src="../images/LeadModelLevelS.gif" alt="Leadership model" width="425" height="310" /></div></td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td><p class="pspaced"><?php echo $row_rsLEManlevelcomment['manlevelcomment']; ?></p>                      <p class="pspaced"><?php echo $row_rsLEManleveljuxtapose['manleveljuxtapose']; ?></p></td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;</td>
+                  </tr>
+                </table>
+              </form>
+            </div>
+            <div class="TabbedPanelsContent">
+              <table border="0" cellspacing="0" cellpadding="4">
+                <tr>
+                  <td colspan="2" align="left" valign="top">
+                    <p><img src="<?php echo $row_rsManlasartRJ['../codingLMLA/manlasvert']; ?>" alt="Graph of level versus management levels" hspace="0" align="left" class="imageleft" /></p>
+                    <h3>Lectical phase: <?php echo $_GET['lasnameRJ']; ?> &nbsp;&nbsp;&nbsp;&nbsp;Social reasoning sub-score: <?php echo $row_rsLMLA['lasinterpersonal']; ?></h3>
+                  <p class="pspaced"><?php echo $row_rsLRJAintroman['rjintroman']; ?></p>
+                  <h3 class="pspaced">Your performance indicates that you understand...</h3>
+                    <p class="pspaced"><?php echo $row_rsRJstrengths['rjcodecomplexity']; ?></p>
+                    <p class="pspaced"><?php echo $row_rsRJstrengths['rjcodecertainty']; ?></p>
+                  <p class="pspaced"><?php echo $row_rsRJstrengths['rjcodeinquiry']; ?></p>                  
+                  <p class="pspaced"><?php echo $row_rsRJstrengths['rjcodeevaluate']; ?></p>                  
+                  <p class="pspaced"><?php echo $row_rsRJstrengths['rjcodetruth']; ?></p>                  
+                  <p class="pspaced"><?php echo $row_rsRJstrengths['rjcoderelative']; ?></p>                  
+                  <h3 class="pspaced">Personal remarks</h3>                  
+                  <p class="pspaced"><?php echo $row_rsLMLA['commentRJ']; ?></p>                  <p class="style14"><span class="pspaced"><strong><img src="<?php echo $row_rsManlasartRJ['../codingLMLA/manlaspie']; ?>" alt="Pie chart showing the distribution of managers across levels" hspace="6" vspace="6" align="right" class="imageright" /></strong></span></p></td>
+                </tr>
+                <tr>
+                  <td colspan="2" class="style14"><br />                  </td>
+                </tr>
+              </table>
+            </div>
+            <div class="TabbedPanelsContent">
+              <form id="form2" name="form2" method="post" action="">
+                <table width="100%" border="0" cellspacing="0" cellpadding="4">
+
+                  
+                  <tr>
+                    <td><h3 class="pspaced">Approximate distribution of skill levels in the adult population</h3>
+<p class="pspaced">The figure below shows the approximate distribution of American adults' skill levels—in areas of expertise. There is no single source for the numbers that inform this figure. They are informed by the research literature, our own data, and consultations with other developmentalists. We are least clear about the ends of the distribution—especially the top end—but despite this we feel confident that the general picture is accurate. Most American adults perform in level 10 or the first phase of level 11. A much smaller percentage performs above phase 11:1.</p>
+                      <p class="pspaced">The figure shows a symmetrical bell curve, in which the average score adults receive in an area of expertise is  in the middle of the curve. Most people (68% of them, or 34% + 34%)  perform within one segment of the average score. Each of the second segments (to the right and left of the two middle segments) represent 14% of the population, and each of the segments on the far right and left represent 2% of the adult population. Percentages are shown on the horizontal axis. The location of your score (phase <?php echo $_GET['lasnameRJ']; ?>) is indicated by a vertical line with translucent bars on each side. Those bars represent the range in which your &quot;true&quot; score is most likely to fall. </p>
+                      <p class="pspaced">&nbsp;</p>
+                      <p class="pspaced"><img src="<?php echo $row_rsLasByAgeRJ['../codingLMLA/lasbyageart2']; ?>" hspace="6" vspace="6" align="left" /></p>
+                      <h3 class="pspaced">&nbsp;</h3>
+                      <h3 class="pspaced">Reflective judgment in phase <?php echo $_GET['lasnameRJ']; ?></h3>                      
+                    <p class="pspaced"><?php echo $row_rsLRJAmanlasgendescrip['rjmanlasgendescrip']; ?></p>                      
+                    <p class="pspaced"><?php echo $row_rsLRJAmanlasgendescrip['rjmanlasperspec']; ?></p>                      
+                    <p class="pspaced"><?php echo $row_rsLRJAmanlasgendescrip['rjmanlaslearn']; ?></p>                      
+                    <p class="pspaced"><?php echo $row_rsLRJAmanlasgendescrip['rjmanlasinquiry']; ?></p>                    <h3 class="pspaced"><strong>Areas fo<span class="pspaced">r growth include...</span></strong></h3>
+                    <ul class="pspaced">
+                      <li>
+                        <p><?php echo $row_rsLRJAgrowth['rjgrowthcomplexity']; ?></p>
+                      </li>
+                      <li>
+                        <p><?php echo $row_rsLRJAgrowth['rjgrowthinquiry']; ?></p>
+                      </li>
+                      <li>
+                        <p><?php echo $row_rsLRJAgrowth['rjgrowthevaluate']; ?></p>
+                      </li>
+                      <li>
+                        <p><?php echo $row_rsLRJAgrowth['rjgrowthcertainty']; ?></p>
+                      </li>
+                      <li>
+                        <p><?php echo $row_rsLRJAgrowth['rjgrowthtruth']; ?></p>
+                      </li>
+                      <li>
+                        <p><?php echo $row_rsLRJAgrowth['growthrelative']; ?></p>
+                      </li>
+                    </ul>
+                    <h3 class="pspaced">Learning suggestions<br /></h3>                      
+                      <p class="pspaced"><?php echo $row_rsLRJAresources1['resource']; ?></p>                    
+                      <p class="pspaced"><?php echo $row_rsLRJAresources2['resource']; ?></p>                    
+                      <p class="pspaced"><?php echo $row_rsLRJAresources3['resource']; ?></p>                    
+                      <p class="pspaced"><?php echo $row_rsLRJAresources4['resource']; ?></p>                    
+                    <p class="pspaced"><?php echo $row_rsLRJAresources5['resource']; ?></p></td>
+                  </tr>
+                </table>
+                <table width="96%" border="0" cellspacing="0" cellpadding="4">
+                  <tr>
+                    <td align="center" valign="middle"><div align="center"></div></td>
+                  </tr>
+                  <tr>
+                    <td align="center" valign="top"><div align="center"></div></td>
+                  </tr>
+                </table>
+                <p>&nbsp;</p>
+              </form>
+            </div>
+            <div class="TabbedPanelsContent">
+              <form id="form3" name="form3" method="post" action="">
+                <table width="100%" border="0" cellspacing="0" cellpadding="4">
+                  <tr>
+                    <td><p class="pspaced">An appropriate level of reflective judgment is necessary but not sufficient for managerial success. Other skills, such as workplace decision making and reasoning about the leadership role, along with interpersonal awareness, emotional maturity, motivation, and personality contribute to predictions of performance. The figure below portrays our evolving research-based model of the skills and conditions that contribute to the development of good leadership. </p></td>
+                  </tr>
+                  <tr>
+                    <td><div align="center"><img src="../images/LeadModelLevelS.gif" alt="Leadership model" width="425" height="310" /></div></td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td><p class="pspaced"><?php echo $row_rsRJManlevelcomment['manlevelcomment']; ?></p>                      <p class="pspaced"><?php echo $row_rsRJManleveljuxtapose['manleveljuxtapose']; ?></p></td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;</td>
+                  </tr>
+                </table>
+              </form>
+            </div>
+            <div class="TabbedPanelsContent">
+              <table border="0" cellspacing="0" cellpadding="4">
+                <tr>
+                  <td><h3><strong><img src="<?php echo $row_rsManlasartDM['../codingLMLA/manlasvert']; ?>" alt="Graph of level versus management levels" hspace="0" align="left" class="imageleft" />Lectical phase</strong>: <?php echo $_GET['lasnameDM']; ?></h3>
+                    <h3>You<span class="pspaced">r performance in relation to the task demands of management levels</span></h3>
+                    <p class="pspaced"><?php echo $row_rsDmintroman['dmintroman']; ?></p>
+<h3>Your<span class="pspaced"> performance indicates that you are likely to think:</span></h3>
+                    <p class="pspaced"><?php echo $row_rsDMStrengths['dmcode1perspectives']; ?></p>
+                    <p class="pspaced"><?php echo $row_rsDMStrengths['dmcode2perspectives']; ?></p>                    
+                    <p class="pspaced"><?php echo $row_rsDMStrengths['dmcode3response']; ?></p>                    
+                    <p class="pspaced"><?php echo $row_rsDMStrengths['dmcode4response']; ?></p>                    
+                    <h3 class="pspaced">In your decision-making process, you are likely to...</h3>                    
+                    <p class="pspaced"><?php echo $row_rsDMStrengths['dmcode5process']; ?></p>                    
+                    <h3 class="pspaced">Personal remarks</h3>                    
+                    <p class="pspaced"><?php echo $row_rsLMLAperspective['spcomment']; ?><?php echo $row_rsPerspectiveOrienting['perspective']; ?> <?php echo $row_rslmlascores['perspectiveintro']; ?> <?php echo $row_rsPerspectiveYou1['LDMAtaken']; ?> <?php echo $row_rsPerspectiveEmployee2['LDMAtaken']; ?> <?php echo $row_rsPerspectiveManager3['LDMAtaken']; ?> <?php echo $row_rsPerspectiveSenior4['LDMAtaken']; ?> <?php echo $row_rsPerspectiveCompany5['LDMAtaken']; ?> <?php echo $row_rsPerspectiveCustomer6['LDMAtaken']; ?> <?php echo $row_rsPerspectiveStakeholder7['LDMAtaken']; ?> <?php echo $row_rsPerspectiveSociety8['LDMAtaken']; ?> <?php echo $row_rslmlascores['perspectivesprotag']; ?> <?php echo $row_rsPerspectiveSought['LDMAsought']; ?></p>
+                    <p class="pspaced"><?php echo $row_rslmlascores['codercomment']; ?><?php echo $row_rsLDMAstrength['strength']; ?> <?php echo $row_rsLDMAcaveat['caveat']; ?>   </p>
+                    <p class="pspaced"><?php echo $row_rsCoherenceFraming['coherenceframing']; ?> <?php echo $row_rsRelevanceExamp['coherencerelevexamp']; ?> <?php echo $row_rsCoherenceConcise['coherencconcise']; ?> <?php echo $row_rsCoherencePersuade['persuasiveness']; ?> <?php echo $row_rsCoherenceFragment['coherencefragment']; ?> <?php echo $row_rsRelevanceArg['coherencerelevancearg']; ?> <?php echo $row_rsCoherenceOverall['implication']; ?> <?php echo $row_rsCoherenceOverall['cohereoverinfer']; ?></p>
+                    <p class="pspaced"><?php echo $row_rsLMLAdecision['decision']; ?><?php echo $row_rsDMemphasis['LDMAemphasis']; ?> <?php echo $row_rsDMby['LDMAby']; ?> <?php echo $row_rslmlascores['stepsinprocess']; ?> <?php echo $row_rsDMpersonalgoals1['LDMAinclude']; ?> <?php echo $row_rsDMmanagementgoals2['LDMAinclude']; ?> <?php echo $row_rsDMstrategicgoals3['LDMAinclude']; ?> <?php echo $row_rsDMrules4['LDMAinclude']; ?> <?php echo $row_rsDMpriorities5['LDMAinclude']; ?> <?php echo $row_rsDMprinciples6['LDMAinclude']; ?> <?php echo $row_rsDMvalues7['LDMAinclude']; ?> <?php echo $row_rsDMinformation13['LDMAinclude']; ?> <?php echo $row_rsDMclarification14['LDMAinclude']; ?> <?php echo $row_rsDMexperience15['LDMAinclude']; ?> <?php echo $row_rsDMintuition16['LDMAinclude']; ?> <?php echo $row_rsDMtwoway17['LDMAinclude']; ?> <?php echo $row_rsDMstakeholderinput18['LDMAinclude']; ?> <?php echo $row_rsDMbestpractices19['LDMAinclude']; ?> <?php echo $row_rsDMcorporateculture20['LDMAinclude']; ?> <?php echo $row_rsDMpsychology21['LDMAinclude']; ?> <?php echo $row_rsDMethics22['LDMAinclude']; ?> <?php echo $row_rsDManalysis25['LDMAinclude']; ?> <?php echo $row_rsDMproscons26['LDMAinclude']; ?> <?php echo $row_rsDMrisksbenefits27['LDMAinclude']; ?> <?php echo $row_rsDMalternatives28['LDMAinclude']; ?> <?php echo $row_rsDMexplain34['LDMAinclude']; ?> <?php echo $row_rsDMbuyin33['LDMAinclude']; ?> <?php echo $row_rslmlascores['dmimplement']; ?> <?php echo $row_rsDMreview['LDMAreview']; ?> <?php echo $row_rsDMstructures40['dmstructures']; ?></p>
+                    <p class="pspaced"><?php echo $row_rsLDMArecommend['recommend']; ?></p>
+                    <p class="pspaced"><em><?php echo $row_rsCoherenceEnglish['coherenceenglishinfer']; ?> <?php echo $row_rsCoherenceEnglish['implication']; ?></em></p></td>
+                </tr>
+                <tr>
+                  <td valign="top"><div align="right"><img src="<?php echo $row_rsManlasartDM['../codingLMLA/manlaspie']; ?>" alt="Pie chart showing the distribution of managers across levels" hspace="6" vspace="6" align="right" /></div></td>
+                </tr>
+                <tr>
+                  <td><p class="style18"><br />
+                  </p></td>
+                </tr>
+              </table>
+            </div>
+            <div class="TabbedPanelsContent">
+              <form id="form6" name="form3" method="post" action="">
+                <table border="0" cellspacing="0" cellpadding="4">
+                  <tr>
+                    <td><h3 class="pspaced">Approximate distribution of skill levels in the adult population</h3>
+                      <p class="pspaced">The figure below shows the approximate distribution of American adults' skill levels—in areas of expertise. There is no single source for the numbers that inform this figure. They are informed by the research literature, our own data, and consultations with other developmentalists. We are least clear about the ends of the distribution—especially the top end—but despite this we feel confident that the general picture is accurate. Most American adults perform in level 10 or the first phase of level 11. A much smaller percentage performs above phase 11:1.</p>
+                      <p class="pspaced">The figure shows a symmetrical bell curve, in which the average score adults receive in an area of expertise is  in the middle of the curve. Most people (68% of them, or 34% + 34%)  perform within one segment of the average score. Each of the second segments (to the right and left of the two middle segments) represent 14% of the population, and each of the segments on the far right and left represent 2% of the adult population. Percentages are shown on the horizontal axis. The location of your score (phase <?php echo $_GET['lasnameDM']; ?>) is indicated by a vertical line with translucent bars on each side. Those bars represent the range in which your &quot;true&quot; score is most likely to fall. </p>
+<p class="pspaced"><img src="<?php echo $row_rsLasByAgeDM['../codingLMLA/lasbyageart2']; ?>" hspace="6" vspace="6" align="left" /></p>
+                    <h3 class="pspaced">&nbsp;</h3>
+                    <h3 class="pspaced">Decision making in  phase <?php echo $_GET['lasnameDM']; ?></h3>                    
+                    <p class="pspaced"><?php echo $row_rsDmmanlasgendescrip['dmmanlasgendescrip']; ?></p>                    
+                    <p class="pspaced"><?php echo $row_rsDmmanlasgendescrip['dmmanlasperspec']; ?></p>                    
+                    <p class="pspaced"><?php echo $row_rsDmmanlasgendescrip['dmmanlasresponse']; ?></p>                    
+                    <p class="pspaced"><?php echo $row_rsDmmanlasgendescrip['dmmanlasprocess']; ?></p>
+                    <h3 class="pspaced">Areas for growth include...</h3>
+                    <ul class="pspaced">
+                      <li>
+                        <p><?php echo $row_rsDmgrowth['dmgrowthperspectives']; ?></p>
+                      </li>
+                      <li>
+                        <p><?php echo $row_rsDmgrowth['dmgrowthresponse']; ?></p>
+                      </li>
+                      <li>
+                        <p><?php echo $row_rsDmgrowth['dmgrowthprocess']; ?></p>
+                      </li>
+                    </ul>
+                    <h3 class="pspaced">Learning suggestions</h3>
+                    <p class="pspaced"><?php echo $row_rsDmlessons['dmlesson1']; ?></p>
+                    <p class="pspaced"><?php echo $row_rsDmlessons['dmlesson2']; ?></p>
+                    <p class="pspaced"><?php echo $row_rsDmlessons['dmlesson3']; ?></p>
+                    <p class="pspaced"><?php echo $row_rsDmlessons['dmlesson4']; ?></p>
+                    <p class="pspaced"><?php echo $row_rsDmlessons['dmlesson5']; ?></p>
+                    <p class="pspaced"><?php echo $row_rsDmlessons['dmlesson6']; ?></p>
+                    <div align="center" class="style19"></div></td>
+                  </tr>
+                  <tr>
+                    <td align="left" valign="bottom">&nbsp;</td>
+                  </tr>
+                </table>
+              </form>
+              <form id="form5" name="form2" method="post" action="">
+                <table border="0" cellspacing="0" cellpadding="4">
+                  <tr>
+                    <td><p>&nbsp;</p></td>
+                  </tr>
+                </table>
+              </form>
+              <p>&nbsp;</p>
+            </div>
+            <div class="TabbedPanelsContent">
+              <form id="form7" name="form3" method="post" action="">
+                <table width="100%" border="0" cellspacing="0" cellpadding="4">
+                  <tr>
+                    <td><p>An appropriate<span class="pspaced"> level of decision-making skill is necessary but not sufficient for managerial success. Other skills, such as strategic thinking and reasoning about the leadership role, along with interpersonal awareness, emotional maturity, motivation, and personality contribute to predictions of performance. The figure below portrays our evolving research-based model of</span> the skills and conditions that contribute to the development of good leadership. </p></td>
+                  </tr>
+                  <tr>
+                    <td><div align="center"><img src="../images/LeadModelLevelS.gif" alt="Leadership model" width="425" height="310" /></div></td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td><p class="pspaced"><?php echo $row_rsDMManlevelcomment['manlevelcomment']; ?></p>                      <p class="pspaced"><?php echo $row_rsDMManleveljuxtapose['manleveljuxtapose']; ?></p></td>
+                  </tr>
+                  <tr>
+                    <td>&nbsp;</td>
+                  </tr>
+                </table>
+              </form>
+            </div>
+            <div class="TabbedPanelsContent">
+              <table width="96%" border="0" cellspacing="0" cellpadding="4">
+                <tr>
+                  <td width="100%" valign="top"><p><span class="pspaced"><strong>A good leader <?php echo $row_rsLMLA['quality1']; ?></strong></span></p>                    <p><span class="pspaced"><?php echo $row_rsLMLA['essay1']; ?></span></p>                    <p><span class="pspaced"><strong>A good leader <?php echo $row_rsLMLA['quality2']; ?></strong></span></p>                    <p><span class="pspaced"><?php echo $row_rsLMLA['essay2']; ?></span></p>                    <p><span class="pspaced"><strong>A good leader <?php echo $row_rsLMLA['quality3']; ?></strong></span></p>                    <p><span class="pspaced"><?php echo $row_rsLMLA['essay3']; ?></span></p>                    <p><span class="pspaced"><strong>A good leader <?php echo $row_rsLMLA['quality4']; ?></strong></span></p>                    <p><span class="pspaced"><?php echo $row_rsLMLA['essay4']; ?></span></p>                    <p><span class="pspaced"><strong>Leader essay 5 </strong></span></p>                    <p><span class="pspaced"><?php echo $row_rsLMLA['essay5']; ?></span></p>                    <p><span class="pspaced"><strong>How is it possible that experts can come to such different conclusions?</strong></span></p>                    <p><span class="pspaced"><?php echo $row_rsLMLA['ThinkOf']; ?></span></p>                    <p><span class="pspaced"><strong>What is it about problems like this one that makes the truth so difficult to find?</strong></span></p>                    <p><span class="pspaced"><?php echo $row_rsLMLA['DifferentConclusions']; ?></span></p>                    <p><span class="pspaced"><strong>How would you go about gathering the information you would need to form an opinion on
+                  a problem like this one? What kind of information sources would you consider? Why? </strong></span></p>                    <p><span class="pspaced"><?php echo $row_rsLMLA['IdealProcess']; ?></span></p>                  <p><span class="pspaced"><strong>How would you go about evaluating the quality of information you obtain from different sources? Why? How do you know when you have the &quot;right&quot; information?</strong></span></p>                  <p><span class="pspaced"><?php echo $row_rsLMLA['Certainty']; ?></span></p>                  <p><span class="pspaced"><strong>Can you be certain that your conclusions are correct? Why or why not?</strong></span></p>                  <p><span class="pspaced"><?php echo $row_rsLMLA['Truth']; ?></span></p>                  <p><span class="pspaced"><strong>People often use terms like reality, truth, or facts when responding to this dilemma. What do these terms mean to you?</strong></span></p>                  <p><span class="pspaced"><?php echo $row_rsLMLA['IdentifyTruth']; ?></span></p>                  <p><span class="pspaced"><strong>Do you think there are any absolute truths? Why or why not?</strong></span></p>                  <p><span class="pspaced"><?php echo $row_rsLMLA['AbsoluteTruth']; ?></span></p>                  <p><span class="pspaced"><strong>What are the important things to consider in this situation? In one or two paragraphs, explain what they are and why they are important.</strong></span></p>                  <p><span class="pspaced"><?php echo $row_rsLMLA['perspectives1']; ?></span></p>                  <p><span class="pspaced"><strong>Are some of the the considerations you discussed in your response to question 1 more important than others? If so, what are they and why are they more important?</strong></span></p>                  <p><span class="pspaced"><?php echo $row_rsLMLA['perspectives2']; ?></span></p>                  <p><span class="pspaced"><strong>What do you think is an appropriate response to this kind of situation? Please explain why this response is appropriate.</strong></span></p>                  <p><span class="pspaced"><?php echo $row_rsLMLA['response1']; ?></span></p>                  <p><span class="pspaced"><strong>Describe another reasonable response to this kind of situation. Compare the potential risks and benefits of this response with those of your original response.</strong></span></p>                  <p><span class="pspaced"><?php echo $row_rsLMLA['response2']; ?></span></p>                  <p><span class="pspaced"><strong>What process would you recommend for deciding how to respond to situations of this kind? Please describe this decision-making process in a way that would allow another person to replicate it.</strong></span></p>                  <p><span class="pspaced"><?php echo $row_rsLMLA['process']; ?></span></p></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+        <p>&nbsp;</p>
+      <p>&nbsp;</p></td>
+  <script type="text/javascript">
+<!--
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+//-->
+      </script>
+      <!-- InstanceEndEditable -->
+  <p>&nbsp;</p>
+  <div align="center" class="copyright"> </div>
+</div>
+<div id="apDiv17">
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="../security/logIn.php">log in</a></li>
+    <li><a href="../index.html">home</a></li>
+    <li><a href="../contactus.php">contact</a></li>
+  </ul>
+</div>
+<div id="apDiv14">
+<p class="copyright">©2010, Developmental Testing Service, INC. All rights reserved.
+    </p>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"../SpryAssetsAssessments/SpryMenuBarDownHover.gif", imgRight:"../SpryAssetsAssessments/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsManlasartLeader);
+
+mysql_free_result($rsLMLA);
+
+mysql_free_result($rsManlasartRJ);
+
+mysql_free_result($rsManlasartDM);
+
+mysql_free_result($rsRJstrengths);
+
+mysql_free_result($rsRJstrengths);
+
+mysql_free_result($rsManlevelart);
+
+mysql_free_result($rsCoherence);
+
+mysql_free_result($rsRegistrant);
+
+mysql_free_result($rsLRJAintroman);
+
+mysql_free_result($rsLRJAmanlasgendescrip);
+
+mysql_free_result($rsRJManlevelcomment);
+
+mysql_free_result($rsRJManleveljuxtapose);
+
+mysql_free_result($rsLRJAgrowth);
+
+mysql_free_result($rsLRJAsurvey);
+
+mysql_free_result($Rsrjcoderelative);
+
+mysql_free_result($rsLLRAgeneral);
+
+mysql_free_result($rsLLRAintroman);
+
+mysql_free_result($rsLLRAqualities1);
+
+mysql_free_result($rsLEManlevelcomment);
+
+mysql_free_result($rsLEManleveljuxtapose);
+
+mysql_free_result($rsLLRAgrowthcognition);
+
+mysql_free_result($rsLLRAlessons);
+
+mysql_free_result($rsDMStrengths);
+
+mysql_free_result($rsManlasart);
+
+mysql_free_result($rsManlevelart);
+
+mysql_free_result($rsDmintroman);
+
+mysql_free_result($rsDmmanlasgendescrip);
+
+mysql_free_result($rsDMManlevelcomment);
+
+mysql_free_result($rsDMManleveljuxtapose);
+
+mysql_free_result($rsDmgrowth);
+
+mysql_free_result($rsDmlessons);
+
+mysql_free_result($rsCoherenceOverall);
+
+mysql_free_result($rsCoherenceConcise);
+
+mysql_free_result($rsRelevanceArg);
+
+mysql_free_result($rsRelevanceExamp);
+
+mysql_free_result($rsCoherenceFragment);
+
+mysql_free_result($rsCoherenceFraming);
+
+mysql_free_result($rsCoherenceEnglish);
+
+mysql_free_result($rsCoherencePersuade);
+
+mysql_free_result($rsPerspectiveOrienting);
+
+mysql_free_result($rsPerspectiveSought);
+
+mysql_free_result($rsPerspectiveYou1);
+
+mysql_free_result($rsPerspectiveEmployee2);
+
+mysql_free_result($rsPerspectiveManager3);
+
+mysql_free_result($rsDMemphasis);
+
+mysql_free_result($rsDMby);
+
+mysql_free_result($rsDMreview);
+
+mysql_free_result($rsDMreflect);
+
+mysql_free_result($rsDMpersonalgoals1);
+
+mysql_free_result($rsDMmanagementgoals2);
+
+mysql_free_result($rsDMstrategicgoals3);
+
+mysql_free_result($rsDMrules4);
+
+mysql_free_result($rsDMpriorities5);
+
+mysql_free_result($rsDMprinciples6);
+
+mysql_free_result($rsDMvalues7);
+
+mysql_free_result($rsDMinformation13);
+
+mysql_free_result($rsDMclarification14);
+
+mysql_free_result($rsDMexperience15);
+
+mysql_free_result($rsDMintuition16);
+
+mysql_free_result($rsDMtwoway17);
+
+mysql_free_result($rsDMstakeholderinput18);
+
+mysql_free_result($rsDMbestpractices19);
+
+mysql_free_result($rsDMcorporateculture20);
+
+mysql_free_result($rsDMpsychology21);
+
+mysql_free_result($rsDMethics22);
+
+mysql_free_result($rsDManalysis25);
+
+mysql_free_result($rsDMproscons26);
+
+mysql_free_result($rsDMrisksbenefits27);
+
+mysql_free_result($rsDMalternatives28);
+
+mysql_free_result($rsDMbuyin33);
+
+mysql_free_result($rsDMexplain34);
+
+mysql_free_result($rslmlascores);
+
+mysql_free_result($rsDMstructures40);
+
+mysql_free_result($rsLLRAqualities2);
+
+mysql_free_result($rsLLRAqualities3);
+
+mysql_free_result($rsLLRAqualities4);
+
+mysql_free_result($rsLLRAlascomment);
+
+mysql_free_result($rsLDMAlascomment);
+
+mysql_free_result($rsLRJAlascomment);
+
+mysql_free_result($rsLDMAstrength);
+
+mysql_free_result($rsLDMAcaveat);
+
+mysql_free_result($rsLDMArecommend);
+
+mysql_free_result($rsLRJAresources1);
+
+mysql_free_result($rsLLRAgrowthaffect);
+
+mysql_free_result($rsLasByAgeDM);
+
+mysql_free_result($rsLasByAgeRJ);
+
+mysql_free_result($rsLasByAgeL);
+
+
+
+?>

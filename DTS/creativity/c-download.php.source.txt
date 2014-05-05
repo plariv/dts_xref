@@ -1,0 +1,71 @@
+<?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCPSW = "SELECT * FROM CreativePotential ORDER BY creativitykey ASC";
+$rsCPSW = mysql_query($query_rsCPSW, $Assessment) or die(mysql_error());
+$row_rsCPSW = mysql_fetch_assoc($rsCPSW);
+$totalRows_rsCPSW = mysql_num_rows($rsCPSW);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+<p>
+  <?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=cpsw.txt\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+creativitykey*userkey*date*cscore*age*edu*profession*yrsprofession*otherprofession*undergradmajor*gradmajor*othermajor*expertise1*expertise1years*expertise2*expertise2years*expertise3*expertise3years*ethnicity1*ethnicityother*country*workcollab*probsolveoften*sparetimelearn*manyinterests*thrillchallenge*expert1*fieldperspect*passionate*illstructured*noticepeople*expert2*understandpersp*outsideself*prefercollab*manyhobbies*overallapperspec*excellencetime*learnwhatever*transferskills*wronglearn*newanticipation*flow*varietysources*newsolution*manycultures*questioning*mostcreative1*mostcreative2*mostcreative3*fineartcreative*probsolvecreative*everydaycreative*imaginative*socialcreative*inventive*comments</p>
+<p>
+  <?php do { ?>
+    <?php echo $row_rsCPSW['creativitykey']; ?>*<?php echo $row_rsCPSW['userkey']; ?>*<?php echo $row_rsCPSW['date']; ?>*<?php echo $row_rsCPSW['cscore']; ?> *<?php echo $row_rsCPSW['age']; ?>*<?php echo $row_rsCPSW['edu']; ?>*<?php echo $row_rsCPSW['profession']; ?>*<?php echo $row_rsCPSW['yrsprofession']; ?>*<?php echo $row_rsCPSW['otherprofession']; ?>*<?php echo $row_rsCPSW['undergradmajor']; ?>*<?php echo $row_rsCPSW['gradmajor']; ?>*<?php echo $row_rsCPSW['othermajor']; ?>*<?php echo $row_rsCPSW['expertise1']; ?>*<?php echo $row_rsCPSW['expertise1years']; ?>*<?php echo $row_rsCPSW['expertise2']; ?>*<?php echo $row_rsCPSW['expertise2years']; ?>*<?php echo $row_rsCPSW['expertise3']; ?>*<?php echo $row_rsCPSW['expertise3years']; ?>*<?php echo $row_rsCPSW['ethnicity1']; ?>*<?php echo $row_rsCPSW['ethnicityother']; ?>*<?php echo $row_rsCPSW['country']; ?>*<?php echo $row_rsCPSW['workcollab']; ?>*<?php echo $row_rsCPSW['probsolvoften']; ?>*<?php echo $row_rsCPSW['sparetimelearn']; ?>*<?php echo $row_rsCPSW['manyinterests']; ?>*<?php echo $row_rsCPSW['thrillchallenge']; ?>*<?php echo $row_rsCPSW['expert1']; ?>*<?php echo $row_rsCPSW['fieldperspect']; ?>*<?php echo $row_rsCPSW['passionate']; ?>*<?php echo $row_rsCPSW['illstructured']; ?>*<?php echo $row_rsCPSW['noticepeople']; ?>*<?php echo $row_rsCPSW['expert2']; ?>*<?php echo $row_rsCPSW['understandpersp']; ?>*<?php echo $row_rsCPSW['outsideself']; ?>*<?php echo $row_rsCPSW['prefercollab']; ?>*<?php echo $row_rsCPSW['manyhobbies']; ?>*<?php echo $row_rsCPSW['overlapperspec']; ?>*<?php echo $row_rsCPSW['excellencetime']; ?>*<?php echo $row_rsCPSW['learnwhatever']; ?>*<?php echo $row_rsCPSW['transferskills']; ?>*<?php echo $row_rsCPSW['wronglearn']; ?>*<?php echo $row_rsCPSW['newanticipation']; ?>*<?php echo $row_rsCPSW['flow']; ?>*<?php echo $row_rsCPSW['varietysources']; ?>*<?php echo $row_rsCPSW['newsolution']; ?>*<?php echo $row_rsCPSW['manycultures']; ?>*<?php echo $row_rsCPSW['questioning']; ?>*<?php echo $row_rsCPSW['mostcreative1']; ?>*<?php echo $row_rsCPSW['mostcreative2']; ?>*<?php echo $row_rsCPSW['mostcreative3']; ?>*<?php echo $row_rsCPSW['fineartcreative']; ?>*<?php echo $row_rsCPSW['probsolvecreative']; ?>*<?php echo $row_rsCPSW['everydaycreative']; ?>*<?php echo $row_rsCPSW['imaginative']; ?>*<?php echo $row_rsCPSW['socialcreative']; ?>*<?php echo $row_rsCPSW['inventive']; ?>*<?php echo $row_rsCPSW['comments']; ?><br />
+<?php } while ($row_rsCPSW = mysql_fetch_assoc($rsCPSW)); ?>
+  <?
+exit();
+?>
+</p>
+</body>
+</html>
+<?php
+mysql_free_result($rsCPSW);
+?>

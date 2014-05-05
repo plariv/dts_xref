@@ -1,0 +1,372 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsCharacter = "-1";
+if (isset($_GET['characterkey'])) {
+  $colname_rsCharacter = $_GET['characterkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCharacter = sprintf("SELECT characterkey, challengeaverage, challengescore, emotionaverage, emotionscore, integrityaverage, integrityscore, learneraverage, learnerscore, persistenceaverage, persistencescore, charactercomment FROM charactersurvey WHERE characterkey = %s", GetSQLValueString($colname_rsCharacter, "int"));
+$rsCharacter = mysql_query($query_rsCharacter, $Assessment) or die(mysql_error());
+$row_rsCharacter = mysql_fetch_assoc($rsCharacter);
+$totalRows_rsCharacter = mysql_num_rows($rsCharacter);
+
+// calculate total
+$total_sum = 0;
+$total_sum += $row_rsCharacter['forgiving'];
+$total_sum += $row_rsCharacter['attractive'];
+$total_sum += $row_rsCharacter['mistakes'];
+$total_sum += $row_rsCharacter['besteffort'];
+$total_sum += $row_rsCharacter['motives'];
+$total_sum += $row_rsCharacter['lookingforward'];
+$total_sum += $row_rsCharacter['benefitofdoubt'];
+$total_sum += $row_rsCharacter['makedifference'];
+$total_sum += $row_rsCharacter['purpose'];
+$total_sum += $row_rsCharacter['ownup'];
+$total_sum += $row_rsCharacter['crisis'];
+$total_sum += $row_rsCharacter['wellbeing'];
+$total_sum += $row_rsCharacter['goodalive'];
+$total_sum += $row_rsCharacter['confident'];
+$total_sum += $row_rsCharacter['humangood'];
+
+// calc average
+$total_num_fields = 15;
+
+$character_average = $total_sum / ($total_num_fields);
+
+$_SESSION["charactertotal"] = $total_sum;
+$_SESSION["total_num_fields"] = $total_num_fields;
+$_SESSION["characteraverage"] = $character_average;
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template2php.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Character survey results</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssetsAssessments/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="../SpryAssetsAssessments/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #9D9F9C;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #F6F6F6;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/DTSheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 26px;
+	background-image: url(/images/skin/menu.png);
+	color: #E2E2E2;
+	margin-top: 0px;
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	height: 19px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a {
+	color: #EAEAEA;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu1 a:active {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 a:visited {
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div id="menu1">
+  <p><a href="/landing.php">home</a>&nbsp;&nbsp;&nbsp;<a href="/security/registration.php">register</a>&nbsp;&nbsp;&nbsp;<a href="/security/logIn.php">log in</a>&nbsp;&nbsp;&nbsp;<a href="/contactus.php">contact us</a>&nbsp;&nbsp;&nbsp;<a href="/security/logout.php">log out</a>&nbsp;&nbsp;
+  <!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->
+  <span class="logintext">
+  <?php if (isset($_SESSION['log_firstname'])) {  ?>
+  You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></span></p>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>DTS CHARACTER SURVEY RESULTS</h1>
+  <h3>What is character?</h3>
+  <p>Your definition of character: <?php echo $row_rsCharacter['charactercomment']; ?></p>
+<p>We think of character as  a set of interrelated qualities that help determine our general approach to  tasks, social relationships, and citizenship. It includes qualities like compassion, courage, dependability,  emotional maturity,  generosity, humility, integrity,   perseverance, responsibility, tolerance, openness to learning, and the ability to respond to challenges. In this survey, we focus on five aspects of character:</p>
+  <ul>
+    <li>integrity,  including attributes like truthfulness, fairness, honesty, loyalty, and dependability;</li>
+    <li>perseverance, including persistence over time and persistence in the face of adversity;</li>
+    <li>openness to learning, including one's general attitude toward learning and development and the degree to which learning informs one's life;</li>
+    <li>comfort with challenge, including one's general attitude to challenging situations and the degree to which one embraces challenge; and </li>
+    <li>emotional  awareness and self control.<br />
+    </li>
+  </ul>
+  <p>Our scale runs from  0 – 5. Higher scores reflect more of each quality than lower scores. </p>
+  <p>Click on one of the panels to learn more. (Click a second time to close the panel.)  </p>
+  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+    <div class="CollapsiblePanelTab"> Integrity = <?php echo $row_rsCharacter['integrityaverage']; ?> </div>
+    <div class="CollapsiblePanelContent">
+      <p><strong>Very low:</strong> A score lower than 1.00 on our scale indicates that  behaviors like fairness, responsibility, and dependability, which are the hallmarks of personal integrity, are given almost no value. Individuals who score in this range are  likely to have a great deal of difficulty maintaining relationships, and are more likely than people with higher scores to act  in their own self-interest when it means knowingly harming others. </p>
+      <p><strong>Low:</strong> A score between 1.00 and 2.00 indicates that  behaviors like fairness, responsibility, and dependability are given little value. Individuals who score in this range are  likely to have  difficulty maintaining close relationships, and are more likely than people with higher scores to act without considering the effects of their actions upon others. </p>
+      <p><strong>Moderate: </strong>A score between 2.00 and 3.00 indicates that  behaviors like fairness, responsibility, and dependability are given some value. Although individuals who score in this range are  likely to be able to maintain close relationships,  when under duress or subjected to temptation, they are are more likely than people with higher scores to act in ways that have negative effects on others. </p>
+      <p><strong>High: </strong>A score between 3.00 and 4.00 indicates that  behaviors like fairness, responsibility, and dependability are given a high value. Individuals who score in this range are  likely to be able to maintain close relationships. And even when under duress or subjected to temptation, they are are more likely than people with lower scores to act in ways that show consideration for others. </p>
+      <p><strong>Very high: </strong>A  score higher than 4.00 on our scale indicates vigilance when it comes to behaving with fairness, responsibility, and dependability. Individuals who score in this range are more likely than people with lower scores to put integrity  first in all situations. However, when vigilance becomes hyper-vigilance or rigidity, even integrity can spawn behavior that is non-adaptive, creating problems for the self and others.</p>
+    </div>
+  </div>
+  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+    <div class="CollapsiblePanelTab"> Perseverance = <?php echo $row_rsCharacter['persistenceaverage']; ?> </div>
+    <div class="CollapsiblePanelContent">
+      <p><strong>Very low: </strong>A score lower than 1.00 on our scale indicates a very low level of the propensity to persist, either over time or in the face of adversity. Individuals who score in this range are very likely to have a great deal of difficulty achieving  long-term or challenging goals, even when failure is associated with severe negative consequences. </p>
+      <p><strong>Low: </strong>A score between 1.00 and 2.00 indicates a  low level of the propensity to persist, either over time or in the face of adversity. Individuals who score in this range are very likely to  find it difficult to achieve   medium-term or challenging goals, even when failure is associated with clear-cut negative consequences. </p>
+      <p><strong>Moderate:</strong> A score between 2.00 and 3.00 indicates a  moderate level of the propensity to persist. Individuals who score in this range are likely to persist—even over relatively long periods of  time—as long as doing so   involves no more than a moderate level of challenge or adversity. They are more likely to  persist when failure is associated with  negative consequences. </p>
+      <p><strong>High:</strong> A score between 3.00 and 4.00 indicates an  optimally adaptive level of the propensity to persist. Individuals who score in this range are likely to persist over  long periods of  time and under adverse conditions. They are likely to  persist even when failure is not associated with  negative consequences. </p>
+      <p><strong>Very high:</strong> A score higher than 4.00 on our scale indicates an unusually high level of the propensity to persist. Individuals who score in this range are likely to persist over  very long periods of  time and under extreme conditions. Although this level of persistence can lead to great success, it can also lead to catastrophic failure. For example, individuals who score in this range    are more likely than those with lower scores to ignore clear evidence of failure, continuing to persevere even when the cost of doing so outweighs the benefits of success.</p>
+    </div>
+  </div>
+  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+    <div class="CollapsiblePanelTab"> Openness to  learning = <?php echo $row_rsCharacter['learneraverage']; ?>    </div>
+    <div class="CollapsiblePanelContent">
+      <p><strong>Very low: </strong>A score lower than 1.00 on our scale indicates a very low level of openness to learning. Individuals who score in this range are  unlikely to take advantage of learning opportunities of any kind, severely reducing the possibility of personal development.</p>
+      <p><strong>Low: </strong>A score between 1.00 and 2.00 indicates a  low level of  openness to learning. Individuals who score in this range may have one or two recreational interests that involve a degree of learning. But, for the most part, they take advantage of learning opportunities only when   required, and are unlikely to engage with any enthusiasm. This  limits the potential for personal development.</p>
+      <p><strong>Moderate: </strong>A score between 2.00 and 3.00 indicates a  moderate level of  openness to learning. Individuals who score in this range are likely to have  recreational interests that involve  learning and to  take advantage of conventional learning opportunities when   these lead to clear-cut benefits. Personal development is most likely to occur in one or two specific areas of interest or in workplace skills.</p>
+      <p><strong>High: </strong>A score between 3.00 and 4.00 indicates a  high level of  openness to learning. Individuals who score in this range are likely to pursue learning in a variety of conventional and unconventional contexts and in a  range of subject or skill areas. When learning crosses disciplines, goes deep, and involves critical reflection, transformative development—of the kind that spawns innovation—is possible. </p>
+      <p><strong>Very high:</strong> A score higher than 4.00 on our scale indicates an all-out passion for learning. Individuals who score in this range are likely to pursue learning in a wide variety of conventional and unconventional contexts and in a remarkably wide range of subject or skill areas. When learning crosses disciplines, goes deep, and involves critical reflection, transformative development—of the kind that spawns innovation—is likely. However, it is possible for  learning to become so much of a passion that it negatively influences personal development, especially when it interferes with close relationships.</p>
+    </div>
+  </div>
+  <div id="CollapsiblePanel4" class="CollapsiblePanel">
+    <div class="CollapsiblePanelTab"> Comfort with challenge = <?php echo $row_rsCharacter['challengeaverage']; ?>    </div>
+    <div class="CollapsiblePanelContent">
+      <p><strong>Very low: </strong>A score lower than 1.00 on our scale indicates a very low level of comfort with challenging situations. Individuals who score in this range are  likely to avoid challenges of any kind.</p>
+      <p><strong>Low: </strong>A score between 1.00 and 2.00 indicates a  low level of  comfort with challenging situations. Individuals who score in this range are likely to avoid engaging in challenging activities unless they are required to do so. Even in this case, they are likely to require a  great deal of support (or supervision).</p>
+      <p><strong>Moderate: </strong>A score between 2.00 and 3.00 indicates a  moderate level of  comfort with challenging situations. Individuals who score in this range may voluntarily take on a moderately challenging activity if the stakes are not too high, but they are  likely to be more reluctant to take on a major challenge. </p>
+      <p><strong>High: </strong>A score between 3.00 and 4.00 indicates a  high level of  comfort with challenging situations. Individuals who score in this range are likely to volunteer to tackle  challenging problems and to take pleasure in the process.   </p>
+      <p><strong>Very high:</strong> A score higher than 4.00 on our scale indicates a true passion for  taking on challenging situations. Individuals who score in this range are likely to  seek out challenges—and may gain a reputation as problem-solvers—or daredevils.</p>
+      <p>&nbsp;</p>
+    </div>
+  </div>
+  <div id="CollapsiblePanel5" class="CollapsiblePanel">
+    <div class="CollapsiblePanelTab"> Levels of emotional awareness = <?php echo $row_rsCharacter['emotionaverage']; ?>    </div>
+    <div class="CollapsiblePanelContent">
+      <p><strong>Very low: </strong>A score lower than 1.00 on our scale indicates a very low level of emotional awareness. Individuals who score in this range are  very likely to be out of touch with their own and other's emotional states. They are   also more likely than those who score higher on this scale to experience destructive emotional outbursts, especially if they are emotionally intense.</p>
+      <p><strong>Low: </strong>A score between 1.00 and 2.00 indicates a  low level of  emotional awareness. Individuals who score in this range are likely to be out of touch with their own and other's emotional states and are more likely that those who score higher on this scale to experience  emotional outbursts, some of which may be destructive, especially if they are emotionally intense.</p>
+      <p><strong>Moderate: </strong>A score between 2.00 and 3.00 indicates a  moderate level of  emotional awareness. Individuals who score in this range are likely to be aware of their own and other's basic  emotional states, and are more likely that those who score lower on this scale to be able to keep potentially destructive emotions under control, even if they are emotionally intense. </p>
+      <p><strong>High: </strong>A score between 3.00 and 4.00 indicates a  high level  of  emotional awareness. Individuals who score in this range are likely likely to think of themselves as having a  nuanced awareness of their own and other's   emotional states, and are more likely that those who score lower on this scale to actively monitor their own and other's emotions, and to    channel or defuse potentially destructive emotions.</p>
+      <p><strong>Very high:</strong> A score higher than 4.00 on our scale indicates a very high level of emotional awareness. Individuals who score in this range are likely to think of themselves as having a  highly nuanced awareness of their own and other's   emotional states. They are  likely to actively monitor their own and other's emotions and to    channel  or defuse potentially destructive emotions. They are also more likely than individuals who score lower on the scale to take on more emotion than they can handle, especially if they are caregivers.</p>
+    </div>
+  </div>
+  <div id="CollapsiblePanel6" class="CollapsiblePanel">
+    <div class="CollapsiblePanelTab"> Good and bad character?    </div>
+    <div class="CollapsiblePanelContent">
+      <p>Some aspects of character can be arranged neatly on a scale, where a high score is good and a low score is bad. For example, almost everyone would  agree that a lack of integrity is a bad thing. But other aspects of character are more complex. People don't always agree on the value of being open to new knowledge or the value of emotional awareness, which makes it harder to talk about simple &quot;good&quot; and &quot;bad&quot; amounts of these qualities. To make things more complicated, very high levels of  qualities—like perseverance or thoroughness—sometimes aren't as adaptive as moderately high levels. It is not <em>always</em> good to persist, and too much thoroughness begins to look like perfectionism, which can have negative personal consequences.</p>
+    </div>
+  </div>
+<div id="CollapsiblePanel8" class="CollapsiblePanel">
+    <div class="CollapsiblePanelTab"> Take home message    </div>
+    <div class="CollapsiblePanelContent">
+      <p>Character, like other human qualities, has both positive and negative implications. You can use your survey results to   get  started thinking about the role  that different aspects of your character have played in your life. We suggest that you begin by thinking about the ways in which aspects of your character have affected your choices, relationships, and experiences. What are the advantage and disadvantages of your character traits? Are you satisfied or dissatisfied with your character? What kind of feedback have you had from others regarding different aspects of your   character? Try journaling about these issues or discussing them with others. </p>
+    </div>
+  </div>
+  <h3>&nbsp;</h3>
+  <h3>&nbsp;</h3>
+<p>&nbsp;</p>
+<h3>&nbsp;</h3>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel4 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel4");
+var CollapsiblePanel5 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel5");
+var CollapsiblePanel6 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel6");
+var CollapsiblePanel8 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel8");
+//-->
+</script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsCharacter);
+?>

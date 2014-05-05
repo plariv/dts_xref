@@ -1,0 +1,76 @@
+@charset "UTF-8";
+/* CSS Document */
+
+.inner_container .column1 p {
+	font-size: 120%;
+	font-weight: 400;
+	line-height: 160%;
+}
+.inner_container .column1 h1 {
+	font-size: 220%;
+}
+.inner_container .column1 h2 {
+	font-size: 150%;
+	font-weight: 600;
+}
+.inner_container .column1 h3 {
+	font-size: 120%;
+}
+.inner_container .column1 h4 {
+	font-size: 110%;
+}
+.inner_container .column1 a {
+	color: #007376;
+}
+.inner_container .column1 table {
+	line-height: 140%;
+}
+.inner_container .column1 td {
+	font-size: 120%;
+	font-weight: 400;
+	line-height: 140%;
+	padding-left: 0px;
+	padding-right: 15px;
+}
+.inner_container .column1 th {
+	font-size: 130%;
+	font-weight: 600;
+	line-height: 140%;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	border-bottom: 2px solid #007376;
+	padding-right: 8px;
+	padding-left: 8px;
+}
+.inner_container .column1 td p {
+	font-size: 100%;
+	line-height: 140%;
+	margin-top: 0px;
+}
+.inner_container .column1 td h2 {
+	font-size: 120%;
+	line-height: 140%;
+	margin-top: 0px;
+	font-weight: 600;
+}
+.inner_container .column1 tr td table {
+	width: 100%;
+}
+.inner_container .column1 tr td table tr td {
+	font-size: 100%;
+	font-weight: 400;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+.inner_container .column1 tr td table tr th {
+	font-size: 110%;
+	font-weight: 600;
+}
+.inner_container .column1 table tr td h3 {
+	margin-top: 0px;
+	font-size: 120%;
+}
+.inner_container .column1 table tr td p {
+	padding-right: 0px;
+	padding-bottom: 5px;
+}

@@ -1,0 +1,789 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Load the KT_back class
+require_once('../includes/nxt/KT_back.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEduattainment = "SELECT * FROM EduAttainment ORDER BY EduLevelKey ASC";
+$rsEduattainment = mysql_query($query_rsEduattainment, $Assessment) or die(mysql_error());
+$row_rsEduattainment = mysql_fetch_assoc($rsEduattainment);
+$totalRows_rsEduattainment = mysql_num_rows($rsEduattainment);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCountries = "SELECT * FROM countries";
+$rsCountries = mysql_query($query_rsCountries, $Assessment) or die(mysql_error());
+$row_rsCountries = mysql_fetch_assoc($rsCountries);
+$totalRows_rsCountries = mysql_num_rows($rsCountries);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsSex = "SELECT * FROM Sex";
+$rsSex = mysql_query($query_rsSex, $Assessment) or die(mysql_error());
+$row_rsSex = mysql_fetch_assoc($rsSex);
+$totalRows_rsSex = mysql_num_rows($rsSex);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEthnicity = "SELECT * FROM Ethnicity";
+$rsEthnicity = mysql_query($query_rsEthnicity, $Assessment) or die(mysql_error());
+$row_rsEthnicity = mysql_fetch_assoc($rsEthnicity);
+$totalRows_rsEthnicity = mysql_num_rows($rsEthnicity);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLanguages = "SELECT * FROM Languages";
+$rsLanguages = mysql_query($query_rsLanguages, $Assessment) or die(mysql_error());
+$row_rsLanguages = mysql_fetch_assoc($rsLanguages);
+$totalRows_rsLanguages = mysql_num_rows($rsLanguages);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEnglishquality = "SELECT * FROM EnglishQuality";
+$rsEnglishquality = mysql_query($query_rsEnglishquality, $Assessment) or die(mysql_error());
+$row_rsEnglishquality = mysql_fetch_assoc($rsEnglishquality);
+$totalRows_rsEnglishquality = mysql_num_rows($rsEnglishquality);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlevel = "SELECT * FROM ManagementLevel";
+$rsManlevel = mysql_query($query_rsManlevel, $Assessment) or die(mysql_error());
+$row_rsManlevel = mysql_fetch_assoc($rsManlevel);
+$totalRows_rsManlevel = mysql_num_rows($rsManlevel);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEmployeenumber = "SELECT * FROM EmployeeNumber";
+$rsEmployeenumber = mysql_query($query_rsEmployeenumber, $Assessment) or die(mysql_error());
+$row_rsEmployeenumber = mysql_fetch_assoc($rsEmployeenumber);
+$totalRows_rsEmployeenumber = mysql_num_rows($rsEmployeenumber);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsSupervisees = "SELECT * FROM Supervisees";
+$rsSupervisees = mysql_query($query_rsSupervisees, $Assessment) or die(mysql_error());
+$row_rsSupervisees = mysql_fetch_assoc($rsSupervisees);
+$totalRows_rsSupervisees = mysql_num_rows($rsSupervisees);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLongestproject = "SELECT * FROM LongestProject";
+$rsLongestproject = mysql_query($query_rsLongestproject, $Assessment) or die(mysql_error());
+$row_rsLongestproject = mysql_fetch_assoc($rsLongestproject);
+$totalRows_rsLongestproject = mysql_num_rows($rsLongestproject);
+
+$colname_rsProjectRespondent = "-1";
+if (isset($_GET['UserKey'])) {
+  $colname_rsProjectRespondent = $_GET['UserKey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProjectRespondent = sprintf("SELECT UserKey, userkey, ResearcherKey FROM ProjectRespondents WHERE UserKey = %s", GetSQLValueString($colname_rsProjectRespondent, "int"));
+$rsProjectRespondent = mysql_query($query_rsProjectRespondent, $Assessment) or die(mysql_error());
+$row_rsProjectRespondent = mysql_fetch_assoc($rsProjectRespondent);
+$totalRows_rsProjectRespondent = mysql_num_rows($rsProjectRespondent);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+// Make an insert transaction instance
+$ins_LLRA = new tNG_multipleInsert($conn_Assessment);
+$tNGs->addTransaction($ins_LLRA);
+// Register triggers
+$ins_LLRA->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Insert1");
+$ins_LLRA->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$ins_LLRA->registerTrigger("END", "Trigger_Default_Redirect", 99, "assess__llra03_essays.php?userkey={userkey}&llrakey={llrakey}");
+// Add columns
+$ins_LLRA->setTable("LLRA");
+$ins_LLRA->addColumn("userkey", "NUMERIC_TYPE", "POST", "userkey", "{GET.UserKey}");
+$ins_LLRA->addColumn("user_name", "STRING_TYPE", "POST", "user_name", "{rsProjectRespondent.userkey}");
+$ins_LLRA->addColumn("testtime", "NUMERIC_TYPE", "POST", "testtime", "{GET.testtime}");
+$ins_LLRA->addColumn("form", "NUMERIC_TYPE", "POST", "form", "{GET.form}");
+$ins_LLRA->addColumn("username4students", "STRING_TYPE", "POST", "username4students", "");
+$ins_LLRA->addColumn("age", "NUMERIC_TYPE", "POST", "age");
+$ins_LLRA->addColumn("edulevel", "NUMERIC_TYPE", "POST", "edulevel");
+$ins_LLRA->addColumn("collegemajor", "STRING_TYPE", "POST", "collegemajor");
+$ins_LLRA->addColumn("occupation", "STRING_TYPE", "POST", "occupation");
+$ins_LLRA->addColumn("country", "STRING_TYPE", "POST", "country");
+$ins_LLRA->addColumn("sex", "NUMERIC_TYPE", "POST", "sex");
+$ins_LLRA->addColumn("ethnicity1", "NUMERIC_TYPE", "POST", "ethnicity1");
+$ins_LLRA->addColumn("ethnicity1other", "STRING_TYPE", "POST", "ethnicity1other");
+$ins_LLRA->addColumn("ethnicity2", "NUMERIC_TYPE", "POST", "ethnicity2");
+$ins_LLRA->addColumn("ethnicity2other", "STRING_TYPE", "POST", "ethnicity2other");
+$ins_LLRA->addColumn("language", "NUMERIC_TYPE", "POST", "language");
+$ins_LLRA->addColumn("languageother", "STRING_TYPE", "POST", "languageother");
+$ins_LLRA->addColumn("englishquality", "NUMERIC_TYPE", "POST", "englishquality");
+$ins_LLRA->addColumn("manlevel", "NUMERIC_TYPE", "POST", "manlevel");
+$ins_LLRA->addColumn("employeeno", "STRING_TYPE", "POST", "employeeno");
+$ins_LLRA->addColumn("supervisees", "STRING_TYPE", "POST", "supervisees");
+$ins_LLRA->addColumn("longestproject", "STRING_TYPE", "POST", "longestproject");
+$ins_LLRA->setPrimaryKey("llrakey", "NUMERIC_TYPE");
+
+// Make an update transaction instance
+$upd_LLRA = new tNG_multipleUpdate($conn_Assessment);
+$tNGs->addTransaction($upd_LLRA);
+// Register triggers
+$upd_LLRA->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Update1");
+$upd_LLRA->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$upd_LLRA->registerTrigger("END", "Trigger_Default_Redirect", 99, "assess__llra_essays.php?userkey={SESSION.log_userkey}&llrakey={llrakey}");
+// Add columns
+$upd_LLRA->setTable("LLRA");
+$upd_LLRA->addColumn("userkey", "NUMERIC_TYPE", "POST", "userkey");
+$upd_LLRA->addColumn("user_name", "STRING_TYPE", "POST", "user_name");
+$upd_LLRA->addColumn("username4students", "STRING_TYPE", "POST", "username4students");
+$upd_LLRA->addColumn("age", "NUMERIC_TYPE", "POST", "age");
+$upd_LLRA->addColumn("edulevel", "NUMERIC_TYPE", "POST", "edulevel");
+$upd_LLRA->addColumn("collegemajor", "STRING_TYPE", "POST", "collegemajor");
+$upd_LLRA->addColumn("occupation", "STRING_TYPE", "POST", "occupation");
+$upd_LLRA->addColumn("country", "STRING_TYPE", "POST", "country");
+$upd_LLRA->addColumn("sex", "NUMERIC_TYPE", "POST", "sex");
+$upd_LLRA->addColumn("ethnicity1", "NUMERIC_TYPE", "POST", "ethnicity1");
+$upd_LLRA->addColumn("ethnicity1other", "STRING_TYPE", "POST", "ethnicity1other");
+$upd_LLRA->addColumn("ethnicity2", "NUMERIC_TYPE", "POST", "ethnicity2");
+$upd_LLRA->addColumn("ethnicity2other", "STRING_TYPE", "POST", "ethnicity2other");
+$upd_LLRA->addColumn("language", "NUMERIC_TYPE", "POST", "language");
+$upd_LLRA->addColumn("languageother", "STRING_TYPE", "POST", "languageother");
+$upd_LLRA->addColumn("englishquality", "NUMERIC_TYPE", "POST", "englishquality");
+$upd_LLRA->addColumn("manlevel", "NUMERIC_TYPE", "POST", "manlevel");
+$upd_LLRA->addColumn("employeeno", "STRING_TYPE", "POST", "employeeno");
+$upd_LLRA->addColumn("supervisees", "STRING_TYPE", "POST", "supervisees");
+$upd_LLRA->addColumn("longestproject", "STRING_TYPE", "POST", "longestproject");
+$upd_LLRA->setPrimaryKey("llrakey", "NUMERIC_TYPE", "GET", "llrakey");
+
+// Make an instance of the transaction object
+$del_LLRA = new tNG_multipleDelete($conn_Assessment);
+$tNGs->addTransaction($del_LLRA);
+// Register triggers
+$del_LLRA->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Delete1");
+$del_LLRA->registerTrigger("END", "Trigger_Default_Redirect", 99, "../includes/nxt/back.php");
+// Add columns
+$del_LLRA->setTable("LLRA");
+$del_LLRA->setPrimaryKey("llrakey", "NUMERIC_TYPE", "GET", "llrakey");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsLLRA = $tNGs->getRecordset("LLRA");
+$row_rsLLRA = mysql_fetch_assoc($rsLLRA);
+$totalRows_rsLLRA = mysql_num_rows($rsLLRA);
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatellra2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Lectical Leadership Reasoning Assessment</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<style type="text/css">
+<!--
+.style11 {	color: #990000
+}
+-->
+</style>
+<?php echo $tNGs->displayValidationRules();?><!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LLRAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+      <!-- end #menu1 -->
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+        <td valign="top"><h1>LLRA, PAGE 1 OF 3</h1>
+          <h3>Please read these instructions before beginning.</h3>
+          <p>The LLRA is composed of three sections. On this page we collect important personal information. On page two we collect your responses to questions about leadership, and on the third and final page, we ask you to rate a series of statements. The assessment will take about an hour of your time, but timing varies quite a bit, depending primarily on how much you have to tell us on page 2. </p>
+          <p><span class="emphasis"><strong>The assessment must be done in a single sitting.</strong></span> You will not be able to start the assessment and return later to complete it. Please take the assessment when you alert, well-rested, and unlikely to be interrupted. </p>
+<p><strong>Important:</strong> If you have never taken a lectical assessment, please read, &quot;<a href="../_about/takingassessments.php">Taking Lectical Assessments</a>.&quot;</p>
+<p>&nbsp;
+      <?php
+	echo $tNGs->getErrorMsg();
+?>
+
+<div class="KT_tng">
+            <h2>
+              <?php 
+// Show IF Conditional region1 
+if (@$_GET['llrakey'] == "") {
+?>
+                <?php echo NXT_getResource("Insert_FH"); ?>
+                <?php 
+// else Conditional region1
+} else { ?>
+                <?php echo NXT_getResource("Update_FH"); ?>
+                <?php } 
+// endif Conditional region1
+?>
+              your personal information</h2>
+            <div class="KT_tngform">
+              <form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+                <?php $cnt1 = 0; ?>
+                <?php do { ?>
+                  <?php $cnt1++; ?>
+                  <?php 
+// Show IF Conditional region1 
+if (@$totalRows_rsLLRA > 1) {
+?>
+                    <h2><?php echo NXT_getResource("Record_FH"); ?> <?php echo $cnt1; ?></h2>
+<?php } 
+// endif Conditional region1
+?>
+                  <table width="500" cellpadding="2" cellspacing="0" class="KT_tngtable">
+                    <tr>
+                      <td class="KT_th"><label for="user_name_<?php echo $cnt1; ?>">Your user name</label></td>
+                      <td><input type="text" name="user_name_<?php echo $cnt1; ?>" id="user_name_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLLRA['user_name']); ?>" size="13" maxlength="13" />
+                          <?php echo $tNGs->displayFieldHint("user_name");?> <?php echo $tNGs->displayFieldError("LLRA", "user_name", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="bulkcustomerkey_<?php echo $cnt1; ?>">If someone other than yourself has ordered this  
+assessment, please enter the ID you were provided  
+with. (If you are taking this assessment on your own  
+initiative, enter &quot;myself&quot;.)</label></td>
+                      <td><input type="text" name="username4students_<?php echo $cnt1; ?>" id="username4students_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLLRA['username4students']); ?>" size="13" />
+                          <?php echo $tNGs->displayFieldHint("username4students");?> <?php echo $tNGs->displayFieldError("LLRA", "username4students", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="age_<?php echo $cnt1; ?>">Your age</label></td>
+                      <td><input type="text" name="age_<?php echo $cnt1; ?>" id="age_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLLRA['age']); ?>" size="3" />
+                          <?php echo $tNGs->displayFieldHint("age");?> <?php echo $tNGs->displayFieldError("LLRA", "age", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="edulevel_<?php echo $cnt1; ?>">Your educational level</label></td>
+                      <td><select name="edulevel_<?php echo $cnt1; ?>" id="edulevel_<?php echo $cnt1; ?>">
+                        <option value="" <?php if (!(strcmp("", $row_rsLLRA['edulevel']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                        <?php
+do {  
+?><option value="<?php echo $row_rsEduattainment['edukey']?>"<?php if (!(strcmp($row_rsEduattainment['edukey'], $row_rsLLRA['edulevel']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsEduattainment['EduLevel']?></option>
+                        <?php
+} while ($row_rsEduattainment = mysql_fetch_assoc($rsEduattainment));
+  $rows = mysql_num_rows($rsEduattainment);
+  if($rows > 0) {
+      mysql_data_seek($rsEduattainment, 0);
+	  $row_rsEduattainment = mysql_fetch_assoc($rsEduattainment);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("LLRA", "edulevel", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="collegemajor_<?php echo $cnt1; ?>">Your college major (if relevant)</label></td>
+                      <td><input type="text" name="collegemajor_<?php echo $cnt1; ?>" id="collegemajor_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLLRA['collegemajor']); ?>" size="32" />
+                          <?php echo $tNGs->displayFieldHint("collegemajor");?> <?php echo $tNGs->displayFieldError("LLRA", "collegemajor", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="occupation_<?php echo $cnt1; ?>">Your occupation</label></td>
+                      <td><input type="text" name="occupation_<?php echo $cnt1; ?>" id="occupation_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLLRA['occupation']); ?>" size="32" />
+                          <?php echo $tNGs->displayFieldHint("occupation");?> <?php echo $tNGs->displayFieldError("LLRA", "occupation", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="country_<?php echo $cnt1; ?>">The country in which you reside</label></td>
+                      <td><select name="country_<?php echo $cnt1; ?>" id="country_<?php echo $cnt1; ?>">
+                        <option value="" <?php if (!(strcmp("", KT_escapeAttribute($row_rsLLRA['country'])))) {echo "selected=\"selected\"";} ?>>select one...</option>
+                        <option value="United States" <?php if (!(strcmp("United States", KT_escapeAttribute($row_rsLLRA['country'])))) {echo "selected=\"selected\"";} ?>>United States</option>
+                        <?php
+do {  
+?>
+<option value="<?php echo $row_rsCountries['name']?>"<?php if (!(strcmp($row_rsCountries['name'], KT_escapeAttribute($row_rsLLRA['country'])))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsCountries['name']?></option>
+                        <?php
+} while ($row_rsCountries = mysql_fetch_assoc($rsCountries));
+  $rows = mysql_num_rows($rsCountries);
+  if($rows > 0) {
+      mysql_data_seek($rsCountries, 0);
+	  $row_rsCountries = mysql_fetch_assoc($rsCountries);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("LLRA", "country", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="sex_<?php echo $cnt1; ?>">Your sex</label></td>
+                      <td><select name="sex_<?php echo $cnt1; ?>" id="sex_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsSex['sexkey']?>"<?php if (!(strcmp($row_rsSex['sexkey'], $row_rsLLRA['sex']))) {echo "SELECTED";} ?>><?php echo $row_rsSex['sex']?></option>
+                          <?php
+} while ($row_rsSex = mysql_fetch_assoc($rsSex));
+  $rows = mysql_num_rows($rsSex);
+  if($rows > 0) {
+      mysql_data_seek($rsSex, 0);
+	  $row_rsSex = mysql_fetch_assoc($rsSex);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("LLRA", "sex", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="ethnicity1_<?php echo $cnt1; ?>">Your primary ethnicity</label></td>
+                      <td><select name="ethnicity1_<?php echo $cnt1; ?>" id="ethnicity1_<?php echo $cnt1; ?>">
+                        <option value="" <?php if (!(strcmp("", $row_rsLLRA['ethnicity1']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                        <?php
+do {  
+?><option value="<?php echo $row_rsEthnicity['Ethnicity']?>"<?php if (!(strcmp($row_rsEthnicity['Ethnicity'], $row_rsLLRA['ethnicity1']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsEthnicity['Ethnicity']?></option><?php
+} while ($row_rsEthnicity = mysql_fetch_assoc($rsEthnicity));
+  $rows = mysql_num_rows($rsEthnicity);
+  if($rows > 0) {
+      mysql_data_seek($rsEthnicity, 0);
+	  $row_rsEthnicity = mysql_fetch_assoc($rsEthnicity);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("LLRA", "ethnicity1", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="ethnicity1other_<?php echo $cnt1; ?>">If other, please describe.</label></td>
+                      <td><input type="text" name="ethnicity1other_<?php echo $cnt1; ?>" id="ethnicity1other_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLLRA['ethnicity1other']); ?>" size="32" />
+                          <?php echo $tNGs->displayFieldHint("ethnicity1other");?> <?php echo $tNGs->displayFieldError("LLRA", "ethnicity1other", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="ethnicity2_<?php echo $cnt1; ?>">Secondary ethnicity</label></td>
+                      <td><select name="ethnicity2_<?php echo $cnt1; ?>" id="ethnicity2_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsEthnicity['Ethnicity']?>"<?php if (!(strcmp($row_rsEthnicity['Ethnicity'], $row_rsLLRA['ethnicity2']))) {echo "SELECTED";} ?>><?php echo $row_rsEthnicity['Ethnicity']?></option>
+                          <?php
+} while ($row_rsEthnicity = mysql_fetch_assoc($rsEthnicity));
+  $rows = mysql_num_rows($rsEthnicity);
+  if($rows > 0) {
+      mysql_data_seek($rsEthnicity, 0);
+	  $row_rsEthnicity = mysql_fetch_assoc($rsEthnicity);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("LLRA", "ethnicity2", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="ethnicity2other_<?php echo $cnt1; ?>">If other, please describe.</label></td>
+                      <td><input type="text" name="ethnicity2other_<?php echo $cnt1; ?>" id="ethnicity2other_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLLRA['ethnicity2other']); ?>" size="32" />
+                          <?php echo $tNGs->displayFieldHint("ethnicity2other");?> <?php echo $tNGs->displayFieldError("LLRA", "ethnicity2other", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="language_<?php echo $cnt1; ?>">Your first language</label></td>
+                      <td><select name="language_<?php echo $cnt1; ?>" id="language_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsLanguages['Languages']?>"<?php if (!(strcmp($row_rsLanguages['Languages'], $row_rsLLRA['language']))) {echo "SELECTED";} ?>><?php echo $row_rsLanguages['Languages']?></option>
+                          <?php
+} while ($row_rsLanguages = mysql_fetch_assoc($rsLanguages));
+  $rows = mysql_num_rows($rsLanguages);
+  if($rows > 0) {
+      mysql_data_seek($rsLanguages, 0);
+	  $row_rsLanguages = mysql_fetch_assoc($rsLanguages);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("LLRA", "language", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="languageother_<?php echo $cnt1; ?>">If other, please describe.</label></td>
+                      <td><input type="text" name="languageother_<?php echo $cnt1; ?>" id="languageother_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLLRA['languageother']); ?>" size="32" />
+                          <?php echo $tNGs->displayFieldHint("languageother");?> <?php echo $tNGs->displayFieldError("LLRA", "languageother", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="englishquality_<?php echo $cnt1; ?>">Rate the quality of your English.</label></td>
+                      <td><select name="englishquality_<?php echo $cnt1; ?>" id="englishquality_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsEnglishquality['englishqualitykey']?>"<?php if (!(strcmp($row_rsEnglishquality['englishqualitykey'], $row_rsLLRA['englishquality']))) {echo "SELECTED";} ?>><?php echo $row_rsEnglishquality['EnglishQuality']?></option>
+                          <?php
+} while ($row_rsEnglishquality = mysql_fetch_assoc($rsEnglishquality));
+  $rows = mysql_num_rows($rsEnglishquality);
+  if($rows > 0) {
+      mysql_data_seek($rsEnglishquality, 0);
+	  $row_rsEnglishquality = mysql_fetch_assoc($rsEnglishquality);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("LLRA", "englishquality", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="manlevel_<?php echo $cnt1; ?>">What is your rank?</label></td>
+                      <td><select name="manlevel_<?php echo $cnt1; ?>" id="manlevel_<?php echo $cnt1; ?>">
+                        <option value="" <?php if (!(strcmp("", $row_rsLLRA['manlevel']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                        <?php
+do {  
+?><option value="<?php echo $row_rsManlevel['manlevelkey2']?>"<?php if (!(strcmp($row_rsManlevel['manlevelkey2'], $row_rsLLRA['manlevel']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsManlevel['Levelmil']?></option>
+                        <?php
+} while ($row_rsManlevel = mysql_fetch_assoc($rsManlevel));
+  $rows = mysql_num_rows($rsManlevel);
+  if($rows > 0) {
+      mysql_data_seek($rsManlevel, 0);
+	  $row_rsManlevel = mysql_fetch_assoc($rsManlevel);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("LLRA", "manlevel", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="employeeno_<?php echo $cnt1; ?>">If you are in a leadership role, please select the  
+                      number of employees in your organization.</label></td>
+                      <td><select name="employeeno_<?php echo $cnt1; ?>" id="employeeno_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsEmployeenumber['EmployeeNo']?>"<?php if (!(strcmp($row_rsEmployeenumber['EmployeeNo'], $row_rsLLRA['employeeno']))) {echo "SELECTED";} ?>><?php echo $row_rsEmployeenumber['EmployeeNo']?></option>
+                          <?php
+} while ($row_rsEmployeenumber = mysql_fetch_assoc($rsEmployeenumber));
+  $rows = mysql_num_rows($rsEmployeenumber);
+  if($rows > 0) {
+      mysql_data_seek($rsEmployeenumber, 0);
+	  $row_rsEmployeenumber = mysql_fetch_assoc($rsEmployeenumber);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("LLRA", "employeeno", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="supervisees_<?php echo $cnt1; ?>">If you are in a leadership role, please indicate  
+                      the number of people you directly supervise.</label></td>
+                      <td><select name="supervisees_<?php echo $cnt1; ?>" id="supervisees_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsSupervisees['Supervisees']?>"<?php if (!(strcmp($row_rsSupervisees['Supervisees'], $row_rsLLRA['supervisees']))) {echo "SELECTED";} ?>><?php echo $row_rsSupervisees['Supervisees']?></option>
+                          <?php
+} while ($row_rsSupervisees = mysql_fetch_assoc($rsSupervisees));
+  $rows = mysql_num_rows($rsSupervisees);
+  if($rows > 0) {
+      mysql_data_seek($rsSupervisees, 0);
+	  $row_rsSupervisees = mysql_fetch_assoc($rsSupervisees);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("LLRA", "supervisees", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="longestproject_<?php echo $cnt1; ?>">If you are in a leadership role, please indicate  
+                        the length of the longest project you have  
+                      planned, managed, and completed.</label></td>
+                      <td><select name="longestproject_<?php echo $cnt1; ?>" id="longestproject_<?php echo $cnt1; ?>">
+                          <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                          <?php 
+do {  
+?>
+                          <option value="<?php echo $row_rsLongestproject['LongestProject']?>"<?php if (!(strcmp($row_rsLongestproject['LongestProject'], $row_rsLLRA['longestproject']))) {echo "SELECTED";} ?>><?php echo $row_rsLongestproject['LongestProject']?></option>
+                          <?php
+} while ($row_rsLongestproject = mysql_fetch_assoc($rsLongestproject));
+  $rows = mysql_num_rows($rsLongestproject);
+  if($rows > 0) {
+      mysql_data_seek($rsLongestproject, 0);
+	  $row_rsLongestproject = mysql_fetch_assoc($rsLongestproject);
+  }
+?>
+                        </select>
+                          <?php echo $tNGs->displayFieldError("LLRA", "longestproject", $cnt1); ?> </td>
+                    </tr>
+                  </table>
+            <input type="hidden" name="kt_pk_LLRA_<?php echo $cnt1; ?>" class="id_field" value="<?php echo KT_escapeAttribute($row_rsLLRA['kt_pk_LLRA']); ?>" />
+                  <input type="hidden" name="userkey_<?php echo $cnt1; ?>" id="userkey_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLLRA['userkey']); ?>" />
+                  <input type="hidden" name="testtime_<?php echo $cnt1; ?>" id="testtime_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLLRA['testtime']); ?>" />
+                  <input type="hidden" name="form_<?php echo $cnt1; ?>" id="form_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLLRA['form']); ?>" />
+                  <?php } while ($row_rsLLRA = mysql_fetch_assoc($rsLLRA)); ?>
+                <div class="KT_bottombuttons">
+                  <div>
+                    <?php 
+      // Show IF Conditional region1
+      if (@$_GET['llrakey'] == "") {
+      ?>
+                      <input type="submit" name="KT_Insert1" id="KT_Insert1" value="<?php echo NXT_getResource("Insert_FB"); ?>" />
+                      <?php 
+      // else Conditional region1
+      } else { ?>
+                      <div class="KT_operations">
+                        <input type="submit" name="KT_Insert1" value="<?php echo NXT_getResource("Insert as new_FB"); ?>" onclick="nxt_form_insertasnew(this, 'llrakey')" />
+                      </div>
+                      <input type="submit" name="KT_Update1" value="<?php echo NXT_getResource("Update_FB"); ?>" />
+                      <input type="submit" name="KT_Delete1" value="<?php echo NXT_getResource("Delete_FB"); ?>" onclick="return confirm('<?php echo NXT_getResource("Are you sure?"); ?>');" />
+                      <?php }
+      // endif Conditional region1
+      ?>
+                    <input type="button" name="KT_Cancel1" value="<?php echo NXT_getResource("Cancel_FB"); ?>" onclick="return UNI_navigateCancel(event, '../includes/nxt/back.php')" />
+                  </div>
+                </div>
+              </form>
+            </div>
+            <br class="clearfixplain" />
+          </div>
+          <p>&nbsp;</p>
+          </p></td>
+        <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsEduattainment);
+
+mysql_free_result($rsCountries);
+
+mysql_free_result($rsSex);
+
+mysql_free_result($rsEthnicity);
+
+mysql_free_result($rsLanguages);
+
+mysql_free_result($rsEnglishquality);
+
+mysql_free_result($rsManlevel);
+
+mysql_free_result($rsEmployeenumber);
+
+mysql_free_result($rsSupervisees);
+
+mysql_free_result($rsLongestproject);
+
+mysql_free_result($rsProjectRespondent);
+
+mysql_free_result($rsRegistrants);
+?>

@@ -1,0 +1,357 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE resources SET resource_type=%s, resource_theme=%s, resource_text=%s, `resource`=%s, resource_url=%s, lima=%s, lera=%s, lsua=%s, ldma=%s, lrja=%s, llra=%s, phase_low=%s, phase_high=%s WHERE resourceskey=%s",
+                       GetSQLValueString($_POST['resource_type'], "text"),
+                       GetSQLValueString($_POST['resource_theme'], "text"),
+                       GetSQLValueString($_POST['resource_text'], "text"),
+                       GetSQLValueString($_POST['resource'], "text"),
+                       GetSQLValueString($_POST['resource_url'], "text"),
+                       GetSQLValueString(isset($_POST['lima']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['lera']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['lsua']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['ldma']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['lrja']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['llra']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['phase_low'], "text"),
+                       GetSQLValueString($_POST['phase_high'], "text"),
+                       GetSQLValueString($_POST['resourceskey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "resources_Results.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));
+}
+?>
+<?php
+$colname_rsResources = "-1";
+if (isset($_GET['resourceskey'])) {
+  $colname_rsResources = (get_magic_quotes_gpc()) ? $_GET['resourceskey'] : addslashes($_GET['resourceskey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsResources = sprintf("SELECT resourceskey, resource_type, resource_theme, resource_text, `resource`, resource_url, lima, lera, lsua, ldma, lrja, llra, phase_low, phase_high FROM resources WHERE resourceskey = %s", GetSQLValueString($colname_rsResources, "int"));
+$rsResources = mysql_query($query_rsResources, $Assessment) or die(mysql_error());
+$row_rsResources = mysql_fetch_assoc($rsResources);
+$totalRows_rsResources = mysql_num_rows($rsResources);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsResourceType = "SELECT DISTINCT resource_type FROM resources ORDER BY resource_type";
+$rsResourceType = mysql_query($query_rsResourceType, $Assessment) or die(mysql_error());
+$row_rsResourceType = mysql_fetch_assoc($rsResourceType);
+$totalRows_rsResourceType = mysql_num_rows($rsResourceType);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsResourceTheme = "SELECT DISTINCT resource_theme FROM resources ORDER BY resource_theme";
+$rsResourceTheme = mysql_query($query_rsResourceTheme, $Assessment) or die(mysql_error());
+$row_rsResourceTheme = mysql_fetch_assoc($rsResourceTheme);
+$totalRows_rsResourceTheme = mysql_num_rows($rsResourceTheme);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLas = "SELECT * FROM las ORDER BY lasname ASC";
+$rsLas = mysql_query($query_rsLas, $Assessment) or die(mysql_error());
+$row_rsLas = mysql_fetch_assoc($rsLas);
+$totalRows_rsLas = mysql_num_rows($rsLas);
+
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Resource details</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<link href="../WA_DataAssist/styles/Refined_Pacifica.css" rel="stylesheet" type="text/css" />
+<link href="../WA_DataAssist/styles/Verdana.css" rel="stylesheet" type="text/css" />
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextarea.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><a href="resources_insert.php">add resources</a><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+      <h1>UPDATE RESOURCE</h1>
+<div>
+    <form action="<?php echo $editFormAction; ?>" method="POST" name="form1" id="form1">
+      <table>
+        <tr>
+          <th class="WADADataTableHeader">Resource type</th>
+          <td class="WADADataTableCell"><span id="spryselect3">
+            <select name="resource_type" id="resource_type">
+              <option value="" <?php if (!(strcmp("", $row_rsResources['resource_type']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsResourceType['resource_type']?>"<?php if (!(strcmp($row_rsResourceType['resource_type'], $row_rsResources['resource_type']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsResourceType['resource_type']?></option>
+              <?php
+} while ($row_rsResourceType = mysql_fetch_assoc($rsResourceType));
+  $rows = mysql_num_rows($rsResourceType);
+  if($rows > 0) {
+      mysql_data_seek($rsResourceType, 0);
+	  $row_rsResourceType = mysql_fetch_assoc($rsResourceType);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Resource theme</th>
+          <td class="WADADataTableCell"><span id="spryselect4">
+            <select name="resource_theme" id="resource_theme">
+              <option value="" <?php if (!(strcmp("", $row_rsResources['resource_theme']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsResourceTheme['resource_theme']?>"<?php if (!(strcmp($row_rsResourceTheme['resource_theme'], $row_rsResources['resource_theme']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsResourceTheme['resource_theme']?></option>
+              <?php
+} while ($row_rsResourceTheme = mysql_fetch_assoc($rsResourceTheme));
+  $rows = mysql_num_rows($rsResourceTheme);
+  if($rows > 0) {
+      mysql_data_seek($rsResourceTheme, 0);
+	  $row_rsResourceTheme = mysql_fetch_assoc($rsResourceTheme);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Resource text (as shown in feedback)</th>
+          <td class="WADADataTableCell"><span id="sprytextarea1">
+            <textarea name="resource_text" class="textarea040_500" id="resource_text"><?php echo(str_replace('"', '&quot;', $row_rsResources['resource_text'])); ?></textarea>
+            <span class="textareaRequiredMsg">A value is required.</span></span></td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Formal citation (APA format)</th>
+          <td class="WADADataTableCell"><span id="sprytextarea2">
+            <textarea name="resource" cols="32" class="textarea040_500" id="resource"><?php echo(str_replace('"', '&quot;', $row_rsResources['resource'])); ?></textarea>
+            <span class="textareaRequiredMsg">A value is required.</span></span></td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Url</th>
+          <td class="WADADataTableCell"><span id="sprytextarea3">
+            <textarea name="resource_url" cols="32" class="textarea040_500" id="resource_url"><?php echo(str_replace('"', '&quot;', $row_rsResources['resource_url'])); ?></textarea>
+</span></td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Relevant for LIMA</th>
+          <td class="WADADataTableCell"><input <?php if (!(strcmp($row_rsResources['lima'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="lima" id="lima" value="1" /></td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Relevant for LERA</th>
+          <td class="WADADataTableCell"><input <?php if (!(strcmp($row_rsResources['lera'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="lera" id="lera" value="1" /></td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Relevant for LSUA</th>
+          <td class="WADADataTableCell"><input <?php if (!(strcmp($row_rsResources['lsua'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="lsua" id="lsua" value="1" /></td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Relevant for LDMA</th>
+          <td class="WADADataTableCell"><input <?php if (!(strcmp($row_rsResources['ldma'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="ldma" id="ldma" value="1" /></td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Relevant for LRJA</th>
+          <td class="WADADataTableCell"><input <?php if (!(strcmp($row_rsResources['lrja'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="lrja" id="lrja" value="1" /></td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Relevant for LLRA</th>
+          <td class="WADADataTableCell"><input <?php if (!(strcmp($row_rsResources['llra'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="llra" id="llra" value="1" /></td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Lowest phase</th>
+          <td class="WADADataTableCell"><span id="spryselect2">
+            <select name="phase_low" id="phase_low">
+              <option value="" <?php if (!(strcmp("", $row_rsResources["phase_low"]))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsLas['lasname']?>"<?php if (!(strcmp($row_rsLas['lasname'], $row_rsResources["phase_low"]))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLas['lasname']?></option>
+              <?php
+} while ($row_rsLas = mysql_fetch_assoc($rsLas));
+  $rows = mysql_num_rows($rsLas);
+  if($rows > 0) {
+      mysql_data_seek($rsLas, 0);
+	  $row_rsLas = mysql_fetch_assoc($rsLas);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+          </tr>
+        <tr>
+          <th class="WADADataTableHeader">Highest phase</th>
+          <td class="WADADataTableCell"><span id="spryselect1">
+            <select name="phase_high" id="phase_high">
+              <option value="" <?php if (!(strcmp("", $row_rsResources["phase_high"]))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsLas['lasname']?>"<?php if (!(strcmp($row_rsLas['lasname'], $row_rsResources["phase_high"]))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLas['lasname']?></option>
+              <?php
+} while ($row_rsLas = mysql_fetch_assoc($rsLas));
+  $rows = mysql_num_rows($rsLas);
+  if($rows > 0) {
+      mysql_data_seek($rsLas, 0);
+	  $row_rsLas = mysql_fetch_assoc($rsLas);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span>
+            <input type="hidden" name="resourceskey" id="resourceskey" value="<?php echo $_GET['resourceskey']; ?>" /></td>
+          </tr>
+        </table>
+      <div>
+        <table>
+          <tr>
+            <td><input type="Submit" name="Update" id="Update" value="Update" /></td>
+            </tr>
+          </table>
+        </div>
+      <input type="hidden" name="MM_update" value="form1" />
+    </form>
+</div>
+<script type="text/javascript">
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"]});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"]});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"]});
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {validateOn:["blur", "change"]});
+var sprytextarea2 = new Spry.Widget.ValidationTextarea("sprytextarea2", {validateOn:["blur", "change"]});
+var sprytextarea3 = new Spry.Widget.ValidationTextarea("sprytextarea3", {validateOn:["blur", "change"], isRequired:false});
+</script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsResources);
+
+mysql_free_result($WADADynListresources);
+
+mysql_free_result($WADADynListlas);
+
+mysql_free_result($rsResourceType);
+
+mysql_free_result($rsResourceTheme);
+
+mysql_free_result($rsLas);
+?>

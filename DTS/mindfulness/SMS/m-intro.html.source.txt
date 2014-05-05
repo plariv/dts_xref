@@ -1,0 +1,264 @@
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mindfulness1.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Mindfulness survey:  Introduction</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+
+
+<script src="../../SpryAssetsSMS/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../../SpryAssetsSMS/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.style2 {font-family: Verdana, Arial, Helvetica, sans-serif}
+-->
+</style>
+<style type="text/css">
+<!--
+.style3 {font-size: 11px}
+-->
+</style>
+<style type="text/css">
+<!--
+.style4 {color: #003366}
+-->
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+	background-color: #93B3C8;
+}
+.oneColFixCtrHdr #container {
+	width: 780px;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #7799B8;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+	background-image: url(/images/mindful/m-background.gif);
+}
+.oneColFixCtrHdr #header {
+	background-color: #DDDDDD;
+	background-image: url(/images/mindful/m-header.gif);
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+	height: 104px;
+}
+.oneColFixCtrHdr #menu {
+	background-color: #8AB3C4;
+	padding-top: 0;
+	padding-right: 40px;
+	padding-bottom: 0;
+	height: 20px;
+	background-image: url(/images/skin/SMSmenu.jpg);
+}
+.oneColFixCtrHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0;
+	vertical-align: text-bottom;
+}
+.oneColFixCtrHdr #mainContent {
+	padding-top: 30;
+	padding-right: 45px;
+	padding-bottom: 0;
+	padding-left: 45px;
+}
+.oneColFixCtrHdr #footer {
+	padding: 0 10px;
+}
+.oneColFixCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+-->
+</style>
+<link href="/css/styles3.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssets/SpryMenuBarHorizontalmind.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="oneColFixCtrHdr">
+
+<div id="container">
+  <div id="header">
+    <h1>&nbsp;</h1>
+  <!-- end #header --></div>
+  <div id="menu">
+       <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/landing.php">home</a></li>
+<li><a href="/mindfulness/SMS/m-articles.html">articles</a></li>
+        <li><a href="/mindfulness/SMS/m-intro.html">intro</a></li>
+        <li><a href="/mindfulness/SMS/m-start.php">survey</a></li>
+        <li><a href="/mindfulness/SMS/m-suggestions.php">ideas</a></li>
+        <li><a href="/mindfulness/SMS/m-teacherinfo.php" class="MenuBarItemSubmenu">teachers</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/bc_viewsms.php">view SMS results</a></li>
+            <li><a href="/mindfulness/SMJ/teacher_viewjournalentries.php">view SMS journal</a></li>
+            <li><a href="/bulkcustomers/bulkpolicies.php">policies &amp; schedules</a></li>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+        <li><a href="#" class="MenuBarItemSubmenu">research</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+    </ul>
+    <!-- end #menu --></div>
+  <div id="mainContent">
+    <!-- InstanceBeginEditable name="Main" -->
+<h1>Introduction</h1>
+<p align="center" class="copyrightsms">These pages work best in web standards compliant browsers like Firefox and Safari.</p>
+<h2>Welcome to the Solloway Mindfulness Survey (SMS). This survey is sponsored by the Developmental Testing Service. It has  undergone rigorous psychometric testing and reliably distinguishes 5 levels of intentional attention, which makes it useful for both classroom and research applications (see the <a href="m-articles.html">references</a> page). Dr. Solloway offers the SMS <strong>free</strong> to teachers and students. If you wish to use the SMS for research purposes, there is a small per-assessment fee. These fees are used to maintain and monitor the SMS. <a href="../../contactus.php">Contact us</a> if you would like to use the SMS in a research project. The SMS interface includes:</h2>
+<ul>
+  <li>
+    <h2>information about mindfulness;</h2>
+  </li>
+  <li>
+    <h2>the assessment itself;</h2>
+  </li>
+  <li>
+    <h2>an area where your students (or you) can view personal SMS reports;</h2>
+  </li>
+  <li>
+    <h2>an area where teachers  can view and download  student results; </h2>
+  </li>
+  <li>
+    <h2>a journaling area where students can make journal entries and teachers can make comments on these entries; and </h2>
+  </li>
+  <li>
+    <h2>support for researchers who wish to use the SMS in their work.</h2>
+  </li>
+</ul>
+<h2>Before you begin using the survey, please read the information provided below. If you are a teacher or researcher, be sure to read the <a href="m-teacherinfo.php">teacher information</a> page before you use the SMS.<br />
+</h2>
+<h4><span class="emphasisSMS">Note:</span> The SMS is not a cognitive developmental assessment. No one has been able to assess developmental level accurately with a survey.</h4>
+<h4><br />
+</h4>
+<div id="TabbedPanels1" class="TabbedPanels">
+      <ul class="TabbedPanelsTabGroup">
+        <li class="TabbedPanelsTab">Mindfulness</li>
+        <li class="TabbedPanelsTab">Mindfulness practice</li>
+        <li class="TabbedPanelsTab">Benefits of mindfulness</li>
+        <li class="TabbedPanelsTab">Measuring mindfulness</li>
+        <li class="TabbedPanelsTab">Teachers</li>
+    </ul>
+    <div class="TabbedPanelsContentGroup">
+      <div class="TabbedPanelsContent">
+          <p align="left"><img src="../../images/mindful/m-columbine.gif" alt="Columbine" width="134" height="200" hspace="0" align="left" />Mindfulness can be described as paying attention to one's experience in the here and now. Observations are non-judgmental and unemotional. One simply observes and participates in the moment—seeing what is there without wanting something more or wishing that anything present would disappear. </p>
+        <p align="left"><img src="../../images/mindful/m-fountain.gif" alt="fountain" width="214" height="125" align="right" />Everyone experiences moments of mindfulness. Think about a time when a sunrise, sunset or  child’s face caught your attention. For a few moments, nothing else occupied your mind. You simply experienced the sensations of the  moment. Remember how you felt? Like most  people, you may have felt as if the usual stresses and anxieties of the day just dropped away, leaving you feeling more contented, peaceful, calm. This is sometimes called everyday mindfulness. Experiences like this can be cultivated through mindfulness practice.</p>
+        <p align="left">&nbsp;</p>
+        </div>
+        <div class="TabbedPanelsContent">
+          <p><img src="../../images/mindful/m-blossoms.gif" alt="Blossoms" width="215" height="128" align="left" class="imagetopsms" />Mindfulness practice is a discipline for cultivating more frequent mindful moments. Practitioners learn to &quot;let go&quot; of their reservations and fully attend to all  sensations present in the here and now. This deep form of attention is sometimes called <em>impartial witnessing</em>. </p>
+          <p><img src="../../images/mindful/m-pinkslipper.gif" alt="Lady slipper" width="140" height="194" align="right" class="imagetopsms" />Although the idea of being <em> impartial </em> may sound cold, it actually promotes the development of a more intimate relationship with experience, one in which you become increasingly willing to accept everything that arises in mind and body—just as it is. </p>
+          <p>The place of <em>acceptance</em> in mindfulness practice often requires  explanation. It doesn’t imply passivity. <em>Acceptance</em> means participating in  the moment without wanting it to be something else. Clearly observing experience  without a cloud of judgment is sometimes referred to as <em>radical acceptance</em>. When necessary, acceptance can be followed with thought and action. In other words, the clear non-judgmental awareness cultivated in mindfulness practice   can &quot;uncloud&quot; the mind,  enhancing one's ability to make optimal choices and decisions.</p>
+      </div>
+      <div class="TabbedPanelsContent">
+          <p><img src="../../images/mindful/m-pagoda.gif" alt="pagoda" width="215" height="130" align="left" class="imagetopsms" />Recent work in neuroscience confirms that  attentional training actively contributes to permanent  changes in brain structure (<a href="m-articles.html">Begley, 2007; Davidson &amp; Lutz, 2008</a>). What you pay attention to stimulates growth in the associated area of your brain. Attention is a powerful brain changer. </p>
+        <p>A number of benefits have been associated with mindfulness practice, <a href="m-articles.html">including</a>:</p>
+          <table width="97%" border="0" align="center" cellpadding="2" cellspacing="0">
+            
+            <tr>
+              <td width="6" valign="top"><span class="style2 style3 style4">•</span></td>
+              <td width="364"><span class="style2 style3 style4">Increased self-awareness, self-trust, and self-acceptance.</span></td>
+            </tr>
+            <tr>
+              <td width="6" valign="top"><span class="style2 style3 style4">•</span></td>
+              <td><span class="style2 style3 style4">Enhanced appreciation of living.</span></td>
+            </tr>
+            <tr>
+              <td width="6" valign="top"><span class="style2 style3 style4">•</span></td>
+              <td><span class="style2 style3 style4">Serenity in the face of difficulties.</span></td>
+            </tr>
+            <tr>
+              <td width="6" valign="top"><span class="style2 style3 style4">•</span></td>
+              <td><span class="style2 style3 style4">Increased acceptance of change.</span></td>
+            </tr>
+            <tr>
+              <td width="6" valign="top"><span class="style2 style3 style4">•</span></td>
+              <td><span class="style2 style3 style4">More effective strategies.</span></td>
+            </tr>
+            <tr>
+              <td width="6" valign="top"><span class="style2 style3 style4">•</span></td>
+              <td><span class="style2 style3 style4">Decrease in many stress-related physical symptoms like chronic pain.</span></td>
+            </tr>
+            <tr>
+              <td width="6" valign="top"><span class="style2 style3 style4">•</span></td>
+              <td><span class="style2 style3 style4">Decreases in anxiety and depression.<br />              
+              </span></td>
+            </tr>
+            <tr>
+              <td width="6" valign="top"><span class="style2 style3 style4">•</span></td>
+              <td><span class="style2 style3 style4">Improved concentration and creativity.<br />              
+              </span></td>
+            </tr>
+            <tr>
+              <td width="6" valign="top"><span class="style2 style3 style4">•</span></td>
+              <td><span class="style2 style3 style4">Improved immune system functioning.</span></td>
+            </tr>
+            <tr>
+              <td width="6" valign="top"><span class="style2 style3 style4">•</span></td>
+              <td><span class="style2 style3 style4">Enhanced quality of communications and relationships.</span></td>
+            </tr>
+            <tr>
+              <td width="6" valign="top"><span class="style2 style3 style4">•</span></td>
+              <td><span class="style2 style3 style4">Heightened awareness of thinking patterns and intentions.</span></td>
+            </tr>
+          </table>
+        <p>&nbsp;</p>
+      <p><br />
+            <br />
+            <br />
+            <br />
+            </p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <p>Growth is often palpable—like noticing that the worn patch on your son’s jeans no longer matches where his knee was a few months ago. You don’t have to measure his height to know he has grown, but the availability of an instrument to provide that measure certainly brings valuable information to bear when selecting a pair of jeans with a better fit. The tape measure gives you access to more specific information about what you have noticed. </p>
+        <p><img src="../../images/mindful/m-orangelily.gif" alt="orange lily" width="215" height="128" align="right" class="imagetopsms" />In the same way, as you begin to practice mindfulness, you will no doubt feel yourself growing in <em>intentional attention</em>. The mindfulness ruler is designed to provide more specific information about that growth.</p>
+        <p><img src="../../images/mindful/m-verticals.gif" alt="verticals" width="140" height="194" align="left" class="imagetopsms" /><strong>Teachers</strong> who provide opportunities for their students to gain skill in mindfulness practice need to know how well the opportunities they provide work for each student. When they take a measurement at the beginning of the mindfulness training, that measure can be compared to a  measurement at the end of the training.  The results can not only inform improvements in classroom practices and mindfulness activities, they allow students to trace their own progress as mindfulness practitioners. </p>
+        <p>The goal of mindfulness practice is  to increase the frequency of mindful moments. The SMS measures mindfulness practice along a continuum from <em>beginning intentional attention</em>, to <em>increased intentional attention</em>, to <em>more continuous intentional attention</em>. To take the SMS and view your results, <a href="../../security/registration.php">register here</a>.</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <p><img src="../../images/mindful/m-winterberries.gif" alt="winter berries" width="215" height="120" align="left" class="imagetopsms" />If you teach mindfulness practice, you may be interested in tracking students' progress toward intentional attention. Journal entries that describe the student’s experience during mindfulness practice provide a rich window into that student’s progress toward intentional attention. It is also possible to corroborate the progress you see in journal entries with a quantitative measure—the SMS.        </p>
+        <p>To use the SMS to monitor the development of intentional attention in your classrooms, you will need to <a href="m-teacherinfo.php"><strong>register as an instructor</strong></a> and study the instructions for administering the assessment under the <a href="m-teacherinfo.php">teachers</a> tab in the menu above.  If you are already registered as an instructor,  <a href="../../security/logIn.php">sign in</a> to view your class results.</p>
+        <p>Note: You may want to ask students to take the SMS before the onset of instruction, to establish a baseline.</p>
+        <h3>Resources</h3>
+        <p><a href="http://www.contemplativemind.org/programs/academic/links.html">Contemplative Mind in Society</a> provides a number of useful links for educators.</p>
+        <p><a href="http://www.mindfuled.org/">Mindfulness in Education Network</a>—All educators interested in mindfulness practice in the classroom are welcome. Offers updates on conferences, books, and articles focusing on mindfulness practice in the classroom.</p>
+        <p><a href="http://www.mindfuleducation.org/">Association for Mindfulness in Education</a>—Offers fine networking opportunities for teachers interested in mindfulness practice both as a practice to enhance the quality of their own presence and/or teachers interested in offering their students opportunities to develop mindfulness practice in their own lives.</p>
+        <p>&nbsp;</p>
+      </div>
+    </div>
+<br class="clearfloat" />   
+  </div>
+  <script type="text/javascript">
+<!--
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+//-->
+        </script>
+    <!-- InstanceEndEditable -->
+	<!-- end #mainContent --></div>
+  <div id="footer">
+    <p align="center">©2010-2011 Sharon Solloway. All rights reserved.</p>
+  <!-- end #footer --></div>
+<!-- end #container --></div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

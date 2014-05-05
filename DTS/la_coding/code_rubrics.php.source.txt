@@ -1,0 +1,1184 @@
+<?php 
+include_once ("../includes/dts_functions.php");
+
+// restrict access if not logged in
+if (!WA_Auth_RulePasses("Logged in as teacher assistant")) { 
+	WA_Auth_RestrictAccess("../security/logIn.php"); 
+}
+$userkey = $_SESSION['log_userkey'];
+
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) { WA_Auth_RestrictAccess("../select_instrument.php"); }
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_name = str_replace("_", " ", $_SESSION['instrument_id']);
+$instrument_id_base = str_replace("_JOURNAL", "", $_SESSION['instrument_id']);
+
+$lakey = 0;
+if (isset($_GET['lakey'])) { $lakey = $_GET['lakey']; }
+
+
+
+// Figure out which coder you are, and which coding table you should be writing to
+$coder = 0;
+if (isset($_GET['coder'])) { $coder = SQLstr($_GET['coder'], "int"); }
+if (isset($_GET['scorer_no'])) { $coder = 1; }
+$table = "la_codes_".$coder;
+$table = str_replace("_1", "", $table);
+
+// Permission to edit rubric text?
+$edit_rubrics = false;
+if ($userkey == 1000000539) { $edit_rubrics = true; } // Theo
+if ($userkey == 4623 AND $instrument_id == "LDPA") { $edit_rubrics = true; } // Zak
+if ($userkey == 4623 AND $instrument_id == "LIMA") { $edit_rubrics = true; } // Zak
+if ($userkey == 5124 AND $instrument_id == "LDPA") { $edit_rubrics = true; } // Zachary
+if ($userkey == 1000000533 AND $instrument_id == "LDPA") { $edit_rubrics = true; } // Clint
+if ($userkey == 1000000533 AND $instrument_id == "LIMA") { $edit_rubrics = true; } // Clint
+if ($userkey == 1000000533 AND $instrument_id_base == "LRJA") { $edit_rubrics = true; } // Clint
+
+// Decide what mode the page is in
+$mode = 0;
+if (isset($_GET['mode'])) { $mode = $_GET['mode']; } 
+if (intval($mode) < 1) {
+	$redirect = "code_rubrics.php?lakey=".$lakey."&mode=1";
+	if (isset($_GET['scorer_no'])) { $redirect .= "&scorer_no=".$_GET['scorer_no']; }
+	else { $redirect .= "&coder=".$coder; } 
+	header("Location: ".$redirect);
+	exit();
+} 
+
+// Prepare the page & redirect URLs
+$currentPage = $_SERVER['PHP_SELF'];
+$formRedirect = $currentPage."?lakey=".$lakey."&mode=".$mode;
+if (isset($_GET['scorer_no'])) { $formRedirect .= "&scorer_no=".$_GET['scorer_no']; }
+else { $formRedirect .= "&coder=".$coder; }
+
+
+
+// Labels and definitions for the various modes available for this page. 
+// Adding tags to this $modes[] array activates various "switches" and settings for that page.
+$modes = array();
+
+$modes['LLRA_1'] = " LEADER QUALITIES:  ";
+$modes['LLRA_2'] = " LEADERSHIP THEMES:  ";
+$modes['LLRA_3'] = " LEADERSHIP STYLES:  ";
+
+$modes['LRJA_1'] = " EVIDENCE, CERTAINTY, AND TRUTH:  ";
+$modes['LRJA_2'] = "omit";
+$modes['LRJA_3'] = " REFLECTIVE JUDGMENT SCALES:  ";
+
+$modes['LERA_1'] = " ETHICS THEMES: ";
+$modes['LERA_2'] = "omit";
+$modes['LERA_3'] = " ETHICS SCALES: ";
+$modes['LERA_4'] = "omit";
+
+$modes['LIMA_1'] = " QUADRANTS THEMES: ";
+$modes['LIMA_2'] = " LEVELS AND LINES THEMES: ";
+$modes['LIMA_3'] = "omit";
+$modes['LIMA_4'] = "omit";
+
+$modes['LDPA_1'] = " DP THEMES: ";
+$modes['LDPA_2'] = "omit";
+$modes['LDPA_3'] = " DP SCALES: ";
+$modes['LDPA_6'] = " EDIT DP THEME FEEDBACK & RECOMMENDATIONS: ";
+
+$modes['SMA_1'] = " MINDFULNESS THEMES: ";
+$modes['SMA_2'] = "omit";
+$modes['SMA_3'] = "omit";
+$modes['SMA_4'] = "omit";
+
+$modes['SMJ_1'] = " TEACHER COMMENTS: ";
+$modes['SMJ_2'] = "omit";
+$modes['SMJ_3'] = "omit";
+$modes['SMJ_4'] = "omit";
+
+
+
+// If this $mode (this page) is marked as "omit", it will be skipped down below (after any calculations).
+
+
+
+// 					Prepare queries for the rubric menus for this page.
+// Queries are written in a stardardized way so that the page can work with the recordset in ignorance of what table it was pulled from.
+// The universal(ish) pieces are: THEME (grouping), MENU, ITEM, KEY (value to store), CODE (slot where stored)
+
+$menus['LLRA_1'] = sprintf("SELECT r.theme_name AS theme, r.rubric_name AS menu, r.rubric_stem AS stem, 
+		r.rubric_item AS `item`, r.code_number AS `code`, r.rubrickey AS `key`, 
+		(r.las_number_low + .125) AS `score`  
+	FROM la_rubrics r 
+	JOIN la_data d ON d.lakey = %s AND (r.theme_menukey = d.choicekey01 OR r.theme_menukey = d.choicekey02 
+		OR r.theme_menukey = d.choicekey03 OR r.theme_menukey = d.choicekey04) 
+	WHERE r.instrument_id = 'LLRA' AND r.type = 'leader qualities'
+	ORDER BY theme_name, rubric_name, las_number_low ", 
+		SQLstr($lakey, 'int'));
+$menus['LLRA_2'] = sprintf("SELECT r.theme_name AS theme, r.rubric_name AS menu, r.rubric_stem AS stem, 
+		r.rubric_item AS `item`, r.code_number AS `code`, r.rubrickey AS `key`, 
+		(r.las_number_low + .125) AS `score`    
+	FROM la_rubrics r 
+	WHERE r.instrument_id = 'LLRA' AND r.type = 'leadership themes' AND r.code_number > 0
+	ORDER BY theme_name, rubric_name, las_number_low ");
+$menus['LLRA_3'] = sprintf("SELECT 
+		IF(r.code_number <= 455, 'Leadership styles', 'Theme comments') AS theme, 
+		r.rubric_name AS menu, r.rubric_item AS `item`, r.code_number AS `code`, r.rubrickey AS `key` 
+	FROM la_rubrics r
+	WHERE r.instrument_id = 'LLRA' AND r.type = 'leadership styles' [BLACKLIST]
+	ORDER BY code_number, rubric_name, item_order ");
+
+$menus['LRJA_1'] = sprintf("SELECT r.theme_name AS theme, r.rubric_name AS menu, r.rubric_stem AS stem, 
+		r.rubric_item AS `item`, r.code_number AS `code`, r.rubrickey AS `key`, 
+		(r.las_number_low + .125) AS `score`  
+	FROM la_rubrics r 
+	WHERE r.instrument_id = 'LRJA' AND r.code_number > 0
+	AND (r.type = 'evidence and inquiry themes' OR r.type = 'truth themes') 
+	ORDER BY r.type, theme_name, code_number, las_number_low ");
+$menus['LRJA_2'] = sprintf("  ");
+$menus['LRJA_3'] = sprintf("SELECT theme_name AS theme, 
+		r.rubric_name AS menu, r.rubric_item AS `item`, r.code_number AS `code`, r.rubrickey AS `key` 
+	FROM la_rubrics r
+	WHERE r.instrument_id = 'LRJA' AND r.type = 'reflective judgment scales' AND r.code_number > 0 
+		[BLACKLIST]  ORDER BY code_number, rubric_name, item_order ");
+
+$menus['LERA_1'] = sprintf("SELECT r.theme_name AS theme, r.rubric_name AS menu, r.rubric_stem AS stem, 
+		r.rubric_item AS `item`, r.code_number AS `code`, r.rubrickey AS `key`, 
+		(r.las_number_low + .125) AS `score`  
+	FROM la_rubrics r 
+	WHERE r.instrument_id = 'LERA' AND r.code_number > 0 AND (r.type = 'ethics themes') 
+	ORDER BY type, code_number, las_number_low ");
+$menus['LERA_2'] = sprintf("  ");
+$menus['LERA_3'] = sprintf("SELECT theme_name AS theme, 
+		r.rubric_name AS menu, r.rubric_item AS `item`, r.code_number AS `code`, r.rubrickey AS `key` 
+	FROM la_rubrics r
+	WHERE r.instrument_id = 'LERA' AND r.type = 'scales' AND r.code_number > 0 
+		[BLACKLIST]  ORDER BY code_number, rubric_name, item_order ");
+
+$menus['LIMA_1'] = sprintf("SELECT r.theme_name AS theme, r.rubric_name AS menu, r.rubric_stem AS stem, 
+		r.rubric_item AS `item`, r.code_number AS `code`, r.rubrickey AS `key`, 
+		(r.las_number_low + .125) AS `score`  
+	FROM la_rubrics r 
+	WHERE r.instrument_id = 'LIMA' AND r.type = 'quadrant themes'
+	ORDER BY code_number, las_number_low ", 
+		SQLstr($lakey, 'int'));
+$menus['LIMA_2'] = sprintf("SELECT r.theme_name AS theme, r.rubric_name AS menu, r.rubric_stem AS stem, 
+		r.rubric_item AS `item`, r.code_number AS `code`, r.rubrickey AS `key`, 
+		(r.las_number_low + .125) AS `score`    
+	FROM la_rubrics r 
+	WHERE r.instrument_id = 'LIMA' AND r.type = 'levels and lines themes'
+	ORDER BY code_number, las_number_low ");
+$menus['LIMA_3'] = sprintf("  ");
+
+$menus['LDPA_1'] = sprintf("SELECT r.theme_name AS theme, r.rubric_name AS menu, r.rubric_stem AS stem, 
+		r.rubric_item AS `item`, r.code_number AS `code`, r.rubrickey AS `key`, 
+		(r.las_number_low + .125) AS `score`  
+	FROM la_rubrics r 
+	WHERE r.instrument_id = 'LDPA' AND r.code_number > 0 AND (r.type = 'dp themes') 
+	ORDER BY type, code_number, las_number_low ");
+$menus['LDPA_2'] = sprintf("  ");
+$menus['LDPA_3'] = sprintf("SELECT theme_name AS theme, 
+		r.rubric_name AS menu, r.rubric_item AS `item`, r.code_number AS `code`, r.rubrickey AS `key` 
+	FROM la_rubrics r
+	WHERE r.instrument_id = 'LDPA' AND r.type = 'scales' AND r.code_number > 0 
+		[BLACKLIST]  ORDER BY code_number, rubric_name, item_order ");
+$menus['LDPA_6'] = sprintf("SELECT theme_name AS theme, 'feedback' AS menu, 
+		rubric_item AS `item`, 0 AS `code`, r.rubrickey AS `key`, 
+		CONCAT(r.las_number_low, '-', r.las_number_high) AS `score`  
+	FROM la_rubrics r
+	WHERE r.instrument_id = 'LDPA' AND r.type = 'theme feedback'
+	ORDER BY theme_name, las_number_low ");
+
+$menus['SMA_1'] = sprintf("SELECT r.theme_name AS theme, r.rubric_name AS menu, r.rubric_stem AS stem, 
+		r.rubric_item AS `item`, r.code_number AS `code`, r.rubrickey AS `key`, 
+		(r.las_number_low + .125) AS `score`,
+		CASE
+			WHEN r.theme_menukey = d.choicekey01 THEN 1
+			WHEN r.theme_menukey = d.choicekey02 THEN 2
+			WHEN r.theme_menukey = d.choicekey03 THEN 3
+			WHEN r.theme_menukey = d.choicekey04 THEN 4
+			WHEN r.theme_menukey = d.choicekey05 THEN 5
+			WHEN r.theme_menukey = d.choicekey06 THEN 6
+		END AS sort_question
+	FROM la_rubrics r 
+	JOIN la_data d ON d.lakey = %s 		 AND (r.theme_menukey = d.choicekey01 
+		OR r.theme_menukey = d.choicekey02 OR r.theme_menukey = d.choicekey03 
+		OR r.theme_menukey = d.choicekey04 OR r.theme_menukey = d.choicekey05
+		OR r.theme_menukey = d.choicekey06) 
+	WHERE r.instrument_id = 'SMA' AND r.type = 'mindfulness themes'
+	ORDER BY sort_question, theme_name, rubric_name, las_number_low ", 
+		SQLstr($lakey, 'int'));
+$menus['SMA_2'] = sprintf("  ");
+$menus['SMA_3'] = sprintf("  ");
+
+$menus['SMJ_1'] = sprintf("SELECT r.theme_name AS theme, r.rubric_name AS menu, r.rubric_stem AS stem, 
+		r.rubric_item AS `item`, r.code_number AS `code`, r.rubrickey AS `key`, 0 AS `score`  
+	FROM la_rubrics r 
+	WHERE r.instrument_id = 'SMJ' AND r.code_number > 0
+	AND (r.type = 'comment scales') 
+	ORDER BY theme_name, code_number, item_order ");
+$menus['SMJ_2'] = sprintf("  ");
+$menus['SMJ_3'] = sprintf("  ");
+
+
+
+// 							CALCULATE OVERALL AVERAGES
+
+/* Goal: obtain 
+	a) an average of all rubrics from P1, 
+	b) an average of all rubrics from P2,
+	c) an overall unweighted average of all codes in both groups.
+Strategy:
+	- one massive query to fetch the SUM and COUNT of all codes marked in page 1
+	- one massive query to fetch the SUM and COUNT of all codes marked in page 2
+	- Use the sums and counts to calculate an average for each page, and a global average
+	- Frontload any definitions of where code ranges & avg slots are, to easily add another instrument.
+*/
+$instruments = " LLRA LRJA LERA LIMA LDPA SMA ";
+if (strpos($instruments, $instrument_id_base) AND $mode == 3) {
+	
+	// Recordset: la_codes
+	$query_rsLaCodes = sprintf("SELECT c.*, d.coding_started, d.coderkey_{$coder}, d.coded_{$coder}
+FROM {$table} c JOIN la_data d ON c.lakey = d.lakey
+WHERE c.lakey = %s", SQLstr($lakey, "int"));
+	$rsLaCodes = mysql_query($query_rsLaCodes, $Assessment) 
+		or die("ERROR fetching code info to calculate averages: ".mysql_error());
+	$row_rsLaCodes = mysql_fetch_assoc($rsLaCodes);
+	$totalRows_rsLaCodes = mysql_num_rows($rsLaCodes);
+	if ($totalRows_rsLaCodes < 1) { die("ERROR - couldn't find the code status for this record #".
+	$lakey.". Please contact the web admin team with this error message."); }
+	
+	// Define the code slot ranges for each instrument.
+	// Where a value is 0, that element should be ignored. 
+	// No idea why the page titles are defined here. Maybe they're just for programmer clarity.
+	$pg1_title = array("LLRA" => "Leader qualities", 	
+										 "LRJA" => "Evidence, inquiry, and truth", 
+										 "LERA" => "Ethics themes",
+										 "SMA"  => "Mindfulness themes",
+										 "LIMA" => "Quadrants themes",
+										 "LDPA" => "Developmental Pedagogy themes");
+	$pg2_title = array("LLRA" => "Leadership themes", 
+										 "LRJA" => "", 
+										 "LERA" => "",
+										 "SMA"  => "",
+										 "LIMA" => "Levels and lines themes",
+										 "LDPA" => "");
+	$pg1_start = 	array("LLRA" => 1, 	 "LRJA" => 1,	 "LERA" => 1, 	"SMA" => 1,  "LIMA" => 1,  "LDPA" => 1);
+	$pg1_end = 		array("LLRA" => 100, "LRJA" => 20, "LERA" => 100, "SMA" => 60, "LIMA" => 20, "LDPA" => 36);
+	$pg2_start = 	array("LLRA" => 101, "LRJA" => 0,	 "LERA" => 0, 	"SMA" => 0,  "LIMA" => 21, "LDPA" => 0);
+	$pg2_end = 		array("LLRA" => 130, "LRJA" => 0,  "LERA" => 0, 	"SMA" => 0,  "LIMA" => 40, "LDPA" => 0);
+	// avgs per "page" aren't calculated for LRJA and LERA and SMA.
+	$pg1_avgslot = 		array("LLRA" => 491, "LRJA" => 0, 	"LERA" => 0,   "SMA" => 0,	 "LIMA" => 491, 
+													"LDPA" => 0  );	
+	$pg2_avgslot = 		array("LLRA" => 492, "LRJA" => 0, 	"LERA" => 0,   "SMA" => 0,	 "LIMA" => 492, 
+													"LDPA" => 0  );	
+	$global_avgslot = array("LLRA" => 493, "LRJA" => 491,	"LERA" => 491, "SMA" => 491, "LIMA" => 493, 
+													"LDPA" => 491);
+	
+	// query for SUM and COUNT from PAGE 1 (LLRA = leader qualities; LRJA = evidence & inquiry)
+	$sql_scores_pg1 = "SELECT SUM(las_number_low + .125) AS `sum`, COUNT(las_number_low) AS `count` 
+	FROM la_rubrics r WHERE 1=0 ";
+	for ($c = zeropad($pg1_start[$instrument_id_base], 3); $c <= $pg1_end[$instrument_id_base]; $c = zeropad($c+1, 3)) {
+		if ($row_rsLaCodes['code'.$c] > 0) {
+			$sql_scores_pg1 .= " OR r.rubrickey = ".SQLstr($row_rsLaCodes['code'.$c], "int");
+		}
+	}
+	
+	// query for the SUM and COUNT from PAGE 2 (LLRA = leadership themes; LRJA = truth)
+	$sql_scores_pg2 = "SELECT SUM(las_number_low + .125) AS `sum`, COUNT(las_number_low) AS `count` 
+	FROM la_rubrics r WHERE 1=0 ";
+	for ($c = zeropad($pg2_start[$instrument_id_base], 3); 
+			 $c <= $pg2_end[$instrument_id_base] AND $pg2_end[$instrument_id_base] > 0; $c = zeropad($c+1, 3)) {
+		if ($row_rsLaCodes['code'.$c] > 0) {
+			$sql_scores_pg2 .= " OR r.rubrickey = ".SQLstr($row_rsLaCodes['code'.$c], "int");
+		}
+	}
+	
+	// **** TROUBLESHOOTING COMMENTS - uncomment these lines to print out info on the calculations.
+	// topher("P1 query: ".$sql_scores_pg1."<br>");
+	// topher("P2 query: ".$sql_scores_pg2."<br>");
+	// topher();
+	
+	// Run the queries to fetch the sums and counts
+	$row_scores_pg1 = mysql_fetch_assoc(mysql_query($sql_scores_pg1));
+	$row_scores_pg2 = mysql_fetch_assoc(mysql_query($sql_scores_pg2));
+	
+	// Calculate averages for each page and for global
+	$avg_pg1 = (1.0 * $row_scores_pg1['sum'] / $row_scores_pg1['count']);
+	$avg_pg2 = (1.0 * $row_scores_pg2['sum'] / $row_scores_pg2['count']);
+	$avg_global = ((1.0 * $row_scores_pg1['sum'] + $row_scores_pg2['sum'])
+											/ ($row_scores_pg1['count'] + $row_scores_pg2['count']));
+	
+	// topher("P1 average = ".$avg_pg1);
+	// topher("P2 average = ".$avg_pg2);
+	// topher("Overall average = ".$avg_global);
+	// topher();
+	
+	// save averages to la_codes
+	$also_save = "";
+	if ($row_rsLaCodes['coding_started'] == 0) { 
+		$also_save = sprintf("d.coding_started=1, d.coded_{$coder}=1, d.coderkey_{$coder}=%s, ",
+			SQLstr($userkey, "int"));
+	}
+	
+	$sql_save = sprintf("UPDATE {$table} c JOIN la_data d ON c.lakey = d.lakey
+		SET {$also_save} %s %s %s WHERE c.lakey=%s",
+			($pg1_avgslot[$instrument_id_base] > 0 ? // not all instruments save per-page averages.
+				"c.code".zeropad($pg1_avgslot[$instrument_id_base], 3)."=".SQLstr($avg_pg1, "double")."," : ""),
+			($pg2_avgslot[$instrument_id_base] > 0 ? // not all instruments save per-page averages.
+				"c.code".zeropad($pg2_avgslot[$instrument_id_base], 3)."=".SQLstr($avg_pg2, "double")."," : ""),
+			"c.code".zeropad($global_avgslot[$instrument_id_base], 3)."=".SQLstr($avg_global, "double"),
+			SQLstr($lakey, "int")
+			);
+	// topher($sql_save); topher();
+	$result = mysql_query($sql_save);
+	
+	// Calculation of averages is finished. Now the 3rd rubrics page will continue to load.
+}
+
+
+
+//	             //////////////////////////////////////////////////////////////
+//  UPDATE QUERY  
+//	             //////////////////////////////////////////////////////////////
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+	
+	// The POST data is made up of the following:
+	// - a code slot indicator, codeslot_X, marking where this menu selection should be saved 
+	// 	 (only relevant to single-select)
+	// - the selected rubric value, rubric_X[0], containing the rubrickey choice
+	// - the original text for that rubric item, orig_X (to decide if updating the text is needed
+	// - the updated text for that rubric item, edit_X 
+	//	 (ONLY use on the single-select page)
+	// topher("Codes to save: ".$_POST['codesToSave']);
+	
+	$sql_updateCodes = "UPDATE {$table} SET ";
+	$sql_editRubrics = "";
+	// themeavgs track the SUM and COUNT of codes that go into 
+	// each quality-specific or theme-specific average. 
+	$themeavgs_sum = array();
+	$themeavgs_count = array();
+	
+	// cycle through each menu present. ($i = arbitrary index on the page, NOT a codeslot.)
+	for ($i = 1; isset($_POST['codeslot_'.$i]); $i ++) {
+		$codeslot = zeropad(intval($_POST['codeslot_'.$i]), 3);
+		// topher("Processing code ".$codeslot."... ");
+		
+		if (isset($_POST['rubric_'.$i])) {
+			// codeslot_X is one point of potential injection, so clean it by re-converting it to integer.
+			// The slot this rubric is assigned to, stores the rubrickey # kept as that menu selection value.
+			$sql_updateCodes .= " code".$codeslot."=".SQLstr($_POST['rubric_'.$i][0], "int").", ";
+		}
+		
+		// Prepare to calculate the average for this quality / theme
+		// Averages are calculated using an accumulated SUM / accumulated COUNT strategy. 
+		if (($mode == 1 OR $mode == 2) AND isset($_POST['rubric_'.$i]) AND $_POST['rubric_'.$i][0] > 0) {
+			$codeslot_avg = 0;
+			
+			// Decide where THEME AVERAGES will be stored
+			if ($mode == 1 AND $instrument_id_base == "LLRA") {		// Leader Qualities
+				// the LQ avg slot is calculated as: the CODE slot / 2, rounded up, add 460
+				$codeslot_avg = ceil(1.0 * $codeslot / 2) + 460;
+			} else if ($mode == 2 AND $instrument_id_base == "LLRA") {	// Leadership Themes
+				// the LT avg slot is calculated as: the (CODE slot - 100) / 3, rounded up, add 480
+				$codeslot_avg = ceil(1.0 * ($codeslot-100) / 3) + 480;
+			} 
+			else if ($instrument_id_base == "LRJA") {
+				// For LRJA, use a simple lookup table to decide where the average-slot is.
+				$codeslots = array(4, 8, 12, 16, 20); // the MAX code for this grouping
+				$avgslots = array(481, 482, 483, 485, 486);
+				for ($j = 0; isset($codeslots[$j]) AND $codeslot + 3 >= $codeslots[$j]; $j ++) {
+					$codeslot_avg = $avgslots[$j];	// go through the avgslots until correct code group is found
+					// topher("Avg slot for this code: ".$codeslot_avg);
+				}
+			} 
+			else if ($instrument_id_base == "LERA") {
+				// For LERA, use a simple lookup table to decide where the average-slot is.
+				$codeslots = array(4, 8, 12, 16, 20, 24, 28, 32); // the MAX code for this grouping
+				$avgslots = array(481, 482, 483, 484, 485, 486, 487, 488);
+				for ($j = 0; isset($codeslots[$j]) AND $codeslot + 3 >= $codeslots[$j]; $j ++) {
+					$codeslot_avg = $avgslots[$j];	// go through the avgslots until correct code group is found
+					// topher("Avg slot for this code: ".$codeslot_avg);
+				}
+			} 
+			else if ($instrument_id_base == "SMA") {
+				// For SMA, use a simple lookup table to decide where the average-slot is.
+				// SMA doesn't really have "average" slots; this just stores rubrics in a streamlined format.
+				$codeslots = array(10, 20, 30, 40, 50, 60); // the MAX code for this grouping
+				$avgslots = array(481, 482, 483, 484, 485, 486);
+				for ($j = 0; isset($codeslots[$j]) AND $codeslot + 9 >= $codeslots[$j]; $j ++) {
+					$codeslot_avg = $avgslots[$j];	// go through the avgslots until correct code group is found
+					// topher("Avg slot for this code: ".$codeslot_avg);
+				}
+			} 
+			else if ($instrument_id_base == "LIMA") { 
+				if ($mode == 1) {		// Quadrants
+					// the theme avg slot is calculated as: the CODE slot / 2, rounded up, add 470
+					$codeslot_avg = ceil(1.0 * $codeslot / 2) + 470;
+				} else if ($mode == 2) {	// Levels + lines
+					// the theme avg slot is calculated as: the CODE slot / 2, rounded up, add 480 (Rs start at 20)
+					$codeslot_avg = ceil(1.0 * ($codeslot-20) / 2) + 480;
+				}
+			} 
+			else if ($instrument_id_base == "LDPA") {
+				// For LRJA, use a simple lookup table to decide where the average-slot is.
+				$codeslots = array(4, 8, 12, 16, 20, 24, 28, 32, 36); // the MAX code for this grouping
+				$avgslots = array(481, 482, 483, 484, 485, 486, 487, 488, 489);
+				for ($j = 0; isset($codeslots[$j]) AND $codeslot + 3 >= $codeslots[$j]; $j ++) {
+					$codeslot_avg = $avgslots[$j];	// go through the avgslots until correct code group is found
+					// topher("Avg slot for this code: ".$codeslot_avg);
+				}
+			} 
+			// topher("Avg slot for code# ".$codeslot." = ".$codeslot_avg);
+			
+			// If a slot avg wasn't calculated (for example an instrument_id that doesn't do avgs), ignore.
+			if ($codeslot_avg > 0) { 
+				// initialize this avg slot in the array, if it hasn't already been created
+				if (!isset($themeavgs_sum[$codeslot_avg])) { $themeavgs_sum[$codeslot_avg] = 0; }
+				if (!isset($themeavgs_count[$codeslot_avg])) { $themeavgs_count[$codeslot_avg] = 0; }
+				// Look up the score value for this rubric item
+				$row_rsScoreVal = mysql_fetch_assoc(mysql_query("SELECT (las_number_low + .125) AS score 
+					FROM la_rubrics WHERE rubrickey = ".SQLstr($_POST['rubric_'.$i][0], "int")));
+				$themeavgs_sum[$codeslot_avg] += $row_rsScoreVal['score'];
+				// topher("Total score: ".$themeavgs_sum[$codeslot_avg]);
+				$themeavgs_count[$codeslot_avg] ++;
+			}
+		}
+		
+		// was this menu item text edited? if so, add a query to update it.
+		// When you use the edit field, multiple hidden fields are referenced here to ensure that the 
+		// right field is being updated.
+		//  1) code_X stores the value of the selected rubric item - either the code# or the rubrickey,
+	 	//     depending on which setup the page has.
+		//  2) orig_X stores the original text of that menu item. Only saves if the original text matches.
+		if (isset($_POST['edit_'.$i]) AND $_POST['edit_'.$i] <> $_POST['orig_'.$i]) {
+			// The update-text query requires both key and text matches, to ensure the right row is updated.
+			$sql_editRubrics = sprintf(" UPDATE la_rubrics SET rubric_item = %s
+				WHERE rubrickey = %s AND (rubric_item = %s) AND instrument_id = %s; ",
+					SQLstr($_POST['edit_'.$i], "text"), 
+					SQLstr($_POST['code_'.$i], "int"), 
+					($_POST['orig_'.$i] == "" ? "'' OR rubric_item IS NULL" 
+																		: SQLstr($_POST['orig_'.$i], "text")),
+					SQLstr($instrument_id_base, "text")
+					);
+			// topher("<br>Updating rubric: ".$sql_editRubrics);
+			$result2 = mysql_query($sql_editRubrics) or die("Updating rubrics: ".mysql_error());
+		}
+	}
+	
+	// Now calculate the averages for each quality / theme, and add to the query.
+	// Define the starting & ending slots for each instrument, for each $mode / page.
+	// for example: the $slot_start['LLRA'] numbers are values for page NULL, page 1, page 2, and page 3.
+	// Set to 0 to ignore averages.
+	$slot_start = array(
+			"LLRA" => array(0, 461, 481, 0),
+			"LRJA" => array(0, 481,   0, 0),
+			"LERA" => array(0, 481,   0, 0),
+			"LIMA" => array(0, 471, 481, 0),
+			"LDPA" => array(0, 481,   0, 0, 0, 0),
+			"SMA"  => array(0, 481,   0, 0),
+			"SMJ"  => array(0,   0,   0, 0)
+			);
+	$slot_end = array(
+			"LLRA" => array(0, 480, 490, 0),
+			"LRJA" => array(0, 486,   0, 0),
+			"LERA" => array(0, 490,   0, 0),
+			"LIMA" => array(0, 476, 486, 0),
+			"LDPA" => array(0, 489,   0, 0, 0, 0),
+			"SMA"  => array(0, 490,   0, 0),
+			"SMJ"  => array(0,   0,   0, 0)
+			);
+	
+	// For each code between the starting & ending slots (defined for this instrument + page),
+	// write in an average for this rubric theme (or leader quality). 
+	// If no rubrics were marked for this theme, the average should be set to 0.
+	for ($c = $slot_start[$instrument_id_base][$mode]; $c > 0 AND $c <= $slot_end[$instrument_id_base][$mode]; $c ++) {
+		if (isset($themeavgs_sum[$c])) {
+			$avg = 1.0 * $themeavgs_sum[$c] / $themeavgs_count[$c];
+			$sql_updateCodes .= " code".zeropad($c, 3)."=".SQLstr($avg, "double").", ";
+			// topher("Saving average - slot=".$c.", value=".$avg);
+		} else {
+			$sql_updateCodes .= " code".zeropad($c, 3)."=0".", ";
+			// topher("Saving average - slot=".$c.", value=0");
+		}
+	}
+	
+	// now any codes which were on the "to-write" list but haven't yet been marked, should be marked 0;
+	$codesToSave = explode(' ', $_POST['codesToSave']);
+	// For each code listed in codesToSave... 
+	while (current($codesToSave) > 0) {
+		// convert $thisCode to "cleaned" intval
+		$thisCode = str_pad(intval(current($codesToSave)), 3, '0', STR_PAD_LEFT);
+		// if this code wasn't marked up above, then add a line marking it as unused.
+		if ($thisCode > 0 AND !strpos($sql_updateCodes, "code".$thisCode)) {
+			$sql_updateCodes .= " code".$thisCode."=0, ";
+		}
+		next($codesToSave);
+	}
+	
+	// close the la_codes update query
+	$sql_updateCodes .= " \n\n codercomment=".SQLstr($_POST['codercomment'], "text").", ".
+		"code_recommend=".SQLstr($_POST['code_recommend'], "text").
+		" WHERE lakey=".SQLstr($lakey, "int");
+	
+	// run the updateCodes query
+	// topher("The whole query: ");
+	// topher($sql_updateCodes); 
+	// topher();
+	
+	// $mode 6, restricted to Theme Feedback editing, doesn't result in any changes to dt_codes.
+	if ($mode <> 6) { 
+		$result1 = mysql_query($sql_updateCodes) or die("Error saving codes. Please contact admin.");
+	}
+	
+	// FORWARD TO THE NEXT RUBRICS PAGE (whether or not it exists)
+	// But if the SAVE button was clicked (rather than SUBMIT), stay on THIS page instead.
+	if ($_POST['SUBMIT'] == "SUBMIT") { $mode ++; }
+	$redirectTo = "Location: {$currentPage}?lakey={$lakey}&mode={$mode}";
+	if (isset($_GET['scorer_no'])) { $redirectTo .= "&scorer_no={$_GET['scorer_no']}"; }
+	else { $redirectTo .= "&coder={$coder}"; }
+	header($redirectTo); exit();
+	
+} // END SECTION: $_POST submission / save rubric selections
+
+
+
+// PAGE REDIRECTS 
+// *** Cannot do these earlier in the code than now, or certain calculations might not run.
+// IF this mode doesn't exist for this instrument, send on to argumentation page.
+$redirectTo = "";
+if (!isset($modes[$instrument_id_base.'_'.$mode])) { 
+	if ($instrument_id == "SMA" AND $userkey == 1000000539) { 
+		$redirectTo = "Location: coding_confidence.php?lakey={$lakey}";
+	} else {
+		$redirectTo = "Location: code_argumentation.php?lakey={$lakey}";
+	} 
+} 
+// IF this page is OMITted, redirect on to the next page now.
+if ($modes[$instrument_id_base.'_'.$mode] == "omit") { 
+	$mode ++;
+	$redirectTo = "Location: {$currentPage}?lakey={$lakey}&mode={$mode}";
+} 
+if (isset($_GET['scorer_no'])) { $redirectTo .= "&scorer_no={$_GET['scorer_no']}"; }
+else if ($redirectTo <> "") { $redirectTo .= "&coder={$coder}"; }
+if ($redirectTo <> "") { header($redirectTo); exit(); }
+
+
+
+
+//              //////////////////////////////////////////////////////////////
+//	RECORDSETS
+//	            //////////////////////////////////////////////////////////////
+
+//	Recordset: All the essay, dilemma, probe, and menu-choice data.
+$query_rsEssays = sprintf("SELECT r.firstname, r.lastname, 
+	di.dilemmakey, di.dilemma_name, di.dilemma, 
+	d.probe01, d.probe02, d.probe03, d.probe04, d.probe05, d.probe06, d.probe07, 
+	p1.probe_name AS probe_name01, p2.probe_name AS probe_name02, p3.probe_name AS probe_name03, 
+	p4.probe_name AS probe_name04, p5.probe_name AS probe_name05, p6.probe_name AS probe_name06, 
+	p7.probe_name AS probe_name07, 
+	m1.menu_item AS menu01, m2.menu_item AS menu02, m3.menu_item AS menu03, m4.menu_item AS menu04, 
+	m5.menu_item AS menu05, m6.menu_item AS menu06, m7.menu_item AS menu07
+FROM la_data d 
+LEFT JOIN registrants r ON d.userkey = r.userkey
+LEFT JOIN la_dilemmas di ON di.dilemmakey = d.dilemmakey
+LEFT JOIN la_probes p1 ON p1.instrument_id = %s AND p1.probe_number = '01' 
+LEFT JOIN la_probes p2 ON p2.instrument_id = %s AND p2.probe_number = '02' 
+LEFT JOIN la_probes p3 ON p3.instrument_id = %s AND p3.probe_number = '03' 
+LEFT JOIN la_probes p4 ON p4.instrument_id = %s AND p4.probe_number = '04' 
+LEFT JOIN la_probes p5 ON p5.instrument_id = %s AND p5.probe_number = '05' 
+LEFT JOIN la_probes p6 ON p6.instrument_id = %s AND p6.probe_number = '06' 
+LEFT JOIN la_probes p7 ON p7.instrument_id = %s AND p7.probe_number = '07' 
+LEFT JOIN la_menus m1 ON d.choicekey01 = m1.menukey 
+LEFT JOIN la_menus m2 ON d.choicekey02 = m2.menukey 
+LEFT JOIN la_menus m3 ON d.choicekey03 = m3.menukey 
+LEFT JOIN la_menus m4 ON d.choicekey04 = m4.menukey 
+LEFT JOIN la_menus m5 ON d.choicekey05 = m5.menukey 
+LEFT JOIN la_menus m6 ON d.choicekey06 = m6.menukey 
+LEFT JOIN la_menus m7 ON d.choicekey07 = m7.menukey 
+WHERE d.lakey = %s", 
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($lakey, "int"));
+$rsEssays = mysql_query($query_rsEssays, $Assessment) 
+	or die("ERROR fetching test taker essays: ".mysql_error());
+$row_rsEssays = mysql_fetch_assoc($rsEssays);
+$totalRows_rsEssays = mysql_num_rows($rsEssays);
+
+if ($totalRows_rsEssays < 1) { die("ERROR - couldn't find any essays for this record #".$lakey.". Please contact the web admin team with this error message. "); }
+
+
+// Recordset: la_codes or la_codes_2 depending on who's viewing
+$query_rsLaCodes = sprintf("SELECT c.*, d.coded_1, d.coded_2, d.coded_3 
+	 FROM {$table} c JOIN la_data d ON c.lakey = d.lakey 
+	 WHERE c.lakey = %s", SQLstr($lakey, "int"));
+$rsLaCodes = mysql_query($query_rsLaCodes, $Assessment) or die("ERROR fetching codes: ".mysql_error());
+$row_rsLaCodes = mysql_fetch_assoc($rsLaCodes);
+$totalRows_rsLaCodes = mysql_num_rows($rsLaCodes);
+if ($totalRows_rsLaCodes < 1) { die("ERROR - couldn't find the code status for this record #".$lakey.". Please contact the web admin team with this error message. Sorry for the inconvenience."); }
+
+
+/* 		LLRA / LRJA / LERA Page 3: 
+	tweak the query for the scales menus.
+	Specifically, the per-theme style menus should NOT be shown if any codes were selected 
+	within that theme on the prior page (LLRA coding page 2, Themes) 
+	UNLESS that theme's style menu (on this page) already has a value in it. 
+*/
+$instruments = " LLRA LRJA LERA LDPA ";
+if (strpos($instruments, $instrument_id_base) AND $mode == 3) { 
+	
+	$themeAvgsSlots = array(); // slots where the theme averages are stored after being calculated
+	$themeScaleSlots = array(); // slots where the codes for these overall "theme scale menus" are stored
+	// the theme label, used to block this theme from being fetched in the rubric-menus query
+	// (The ethics menu, one of the original 4 style menus, should not be blacklisted.)
+	$themeLabels = array();
+	
+	$themeScaleSlots['LLRA'] = array(0, 456, 457, 453, 458, 455, 459, 460);
+	$themeAvgsSlots['LLRA'] =  array(0, 481, 482, 484, 483, 487, 485, 486);
+	$themeLabels['LLRA'] = array("none", "cognition", "communication", "ethicsXX", "emotion", 
+														 "approach", "personality", "social");
+	
+	$themeScaleSlots['LRJA'] = array(0, 111, 112, 113, 114, 115);	
+	$themeAvgsSlots['LRJA'] =  array(0, 481, 482, 483, 485, 486);
+	$themeLabels['LRJA'] = array("none", "complexity", "evidence", "inquiry", 
+															 "perspectives", "truth & certainty");
+	
+	$themeScaleSlots['LERA'] = array(0, 451, 452, 453, 454, 455, 456, 457, 458);
+	$themeAvgsSlots['LERA'] =  array(0, 481, 482, 483, 484, 485, 486, 487, 488);
+	$themeLabels['LERA'] = array("none", 
+															 "ethics", 
+															 "the good and the right", 
+															 "values and beliefs", 
+															 "ethics and perspectives", 
+															 "ethical relativism",
+															 "ethics and spirituality",
+															 "ethical decision making",
+															 "ethics in citizenship");
+	
+	$themeScaleSlots['LDPA'] = array(0, 451, 452, 453, 454, 455, 456, 457, 458, 459);	
+	$themeAvgsSlots['LDPA'] =  array(0, 481, 482, 483, 484, 485, 486, 487, 488, 489);
+	$themeLabels['LDPA'] = array("none", "nature of psychological structures", "developmental dynamics",
+															 "developmental pedagogy", "methodology",
+															 "developmental psychology as a field", "theory and practice",
+															 "learning", "curricula", "assessment");
+	
+	for ($i = 1; isset($themeAvgsSlots[$instrument_id_base][$i]); $i ++) {
+		// topher("Checking avgslot #".$i.": ".$themeAvgsSlots[$instrument_id_base][$i]);
+		// IF this theme average exists (codes were marked) and this theme's style menu is uncoded,
+		$slot_themeAvg = zeropad($themeAvgsSlots[$instrument_id_base][$i], 3);
+		$slot_themeScale = zeropad($themeScaleSlots[$instrument_id_base][$i], 3);
+		// topher("Code ".$slot_themeAvg." = ".$row_rsLaCodes['code'.$slot_themeAvg]);
+		if ($row_rsLaCodes['code'.$slot_themeAvg] > 0 AND $row_rsLaCodes['code'.$slot_themeScale] == 0) { 
+			// THEN ensure that this theme's menu doesn't make it onto the page.
+			$sql = " AND rubric_name <> ".SQLstr($themeLabels[$instrument_id_base][$i], "text");
+			// topher($sql);
+			$menus[$instrument_id_base.'_3'] = str_replace("[BLACKLIST]", $sql." [BLACKLIST]", $menus[$instrument_id_base.'_3']);
+		}
+	}
+	// then clear out the [BLACKLIST] placeholder.
+	$menus[$instrument_id_base.'_3'] = str_replace("[BLACKLIST]", "", $menus[$instrument_id_base.'_3']);
+}
+
+// List rubrickeys which have been coded for this user previously
+$sql_rsUsedItems = sprintf("SELECT 
+		code201, code202, code203, code204, code205, code206, code207, code208, code209, code210, 
+		code211, code212, code213, code214, code215, code216, code217, code218, code219, code220,
+		code221, code222, code223, code224, code225, code226, code227, code228, code229, code230,
+		code231, code232, code233, code234, code235, code236, code237, code238, code239, code240
+	FROM la_data d1 	# reference this record only to find the userkey, and to exclude this lakey.
+	JOIN la_data d2 ON d1.userkey = d2.userkey AND d1.lakey <> d2.lakey
+	JOIN la_codes c ON d2.lakey = c.lakey
+	WHERE d1.instrument_id = %s AND d1.lakey = %s ",
+		SQLstr($instrument_id_base, 'text'),
+		SQLstr($lakey, 'int'));
+// echo str_replace("\n", "<br>", $sql_rsUsedItems);
+$rsUsedItems = mysql_query($sql_rsUsedItems) or die("ERROR fetching previous codes: ".mysql_error());
+$used_rubrickeys = "";
+while ($row = mysql_fetch_assoc($rsUsedItems)) {
+	for ($c = 201; $c <= 300; $c ++) {
+		if (isset($row['code'.$c]) AND $row['code'.$c] > 0) {
+			$used_rubrickeys .= " ".$row['code'.$c]." ";
+		}
+	}
+}
+
+// Fetch the rubric menus, based on the query defined above. 
+// topher($menus[$instrument_id_base.'_'.$mode]); topher();
+$rsMenus = mysql_query($menus[$instrument_id_base.'_'.$mode], $Assessment) 
+	or die("ERROR fetching rubrics for instrument '{$instrument_id_base}' mode '{$mode}': ".mysql_error());
+$row_rsMenus = mysql_fetch_assoc($rsMenus);
+
+// if no menus were fetched, skip this page. 
+if (mysql_num_rows($rsMenus) == 0) { 
+	$redirectTo = "code_argumentation.php"."?lakey=".$lakey;
+	if (isset($_GET['scorer_no'])) {  $redirectTo .= "&scorer_no=".$_GET['scorer_no']; }
+	else { $redirectTo .= "&coder=".$coder; }
+	header("Location: ".$redirectTo); exit();
+}
+
+
+
+// Boilerplate table allows us to pull template text into various parts of the report.
+// It's more efficient, now, to download the whole table and put each boilerplate item into a slot in an array, which I call using the boilerplate column "name".
+$rsLaBoilerplate = mysql_query("SELECT b.* FROM la_boilerplate b WHERE type='coding' ") 
+	or die("rsLaBoilerplate: ".mysql_error());
+$boilerplate = array();
+while ($row_rsLaBoilerplate = mysql_fetch_assoc($rsLaBoilerplate)) {
+	$boilerplate[$row_rsLaBoilerplate['name']] = $row_rsLaBoilerplate['la_boilerplate_text'];
+}
+ 
+
+
+
+
+?>
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Code <?php echo $instrument_id_name." ".
+							ucwords(strtolower(substr($modes[$instrument_id_base.'_'.$mode], 0, 
+								strpos($modes[$instrument_id_base.'_'.$mode], ":")))); ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<script src="../includes/jquery.multiselect.js" type="text/javascript"></script>
+<link href="../includes/jquery.multiselect.css" rel="stylesheet" type="text/css" />
+<link href="../includes/js_res/jquery.ui.smoothness.css" rel="stylesheet" type="text/css" />
+<script src="../SpryAssets/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+
+
+<style type="text/css">
+.twoColFixRtHdr #container #mainContent .box {
+	padding-bottom: 0px;
+}
+.twoColFixRtHdr #container #mainContent .box ol li {
+	line-height: 17px;
+}
+.twoColFixRtHdr #container #mainContent #form1 tr td h4 {
+	margin-top: 6px;
+	margin-bottom: 4px;
+}
+</style>
+
+
+<script type="text/javascript">
+
+$(document).ready(function() {
+	
+	
+	// INITIALIZE ALL THE JQUERY MULTISELECTS 
+	// Instructions can be found at http://www.erichynds.com/jquery/jquery-ui-multiselect-widget/
+	
+	$('.rubricmenu').multiselect({
+		
+		multiple: false,		
+		noneSelectedText: '<em>select one</em>',
+		selectedList: 1,
+		header: false,
+		height: 500,
+		position: {
+			my: 'center',
+			at: 'center'
+				
+			 // only include the "of" property if you want to position
+			 // the menu against an element other than the button.
+			 // multiselect automatically sets "of" unless you explictly
+			 // pass in a value.
+		},
+		click: function(event, ui){
+      if (ui.checked == true && ui.value > 0) {
+				var menu_id = $(this).attr('id');
+				var menu_num = menu_id.replace('rubric_', '');  
+				// exclude the score and other 'helper' info from the text shown for editing
+				// Jquery UI seems to have a serious sanitization hole. Quotes are manually converted
+				// from " to '' and then back again, to prevent page breakage and security risks.
+				ui.text = ui.text.replace(/''/g, "\"");
+				var displayAfter = 0;
+				if (ui.text.indexOf(' - ') > 0) { 
+					displayAfter = ui.text.indexOf(' - ')+3;
+				}
+				var itemText = ui.text.substring(displayAfter);
+				var displayText = itemText;
+				if (displayText.length > 40) { displayText = displayText.substring(0,40)+'...'; }
+				$('#edit_'+menu_num).val(''+itemText);
+				$('#orig_'+menu_num).val(''+itemText);
+				$('#code_'+menu_num).val(''+ui.value);
+				$('#disp_'+menu_num).html('<em>Editing:</em> '+displayText);
+				
+			} else { 
+				var menu_id = $(this).attr('id');
+				var menu_num = menu_id.replace('rubric_', ''); 
+				$('#edit_'+menu_num).val('');
+				$('#orig_'+menu_num).val('');
+				$('#code_'+menu_num).val('');
+				$('#disp_'+menu_num).html('');
+			}
+   }
+	 
+	});
+	
+});
+
+</script>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->
+<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+  <?php include 'code_quickmenu.php'; ?>
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1><?php echo substr($modes[$instrument_id_base.'_'.$mode], 0, 
+								strpos($modes[$instrument_id_base.'_'.$mode], ":")); 
+			if ($instrument_id == "SMJ") { 
+				echo " FOR ".strtoupper($row_rsEssays['firstname']." ".$row_rsEssays['lastname']);
+			} else {
+				echo ": #".$lakey." CODER ".$coder;
+			} ?></h1>
+		
+    <?php if ($instrument_id == "SMA") { ?>
+    
+			<?php for ($i = 1; $row_rsEssays['probe_name0'.$i] <> ""; $i ++) { ?>
+      
+      <div id="CollapsiblePanel<?php echo $i; ?>" class="CollapsiblePanel">
+        <div class="CollapsiblePanelTab"><?php echo ucfirst($row_rsEssays['menu0'.$i]); ?></div>
+        <div class="CollapsiblePanelContent">
+          <table width="900"><tr><td>
+          <p><?php echo str_replace("\n", "<br>", $row_rsEssays['probe0'.$i]); ?></p>
+          </td></tr></table>
+        </div>
+      </div>
+        
+      <script type="text/javascript">
+        var CollapsiblePanel<?php echo $i; ?> = 
+					new Spry.Widget.CollapsiblePanel("CollapsiblePanel<?php echo $i; ?>");
+      </script>
+      
+      <?php } ?>
+    
+    <?php } else { // if NOT instrument SMA ?>
+    
+    <div id="CollapsiblePanel1" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">TEST-TAKER RESPONSES</div>
+      <div class="CollapsiblePanelContent">
+      	<table width="900"><tr><td>
+        
+        <?php if ($row_rsEssays['dilemma'] <> "") { ?>
+        	<p>Dilemma:</p>
+          <p><?php echo $row_rsEssays['dilemma']; ?></p>
+        <?php } // ?>
+        
+        <?php if ($instrument_id == "LDPA") { ?>
+        	<p>You are working with 
+          	<strong><?php echo strtolower($row_rsEssays['menu01']); ?></strong> students.</p>
+        	<p>You are teaching 
+          	<strong><?php echo strtolower($row_rsEssays['menu02']); ?></strong>.</p>
+        <?php } // ?>
+        
+      	<?php 
+				$i = 1;
+				while ($row_rsEssays['probe_name0'.$i] <> "") { ?>
+          <p><strong><?php 
+						$row_rsEssays['probe_name0'.$i] = 
+							str_replace("random_lamenus", "", $row_rsEssays['probe_name0'.$i]);
+						echo $row_rsEssays['probe_name0'.$i]; 
+						if ($row_rsEssays['menu0'.$i] <> "" AND $instrument_id <> "LDPA") { 
+							if ($row_rsEssays['probe_name0'.$i] <> "") { echo ": "; }
+							echo ucfirst($row_rsEssays['menu0'.$i]); 
+						} ?></strong>
+          </p>
+        <p><?php echo str_replace("\n", "<br>", $row_rsEssays['probe0'.$i]); ?></p>
+        <?php $i ++;
+				} // end WHILE loop for each essay ?>
+        </td></tr></table>
+      </div>
+    </div>
+    
+    <script type="text/javascript">
+			var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+  	</script>
+    
+    <?php } ?>
+    
+  <?php if ($mode == 1 AND $instrument_id_base == "LLRA") { 
+		echo $boilerplate['code_instructions_llra_qualities'];
+	} else if ($mode == 2 AND $instrument_id_base == "LLRA") { 
+		echo $boilerplate['code_instructions_llra_themes'];
+	} else if ($mode == 3 AND $instrument_id_base == "LLRA") {
+		echo $boilerplate['code_instructions_llra_dimensions'];
+	} else if ($mode == 1 AND $instrument_id_base == "LERA") { 
+		echo $boilerplate['code_instructions_lera_themes']; 
+	} ?>
+    
+<form id="form1" name="form1" method="POST" action="<?php echo $formRedirect; ?>">
+
+<table>
+
+	<tr>
+  	<td colspan="4" align="right">&nbsp;
+      <input name="SUBMIT" type="submit" value="SAVE" /> &nbsp; 
+      <input name="SUBMIT" type="submit" value="SUBMIT" />
+    </td>
+  </tr>
+  
+  <?php 
+	// LIST EACH MENU
+	// For each menu, have to list 3 things: 
+	// (if this is a new theme, add a row for the theme)
+	// - descriptor for that menu (name)
+	// - the rubric itself
+	// - a text field for editing the rubric (Theo only)
+	// The menus recordset fetches 5 columns: theme, menu, item, code, key 
+	
+	// Store a list of all codes which should be written to
+	$codesToSave = " ";
+	$rub_count = 0; // count gives each rubric and each text field a unique, semi-arbitrary identifier.
+	
+	// Keep track of the theme and rubric
+	$cur_theme = "";
+	$cur_menu = "";
+	
+	// the WHILE loop creates the rows, so it's outside of the rows.
+	do {
+		
+		// gather basic information on this menu item
+		$this_codenum = zeropad($row_rsMenus['code'], 3); // reference which code slot?
+		// what value (stored in that code slot) represents this item?
+		// For single-select menus, the value is the key identifying this choice. (since a single code 
+		//  slot needs to store one of multiple possible choices)
+		$this_value = $row_rsMenus['key'];
+		// Mark this code to be saved when updates are being written.
+		// This ensures that un-checked checkboxes will indeed be marked as unchecked.
+		$codesToSave .= $this_codenum." ";
+		
+		// are we into a new theme? if so, update the trackers and start a new menu.
+		// (if this happens, we can assume that the previous menu & row was already ended properly.)
+		if ($row_rsMenus['theme'] <> $cur_theme) {
+			$cur_theme = $row_rsMenus['theme']; // update to remember the new theme
+			?><tr><td class="tablehead_knockout" colspan="3">
+				<?php echo ucfirst($row_rsMenus['theme']); ?>
+      </td></tr><?php
+			// Instructions row for SMJ
+			if ($instrument_id_base == "SMJ") { 
+				if ($cur_theme == "teacher comments") { ?>
+        	<tr><td colspan="3">
+          	<?php echo $boilerplate['coding_smj_rubrics_explain_comments']; ?>
+          </td></tr><?php
+				} else if ($cur_theme == "teacher suggestions") { ?>
+          <tr><td colspan="3">
+            <?php echo $boilerplate['coding_smj_rubrics_explain_lasttwo']; ?>
+          </td></tr><?php 
+				} 
+			}
+			$cur_menu = ""; // treat the coming menu as new, regardless of what it's named.
+		}
+		
+		// are we into a new menu? if so, update the tracker and start the menu.
+		// (if this happens, we can assume that the previous menu & row was already ended properly.)
+		if ($row_rsMenus['menu'] <> $cur_menu) {
+			$cur_menu = $row_rsMenus['menu']; // remember the new menu name
+			$rub_count ++; // increment to a new # for this menu on the page
+			// Create this table row, and add the label for the rubric.
+			// also add a hidden variable which indicates which code number should store this menu choice.
+			?>
+      <tr>
+      	<td width="200">
+				<?php 
+					if ($instrument_id <> "SMA") { 
+						echo ucfirst($row_rsMenus['menu']);
+						if (isset($row_rsMenus['stem'])) { echo ": "; }
+					}
+					if (isset($row_rsMenus['stem'])) { echo $row_rsMenus['stem']; } ?>
+      	<input type="hidden" name="codeslot_<?php echo $rub_count; ?>" 
+        	id="codeslot_<?php echo $rub_count; ?>" value="<?php echo $this_codenum; ?>" />
+        </td><?php 
+			// and initialize the SELECT menu.
+			$blank_text = "- none -";
+			if ($mode == 6) { $blank_text = "- select feedback to edit -"; }
+			?><td><select name="rubric_<?php echo $rub_count; ?>[]" id="rubric_<?php echo $rub_count; ?>" 
+				class="rubricmenu pulldown_width_450" >
+        	<option value=""><?php echo $blank_text; ?></option>
+			<?php
+		}
+		
+		// Add the menu option for this recordset row.
+		// Option is selected IF the la_codes code value is the SAME AS this option's value.
+		?><option value="<?php echo $this_value; ?>" <?php 
+			if (!(strcmp($this_value, round($row_rsLaCodes['code'.$this_codenum])) )) 
+      { echo "selected='selected'"; } ?> ><?php 
+			if (isset($row_rsMenus['score']) AND $row_rsMenus['score'] > 0) { echo "".$row_rsMenus['score']; } 
+			echo " (r".$row_rsMenus['key'].") ";
+			if ($instrument_id_base == "SMJ" AND strpos($used_rubrickeys, $row_rsMenus['key'])) { 
+				echo "*USED* "; 
+			}
+			echo " - ";
+			$item = "";
+			$item = $row_rsMenus['item'];
+			$item = str_replace("\"", "''", $item);
+			$item = str_replace("<", "&lt;", $item);
+			echo $item; ?></option><?php 
+				
+		// go to the next recordset row.
+		$row_rsMenus = mysql_fetch_assoc($rsMenus);
+		
+		// anything to do before the next item? if it's a new theme or menu, we should end the row.
+		if ($row_rsMenus['theme'] <> $cur_theme OR $row_rsMenus['menu'] <> $cur_menu) {
+			?></select></td><?php // end the menu
+			//echo "Old menu: ".$cur_menu."'; new menu = '".$row_rsMenus['menu']."'; "."<br>"; 
+			// add the edits text field -- ONLY for Theo
+			if ($edit_rubrics) {
+				/* <input name="edit_<?php echo $rub_count; ?>" type="text" 
+        	id="edit_<?php echo $rub_count; ?>" value="" size="30" /> */
+				?><td width="300">
+        	<span id="disp_<?php echo $rub_count; ?>"></span>
+          <input type="hidden" name="orig_<?php echo $rub_count; ?>" 
+          	id="orig_<?php echo $rub_count; ?>" />
+          <input type="hidden" name="code_<?php echo $rub_count; ?>" 
+          	id="code_<?php echo $rub_count; ?>" />
+          <textarea name="edit_<?php echo $rub_count; ?>" id="edit_<?php echo $rub_count; ?>"
+        		style=" height: <?php echo ($mode == 6 ? "150px" : "auto"); ?>; width: 400px; height: 100px;"></textarea>
+          </td><?php
+			}
+			?></tr><?php // end the table row
+			// now the HTML is ready for adding another row on next loop.
+		}
+		
+	} while ($row_rsMenus !== false);
+  ?>
+  
+</table>
+
+<table>
+
+	<tr>
+  	<td>&nbsp;</td>
+    <td></td>
+  </tr>
+
+  <tr>
+    <td width="200"><?php 
+			$text = "Coder comments about the performance:";
+			if ($instrument_id_base == "SMJ") { $text = $boilerplate['coding_smj_rubrics_teacher_comments']; }
+			echo $text; ?>
+    </td>
+    <td><textarea name="codercomment" cols="45" rows="5" class="textarea080_450" 
+    	id="codercomment"><?php echo str_replace("<br>", "\n", $row_rsLaCodes['codercomment']); 
+			?></textarea></td>
+  </tr>
+  <tr>
+    <td width="200"><?php 
+			$text = "Suggestions for new / changed codes: (Press ENTER to separate different suggestions.)";
+			if ($instrument_id_base == "SMJ") { $text = $boilerplate['coding_smj_rubrics_teacher_suggestions']; }
+			echo $text; ?>
+    </td>
+    <td scope="col"><textarea name="code_recommend" cols="45" rows="5" class="textarea080_450" 
+    	id="code_recommend"><?php echo str_replace("<br>", "\n", $row_rsLaCodes['code_recommend']); 
+			?></textarea></td>
+  </tr>
+  <tr>
+    <td align="right">&nbsp;</td>
+    <td align="right">
+      <input name="SUBMIT" type="submit" value="SAVE" /> &nbsp; 
+      <input name="SUBMIT" type="submit" value="SUBMIT" />
+    </td>
+  </tr>
+</table>
+		
+    <input type="hidden" name="codesToSave" value="<?php echo $codesToSave; ?>" />
+    <input type="hidden" name="MM_update" value="form1" />
+    
+    </form>
+    <p>&nbsp;</p>
+
+
+  
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+
+
+<?php
+?>

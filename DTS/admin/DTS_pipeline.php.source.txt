@@ -1,0 +1,586 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="../Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title><?php echo $_SESSION['instrument_id']; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+td p {
+	padding: 0px;
+	margin-bottom: 10px;
+	margin-top: -3px;
+}
+.minimalist-a td {
+	border-bottom: 1px solid #CCC;
+}
+.twoColFixRtHdr #container #mainContent .minimalist-a tbody tr:hover td {
+	color: #8A8A8A;
+}
+</style>
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>DTS</h1>
+    <h2>Contacts</h2>
+    <table class='minimalist-a'>
+      <tr>
+        <th style='width:15%;'>Company</th>
+        <th>Contact</th>
+        <th style='width:10%;'>Pending actions</th>
+        <th>Contact dates</th>
+        <th style='width:40%;'>Notes</th>
+      </tr>
+      <tr>
+        <td><p>Actualizing Self</p>
+          <p>&nbsp;</p></td>
+        <td><p><a href="mailto:aikiporto@gmail.com">Chris Porto</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Founder; Worked with Deloitte previously. Also works for a solar energy company in the Bay area.</p>
+          <p>Has attended webinar (LDMA); on our mailing list. Offered a 15 minute feedback recording. Attended all Lectica related presentations.</p>
+          <p>In the initial stages of building his consulting business; may be a long term sale, but nothing imminent.</p>
+          <p>Sent follow-up.</p></td>
+      </tr>
+      <tr>
+        <td><p>Being First, Inc</p></td>
+        <td><p><a href="mailto:deananderson@beingfirst.com">Dean Anderson</a></p>
+          <p><a href="mailto:willowdea@gmail.com">Willow Dea</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/12/30</p></td>
+        <td><p>ITC conference; interested in doing a project with up to 1000 LDMAs for a contract hoping to land in August. He has written into this proposal money for our assessments.</p>
+          <p>up to $142,000 (300 LDMAs and 150 LSUAs) </p>
+          <p>Jennifer and Zak met with Dean; he is proposing a project with a large Canadian retailer to do leadership development with management. He would like to use the LDMA and potentially the LSUA as embedded assessments to scaffold growth and measure efficacy. His timeline is somewhat uncertain, but he expects to have Up to $630,000 (1000 pre/post assessments)</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p><a href="mailto:barbtchang@gmail.com">Barbara Chang</a></p></td>
+        <td><p>If no word by 10/11, poke week of 10/14.</p></td>
+        <td><p>2013/09/12</p>
+          <p>2013/09/17</p></td>
+        <td><p>Daniel Goldman suggested that Barbara and Lectica ought to meet to discuss a project she is working on; he also suggested that she might be willing to help us with our fundraising strategy.</p>
+          <p>Zak and Jennifer met with her 9/12.</p>
+          <p>Follow up with Barbara included sending 1-page materials about LTs; Barbara inquired about our compliance with EEOC guidelines, and sent her 1 pager over to us. As of 9/17 she said she would be in touch in coming weeks.</p></td>
+      </tr>
+      <tr>
+        <td><p>HUB Network</p></td>
+        <td><p><a href="mailto:mjcox08@gmail.com">Michael Cox</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2014/01/17</p></td>
+        <td><p>Angel networker; Well connected in non-profit and start-up sectors</p>
+          <p>Focused on leadership as the means to organizational change. Global Hub Network, social enterprise startups, Sandbox Network, World Economic Forum of World Changers, Rockwood, Benkana (Consulting Firms), National Center for Service and Innovation Leadership. Works on supporting cross-sector leadership training.</p>
+          <p>Taking an LDMA to better be able to pitch us to others. Has not taken it yet. Zak checked in with him about the LDMA and he has just been very busy.</p>
+          <p>Interested in FOLA 2013</p>
+          <p>Zak and Jennifer had dinner with Michael 5/23 and he invited two colleagues from Deloitte to join us (Ross)</p>
+          <p>Has connected or will connect us to: Entertainment Industry Foundation, Tony Hsieh's Downtown Project, Ross Rocketto</p>
+          <p>Finished the LDMA on 2014/01/17.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p><a href="mailto:barbara@arasgroupllc.com">Barbara Aras</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/08</p></td>
+        <td><p>Consulting firm out of OH, looking for mindfulness or decision-making for clients; Related to dissertation. Phone call in February with Zak.</p>
+          <p>We're not moving on this, may hear from her in the future.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p>Mariana Bozesan</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/07/24</p>
+          <p>2013/08/08</p>
+          <p>2013/08/23</p></td>
+        <td><p>Very well connected; potential funder and fundraising advisor;</p>
+          <p>Interested in using LDMAs for venture capital due diligence; assess executive teams and coaching;</p>
+          <p>Trying to start an alternative crowd-sourcing platform similar to kickstarter with Integral features and publish developmental level as a means of projecting accountability.</p>
+          <p>Zak emailed Mariana 7/24 requesting a meeting. Works closely with Stuart Valentine. Independently wealthy, PHD from IEP/Sofia University; interested in empowering women. Hazel Henderson is a client.</p>
+          <p>Zak and Jennifer meeting with Mariana 08/08/2013 to discuss using assessments (LDMA and LSUA/LERA) for due diligence. Will also seek advice on fundraising campaign.</p>
+          <p>Jennifer, Lauren, Theo, Zak met with Mariana and her team on 8/23. They were interesting in working together. Lauren sent follow up materials to her colleagues and Theo and Mariana have corresponded. They will be in touch to talk about logistics when they begin their next round of due diligence with VC teams.</p></td>
+      </tr>
+      <tr>
+        <td><p>Boston Consulting Group </p>
+          <p>&nbsp;</p></td>
+        <td><p>Christine Locher</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Works at BCG in their Global Learning and Development sector</p>
+          <p>Would like: slides from presentations, webinar information, general information about assessments.</p>
+          <p>Lauren's mother works with BCG; overall sense of interactions was one of limited interest in engaging in conversation.&nbsp;</p>
+          <p>Signed up for a webinar, but wasn't able to come. Expressed interest in continuing a conversation. Has been added to the newsletter list.&nbsp;</p>
+          <p>Was sent CI handout materials, sent warm reply back to Lauren with offer to meet up in Boston.</p></td>
+      </tr>
+      <tr>
+        <td><p>Catalyst Online</p></td>
+        <td><p>Bill Underwood</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/08/07</p>
+          <p>2013/08/30</p>
+          <p>2013/09/20</p>
+          <p>2013/12/15</p></td>
+        <td><p>Connected to us through Core Integral mailing.</p>
+          <p>Catalyst online does consulting on social media and online marketing strategy.</p>
+          <p>Meeting with Bill on 5/17 led to Bill's decision to take an LDMA 'test drive'. His interest is in using LTs with his Silicon Valley exec clients and his questions / doubts about LTs center around how to ensure that they feel valuable to his clients.</p>
+          <p>Bill signed contract and paid; started it, but hasn't finished it yet; Amy has been in touch with him.</p>
+          <p>Zak emailed 08/07 about the FOLA and completing his LDMA.</p>
+          <p>He has been debriefed on his LDMA and expressed that it was very educational and beneficial experience. He wants to take a few more assessments, possibly the LSUA and LERA. He also wants to use LectaTests in an upcoming executive training starting in November involving two groups of 20 managers. We will be in touch during the couple weeks to get him taking more LectaTests and in contracting for his training.</p>
+          <p>Lauren and Theo met with Bill on 8/30 to discuss use of dillemmas in his upcoming project (not yet contracted). Lauren received signed NDA from bill and shared our list of dilemmas with Bill.</p>
+          <p>Bill and Lauren met to discuss marketing &amp; framing for DTS, customer segments and strategies 9/20.</p>
+          <p>Bill, Theo and Lauren met to discuss Bill's use of dilemmas in his upcoming leadership program to start end Nov.</p>
+          <p>2013/12 Emailed about contact with Google: Richard David Hames, Google leadership program</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p><a href="mailto:michael.w.connell@gmail.com">Mike Connell</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Move to next year. ARPA-ED</p>
+          <p>Zak spoke with him last Friday. Avoiding venture capital, confirmed our concerns about both Lumosity and Khan Academy.</p>
+          <p>In the long run, he wants to collaborate, but nothing imminent.</p>
+          <p>Starting a new blog, looking for a guest contributor and approached Zak.</p></td>
+      </tr>
+      <tr>
+        <td><p>Cornerstone Consulting</p></td>
+        <td><p><a href="mailto:pete@theholosgroup.com">Peter Holliday</a></p>
+          <p> <a href="mailto:mgriffiths@CornerstoneIntegral.com.au">MikeGriffiths</a></p>
+          <p><a href="mailto:ccdrake@CornerstoneIntegral.com.au">Chris Drake</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/08/07</p>
+          <p>2013/12/30</p></td>
+        <td><p>An Australian social enterprise startup that does Jacquesian and Integral informed coaching and consulting, primarily in the mining sector to date. They are including Lectical assessments in their sales pitches to clients, using materials approved by Lectica staff. Dinner at ITC with Lectica team, Mike expressed interest in moving towards contracting for a job they are confident about with a coal extraction organization likely to start in August; Mike is very well connected to independent school world in Australia and offered to help us make connections there. </p>
+          <p>Amy, Jennifer, and Zak are meeting with Mike 08/07/2013. </p>
+          <p>Several people from Cornerstone have enrolled in the FOLA. Cornerstone put approved content about Lectica up on their site. </p>
+          <p>Theo and Lauren met with Chris Drake in Boston for dinner on 9/27. Chris has clear understanding of Lectica &amp; our assessments; wants to have Cornerstone consultants in the FOLA present on LTs to the rest of the org; looking to set up a pilot project in early 2014 timeframe.</p></td>
+      </tr>
+      <tr>
+        <td><p>Deloitte Consulting, GovLab</p></td>
+        <td><p> <a href="mailto:rocketto.corostl@gmail.com">Ross Rocketto</a></p>
+          <p> <a href="mailto:camedina@deloitte.com">Carmen Medina</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>GovLab is a division of Deloitte Consulting that focuses on innovation in the public sector.</p>
+          <p>We met Ross through Michael Cox (dinner 5/23)</p>
+          <p>Meeting with Deloitte in July went well, one connection from Carmen pending.</p>
+          <p>Zak emailed 7/11. No response as of 7/24.</p>
+          <p>Jennifer emailed Ross 8/07 requesting a meeting and informing him of FOLA.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p><a href="mailto:fowke@vianet.ca">Don Fowkes</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/05/29</p></td>
+        <td><p>Development (temporal horizon). He works with construction, engineering, and tech companies</p>
+          <p>Interested in the LDMA for measurement for the next project</p>
+          <p>Global Organizational design society (GO Society). Works with large clients, conferences, etc. Have their own methods for development assessment through qualitative interviewing. Good fit, similar to Integral Theory.</p>
+          <p>Participated in tour and call with GO Society gentlemen (5/29/13).</p>
+          <p>Zak emailed Don and a couple of the other gentlemen from RO in early June and never head back.</p></td>
+      </tr>
+      <tr>
+        <td><p>General Assembly</p></td>
+        <td><p><a href="mailto:mowens@generalassemb.ly">Matthew Owens</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>3-4 locations where they build incubators for emerging tech entrepreneurs; looking for assessments of very specific skills, but Zak attempting to communicate that reasons for failure are soft skills (collaboration, communication, etc.)</p>
+          <p>Ed West connection.</p>
+          <p>Zak emailed Matthew in April, 2013 no response.</p>
+          <p>Zak sent Matthew a connection request, so far no update.</p></td>
+      </tr>
+      <tr>
+        <td><p>GO Society</p></td>
+        <td><p><a href="mailto:toj1212@erols.com">Owen Jacobs</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Global Organizational society conference 2014; Herb Koplowitz wants to collaborate to plan something for the conference. Theo and Zak both had a positive impression.</p>
+          <p>Zak will follow up on Herb's email about planning for conference. These are also potential customers.</p>
+          <p>Met 5/29 with Theo, Jennifer, Zak. Learning experience about prep work before meetings; not bad, but unlikely work will come from them as a group, until we can speak about Lectica in more Jacquesian terms.</p>
+          <p>SEE Don Fowke</p>
+          <p>SEE Owen Jacobs</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p>Triinu Groon</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/08/23</p>
+          <p>2013/09/09</p></td>
+        <td><p>At ITC, met Zachary.</p>
+          <p>Working at Natura; seems she is going to be doing a training project there.</p>
+          <p>Triiinu wrote to us about a potential project. Lauren and Zachary collaborated on a follow up and sent it 8/23.</p>
+          <p>No response back from Triinu, Lauren poked again on 9/9.</p></td>
+      </tr>
+      <tr>
+        <td><p>Eliott Ingersoll</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Friend of Lauren's; he is an SCTI scorer. Lauren would like to ask him for a testimonial/feedback about Lectica and LectaTests following his experience at ITC.</p>
+          <p>Sent follow-up.</p></td>
+      </tr>
+      <tr>
+        <td><p>Leader's Institute of SA Niki Vincent&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Lauren: send the cold case</p></td>
+        <td><p>2012/07/24</p></td>
+        <td><p>Leading an Australian leadership development program, researching with SCT and MBTI. Potential LectaTest bulk user.</p>
+          <p>Zak emailed 07/24/2013.</p></td>
+      </tr>
+      <tr>
+        <td><p>Kristian Merckoll</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Consulting firm; Sent follow-up.</p></td>
+      </tr>
+      <tr>
+        <td><p>Minerva University</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Looking to incorporate assessments</p>
+          <p>Robb Smith introduced Zak to Ben Nelson. Zak passed on materials and invited him to a Skype meeting. Never heard from them after initial contact</p></td>
+      </tr>
+      <tr>
+        <td><p>One Spark Consulting</p>
+          <p>&nbsp;</p>
+          <p>Lakia Green</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/08/07</p></td>
+        <td><p>Works in diversity issues; interest in using assessments, but not clear how or when.</p>
+          <p>Jennifer sent link to webinars 08/07/2013.</p></td>
+      </tr>
+      <tr>
+        <td><p>Pattern Dynamics </p></td>
+        <td><p>Tim Winton</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/06/13</p>
+          <p>2013/08/15</p>
+          <p>2013/08/26</p></td>
+        <td><p>Tim Winton is a founder and director at Pattern Dynamics. In Meta- Integral embodied leadership program.</p>
+          <p>Attended webinar and wrote to Zak requesting a meeting. FOLA 2013.</p>
+          <p>Meeting with Tim and partner 6/13/2013: Tim will mock up products and get back to us; meeting at ITC.</p>
+          <p>Presented at Tim's lunch meeting; continued building this relationship at ITC. He is actively pursuing new clients.&nbsp;</p>
+          <p>Zak and Lauren will follow up with him about how he is planning on deploying LectaTests in multiple ways.</p>
+          <p>Call scheduled for 08/15/2013</p>
+          <p>He is changing his offering to an on-line course, but still wants to do LectaTests on the students as they come in and as they leave. He expects 50 in the next 3-5 months. Lauren met with him on 8/26.</p>
+          <p>Lauren and Theo met with Tim; discussed use of LDMA and fit with PD; Lauren proposed consulting trade agreement to Tim.</p></td>
+      </tr>
+      <tr>
+        <td><p>Quantcast</p>
+          <p>&nbsp;</p></td>
+        <td><p>Justin McSharry</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>ICC coach and has signed up for 2 webinars with us, but not sure if he has done any of them yet. He is on the newsletter list.</p>
+          <p>Per request, Lauren is sending him digital copies of Joel &amp; Sandra's presentation.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p>Kathleen Roberts</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Consultant; interested in learning more and Joel and Sandra's materials</p>
+          <p>Connection to Bryan, ME; Sent follow up.</p></td>
+      </tr>
+      <tr>
+        <td><p>Round Sky Consulting</p>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p></td>
+        <td><p>Cecile Green</p>
+          <p> Daniel Little</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Friends of Laurens who now have a consulting firm, Round Sky; Expressed interest in LectaTests at ITC.</p>
+          <p>Lauren had informal solo call with Cecile to discuss her assessment needs 9/12.</p>
+          <p>Lauren sent follow up information on possibility of using LTs to evaluate groups and orgs to Cecile; warm response.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p>Lynn Royster</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/12/15</p></td>
+        <td><p>Enrolled in the FOLA; has been introduced to Amy to get set up to take several assessments.</p></td>
+      </tr>
+      <tr>
+        <td><p>Strategic Sustainability &amp; Leadership</p>
+          <p>&nbsp;</p></td>
+        <td><p>Dwight A. Gaudet</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Sent follow up.</p></td>
+      </tr>
+      <tr>
+        <td><p>Symplicitus (and Shift Foundation)</p>
+          <p>&nbsp;</p></td>
+        <td><p>Victoria Wilding</p></td>
+        <td><p>Jennifer will investigate re: fundraising</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Consultant; looking to measure efficacy of approach; Possible fundraising advisor.</p></td>
+      </tr>
+      <tr>
+        <td><p>Ten Directions </p></td>
+        <td><p>Rebecca Colwell</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/10</p></td>
+        <td><p>Met Lauren at JFK; Strategic management consultant.</p>
+          <p>Working on a facilitation training program beginning October, 2013 with Diane Hamilton (a respected zen priest, mediator and facilitator); 7 month facilitation certification program, expressed interest in exploring using LectaTests. Invited Lauren to travel to Houston for participation in 3 day workshop.</p>
+          <p>Lauren pitched the LSUA and LDPA.</p>
+          <p>Lauren has been talking regularly with Rebecca, not about Lectica, but relationship building. No short term action on our assessments.</p></td>
+      </tr>
+      <tr>
+        <td><p>Raquel Torrent</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>ITC Volunteer; attended a session and gave us her card. Consultant</p>
+          <p>Sent follow up.</p></td>
+      </tr>
+      <tr>
+        <td><p>Ubiquity University</p></td>
+        <td><p>Peter Mary</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Potential pilot project in the Fall '13, still very vague Clint working with them (via Integral Institute)</p>
+          <p>Zak talked with Peter Mary, they are very ambitious, interested in working with us, but some doubt about the project.</p>
+          <p>Clint would be the liaison, running pilot IT course. As of Sept, no near term action.</p></td>
+      </tr>
+      <tr>
+        <td><p>Yscouts</p></td>
+        <td><p>Kent Frazier</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Sent follow up.</p></td>
+      </tr>
+      <tr>
+        <td><p>leader's Institute of SA&nbsp;</p></td>
+        <td><p>Niki Vincent</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p>Dorrian Aiken</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Dorrian inquired about LDMA; contact of Lauren's from S.A.. Consultant, coach, teaches at U. of Stellenbosch. Friend of John &amp; Anna who have been in touch with Zak about using LTs in the past, never materialized.&nbsp;</p>
+          <p>She wants to use our dilemmas for her work with Ph.D students around perspective seeking / taking. Signed NDA and received access to dilemmas online.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p>Michael Stern</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>New york integral guy, friends with Mikyo Clark. Email to Zak about &quot;collective intelligence&quot;. Unclear what org he has / is with.</p>
+          <p>Jennifer drafted reply to Michael 9/11.</p></td>
+      </tr>
+      <tr>
+        <td><p>Google</p></td>
+        <td><p>Adam Leonard</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/12/28</p></td>
+        <td><p>Zak set up meeting with him for Oct 3 with Barrett. Lauren will attend.</p>
+          <p>Zak, Lauren met with Adam &amp; Barrett on 10/3. Adam looking to bring metric in to google's mindfulness program as part of initiative to support generating evidence of value of mindfulness.</p>
+          <p>Lauren sent follow up link to Adam; Adam will reach out to schedule next meeting with Theo and Barrett.</p></td>
+      </tr>
+      <tr>
+        <td><p>&nbsp;</p></td>
+        <td><p><a href="mailto:cindy@deepchange.com">Cindy Wigglesworth</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/03/13</p></td>
+        <td><p>Has some history with Lectica; working on building an argument for spiritual intelligence; approached us years ago to work with her instrument, but nothing happened.</p>
+          <p>Zak emailed her recently with fundraising page. Could become a client, or a funder. Perhaps a hybrid similar to the SMS.</p>
+          <p>Zak had a call with Cindy on 03/13/13. Talked with her about assessment and potential friends who could be donors. On adult side, LDMA. She feels like she has built an assessment of spiritual development.</p>
+          <p>Long term sale/cultivation cycle. She is not really thinking about public education but she got excited once she got on board.</p></td>
+      </tr>
+      <tr>
+        <td><p>Human Capital</p></td>
+        <td><p><a href="mailto:joliver@human-equity.com">John Oliver</a></p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>2013/09/25</p>
+          <p>2013/10/03</p></td>
+        <td><p>On Outreach pipeline as well re: non-profit customers.</p>
+          <p>John has been in contact with Theo since 2009 and developed brochure to pitch LTs to VCs (?) and business schools. Reached out to reconnect about his revised brochure.</p>
+          <p>Jennifer replied, CC to Lauren 9/25.</p>
+          <p>Jennifer and Lauren met with John 10/3; discussed his interest in using LTs for due dilligence on behalf of investors vetting entrepreneurs, and his initiative to bring LTs to MBA programs and MBA accreditation bodies in Europe.</p>
+          <p>Jennifer will follow up with John re: his 2009 LDMA, Lauren will continue to work on materials to support coaches and resellers of LTs and share them with John.</p></td>
+      </tr>
+      <tr>
+        <td><p>Center for the Edge</p></td>
+        <td><p>Andrew Trabulsi</p>
+          <p>John Seely Brown</p>
+          <p>John Hager</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+      </tr>
+      <tr>
+        <td><p>EcoLogix</p></td>
+        <td><p>Sam Roberts</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+      </tr>
+    </table>
+    <br />
+    <h2>Social Media and Public Relations</h2>
+    <table class='minimalist-a'>
+      <tr>
+        <th style='width:15%;'>Project</th>
+        <th>Lead</th>
+        <th style='width:10%;'>Action</th>
+        <th>Date</th>
+        <th style='width:40%;'>Notes</th>
+      </tr>
+      <tr>
+        <td><p>LinkedIn</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Monthly</p></td>
+        <td><p>Selected updates from newsletter are regularly added 82 Followers</p>
+          <p>Successfully garnered endorsements and recommendations</p></td>
+      </tr>
+      <tr>
+        <td><p>Newsletter</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Monthly</p></td>
+        <td><p>Topics for August: (Adult) Entrepreneurship and predicting success; (K-12) Commentary on this article from NYT: <u>http://</u></p>
+          <p><a href="http://www.nytimes.com/2013/07/14/opinion/sunday/the-trouble-with-">www.nytimes.com/2013/07/14/opinion/sunday/the-trouble-with-</a>testing-mania.html?src=recg&amp;_r=0</p>
+          <p>In September, Howard Drossman will guest write the Adult and column and may write other columns in coming months.</p>
+          <p>Zak will guest write: K-12 side will be the new tests about cautionary tale of Obama's new test administration rolling out this year.&nbsp;</p>
+          <p>Atlanta cheating scandal: how DiscoTests negate cheating.</p>
+          <p>Barrett interested in guest authoring.</p></td>
+      </tr>
+      <tr>
+        <td><p>Idealist.org</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Jennifer: Investigate possible uses</p></td>
+        <td><p>&nbsp;</p></td>
+        <td><p>Amy set up an account for us some time ago, but we need to decide what, if anything, we want to do with the account.</p></td>
+      </tr>
+    </table>
+    <p></p>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrants);
+?>

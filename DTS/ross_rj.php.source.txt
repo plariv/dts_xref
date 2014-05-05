@@ -1,0 +1,561 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/ross.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Ross assessment example</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="SpryAssets/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.style5 {
+	color: #383838;
+	font-weight: bold;
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+}
+.style6 {color: #333333}
+-->
+</style>
+<!-- InstanceEndEditable -->
+<link href="css/styles2.css" rel="stylesheet" type="text/css" />
+<style type="text/css"> 
+<!-- 
+body  {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+}
+.twoColFixLtHdr #container { 
+	width: 780px;  /* using 20px less than a full 800px width allows for browser chrome and avoids a horizontal scroll bar */
+	background: #FFFFFF;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #000000;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+} 
+.twoColFixLtHdr #header { 
+	background: #DDDDDD; 
+	padding: 0 10px 0 20px;  /* this padding matches the left alignment of the elements in the divs that appear beneath it. If an image is used in the #header instead of text, you may want to remove the padding. */
+} 
+.twoColFixLtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixLtHdr #sidebar1 {
+	float: left; /* since this element is floated, a width must be given */
+	width: 200px; /* the actual width of this div, in standards-compliant browsers, or standards mode in Internet Explorer will include the padding and border in addition to the width */
+	background: #EBEBEB; /* the background color will be displayed for the length of the content in the column, but no further */
+	padding: 15px 10px 15px 20px;
+}
+.twoColFixLtHdr #mainContent { 
+	margin: 0 0 0 250px; /* the left margin on this div element creates the column down the left side of the page - no matter how much content the sidebar1 div contains, the column space will remain. You can remove this margin if you want the #mainContent div's text to fill the #sidebar1 space when the content in #sidebar1 ends. */
+	padding: 0 20px; /* remember that padding is the space inside the div box and margin is the space outside the div box */
+} 
+.twoColFixLtHdr #footer { 
+	padding: 0 10px 0 20px; /* this padding matches the left alignment of the elements in the divs that appear above it. */
+	background:#DDDDDD; 
+} 
+.twoColFixLtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.style2 {
+	font-size: 10px
+}
+#apDiv1 {
+	position:absolute;
+	left:390px;
+	top:78px;
+	width:495px;
+	height:38px;
+	z-index:1;
+}
+.style3 {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	color: #3F3F3F;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixLtHdr #sidebar1 { width: 230px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixLtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixLtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]--></head>
+
+<body class="twoColFixLtHdr">
+
+<div id="apDiv1"><!-- InstanceBeginEditable name="EditRegion5" -->
+  <h1 align="left">Children and television</h1>
+<!-- InstanceEndEditable --></div>
+<div id="container">
+  <div class="twoColFixLtHdr" id="header">
+    <h1><img src="images/RossLogo.gif" alt="Ross Logo" width="211" height="107" />
+      <!-- end #header -->
+    </h1>
+  </div>
+  <div id="sidebar1">
+    <!-- InstanceBeginEditable name="EditRegion3" -->
+    <h2>INSTRUCTIONS</h2>
+    <p>This is an assessment of <span class="emphasis">how you think</span> about difficult problems that have no clear-cut answers. This means there aren't any &quot;right&quot; answers. We want to know what YOU think.</p>
+    <p>Carefully read the story to the right, then answer all of the questions under each tab of the panel. In your responses, carefully explain each of your answers. In other words: <span class="emphasis">Show us how you are thinking.</span></p>
+    <p>When you are finished with the tasks under tabs 1-6, click the submit button. You can go back and change your answer to any question—just remember to click on the submit button afterward.</p>
+    <p>After you complete the essay section, you will be asked to answer a few short-answer questions. Always choose the answer you agree with the most.</p>
+    <p>When you are finished, click the finish button. Once you have clicked this button, you will not be able to make any more changes. </p>
+    <!-- InstanceEndEditable -->
+    <!-- end #sidebar1 -->
+  </div>
+  <div id="mainContent">
+    <h1>&nbsp; </h1>
+    <!-- InstanceBeginEditable name="EditRegion4" -->
+    <div id="TabbedPanels1" class="TabbedPanels">
+      <ul class="TabbedPanelsTabGroup">
+        <li class="TabbedPanelsTab">dilemma</li>
+        <li class="TabbedPanelsTab">1st</li>
+        <li class="TabbedPanelsTab">2nd</li>
+        <li class="TabbedPanelsTab">3rd</li>
+        <li class="TabbedPanelsTab">4th</li>
+        <li class="TabbedPanelsTab">5th</li>
+        <li class="TabbedPanelsTab">6th</li>
+        <li class="TabbedPanelsTab">finish</li>
+      </ul>
+      <div class="TabbedPanelsContentGroup">
+        <div class="TabbedPanelsContent">
+          <p>Several scientists have raised concerns about global warming, warning us that pollutants released into the air are causing rapid warming of the Earth that is resulting in major environmental changes. They argue that this rapid warming of the planet will result in widespread devastation, and should be curtailed by dramatically reducing airborne pollutants. Other scientists argue that global warming due to pollution is likely to cause fluctuations in mean global temperatures, but that some of these changes will be beneficial, especially in the Northern hemisphere. They argue that, though it is desirable to reduce pollution in the long term (for quality-of-life reasons), the dramatic reduction of airborne pollutants advocated by the first group of scientists would be costly and ineffective, and not necessarily good for everyone.</p>
+        </div>
+        <div class="TabbedPanelsContent">
+          <p>What do you think of the statements made by these scientists? Have you formed an opinion on this issue? How did you come to form this opinion?</p>
+          <form id="form1" name="form1" method="post" action="">
+            <label></label>
+            <label>
+            
+            <div align="center">
+              <textarea name="LRJAEssay7" cols="58" rows="20" id="LRJAEssay7"></textarea>
+              <label>
+              <div align="center" class="style5">
+                <input name="submit" type="submit" class="style5" id="submit" value="submit" />
+              </div>
+              </label>
+            </div>
+            </label>
+          </form>
+          </div>
+        <div class="TabbedPanelsContent">
+          <p>How is it possible that scientists can come to such different conclusions?</p>
+          <form id="form2" name="form1" method="post" action="">
+            <label>
+            <textarea name="LRJAEssay2" cols="58" rows="20" id="LRJAEssay2"></textarea>
+</label>
+            <label>
+            <div align="center" class="style5">
+              <input name="submit4" type="submit" class="style5" id="submit4" value="submit" />
+            </div>
+            </label>
+          </form>
+          <div align="center"></div>
+          <p>&nbsp;</p>
+        </div>
+        <div class="TabbedPanelsContent">
+          <p>What is the ideal way to go about forming an opinion on a problem like this one? Why?</p>
+          <form id="form3" name="form1" method="post" action="">
+            <label>
+            <textarea name="LRJAEssay1" cols="58" rows="20" id="LRJAEssay1"></textarea>
+</label>
+            <label>
+            <div align="center" class="style5">
+              <input name="submit2" type="submit" class="style5" id="submit2" value="submit" />
+            </div>
+            </label>
+          </form>
+          <p>&nbsp;</p>
+        </div>
+        <div class="TabbedPanelsContent">
+          <p>Can you be certain that your conclusions are correct? Why or why not?</p>
+          <form id="form4" name="form1" method="post" action="">
+            <label>
+            <textarea name="LRJAEssay3" cols="58" rows="20" id="LRJAEssay3"></textarea>
+</label>
+            <label>
+            <div align="center" class="style5">
+              <input name="submit3" type="submit" class="style5" id="submit3" value="submit" />
+            </div>
+            </label>
+          </form>
+          </div>
+        <div class="TabbedPanelsContent">
+          <p>People often use terms like reality, truth, or facts when responding to this dilemma. What do these terms mean to you?</p>
+          <form id="form5" name="form1" method="post" action="">
+            <label>
+            <textarea name="LRJAEssay4" cols="58" rows="20" id="LRJAEssay4"></textarea>
+</label>
+            <label>
+            <div align="center" class="style5">
+              <input name="submit5" type="submit" class="style5" id="submit5" value="submit" />
+            </div>
+            </label>
+          </form>
+          </div>
+        <div class="TabbedPanelsContent">
+          <p>How do you know when you have identified reality, truth, or facts?</p>
+          <p>
+            <label>
+            <textarea name="LRJAEssay5" cols="58" rows="20" id="LRJAEssay5"></textarea>
+            </label>
+            <label>
+</p>
+          <div align="center">
+            <input name="submit6" type="submit" class="style5" id="submit6" value="submit" />
+          </div>
+          </label>
+        </div>
+        <div class="TabbedPanelsContent">          
+          <p>Please rate the level of your agreement with the following statements.
+          </p>
+          <form id="form6" name="form6" method="post" action="">
+            <label></label>
+            <table width="450" border="1" cellspacing="0" cellpadding="4">
+              <tr>
+                <td class="style3">If you are ever going to be able to understand something, it will make sense to you the first time you hear it.</td>
+                <td class="style4">
+                  <label>
+                  <select name="Survey list" class="style3" id="Survey list">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                  </label>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">The only thing that is certain is uncertainty itself.</td>
+                <td class="style4">
+                  <select name="Survey list2" class="style3" id="Survey list2">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">If you work hard enough to solve a problem, you'll eventually find the right solution.</td>
+                <td class="style4">
+                  <select name="Survey list3" class="style3" id="Survey list3">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">How much a person gets out of an educational experience depends mostly on the quality of the instructor.</td>
+                <td class="style4">
+                  <select name="Survey list4" class="style3" id="Survey list4">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">To solve a problem, it is important to seek information from a wide variety of sources.</td>
+                <td class="style4">
+                  <select name="Survey list5" class="style3" id="Survey list5">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">The ability to learn is innate.</td>
+                <td class="style4">
+                  <select name="Survey list6" class="style3" id="Survey list6">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">It's annoying to listen to so-called experts who can't seem to make up their minds about what they really believe.</td>
+                <td class="style4">
+                  <select name="Survey list7" class="style3" id="Survey list7">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">If scientists try hard enough, they can find out the truth about almost anything.</td>
+                <td class="style4">
+                  <select name="Survey list8" class="style3" id="Survey list8">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">People who challenge authority are usually over-confident.</td>
+                <td class="style4">
+                  <select name="Survey list9" class="style3" id="Survey list9">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">I try my best to combine information from different sources.</td>
+                <td class="style4">
+                  <select name="Survey list10" class="style3" id="Survey list10">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">Things are simpler than most experts would have you believe.</td>
+                <td class="style4">
+                  <select name="Survey list11" class="style3" id="Survey list11">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">The most important aspect of science is precise measurement.</td>
+                <td class="style4">
+                  <select name="Survey list12" class="style3" id="Survey list12">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">To me learning means getting the big ideas.</td>
+                <td class="style4">
+                  <select name="Survey list13" class="style3" id="Survey list13">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">I get most of my information from 2 or 3 trusted sources.</td>
+                <td class="style4">
+                  <select name="Survey list14" class="style3" id="Survey list14">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">I quickly lose faith in a leader who changes his or her mind on important issues.</td>
+                <td class="style4">
+                  <select name="Survey list15" class="style3" id="Survey list15">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">You know something is true when it is agreed upon by almost everyone.</td>
+                <td class="style4">
+                  <select name="Survey list16" class="style3" id="Survey list16">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">Scientists can ultimately get to the truth.</td>
+                <td class="style4">
+                  <select name="Survey list17" class="style3" id="Survey list17">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">There is no way to evaluate the quality of different people's beliefs.</td>
+                <td class="style4">
+                  <select name="Survey list18" class="style3" id="Survey list18">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">The scientific method is the best approach to getting at the truth.</td>
+                <td class="style4">
+                  <select name="Survey list19" class="style3" id="Survey list19">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">A sentence can have more than one true meaning.</td>
+                <td class="style4">
+                  <select name="Survey list20" class="style3" id="Survey list20">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="style3">The most important part of science is original thinking.</td>
+                <td class="style4">
+                  <select name="Survey list21" class="style3" id="Survey list21">
+                    <option>Select one</option>
+                    <option value="5">Strongly agree</option>
+                    <option value="4">Agree</option>
+                    <option value="3">Agree somewhat</option>
+                    <option value="2">Disagree somewhat</option>
+                    <option value="1">Disagree</option>
+                    <option value="0">Disagree strongly</option>
+                  </select>
+                </td>
+              </tr>
+            </table>
+            <p align="center" class="style5">
+              <input name="submit7" type="submit" class="style5" id="submit7" value="finish" />
+</p>
+          </form>
+        </div>
+      </div>
+    </div>
+    <script type="text/javascript">
+<!--
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+//-->
+    </script>
+    <!-- InstanceEndEditable -->
+    <!-- end #mainContent -->
+  </div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="footer">
+    <p class="style2">©2007, Developmental Testing Service, LLC</p>
+    <!-- end #footer --></div>
+<!-- end #container --></div>
+</body>
+<!-- InstanceEnd --></html>

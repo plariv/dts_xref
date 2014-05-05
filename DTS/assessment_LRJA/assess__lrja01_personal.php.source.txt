@@ -1,0 +1,649 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE Registrants SET country=%s, birth_year=%s, edukey=%s, major=%s, occupation=%s, sexkey=%s, ethnicity1key=%s, ethnicity1other=%s, ethnicity2key=%s, ethnicity2other=%s, languagekey=%s, languageother=%s, englishqualitykey=%s WHERE userkey=%s",
+                       GetSQLValueString($_POST['country'], "text"),
+                       GetSQLValueString($_POST['birth_year'], "int"),
+                       GetSQLValueString($_POST['edukey'], "int"),
+                       GetSQLValueString($_POST['major'], "text"),
+                       GetSQLValueString($_POST['occupation'], "text"),
+                       GetSQLValueString($_POST['sexkey'], "int"),
+                       GetSQLValueString($_POST['ethnicity1key'], "int"),
+                       GetSQLValueString($_POST['ethnicity1other'], "text"),
+                       GetSQLValueString($_POST['ethnicity2key'], "int"),
+                       GetSQLValueString($_POST['ethnicity2other'], "text"),
+                       GetSQLValueString($_POST['languagekey'], "int"),
+                       GetSQLValueString($_POST['languageother'], "text"),
+                       GetSQLValueString($_POST['englishqualitykey'], "int"),
+                       GetSQLValueString($_POST['userkey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "assess__lrja01_conditions.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEduattainment = "SELECT * FROM EduAttainment ORDER BY EduLevelKey ASC";
+$rsEduattainment = mysql_query($query_rsEduattainment, $Assessment) or die(mysql_error());
+$row_rsEduattainment = mysql_fetch_assoc($rsEduattainment);
+$totalRows_rsEduattainment = mysql_num_rows($rsEduattainment);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCountries = "SELECT * FROM countries";
+$rsCountries = mysql_query($query_rsCountries, $Assessment) or die(mysql_error());
+$row_rsCountries = mysql_fetch_assoc($rsCountries);
+$totalRows_rsCountries = mysql_num_rows($rsCountries);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsSex = "SELECT * FROM Sex";
+$rsSex = mysql_query($query_rsSex, $Assessment) or die(mysql_error());
+$row_rsSex = mysql_fetch_assoc($rsSex);
+$totalRows_rsSex = mysql_num_rows($rsSex);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEthnicity = "SELECT * FROM Ethnicity ORDER BY Ethnicity ASC";
+$rsEthnicity = mysql_query($query_rsEthnicity, $Assessment) or die(mysql_error());
+$row_rsEthnicity = mysql_fetch_assoc($rsEthnicity);
+$totalRows_rsEthnicity = mysql_num_rows($rsEthnicity);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLanguages = "SELECT * FROM Languages";
+$rsLanguages = mysql_query($query_rsLanguages, $Assessment) or die(mysql_error());
+$row_rsLanguages = mysql_fetch_assoc($rsLanguages);
+$totalRows_rsLanguages = mysql_num_rows($rsLanguages);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEnglishquality = "SELECT * FROM EnglishQuality";
+$rsEnglishquality = mysql_query($query_rsEnglishquality, $Assessment) or die(mysql_error());
+$row_rsEnglishquality = mysql_fetch_assoc($rsEnglishquality);
+$totalRows_rsEnglishquality = mysql_num_rows($rsEnglishquality);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEthnicity2 = "SELECT * FROM Ethnicity ORDER BY Ethnicity ASC";
+$rsEthnicity2 = mysql_query($query_rsEthnicity2, $Assessment) or die(mysql_error());
+$row_rsEthnicity2 = mysql_fetch_assoc($rsEthnicity2);
+$totalRows_rsEthnicity2 = mysql_num_rows($rsEthnicity2);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname, country, birth_year, edukey, major, occupation, sexkey, ethnicity1key, ethnicity1other, ethnicity2key, ethnicity2other, languagekey, languageother, englishqualitykey FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelrja2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LRJA personal info</title>
+
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../DTSassets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../DTSassets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../DTSassets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../DTSassets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #A9BBA0;
+	padding-top: 4;
+	padding-right: 27;
+	padding-bottom: 0;
+	padding-left: 17;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #52561F;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LRJAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>PERSONAL INFORMATION (page 1 of 10)  </h1>
+<h3>Please read these instructions before beginning.</h3>
+<p>Welcome, <?php echo $row_rsRegistrants['firstname']; ?>. The LRJA is composed of two sections. On this page and the next, we collect  personal information, and on  pages 3-10, we collect your responses to a real world dilemma. The assessment will take about an hour of your time, but timing varies quite a bit, depending primarily on how much you have to say. Please take the assessment when you alert, well-rested, and unlikely to be interrupted.</p>
+<p>Once you have submitted page 2 of this assessment, you will be able to leave the assessment and return to it by going to the link under the &quot;Complete an assessment&quot; tab on the &quot;Select an assessment&quot; page.  After you  submit page 10, you will not be able to make changes to your work.</p>
+<p><span class="emphasis">Important:</span> If you have never taken a lectical assessment, please read, &quot;<a href="../_about/takingassessments.php">Taking Lectical Assessments</a>.&quot;</p>
+  <p><span class="emphasis">Note:</span> If you return to this page after hitting the &quot;submit&quot; button, please check to make sure you have entered responses for all of the required (<span class="red">*</span>) items.  </p>
+  <p></p>
+  <form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+    <table>
+      <tr valign="baseline">
+        <td>The country in which you reside<span class="red">*</span></td>
+        <td><span id="spryselect1">
+          <select name="country" class="pulldownwidth200">
+            <option value="" <?php if (!(strcmp("", htmlentities($row_rsRegistrants['country'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <option value="United States" <?php if (!(strcmp("United States", htmlentities($row_rsRegistrants['country'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>United States</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsCountries['name']?>"<?php if (!(strcmp($row_rsCountries['name'], htmlentities($row_rsRegistrants['country'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsCountries['name']?></option>
+            <?php
+} while ($row_rsCountries = mysql_fetch_assoc($rsCountries));
+  $rows = mysql_num_rows($rsCountries);
+  if($rows > 0) {
+      mysql_data_seek($rsCountries, 0);
+	  $row_rsCountries = mysql_fetch_assoc($rsCountries);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr> </tr>
+      <tr valign="baseline">
+        <td>The year of your birth<span class="red">*</span></td>
+        <td><span id="sprytextfield1">
+        <input type="text" name="birth_year" value="<?php echo htmlentities($row_rsRegistrants['birth_year'], ENT_COMPAT, 'UTF-8'); ?>" size="4" />
+        <span class="textfieldRequiredMsg">A value is required.</span><span class="textfieldMinCharsMsg">Minimum number of characters not met.</span><span class="textfieldMaxCharsMsg">Exceeded maximum number of characters.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td>Your educational level<span class="red">*</span></td>
+        <td><span id="spryselect2">
+          <select name="edukey" class="pulldownwidth200">
+            <option value="" <?php if (!(strcmp("", htmlentities($row_rsRegistrants['edukey'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsEduattainment['edukey']?>"<?php if (!(strcmp($row_rsEduattainment['edukey'], htmlentities($row_rsRegistrants['edukey'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsEduattainment['EduLevel']?></option>
+            <?php
+} while ($row_rsEduattainment = mysql_fetch_assoc($rsEduattainment));
+  $rows = mysql_num_rows($rsEduattainment);
+  if($rows > 0) {
+      mysql_data_seek($rsEduattainment, 0);
+	  $row_rsEduattainment = mysql_fetch_assoc($rsEduattainment);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr> </tr>
+      <tr valign="baseline">
+        <td>Your college major (Write &quot;none&quot; if you did not go to college.)<span class="red">*</span></td>
+        <td><span id="sprytextfield2">
+          <input type="text" name="major" value="<?php echo htmlentities($row_rsRegistrants['major'], ENT_COMPAT, 'UTF-8'); ?>" size="70" />
+        <span class="textfieldRequiredMsg">A value is required.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td>Your occupation (If you are a student, write &quot;student&quot;)<span class="red">*</span></td>
+        <td><span id="sprytextfield3">
+          <input type="text" name="occupation" value="<?php echo htmlentities($row_rsRegistrants['occupation'], ENT_COMPAT, 'UTF-8'); ?>" size="70" />
+        <span class="textfieldRequiredMsg">A value is required.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td>Your sex<span class="red">*</span></td>
+        <td><span id="spryselect3">
+          <select name="sexkey" class="pulldownwidth200">
+            <option value="" <?php if (!(strcmp("", htmlentities($row_rsRegistrants['sexkey'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsSex['sexkey']?>"<?php if (!(strcmp($row_rsSex['sexkey'], htmlentities($row_rsRegistrants['sexkey'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsSex['sex']?></option>
+            <?php
+} while ($row_rsSex = mysql_fetch_assoc($rsSex));
+  $rows = mysql_num_rows($rsSex);
+  if($rows > 0) {
+      mysql_data_seek($rsSex, 0);
+	  $row_rsSex = mysql_fetch_assoc($rsSex);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr> </tr>
+      <tr valign="baseline">
+        <td>Your primary ethnicity<span class="red">*</span></td>
+        <td><span id="spryselect4">
+          <select name="ethnicity1key" class="pulldownwidth200">
+            <option value="" <?php if (!(strcmp("", htmlentities($row_rsRegistrants['ethnicity1key'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsEthnicity['ethnicitykey']?>"<?php if (!(strcmp($row_rsEthnicity['ethnicitykey'], htmlentities($row_rsRegistrants['ethnicity1key'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsEthnicity['Ethnicity']?></option>
+            <?php
+} while ($row_rsEthnicity = mysql_fetch_assoc($rsEthnicity));
+  $rows = mysql_num_rows($rsEthnicity);
+  if($rows > 0) {
+      mysql_data_seek($rsEthnicity, 0);
+	  $row_rsEthnicity = mysql_fetch_assoc($rsEthnicity);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr> </tr>
+      <tr valign="baseline">
+        <td>If other, please describe.</td>
+        <td><span id="sprytextfield4">
+          <input type="text" name="ethnicity1other" value="<?php echo htmlentities($row_rsRegistrants['ethnicity1other'], ENT_COMPAT, 'UTF-8'); ?>" size="70	" />
+</span></td>
+      </tr>
+      <tr valign="baseline">
+        <td>Secondary ethnicity</td>
+        <td><span id="spryselect5">
+          <select name="ethnicity2key" class="pulldownwidth200">
+            <option value="" <?php if (!(strcmp("", htmlentities($row_rsRegistrants['ethnicity2key'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsEthnicity['ethnicitykey']?>"<?php if (!(strcmp($row_rsEthnicity['ethnicitykey'], htmlentities($row_rsRegistrants['ethnicity2key'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsEthnicity['Ethnicity']?></option>
+            <?php
+} while ($row_rsEthnicity = mysql_fetch_assoc($rsEthnicity));
+  $rows = mysql_num_rows($rsEthnicity);
+  if($rows > 0) {
+      mysql_data_seek($rsEthnicity, 0);
+	  $row_rsEthnicity = mysql_fetch_assoc($rsEthnicity);
+  }
+?>
+          </select>
+</span></td>
+      </tr>
+      <tr> </tr>
+      <tr valign="baseline">
+        <td>If other, please describe.</td>
+        <td><span id="sprytextfield5">
+          <input type="text" name="ethnicity2other" value="<?php echo htmlentities($row_rsRegistrants['ethnicity2other'], ENT_COMPAT, 'UTF-8'); ?>" size="70" />
+</span></td>
+      </tr>
+      <tr valign="baseline">
+        <td>Your first language<span class="red">*</span></td>
+        <td><span id="spryselect6">
+          <select name="languagekey" class="pulldownwidth200">
+            <option value="" <?php if (!(strcmp("", htmlentities($row_rsRegistrants['languagekey'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLanguages['languagekey']?>"<?php if (!(strcmp($row_rsLanguages['languagekey'], htmlentities($row_rsRegistrants['languagekey'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLanguages['Languages']?></option>
+            <?php
+} while ($row_rsLanguages = mysql_fetch_assoc($rsLanguages));
+  $rows = mysql_num_rows($rsLanguages);
+  if($rows > 0) {
+      mysql_data_seek($rsLanguages, 0);
+	  $row_rsLanguages = mysql_fetch_assoc($rsLanguages);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr> </tr>
+      <tr valign="baseline">
+        <td>If other, please describe.</td>
+        <td><span id="sprytextfield6">
+          <input type="text" name="languageother" value="<?php echo htmlentities($row_rsRegistrants['languageother'], ENT_COMPAT, 'UTF-8'); ?>" size="70" />
+</span></td>
+      </tr>
+      <tr valign="baseline">
+        <td>Rate the quality of your English.<span class="red">*</span></td>
+        <td><span id="spryselect7">
+          <select name="englishqualitykey" class="pulldownwidth200">
+            <option value="" <?php if (!(strcmp("", htmlentities($row_rsRegistrants['englishqualitykey'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsEnglishquality['englishqualitykey']?>"<?php if (!(strcmp($row_rsEnglishquality['englishqualitykey'], htmlentities($row_rsRegistrants['englishqualitykey'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsEnglishquality['EnglishQuality']?></option>
+            <?php
+} while ($row_rsEnglishquality = mysql_fetch_assoc($rsEnglishquality));
+  $rows = mysql_num_rows($rsEnglishquality);
+  if($rows > 0) {
+      mysql_data_seek($rsEnglishquality, 0);
+	  $row_rsEnglishquality = mysql_fetch_assoc($rsEnglishquality);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr> </tr>
+      <tr valign="baseline">
+        <td>&nbsp;</td>
+        <td><div align="right">
+          <input type="submit" value="SUBMIT AND GO TO PAGE 2" />
+        </div></td>
+      </tr>
+    </table>
+    <input type="hidden" name="userkey" value="<?php echo $row_rsRegistrants['userkey']; ?>" />
+    <input type="hidden" name="MM_update" value="form1" />
+    <input type="hidden" name="userkey" value="<?php echo $row_rsRegistrants['userkey']; ?>" />
+  </form>
+  <p></p>
+    <p></p>
+  <p>&nbsp;</p>
+  <script type="text/javascript">
+<!--
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]});
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "none", {validateOn:["blur", "change"], minChars:4, maxChars:4});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"]});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {validateOn:["blur", "change"]});
+var sprytextfield3 = new Spry.Widget.ValidationTextField("sprytextfield3", "none", {validateOn:["blur", "change"]});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"]});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"]});
+var sprytextfield4 = new Spry.Widget.ValidationTextField("sprytextfield4", "none", {validateOn:["blur", "change"], isRequired:false});
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {validateOn:["blur", "change"], isRequired:false});
+var sprytextfield5 = new Spry.Widget.ValidationTextField("sprytextfield5", "none", {validateOn:["blur", "change"], isRequired:false});
+var spryselect6 = new Spry.Widget.ValidationSelect("spryselect6", {validateOn:["blur", "change"]});
+var sprytextfield6 = new Spry.Widget.ValidationTextField("sprytextfield6", "none", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {validateOn:["blur", "change"]});
+//-->
+  </script>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsEduattainment);
+
+mysql_free_result($rsCountries);
+
+mysql_free_result($rsSex);
+
+mysql_free_result($rsEthnicity);
+
+mysql_free_result($rsLanguages);
+
+mysql_free_result($rsEnglishquality);
+
+mysql_free_result($rsEthnicity2);
+
+mysql_free_result($rsRegistrants);
+?>

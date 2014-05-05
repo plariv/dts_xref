@@ -1,0 +1,1929 @@
+<?php 
+require_once('Connections/Assessment.php'); 
+require_once( "WA_SecurityAssist/Helper_PHP.php" ); 
+require_once 'includes/dts_functions.php';
+
+mysql_select_db($database_Assessment, $Assessment);
+
+$userkey = 0;
+if (isset($_SESSION['log_userkey'])) { $userkey = $_SESSION['log_userkey']; }
+
+// If a search clause was set, clear it. Search shouldn't be saved across different tasks.
+if (isset($_SESSION['search'])) {	unset($_SESSION['search']); }
+if (isset($_SESSION['sort'])) { unset($_SESSION['sort']); }
+
+// Gather basic info about this user.
+$sql_user = sprintf("SELECT r.bulkuserkey FROM registrants r WHERE r.userkey = %s",
+	SQLstr($userkey, 'int'));
+$rsUser = mysql_query($sql_user);
+if (!$rsUser) { 
+	error_log("ERROR identifying user on landing.php!", 1, "service@lectica.org");
+	die("ERROR identifying this user.");
+}
+$row_rsUser = mysql_fetch_assoc($rsUser);
+$clientkey = $row_rsUser['bulkuserkey'];
+
+
+
+//															ROLE										
+
+// user_level determines $role, unless a $role was URL-prespecified.
+$role = "";
+
+// if you aren't logged in, just display the basic info links for visitors.
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	$role = "visitor";
+} else { 
+	// need your registrant info if you're logged in.
+	$query_rsRegistrants = sprintf("SELECT bulkuserkey, user_name, reset, 
+			firstname, lastname, user_level 
+		FROM registrants WHERE userkey = %s", 
+			SQLstr($userkey, "int"));
+	$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+	$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+	$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+	
+	// if you JUST logged in, update your last_login status in Registrants, and refresh the page.
+	
+	if (isset($_GET['status']) AND $_GET['status'] == "login") {
+		$updateSQL = sprintf("UPDATE registrants SET last_login = NOW() WHERE userkey = %s", 
+			SQLstr($_SESSION['log_userkey'], 'int'));
+  	$Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+		
+		header("Location: landing.php");
+		exit();
+	}
+	
+	// if you need to reset your password, redirect you to the profile page 
+	// where you will be asked to do so.
+	if ($row_rsRegistrants['reset'] == 1) { 
+		header("Location: security/profile.php?message=resetpw");
+		exit();
+	}
+	
+	
+	
+	// decide on the user's role
+	
+	$user_level = $row_rsRegistrants['user_level'];
+
+	if (isset($_GET['role']) AND $_GET['role'] <> "employee") {
+		// if you're logged in and have a URL-specified role, show that role
+		$role = $_GET['role'];
+	} else {
+		// if you're logged in, look up your information and decide your role based on user level.
+		
+		// Internal DTS users: employees and interns.
+		// This determines whether the EMPLOYEES tab on the right appears or not.
+		if ($user_level >= 17) {
+			$role = "employee";
+		} else if ($user_level >= 11) {
+			$role = "client";
+		} else if ($user_level >= 10) {
+			// Teacher role will also include TAs, assistant coders, etc. for now at least.
+			$role = "teacher";
+		} else if ($user_level >= 8) {
+			// Many resellers seem to be at level 9.
+			$role = "client";
+		} // So where are researchers? I guess the line is blurry anyway.
+		else if ($user_level >= 0) {
+			$role = "test-taker";
+		}
+	}
+} // end ELSE condition: if the user IS logged in as a registrant
+
+
+
+
+
+
+
+// 				LOG ERROR MESSAGES
+// Multiple pages can use a jquery .get('url') command to send error message triggers here.
+
+if (isset($_GET['log'])) {
+	$log = $_GET['log'];
+	$prevPage = $_SERVER['HTTP_REFERER'];
+	
+	if ($log == "timeoutMessage") {
+		error_log("Userkey #".$userkey." just had their session time out when they were working on an important page. Just lettin' you know.");
+	}
+	
+	header('Location: landing.php');
+	exit();
+}
+
+
+
+
+
+
+
+
+// FOLA course details & registration status
+$fola_current_coursekey = 3;
+
+$sql = sprintf("SELECT c.*, IF(cr.key > 0, 1, 0) AS i_am_registered
+	FROM courses c
+		LEFT JOIN course_registrations cr ON c.key = cr.coursekey AND cr.userkey = %s
+	WHERE c.key = %s ", 
+		SQLstr($userkey, 'int'),
+		SQLstr($fola_current_coursekey, 'int'));
+$rsFOLA = mysql_query($sql) or die("ERROR fetching details on the FOLA course.");
+$fola = mysql_fetch_assoc($rsFOLA);
+
+
+
+
+// Most of the page queries show conditionally based on user's role, but they are becoming more universal.
+
+
+
+if ($role <> "visitor") {
+
+	$assignedTo = "";
+	$assignedTestTimes = array();
+	
+	//	Get list of unstarted active assignments
+	/* Find any assignments I am attached to, which don't already have a la_data record.
+	Outputs all of the instrument_ids I'm assigned to take, separated by commas. */
+	// For MOST projects, assignments don't end at the due date. Test takers can take indefinitely.
+	$sql_assnDateBounds = " AND NOW() >= a.date_start ";
+	if ($clientkey == 1000000083) { // For Sharon Solloway, assignments end strictly on the due date.
+		$sql_assnDateBounds = " AND NOW() BETWEEN a.date_start AND (a.date_end + INTERVAL 1 DAY) ";
+	}
+	$query_rsLaAssignments = sprintf("SELECT a.instrument_id, a.test_time
+		FROM students_assignments sa
+			JOIN la_assignments a ON sa.assignmentkey = a.assignmentkey {$sql_assnDateBounds}
+			LEFT JOIN la_data d ON sa.userkey = d.userkey AND sa.assignmentkey = d.assignmentkey
+		WHERE sa.userkey = %s AND d.lakey IS NULL ", 
+			SQLstr($userkey, "int"));
+	$rsLaAssignments = mysql_query($query_rsLaAssignments) or die(mysql_error());
+	// echo $query_rsLaAssignments;
+	while ($row = mysql_fetch_assoc($rsLaAssignments)) { 
+		$assignedTo .= " ".$row['instrument_id']." ";
+		$assignedTestTimes[$row['instrument_id']] = $row['test_time'];
+	}
+	// assigned instruments are stored in a string with spaces in between, rather than in an array.
+	// topher("=".$assignedTo); topher();
+	
+	/* Gets a list of all incomplete assessments from the new la_data table. If there are any incomplete assessments for a given instrument_id, the page will find them and change the "Take a test" link to point to the appropriate lakey. A set of queries follows afterwards, doing the same thing with the old tables. The lakeys for any incomplete entries are stored in an array with the instrument_id as the name of the element. (One array for the la_data 2.0 entries, a separate array for the old tables.) This will only show the most recent incomplete entry, but there should be no potential to have multiple incomplete entries for the same instrument_id so this shouldn't be an issue. */
+	
+	$incomplete_ladata = array();
+	$query_rsLaDataIncomplete = sprintf("SELECT lakey, instrument_id, test_time 
+		FROM la_data d 
+		WHERE completed = 0 AND userkey = %s", 
+			SQLstr($userkey, "int"));
+	$rsLaDataIncomplete = mysql_query($query_rsLaDataIncomplete, $Assessment) or die(mysql_error());
+	$totalRows_rsLaDataIncomplete = mysql_num_rows($rsLaDataIncomplete);
+	while ($row = mysql_fetch_assoc($rsLaDataIncomplete)) {
+		$incomplete_ladata[$row['instrument_id']] = $row['lakey'];
+		$assignedTestTimes[$row['instrument_id']] = $row['test_time'];
+	}
+	
+	// Incomplete survey
+	// Check if the user has a la_survey_data entry started but not completed.
+	// the page should display a link to resume or delete the record, if so.
+	// It ignores any additional incompletes, only checking for one (earliest one).
+	$incomplete_survey = array('instrument' => "none");
+	// $survey[instrument, key, date]
+	$sql = sprintf("SELECT * FROM la_survey_data WHERE userkey = %s AND completed = 0", 
+		SQLstr($userkey, 'int'));
+	$rs = mysql_query($sql) or die(mysql_error());
+	if (mysql_num_rows($rs) > 0) { 
+		$row = mysql_fetch_assoc($rs);
+		$incomplete_survey['instrument'] = $row['instrument_id'];
+		$incomplete_survey['key'] = $row['lasurveykey'];
+		$incomplete_survey['date'] = $row['date_started'];
+	}
+	
+	//									COUNT COMPLETE, BUT NOT FINALIZED
+	// There would be no real REASON for a person to take an instrument multiple times in a row, 
+	// ie to start an LDMA when the last one hadn't even been finalized yet. 
+	// But I'll be thorough and create all the syntax for it anyway.
+	
+	$completeNotFin_ladata = array(
+			'LDMA' => 0,
+			'LLRA' => 0,
+			'LERA' => 0,
+			'LRJA' => 0,
+			'LSUA' => 0,
+			'LIMA' => 0,
+			'LMBE' => 0,
+			'LMSA' => 0,
+			'LMLA' => 0,
+			'LDMA_JOURNAL' => 0,
+			'LLRA_JOURNAL' => 0,
+			'LERA_JOURNAL' => 0,
+			'LRJA_JOURNAL' => 0,
+			'LSUA_JOURNAL' => 0,
+			'LIMA_JOURNAL' => 0,
+			'LMBE_JOURNAL' => 0,
+			'LMSA_JOURNAL' => 0,
+			'LMLA_JOURNAL' => 0,
+			'SMS' => 0,
+			'SMA' => 0,
+			'SMJ' => 0,
+			'FOLA' => 0,
+			'LDPA' => 0,
+			'CPS' => 0
+			);
+	
+	$sql = sprintf("SELECT lakey, instrument_id FROM la_data 
+		WHERE completed = 1 AND (finalized = 0 OR finalized = 2) AND userkey = %s", 
+			SQLstr($userkey, "int"));
+	$rsCompleteNotFin = mysql_query($sql) or die(mysql_error());
+	$totalRows_rsCompleteNotFin = mysql_num_rows($rsCompleteNotFin);
+	while ($row = mysql_fetch_assoc($rsCompleteNotFin)) {
+		$instrument = $row['instrument_id'];
+		$completeNotFin_ladata[$instrument] += 1;
+	}
+	
+	
+	
+	
+	// 								Find incomplete data from OLD REPORTS
+	// This report link will go up-front for the un-upgraded assessments. 
+	// It will go in a closed tree node for the 2.0 assessments. 
+	
+	$incomplete_old = array();
+	$instruments = array('LDMA', 'LLRA', 'LERA', 'LRJA', 'LSUA', 'LIMA', 'LMBE', 'LMSA', 'LMLA');
+	foreach ($instruments as $i) { 
+		$iname = strtolower($i);
+		$sql = sprintf("SELECT * FROM {$iname} 
+			WHERE userkey = %s AND completed <> 1", SQLstr($userkey, 'int'));
+		$rs = mysql_query($sql);
+		$row = mysql_fetch_assoc($rs);
+		// I noticed that the old LIMA report link referenced resellerkey rather than limakey. 
+		// No idea why, but not going to change it.
+		if ($i == "LIMA") { $incomplete_old[$i] = $row["resellerkey"];  } 
+		else { $incomplete_old[$i] = $row["{$iname}key"]; }
+	}
+	
+	// 							COUNT NUMBER OF REPORTS (la_data)
+	// lists a count of reports for each instrument where a person might have reports ready
+	
+	$query_rsNumReports_ladata = "SELECT 
+		SUM( IF(instrument_id LIKE 'FOLA%', 1, 0) ) AS FOLA, 
+		SUM( IF(instrument_id LIKE 'LDMA%', 1, 0) ) AS LDMA, 
+		SUM( IF(instrument_id LIKE 'LLRA%', 1, 0) ) AS LLRA, 
+		SUM( IF(instrument_id LIKE 'LERA%', 1, 0) ) AS LERA, 
+		SUM( IF(instrument_id LIKE 'LRJA%', 1, 0) ) AS LRJA, 
+		SUM( IF(instrument_id LIKE 'LSUA%', 1, 0) ) AS LSUA, 
+		SUM( IF(instrument_id LIKE 'LIMA%', 1, 0) ) AS LIMA, 
+		SUM( IF(instrument_id LIKE 'LDPA%', 1, 0) ) AS LDPA, 
+		SUM( IF(instrument_id LIKE 'SMS%', 1, 0) ) AS SMS, 
+		SUM( IF(instrument_id LIKE 'SMA%', 1, 0) ) AS SMA, 
+		SUM( IF(instrument_id LIKE 'SMJ%', 1, 0) ) AS SMJ, 
+		SUM( IF(instrument_id LIKE 'LMBE%', 1, 0) ) AS LMBE, 
+		SUM( IF(instrument_id LIKE 'LMSA%', 1, 0) ) AS LMSA, 
+		SUM( IF(instrument_id LIKE 'LMLA%', 1, 0) ) AS LMLA 
+	FROM la_data WHERE finalized = 1 AND userkey = ".
+		SQLstr($userkey, 'int');
+	$rsNumReports_ladata = mysql_query($query_rsNumReports_ladata, $Assessment) or die(mysql_error());
+	$row_rsNumReports_ladata = mysql_fetch_assoc($rsNumReports_ladata);
+	
+	// 								GET LAKEY FOR LAST LA REPORT
+	
+	/* lastReport_ladata: 
+	finds the last report a person took for each instrument in the new la_data table.
+	 - Notice that each query searches using LIKE 'target%', aka "contains", which includes journal reports as well as scored reports. */
+	
+	$lastReport_ladata = array();
+	$instruments = array("FOLA", "LDMA", "LLRA", "LERA", "LRJA", "LSUA", "LIMA", "LDPA",
+											 "SMS", "SMA", "SMJ", "LMBE");
+	foreach ($instruments as $i) { 
+		$sql_rsLastReport = sprintf("SELECT lakey FROM la_data 
+			WHERE instrument_id LIKE %s AND userkey = %s AND finalized = 1 
+			ORDER BY test_time DESC, date_completed DESC 
+			LIMIT 1",
+				SQLstr($i.'%', 'text'),
+				SQLstr($userkey, 'int'));
+		// echo $sql_rsLastReport."<br>";
+		$rsLastReport = mysql_query($sql_rsLastReport) 
+			or error_log("ERROR accessing reports for userkey ".$userkey.": ".mysql_error(), 
+										1, "service@lectica.org");
+		// save the fetched lakey as the ID of the report to show
+		$row = mysql_fetch_assoc($rsLastReport);
+		if ($row['lakey'] > 0) { $lastReport_ladata[$i] = $row['lakey']; }
+		else { $lastReport_ladata[$i] = ""; } 
+	}
+	
+	
+	//							COUNT NUMBER OF OLD REPORTS
+	// Won't have a lastReport_old, but I will at least count the number of reports.
+	
+	$numReports_old = array();
+	$instruments = array('LDMA', 'LLRA', 'LERA', 'LRJA', 'LSUA', 'LIMA', 'LMBE', 'LMSA', 'LMLA');
+	foreach ($instruments as $i) { 
+		$iname = strtolower($i);
+		$sql = sprintf("SELECT * FROM {$iname} WHERE userkey = %s AND finalized = 1", SQLstr($userkey, 'int'));
+		$rs = mysql_query($sql);
+		$numReports_old[$i] = mysql_num_rows($rs);
+	}
+	
+} // End the IF statement for queries which are only called if user is a test-taker.
+
+
+/* Teacher / coder to-code data (info on how many to code / comment on)
+(IF $role = "teacher" -- this label will probably also include "ta", "coder" whatever */
+
+
+
+if ($role == "client" OR $role == "teacher" OR $role == "employee") {
+	
+	/* As far as access level and what links are shown, teachers, TAs, and bulk customers will be treated the same. I'm leaving them as separate categories for now in case we need to split them up later.
+	Any of the pages that links are provided to here, only show the relevant data anyway. So there's no concern, for example, of TAs being able to see all of a bulkcustomer's user data. */
+	
+	// By default, the BC queries search for records under your userkey. But if you are a DTS analyst, instead you are shown a link to records for any bulk customer.
+	$bcFilter = " resellerkey = {$userkey} ";
+	if (WA_Auth_RulePasses("Logged in as analyst")) { $bcFilter = " userkey <> 888 AND userkey <> 999 "; }
+	
+	
+	//   							COUNT BC REPORTS for LA
+	
+	$numBcReports_la = array(
+			'LDMA' => 0,
+			'LLRA' => 0,
+			'LERA' => 0,
+			'LRJA' => 0,
+			'LSUA' => 0,
+			'LIMA' => 0,
+			'LMBE' => 0,
+			'LMSA' => 0,
+			'LMLA' => 0,
+			'LDMA_JOURNAL' => 0,
+			'LLRA_JOURNAL' => 0,
+			'LERA_JOURNAL' => 0,
+			'LRJA_JOURNAL' => 0,
+			'LSUA_JOURNAL' => 0,
+			'LIMA_JOURNAL' => 0,
+			'LMBE_JOURNAL' => 0,
+			'LMSA_JOURNAL' => 0,
+			'LMLA_JOURNAL' => 0,
+			'SMS' => ""
+			);
+	
+	$rsNumBcReportsLa = mysql_query("SELECT instrument_id, COUNT(lakey) AS count FROM la_data 
+		WHERE {$bcFilter} AND finalized >= 1 GROUP BY instrument_id") or die(mysql_error());
+	while ($row_rsNumBcReportsLa = mysql_fetch_assoc($rsNumBcReportsLa)) {
+		$numBcReports_la[$row_rsNumBcReportsLa['instrument_id']] = $row_rsNumBcReportsLa['count'];
+	}
+	
+	// 								BC: COUNT # REPORTS STARTED FOR LA 
+	
+	$numBcStarted_la = array(
+			'LDMA' => 0,
+			'LLRA' => 0,
+			'LERA' => 0,
+			'LRJA' => 0,
+			'LSUA' => 0,
+			'LIMA' => 0,
+			'LMBE' => 0,
+			'LMSA' => 0,
+			'LMLA' => 0,
+			'LDMA_JOURNAL' => 0,
+			'LLRA_JOURNAL' => 0,
+			'LERA_JOURNAL' => 0,
+			'LRJA_JOURNAL' => 0,
+			'LSUA_JOURNAL' => 0,
+			'LIMA_JOURNAL' => 0,
+			'LMBE_JOURNAL' => 0,
+			'LMSA_JOURNAL' => 0,
+			'LMLA_JOURNAL' => 0,
+			'SMS' => 0
+			);
+			
+	$rsNumBcStartedLa = mysql_query("SELECT instrument_id, COUNT(lakey) AS count FROM la_data 
+		WHERE {$bcFilter} GROUP BY instrument_id") or die(mysql_error());
+	while ($row_rsNumBcStartedLa = mysql_fetch_assoc($rsNumBcStartedLa)) {
+		$numBcStarted_la[$row_rsNumBcStartedLa['instrument_id']] = $row_rsNumBcStartedLa['count'];
+	}
+	
+	
+	
+	
+	// 								BC: COUNT # OLD REPORTS AVAILABLE
+	
+	$numBcReports_old = array(
+			'LDMA' => 0,
+			'LLRA' => 0,
+			'LERA' => 0,
+			'LRJA' => 0,
+			'LSUA' => 0,
+			'LIMA' => 0,
+			'LMBE' => 0,
+			'LMSA' => 0,
+			'LMLA' => 0,
+			'SMS' => 0
+			);
+	
+	/**** TO CONSOLIDATE
+	
+	$query_rsNumBcReportsOld = sprintf("SELECT
+	COUNT(ldma.ldmakey) AS ldmacount 
+	FROM registrants r
+	LEFT JOIN ldma ON r.userkey = ldma.bulkcustomerkey 
+	
+	WHERE r.userkey = %s ",
+			SQLstr($userkey, "int")); */
+	
+	$rsNumBcReportsOld = mysql_query("SELECT COUNT(ldmakey) AS ldmacount FROM ldma WHERE bulkcustomerkey = {$userkey} AND finalized >= 1", $Assessment) or die(mysql_error());
+	$row_rsNumBcReportsOld = mysql_fetch_assoc($rsNumBcReportsOld);
+	$numBcReports_old['LDMA'] = $row_rsNumBcReportsOld['ldmacount'];
+	
+	$rsNumBcReportsOld = mysql_query("SELECT COUNT(llrakey) AS llracount FROM llra WHERE bulkcustomerkey = {$userkey} AND finalized >= 1", $Assessment) or die(mysql_error());
+	$row_rsNumBcReportsOld = mysql_fetch_assoc($rsNumBcReportsOld);
+	$numBcReports_old['LLRA'] = $row_rsNumBcReportsOld['llracount'];
+	
+	$rsNumBcReportsOld = mysql_query("SELECT COUNT(lerakey) AS leracount FROM lera WHERE bulkcustomerkey = {$userkey} AND finalized >= 1", $Assessment) or die(mysql_error());
+	$row_rsNumBcReportsOld = mysql_fetch_assoc($rsNumBcReportsOld);
+	$numBcReports_old['LERA'] = $row_rsNumBcReportsOld['leracount'];
+	
+	$rsNumBcReportsOld = mysql_query("SELECT COUNT(lrjakey) AS lrjacount FROM lrja WHERE bulkcustomerkey = {$userkey} AND finalized >= 1", $Assessment) or die(mysql_error());
+	$row_rsNumBcReportsOld = mysql_fetch_assoc($rsNumBcReportsOld);
+	$numBcReports_old['LRJA'] = $row_rsNumBcReportsOld['lrjacount'];
+	
+	$rsNumBcReportsOld = mysql_query("SELECT COUNT(lsuakey) AS lsuacount FROM lsua WHERE bulkcustomerkey = {$userkey} AND finalized >= 1", $Assessment) or die(mysql_error());
+	$row_rsNumBcReportsOld = mysql_fetch_assoc($rsNumBcReportsOld);
+	$numBcReports_old['LSUA'] = $row_rsNumBcReportsOld['lsuacount'];
+	
+	// The LIMA table doesn't have a bulkcustomerkey.
+	$rsNumBcReportsOld = mysql_query("SELECT COUNT(limakey) AS limacount FROM lima WHERE resellerkey = {$userkey} AND finalized >= 1", $Assessment) or die(mysql_error());
+	$row_rsNumBcReportsOld = mysql_fetch_assoc($rsNumBcReportsOld);
+	$numBcReports_old['LIMA'] = $row_rsNumBcReportsOld['limacount'];
+	
+	// **** Bulkcustomerkey doesn't exist for LMBE, so the takey (teacher assistant for that student) is used instead. Unlike in the SMS, for LMBE the takey is stored directly with the performance.
+	$rsNumBcReportsOld = mysql_query("SELECT COUNT(lmbekey) AS lmbecount FROM lmbe WHERE takey = {$userkey} AND finalized >= 1", $Assessment) or die(mysql_error());
+	$row_rsNumBcReportsOld = mysql_fetch_assoc($rsNumBcReportsOld);
+	$numBcReports_old['LMBE'] = $row_rsNumBcReportsOld['lmbecount'];
+	
+	$rsNumBcReportsOld = mysql_query("SELECT COUNT(lmsakey) AS lmsacount FROM lmsa WHERE bulkcustomerkey = {$userkey} AND finalized >= 1", $Assessment) or die(mysql_error());
+	$row_rsNumBcReportsOld = mysql_fetch_assoc($rsNumBcReportsOld);
+	$numBcReports_old['LMSA'] = $row_rsNumBcReportsOld['lmsacount'];
+	
+	$rsNumBcReportsOld = mysql_query("SELECT COUNT(lmlakey) AS lmlacount FROM lmla WHERE bulkcustomerkey = {$userkey} AND finalized >= 1", $Assessment) or die(mysql_error());
+	$row_rsNumBcReportsOld = mysql_fetch_assoc($rsNumBcReportsOld);
+	$numBcReports_old['LMLA'] = $row_rsNumBcReportsOld['lmlacount'];
+	
+	// Mindfulness survey - this is NOT about the journal (which is coded), it's just about the uncoded survey
+	$rsNumBcReportsOld = mysql_query("SELECT COUNT(mindfulness.mindfulkey) AS smscount FROM mindfulness, registrants WHERE mindfulness.userkey = registrants.userkey AND (mindfulness.teacherno = {$userkey} OR registrants.takey = {$userkey})", $Assessment) or die(mysql_error());
+	$row_rsNumBcReportsOld = mysql_fetch_assoc($rsNumBcReportsOld);
+	$numBcReports_old['SMS'] = $row_rsNumBcReportsOld['smscount'];
+	
+	
+	
+	// Specifically for the SMS: counts how many journal entries you're associated with as teacherno or takey.
+	$rsNumSMSJournal = mysql_query("SELECT COUNT(journalkey) AS smsjournal FROM journal WHERE (teacherkey = {$userkey} OR takey = {$userkey}) AND commented = 0", $Assessment) or die(mysql_error());
+	$row_rsNumSMSJournal = mysql_fetch_assoc($rsNumSMSJournal);
+	$countJournal = $row_rsNumSMSJournal['smsjournal'];
+	
+	
+}
+
+
+
+// echo $clientkey;
+
+$rsLaBoilerplate = mysql_query("SELECT b.* FROM la_boilerplate b WHERE type = 'nav' ") 
+	or die("rsLaBoilerplate: ".mysql_error());
+$boilerplate = array();
+while ($row_rsLaBoilerplate = mysql_fetch_assoc($rsLaBoilerplate)) {
+	$boilerplate[$row_rsLaBoilerplate['name']] = $row_rsLaBoilerplate['la_boilerplate_text'];
+}
+
+
+
+
+// ===========				QUICK-WRITE FUNCTIONS FOR DISPLAYING LINKS				=========== //
+
+/*  These functions are written to speed up the code, and reduce redundancy, for writing each group of links. The functions are encapsulated somewhat so that you call several functions based on what kinds of links should show up. 
+
+Within each function are decision-making loops which figure out what to say based on the user's status with regards to that link. For example the function will find out whether you have any incomplete LDMA data and will display a "Continue your LDMA test" link rather than a "Take the LDMA" link.
+
+Each function also decides whether the links should be present, based on your role. So each popup-window section should call all the functions for links relevant to that instrument, and let the function decide whether that user (that role) needs to see those links.
+
+All links are written as <li> </li> items because I'm assuming they'll be displayed within a SpryTreeView list. Might as well standardize that now. */
+
+
+
+
+
+function sLink($instrument_id, $target_page) {
+	// sLink writes set_session_var_instrument links, which are long and ugly.
+	// convert ? into & - prevents URL vars from being contained in other URL vars, which can get unpredictable.
+	$target_page = str_replace("?", "&", $target_page);
+	$link = "<a href='set_session_var_instrument.php?link_id=".$target_page.
+			"&sessionVarName=instrument_id&sessionVarValue=".$instrument_id."'>";
+	return $link;
+}
+
+
+
+function logInLink() {
+	global $userkey;
+	if ($userkey == 0) { 
+		echo "<li><a href='security/logIn.php'>Log in</a> to view your options.</li>";
+	}
+}
+
+
+function links_la($instrument_id, $linksToShow) {
+	
+	/* Declaring global variables "pulls in" those variables from the function. 
+	Any vars that I want to make use of in this function, must be declared in this way. */
+	global $userkey, $clientkey, $role, $user_level, 
+		$incomplete_ladata, $assignedTo, $assignedTestTimes,
+		$row_rsNumReports_ladata, $row_rsRegistrants, 
+		$lastReport_ladata, $completeNotFin_ladata, 
+		$numBcReports_la, $numBcStarted_la;
+	
+	$linksToShow = " ".$linksToShow;
+	
+	$outputLinks_20 = "";
+	$outputLinks_jo = "";
+	
+	// DO NOT show any of these links unless you're logged in.
+	if ($role == "visitor") { 
+		return;
+	}
+	
+	//							LA TEST TAKER LINKS
+	
+	$links = "";
+	
+	if (strpos($linksToShow, "take")) {
+		//topher();
+		$inc = isset($incomplete_ladata[$instrument_id]) ? $incomplete_ladata[$instrument_id] : "";
+		$inc_jo = isset($incomplete_ladata[$instrument_id."_JOURNAL"]) ? 
+							$incomplete_ladata[$instrument_id."_JOURNAL"] : "";
+		
+		// if there is an incomplete test...
+		if ($inc <> "") {
+			$links .= "<li>".sLink($instrument_id, "la_assess/assess_personal1.php?lakey=".$inc); 
+			$links .= "Continue taking the ".$instrument_id."</a>";
+			if ($assignedTestTimes[$instrument_id] > 1) { 
+				$links .= " (time ".$assignedTestTimes[$instrument_id].")"; 
+			}
+			$links .= "</li>";
+		} 
+		
+		// or maybe there is an incomplete journal entry?
+		else if ($inc_jo <> "") {
+			$links .= "<li>".sLink($instrument_id."_JOURNAL", "la_assess/assess_personal1.php?lakey=".$inc_jo);
+			$links .= "Continue your journal entry</a>";
+			if ($assignedTestTimes[$instrument_id."_JOURNAL"] > 1) { 
+				$links .= " (time ".$assignedTestTimes[$instrument_id."_JOURNAL"].")"; 
+			}
+			$links .= "</li>";
+		} 
+		
+		// otherwise, display link to take test
+		else { 
+			
+			// In some cases, the link to the journal should be hidden. 
+			// for example, if the LDMA 4 is also assigned.
+			$ignore_journal = false;
+			if ($instrument_id == 'LDMA' AND isset($assignedTestTimes['LDMA']) AND $assignedTestTimes['LDMA'] == 4) { 
+				$ignore_journal = true; 
+			}
+			 
+			// **** Deleted: FOLA course links
+
+			// ONLY show links to take test when assigned, OR you're admin, OR instrument = SMS
+			if (strpos($assignedTo, $instrument_id." ") OR $user_level >= 13 OR $instrument_id == "SMS"
+					OR ($instrument_id == "LDMA" AND $clientkey == 1000000113)) { 
+					// OR $userkey == 1000013071 
+				$links .= "<li>".sLink($instrument_id, "la_assess/assess_intro.php");
+				if ($instrument_id == "SMJ") { $links .= "Make a journal entry</a></li>"; } 
+				else { 
+					$links .= "Take the ".$instrument_id."</a>";
+					if (isset($assignedTestTimes[$instrument_id]) AND $assignedTestTimes[$instrument_id] > 1) { 
+						$links .= " (time ".$assignedTestTimes[$instrument_id].")"; 
+					}
+					$links .= "</li>"; 
+				}
+			}
+			
+			// for certain instruments, also provide link to write journal entry
+			// but ONLY show this link when you're assigned to take it.
+			if (strpos($linksToShow, "journal") AND !$ignore_journal
+					AND (strpos($assignedTo, $instrument_id."_JOURNAL ") OR $user_level >= 13)) {
+				$links .= "<li>".sLink($instrument_id."_JOURNAL", "la_assess/assess_intro.php").
+					"Make an ".$instrument_id." JOURNAL entry</a>";
+				if (isset($assignedTestTimes[$instrument_id."_JOURNAL"]) AND 
+						$assignedTestTimes[$instrument_id."_JOURNAL"] > 1) { 
+					$links .= " (time ".$assignedTestTimes[$instrument_id."_JOURNAL"].")"; 
+				}
+				$links .= "</li>";	
+			} // endif: if journal links are relevant to this instrument_id
+		} // END ELSE: if you do NOT have any unfinished assessment to complete
+	} // end area for 'take test' links
+	
+	// 						STUDENT CODER LINK
+	
+	if (strpos($linksToShow, "student-code")) { 
+		$links .= "<li>".sLink($instrument_id, "la_coding/coding_performance_select.php?role=student-coder").
+			"Code my assessments</a></li>"; 
+	}
+	
+	// 						LA REPORTS LINKS
+	
+	if (strpos($linksToShow, "report")) {
+		/* Display reports. For the new instruments, a query returns 
+		a single row with columns, named after each instrument_id, 
+		containing a total count of reports available for that user. */
+		
+		$n = isset($row_rsNumReports_ladata[$instrument_id]) ? $row_rsNumReports_ladata[$instrument_id] : 0;
+		$lakey = isset($lastReport_ladata[$instrument_id]) ? $lastReport_ladata[$instrument_id] : "";
+		if ($n > 0) { 
+			$links .= "<li>".sLink($instrument_id, "la_reports/report_individual.php?lakey=".$lakey).
+        "View your ".$n." report".($n > 1 ? "s" : "")."</a></li>"; 
+		}
+		
+		// If reports are in the processing, indicate so.
+		$proc_test = isset($completeNotFin_ladata[$instrument_id]) ? 
+											 $completeNotFin_ladata[$instrument_id] : 0;
+		$proc_journal = isset($completeNotFin_ladata[$instrument_id."_JOURNAL"]) ? 
+													$completeNotFin_ladata[$instrument_id."_JOURNAL"] : 0;
+		if (($proc_test + $proc_journal) > 0) {
+			$links .= "<li><span class='red'>Your ".$instrument_id." is being processed. <a href='contactus.php'>Contact us</a> if you would like to change your answers.</span></li>";			
+		}
+	} // end area for individual report links
+	
+	
+	// 			Commit these $links to the LDMA 2.0
+	if ($links <> "") {
+		
+		// if user is not a test taker, put these links in a closed branch.
+		if ((strpos($linksToShow, "take") OR strpos($linksToShow, "report")) 
+				AND $role <> "test-taker" AND $role <> "visitor") { ?>
+			<li>Test taker links <ul class="TreeNodeCollapsed"> 
+      	<?php 
+				//topher();
+				echo $links; ?>
+			</ul></li> <?php 
+		} 
+		else { echo $links; }
+		
+	}
+	
+	
+	
+	
+	
+	// 										BULK CUSTOMER LINKS 
+	
+	$links = "";
+	
+	if ($role == "client" OR $role == "teacher" OR $role == "employee") {
+	
+		// Link for teacher coding area
+		if (strpos($linksToShow, "teacher-code")) { 
+			if ($role == "teacher" OR $role == "client" OR $role == "employee") {
+			$links .= "<li>".sLink($instrument_id, "la_coding/coding_performance_select.php?role=teacher-coder").
+        "Code performances</a></li>"; 
+			}
+		}
+		
+		// Show link to select page if records have been STARTED for that BC.
+		if (strpos($linksToShow, "select")) {
+			// Link to modify account info for test takers
+			$links .= "<li>".sLink($instrument_id, "la_reports/bc_manage_accounts.php").
+      	"Manage test taker accounts</a></li>";
+			$n = 0;
+			if (isset($numBcStarted_la[$instrument_id])) 
+				{ $n += $numBcStarted_la[$instrument_id]; }
+			if (isset($numBcStarted_la[$instrument_id."_JOURNAL"])) 
+				{ $n += $numBcStarted_la[$instrument_id."_JOURNAL"]; }
+			if ($n > 0) { 
+			$links .= "<li>".sLink($instrument_id, "la_reports/bc_select.php").
+      	"Individual reports</a></li>"; 
+			}
+		} 
+		
+		// show link to report pages for test or journal instrument_id
+		if (strpos($linksToShow, "report")) {
+			$n = 0;
+			if (isset($numBcReports_la[$instrument_id])) 
+			{ $n += $numBcReports_la[$instrument_id]; }
+			if (isset($numBcReports_la[$instrument_id."_JOURNAL"])) 
+			{ $n += $numBcReports_la[$instrument_id."_JOURNAL"]; }
+			if ($n > 0) { 
+				$links .= "<li>".sLink($instrument_id, "la_reports/report_bulkcustomer.php").
+        	"Summary report for ".$n." ".$instrument_id.($n > 1 ? "s" : "")."</a></li>";
+			}
+			/* We aren't using separate links for scored and journal reports anymore. One report page. 
+			// the JOURNAL report shows code data for all records (scored + unscored) but score data is ignored.
+			if (strpos($linksToShow, "journal") AND $numBcReports_la[$instrument_id."_JOURNAL"] > 0) { 
+				$n = $numBcReports_la[$instrument_id."_JOURNAL"] + $numBcReports_la[$instrument_id]; 
+				$links .= "<li>".sLink($instrument_id."_JOURNAL", "la_reports/report_bulkcustomer.php").
+					"View reports for all ".$n." ".$instrument_id.($n > 1 ? "s" : ""). 
+					"</a></li>";
+			}*/
+		}
+		
+		if (strpos($linksToShow, "assign")) {
+			$links .= "<li>".sLink($instrument_id, "la_reports/assignments.php").
+      	"Create assignments</a></li>";
+		}
+		
+		if (strpos($linksToShow, "email")) {  
+    	$links .= "<li class='TreeNodeCollapsed'>Send email 
+			<ul>
+				<li>".sLink($instrument_id, "la_reports/email_test_takers.php?mode=account").
+      			"account login information</a></li>
+				<li>".sLink($instrument_id, "la_reports/email_test_takers.php?mode=assignment").
+        		"assignment</a></li>
+				<li>".sLink($instrument_id, "la_reports/email_test_takers.php?mode=generic").
+        		"a custom message</a></li>
+			</ul></li>"; 
+		}
+		
+		if ($links <> "") { 
+			// if user is not a bulk customer, put these links in a closed branch.
+			if ($role == "employee") { ?> 
+      	<li>Client links <ul class="TreeNodeCollapsed"> 
+					<?php echo $links; ?>
+        </ul></li> <?php 
+			} 
+			else { echo $links; }
+		}
+	
+	} // END IF: only show BC links for certain roles
+	
+	
+	
+	//								DTS EMPLOYEE LINKS
+	
+	$links = "";
+	
+	if ($role == "employee") { 
+  	
+		if (strpos($linksToShow, "score")) { 
+			$links .= "<li>";
+			$links .= sLink($instrument_id, 
+											"la_scoring/scoring_performance_select.php")."Score</a>";
+			if (strpos($linksToShow, "journal ")) {
+				$links .= " &nbsp; ".sLink($instrument_id."_JOURNAL", 
+					"la_scoring/scoring_performance_select.php").
+    			"Score journal</a>";
+			}
+			$links .= "</li>";
+		} 
+		
+		// Coder links
+		if (strpos($linksToShow, "code")) { 
+			$links .= "<li>";
+			$links .= sLink($instrument_id, 
+											"la_coding/coding_performance_select.php")."Code</a>"; 
+			if (strpos($linksToShow, "journal")) { 
+				$links .= " &nbsp; ".sLink($instrument_id."_JOURNAL", 
+					"la_coding/coding_performance_select.php").
+					"Code journal</a>"; 
+			}
+      $links .= "</li>";
+		}  
+		
+	} // end if: $role is "employee"
+	
+	// The employees links aren't hidden in a branch.
+	if ($links <> "") { echo $links; } 
+	
+} // end function links_la
+
+
+
+
+
+
+function links_take_test_old($instrument_id) {
+	
+	global $role, $incomplete_old;
+	
+	if ($role == "test-taker" OR $role == "teacher" OR $role == "client" OR $role == "employee") {
+		
+		/* decide on the link to start an assessment.
+			 This takes some of the excitement out of a universal selection page and unified functions.
+			 But still, I'd just as soon have all of these links gathered in one place where I can keep
+			 a close eye on them. */
+		
+		// Leave the string empty for assessments that you'd like to disable. The link will disappear.
+		$linkStart = "";
+		switch ($instrument_id) {
+			case "LDMA": $linkStart = "";  break;
+			case "LLRA": $linkStart = "assessment_LLRA/assess__llra_personal.php"; break;
+			case "LERA": $linkStart = "assessment_LERA/assess__lera01_personal.php"; break;
+			case "LRJA": $linkStart = "assessment_LRJA/assess__lrja01_personal.php"; break;
+			case "LSUA": $linkStart = "assessment_LSUA/assess__lsua01_personal.php"; break;
+			case "LIMA": $linkStart = "assessment_LIMA/lima01_intro.php"; break;
+			case "LMBE": $linkStart = "lmbe/lmbe_intro.php"; break;
+			case "LMSA": $linkStart = ""; break;
+			case "LMLA": $linkStart = ""; break;
+		}
+		
+		// Decide on the link to continue an assessment you've already started.
+		
+		$linkUpdate = "";
+		
+		switch ($instrument_id) {
+			case "LDMA": $linkUpdate = "assessment_LDMA/assess__ldma01_essays1.php?ldmakey=";  break;	
+			case "LLRA": $linkUpdate = "assessment_LLRA/assess__llra_essays1.php?llrakey="; break;
+			case "LERA": $linkUpdate = "assessment_LERA/assess__lera01_essays1.php?lerakey="; break;
+			case "LRJA": $linkUpdate = "assessment_LRJA/assess__lrja01_essays1.php?lrjakey="; break;
+			case "LSUA": $linkUpdate = "assessment_LSUA/assess__lsua01_essays.php?lsuakey="; break;
+			case "LIMA":	// needs resellerkey rather than lakey... now what's this about?
+				$linkUpdate = "assessment_LIMA/lima01_scales.php?resellerkey="; break;
+			case "LMBE": $linkUpdate = "lmbe/lmbe_assess_start.php?lmbekey="; break;
+			case "LMSA": $linkUpdate = ""; break;
+			case "LMLA": $linkUpdate = ""; break;
+		}
+		
+		// 					TAKING / CONTINUING AN ASSESSMENT LINKS				//
+		
+		if (isset($incomplete_old[$instrument_id]) AND $incomplete_old[$instrument_id] <> "") {
+			// **** I've needed to specify varying key column names, such as llrakey rather than lakey. The update links above perform this by specifying a URL variable name after the link.
+			// Apart from being inconvenient, this makes it very difficult to set the instrument_id through the set_session_var.php tool. But fortunately that is not needed here.
+			?><li><a href="<?php echo $linkUpdate.$incomplete_old[$instrument_id]; ?>">Continue taking the <?php echo $instrument_id; ?></a></li><?php 
+		} else if ($linkStart <> "") {
+			// if no incomplete test-time found for this instrument_id
+			// Don't need to set the session variable for these old links, to my relief.
+			?><li><a href="<?php echo $linkStart; ?>">Take the <?php echo $instrument_id; ?></a></li><?php 
+		} // end area where the "take an assessment" / "continue" link is written
+	
+	}
+}
+
+function links_reports_old($instrument_id) {
+	
+	global $role, $numReports_old;
+		
+	if ($role == "test-taker" OR $role == "teacher" OR $role == "client" OR $role == "employee") {
+		
+		// Decide on the link to view a report.
+		
+		$linkReport = "";
+		
+		switch ($instrument_id) {
+			case "LDMA":
+				$linkReport = "customers/selectldma.php";  break;
+			case "LLRA":
+				$linkReport = "customers/selectllra.php"; break;
+			case "LERA":
+				$linkReport = "customers/selectlera.php"; break;
+			case "LRJA":
+				$linkReport = "customers/selectlrja.php"; break;
+			case "LSUA":
+				$linkReport = "customers/selectlsua.php"; break;
+			case "LIMA":	
+				$linkReport = "customers/selectlima.php"; break;
+			case "LMBE":	
+				$linkReport = "lmbe/indiv_selectlmbe.php"; break;
+			case "LMSA":	
+				$linkReport = "customers/selectlmsa.php"; break;
+			case "LMLA":	
+				$linkReport = "customers/selectlmla.php"; break;
+		}
+		
+		// $numReports_old stores a count of finalized reports for each instrument.
+		if (isset($numReports_old[$instrument_id]) AND $numReports_old[$instrument_id] <> "0") {
+			?><li><a href="<?php echo $linkReport; ?>">View your <?php echo $numReports_old[$instrument_id]; ?> report<?php echo ($numReports_old[$instrument_id] > 1) ? "s" : ""; ?></a></li>
+			<?php
+		} 
+		
+	}
+}
+
+function bc_reports_old($instrument_id) {
+	
+	global $role, $numBcReports_old;
+	
+	if ($role == "client" OR $role == "teacher" OR $role == "employee") {
+		
+		$linkReport = "";
+		
+		switch ($instrument_id) {
+			case "LDMA":
+				$linkReport = "bulkcustomers/viewldma.php";  break;
+			case "LLRA":
+				$linkReport = "bulkcustomers/viewllra.php"; break;
+			case "LERA":
+				$linkReport = "bulkcustomers/viewlera.php"; break;
+			case "LRJA":
+				$linkReport = "bulkcustomers/viewlrja.php"; break;
+			case "LSUA":
+				$linkReport = "bulkcustomers/viewlsua.php"; break;
+			case "LIMA":	
+				$linkReport = "bulkcustomers/viewlima.php"; break;
+			case "LMBE":	
+				$linkReport = "lmbe/viewlmbe.php"; break;
+			case "LMSA":	
+				$linkReport = "bulkcustomers/viewlmsa.php"; break;
+			case "LMLA":	
+				$linkReport = "bulkcustomers/viewlmla.php"; break;
+		}
+		
+		if ($numBcReports_old[$instrument_id] > 0) {
+			?><li><a href="<?php echo $linkReport; ?>">View your <?php echo $numBcReports_old[$instrument_id]; ?> reports</a></li><?php
+		}
+	
+	}
+}
+
+/* Functions for old links for DTS USERS */
+function code_score_old($instrument_id) {
+	
+	global $role, $user_level;
+	
+	if ($role == "employee") {
+		
+		$linkScore = "";
+		
+		switch($instrument_id) {
+			case "LDMA":
+				$linkScore = "scoring/chooseldma.php";  break;
+			case "LLRA":
+				$linkScore = "scoring/choosellra.php"; break;
+			case "LERA":
+				$linkScore = "scoring/chooselera.php"; break;
+			case "LRJA":
+				$linkScore = "scoring/chooselrja.php"; break;
+			case "LSUA":
+				$linkScore = "scoring/chooselsua.php"; break;
+			case "LIMA":	
+				$linkScore = "scoring/chooselima.php"; break;
+			case "LMBE":	
+				//$linkScore = "lmbe/scoring_chooselmbe.php"; break;
+			case "LMSA":	
+				$linkScore = "scoring/chooselmsa.php"; break;
+			case "LMLA":	
+				$linkScore = "scoring/chooselmla.php"; break;
+		}
+		
+		if ($linkScore <> "") { ?><li><a href="../set_session_var_instrument.php?link_id=<?php echo $linkScore; ?>&amp;sessionVarName=instrument_id&amp;sessionVarValue=<?php echo $instrument_id; ?>">Score</a></li><?php }
+		
+		// extra links for LDMA.
+		if ($instrument_id == "LDMA") { 
+			?><li><a href="../set_session_var_instrument.php?link_id=scoring_ldma/ldmascorer2_a.php&amp;sessionVarName=instrument_id&amp;sessionVarValue=LDMA">Second-score</a></li><?php
+			?><li><a href="../set_session_var_instrument.php?link_id=scoring_ldma/ldmascoring_update1.php&amp;sessionVarName=instrument_id&amp;sessionVarValue=LDMA">Blind rescore contested</a></li><?php
+		}
+		
+	}
+}
+?>
+
+<!doctype html>
+<html lang="en">
+
+<head>
+
+<link href='http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+
+<title>Lectica: <?php echo ucfirst($role); ?> landing page</title>
+
+<link href="/_assets/css/bootstrap.css" rel="stylesheet" type="text/css">
+<link href="/_assets/css/bootstrap-responsive.css" rel="stylesheet" type="text/css">
+<link href="/_assets/_css/custom.css" rel="stylesheet" type="text/css">
+<link href="/SpryAssets/SpryTreeView.css" rel="stylesheet" type="text/css" />
+
+    <!-- Le fav and touch icons -->
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="assets/ico/apple-touch-icon-114-precomposed.png">
+      <link rel="apple-touch-icon-precomposed" sizes="72x72" href="assets/ico/apple-touch-icon-72-precomposed.png">
+                    <link rel="apple-touch-icon-precomposed" href="assets/ico/apple-touch-icon-57-precomposed.png">
+                                   <link rel="shortcut icon" href="assets/ico/favicon.png">
+
+<!-- HTML5 shim for IE backwards compatibility -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+<!--<link href="SpryAssets/SpryPopupDialog.css" rel="stylesheet" type="text/css" />-->
+<!--<link href="SpryAssets/SpryPopupDialog.css" rel="stylesheet" type="text/css" />-->
+
+
+
+<style type="text/css">
+
+.span3 p {
+	font-size: 90%;
+	line-height: 130%;
+	padding-bottom: 6px;
+}
+.SpryTreeView {
+	margin-top: 12px;
+	margin-left: 40px;
+} 
+.SpryTreeView li{
+	padding-left: 16px;
+	list-style: none;
+	line-height: 20px;
+	margin-top: 5px;
+	margin-left: -8px;
+	margin-right: 0px;
+	padding-right: 0px;
+	color: #606060;
+} 
+
+</style>
+
+<!-- Google Analytics tag -->
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-37375176-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+	
+//	$(document).ready(function(){
+		// $('#myModal').modal();
+//	});
+
+</script>
+</head>
+
+
+<body>
+	<div class="row-fluid">
+		<nav class="navbar navbar-inverse navbar-fixed-top">
+			<div class="row-fluid header-background span12">
+				<?php include("_includes/navigation/header_index.html"); ?>
+			</div>
+				<div class="navbar-inner">
+        			<div class="container">
+          				<button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+                		</button>
+                	</div>
+
+				<a class="brand" href="#">Select</a>
+    
+			    	<div class="nav-collapse collapse">
+						<ul class="nav">
+							<li><a href="http://lectica.org/index.php">Home</a></li>
+							<li><a href="http://lectica.org/visitors/about.php">About us</a></li>
+							<li><a href="http://lectica.org/visitors/about_lectatests.php">About LectaTests<sup>™</sup></a></li>
+							<li><a href="https://discotest.org/visitors/anatomy.php">About DiscoTests<sup>®</sup></a></li>
+							<li><a href="/contactus.php">Contact us</a></li>
+			  			</ul>
+			  		</div>
+		  	</div>
+      	</nav>
+	</div>
+
+
+<!--NAVIGATION-->
+ 
+<div class="container-fluid">
+	<div class="row-fluid">
+		<div class="span12 hero-unit pull-right margin-bottom-30">
+  	<?php 
+  // if the viewer is logged in
+  if ($role <> "visitor") { ?>
+  	<h1>Select an instrument</h1>
+    <p>Welcome, <?php echo ucfirst($row_rsRegistrants['firstname']); ?>. Click on an <span id="sprytrigger1">instrument</span> from the grid below. Then choose an action from the list that appears. </p>
+<?php } else { ?>
+    <h1>Welcome to  LectaTest<sup>™</sup></h1>
+    
+    <p>If you are a test taker, teacher, researcher, or bulk customer, please <a href="security/logIn.php">log in</a> to see your links. If you are a visitor to our website, we invite you to click on an image below in order to learn more about our assessments and other learning tools. </p>
+  <?php } ?>
+        
+    <!--<div class="box">DTS has changed its name! We are now Lectica, Inc. Please be advised that we are working on updates to our websites. We'll have a new look and feel, but all of our services will stay the same. Stay tuned! And feel free to <a href="contactus.php">contact us</a> if you have any questions about these changes.<span class="red"> If this page does not display properly, try resubmitting it (may take a few tries).</span></div>-->
+    
+   <!-- <div class="alert-info">
+      <p><span class="red">This website is being upgraded to improve performance.</span> We are making improvements to our web services. Please <a href="contactus.php">contact us</a> if you have any questions.</p></div> -->
+    
+     <!-- 
+    	<div class="box" style='font-size:140%; line-height:130%;'>
+				<span class='red'>We are experiencing server problems. Please do not take an assessment at this time.</span>
+    		We apologize for any inconvenience.
+    	</div> 
+     -->
+    
+    <?php /*  ?> <div class="box red">
+		The Lectica office will be closed for Thanksgiving on Thursday November 22nd 
+    	and Friday November 23rd. Our website will operate as normal, but we will be unable to 
+      respond to messages on those days. We apologize for any inconvenience.
+    </div> <?php // */ ?>
+    
+  	<?php 
+		$browser = "";
+		if (isset($_SERVER['HTTP_USER_AGENT'])) { $browser = strtolower($_SERVER['HTTP_USER_AGENT']); }
+		// Outputs the detected browser to the comments. Useful for testing?
+		//echo " <!-- Detected browser information: ".$navigator_user_agent." --> ";
+		if (strpos($browser, "msie") OR strpos($browser, "firefox")) {
+			?><div class="alert-info">
+			<p><span class="red">You are using Internet Explorer or Firefox. 
+    	Some of the pages on this site may not display properly in this browser.</span> 
+			You can download and install a free, standards compliant, 
+      and secure web browser using one of the following links: 
+      <!-- <a href="http://www.firefox.com">Firefox</a> | -->
+      <a href="http://www.google.com/chrome">Google Chrome</a> | 
+      <a href="http://www.apple.com/safari/">Safari</a></p>
+      		</div>
+		<?php } ?>
+    
+    
+       
+      
+  	</div>
+	</div>
+</div>
+<!--CLOSE NAVIGATION-->
+
+	<?php if (isset($incomplete_survey['instrument']) 
+						AND $incomplete_survey['instrument'] <> "none") { ?>
+		<div class='box'>
+    	<h4>Complete your survey</h4>
+      <p>
+      	You started the <?php echo $incomplete_survey['instrument']; ?> survey 
+      	on <?php echo date('M jS', strtotime($incomplete_survey['date'])); ?> but haven't completed it yet.<br />
+      	<a href='la_assess/assess_survey.php?lasurveykey=<?php 
+					echo $incomplete_survey['key']; ?>&instrument_id=<?php echo $incomplete_survey['instrument']; ?>'>
+        	Complete the survey</a> 
+        | <a href='la_assess/assess_survey.php?delete=<?php echo $incomplete_survey['key']; ?>'>
+          I don't plan to complete this</a>
+      </p>
+    </div>
+  <?php } ?>
+    
+<!--LECTATESTS-->
+<div class="container-fluid">
+	<div class="row-fluid">
+        <h2 class="padding-top-30">Select a LectaTest</h2>
+  </div>
+</div>    
+
+<div class="container-fluid">
+	<div class="row-fluid">
+		<div class="span12 pull-right">
+			<ul class="thumbnails">
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_ldma" data-toggle="modal"><img src="_images/buttons/buttons_ldma.png" alt="Lectical Decision Making Assessment (click to view options)" width="100%"/></a></article>
+        </li>        
+      
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_llra" data-toggle="modal"><img src="_images/buttons/buttons_llra.png" alt="Lectical Leadership Reasoning Assessment (click to view options)" width="100%" /></a></article>
+        </li> 
+      
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_lera" data-toggle="modal"><img src="_images/buttons/buttons_lera.png" alt="Lectical Ethical Reasoning Assessment (click to view options)" width="100%" /></a></article>
+        </li> 
+
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_lrja" data-toggle="modal"><img src="_images/buttons/buttons_lrja.png" alt="Lectical Reflective Judgment Assessment (click to view options)" width="100%" /></a></article>
+        </li> 
+			</ul>    
+		</div>
+	</div>
+</div>    
+
+
+<div class="container-fluid">
+	<div class="row-fluid">
+		<div class="span12 pull-right">
+			<ul class="thumbnails">
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_lsua" data-toggle="modal"><img src="_images/buttons/buttons_lsua.png" width="100%"  alt="Lectical Self-Understanding Assessment (click to view options)" /></a></article>
+        </li>        
+      
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_lima" data-toggle="modal"><img src="_images/buttons/buttons_lima.png" width="100%"  alt="Lectical Integral Model Assessment (click to view options)" /></a></article>
+        </li> 
+      
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_ldpa" data-toggle="modal"><img src="_images/buttons/buttons_ldpa.png" width="100%"  alt="Lectical Developmental Pedagogy Assessment (click to view options)" /></a></article>
+        </li> 
+
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_lmbe" data-toggle="modal"><img src="_images/buttons/buttons_lmbe.png" width="100%"  alt="Lectical Mind, Brain, and Education Assessment (click to view options)" /></a></article>
+        </li> 
+			</ul>    
+		</div>
+	</div>
+</div>    
+
+
+<div class="container-fluid">
+	<div class="row-fluid">
+		<div class="span12 pull-right margin-bottom-30">
+			<ul class="thumbnails">
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_lsma" data-toggle="modal"><img src="_images/buttons/buttons_lsma.png" alt="SMA" width="100%" /></a></article>
+        </li>        
+   			</ul>    
+		</div>
+	</div>
+</div>    
+<!--CLOSE LECTATESTS-->
+
+
+<!--JOURNALS-->
+<div class="container-fluid">
+	<div class="row-fluid">
+        <h2>Select a journal</h2>
+  </div>
+</div>    
+
+<div class="container-fluid">
+	<div class="row-fluid">
+		<div class="span12 pull-right margin-bottom-30">
+			<ul class="thumbnails">
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_smj" data-toggle="modal"><img src="_images/buttons/buttons_smj.png" alt="Solloway Mindfulness Journal (click to view options)" width="100%" /></a></article>
+            	</li>        
+   			</ul>    
+		</div>
+	</div>
+</div>    
+
+
+<!--SURVEYS-->
+<div class="container-fluid">
+	<div class="row-fluid">
+        <h2>Select a free survey</h2>
+  </div>
+</div>    
+
+<div class="container-fluid">
+	<div class="row-fluid">
+		<div class="span12 pull-right">
+			<ul class="thumbnails">
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_sms" data-toggle="modal"><img src="_images/buttons/buttons_sms.png" alt="Solloway Mindfulness Survey (click to view options)" width="100%" /></a></article>
+        </li>        
+      
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_dcs" data-toggle="modal"><img src="_images/buttons/buttons_dcs.png" width="100%"  alt="Character Survey (click to view options)" /></a>
+              </article>
+        </li> 
+      
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_cps" data-toggle="modal"><img src="_images/buttons/buttons_cps.png" width="100%"  alt="Workplace Creative Potential Survey" /></a>
+              </article>
+        </li> 
+
+        <li class="span3">
+          <article class="thumbnail">
+      <a href="#links_dos" data-toggle="modal"><img src="_images/buttons/buttons_dos.png" width="100%"  alt="Optimism Survey (click to view options)" /></a>
+              </article>
+        </li> 
+			</ul>    
+		</div>
+	</div>
+</div>    
+
+<div class="container-fluid">
+	<div class="row-fluid">
+		<div class="span12 pull-right margin-bottom-30">
+			<ul class="thumbnails">
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_nts" data-toggle="modal"><img src="_images/buttons/buttons_nts.png" alt="National Testing Survey" width="100%"  align="top" /></a></article>
+        </li>        
+      
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_stc" data-toggle="modal"><img src="_images/buttons/buttons_stc.png" alt="Sort Task Challenge" width="100%"  align="top" /></a></article>
+        </li> 
+			</ul>    
+		</div>
+	</div>
+</div>    
+
+<!--COURSES-->
+<div class="container-fluid">
+	<div class="row-fluid">
+        <h2>Select a course</h2>
+  </div>
+</div>    
+
+<div class="container-fluid">
+	<div class="row-fluid">
+		<div class="span12 pull-right margin-bottom-30">
+			<ul class="thumbnails">
+        <li class="span3">
+          <article class="thumbnail"><a href="#links_fola" data-toggle="modal"><img src="_images/buttons/buttons_fola.png" alt="Foundations of Lectical assessment" width="100%"  /></a></article>
+        </li>        
+   		</ul>    
+		</div>
+	</div>
+</div>
+<!--CLOSE COURSES-->
+
+
+<!-- Modal boxes - 1 per instrument -->
+
+<div id="links_ldma" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Lectical Leadership Decision Making Assessment</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_ldma']; ?>
+    <ul id="TreeView1" class="SpryTreeView">
+      <li><span id="TreeView1"><a href="_about/showcase.php?instrument_id=LDMA">
+      About the LDMA</a></span></li>
+      <?php logInLink(); ?>
+      <?php if ($role <> "visitor") { ?>
+      <li class="TreeNodeExpanded">LDMA 2.0
+        <ul>
+        <?php links_la("LDMA", 
+          "take journal report select assign email 
+          score code "); ?>
+        </ul>
+      </li>
+      <li>LDMA 1.0
+        <ul>
+          <p>
+    			<?php links_take_test_old("LDMA"); ?>
+          <?php links_reports_old("LDMA"); ?>
+          <?php bc_reports_old("LDMA"); ?>
+          <?php code_score_old("LDMA"); ?></p>
+        </ul>
+      </li>
+      <?php } ?>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+
+
+<div id="links_llra" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Lectical Leadership Reasoning Assessment</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_llra']; ?>
+    <ul id="TreeView3" class="SpryTreeView">
+      <li><a href="http://lectica.org/visitors/about_lectatests.php">About the LLRA</a></li>
+      <?php logInLink(); ?>
+      <?php if ($role <> "visitor") { ?>
+      <li class="TreeNodeExpanded">LLRA 2.0
+        <ul>
+        <?php links_la("LLRA", 
+          "take journal report select assign email score score-journal code "); ?>
+        </ul>
+      </li>
+      <li>LLRA 1.0
+        <ul>
+          <?php links_reports_old("LLRA"); ?>
+          <?php bc_reports_old("LLRA"); ?>
+          <?php code_score_old("LLRA"); ?>
+        </ul>
+      </li>
+      <?php } ?>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+
+<div id="links_lera" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Lectical Ethical Reasoning Assessment</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_lera']; ?>
+    <ul id="TreeView4" class="SpryTreeView">
+      <li><a href="http://lectica.org/visitors/about_lectatests.php">About the LERA</a></li>
+      <?php logInLink(); ?>
+      <?php if ($role <> "visitor") { ?>
+      <li class="TreeNodeExpanded">LERA 2.0
+        <ul>
+        <?php links_la("LERA", 
+          "take journal report select assign email 
+          score code "); ?>
+        </ul>
+      </li>
+      <li>LERA 1.0
+        <ul>
+          <?php // links_take_test_old("LERA"); ?>
+          <?php links_reports_old("LERA"); ?>
+          <?php bc_reports_old("LERA"); ?>
+          <?php code_score_old("LERA"); ?>
+        </ul>
+      </li>
+      <?php } ?>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+
+<div id="links_lrja" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Lectical Reflective Judgment Assessment</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_lrja']; ?>
+    <ul id="TreeView5" class="SpryTreeView">
+      <li><a href="http://lectica.org/visitors/about_lectatests.php">About the LRJA</a></li>
+      <?php logInLink(); ?>
+      <?php if ($role <> "visitor") { ?>
+      <li class="TreeNodeExpanded">LRJA 2.0
+        <ul>
+        <?php links_la("LRJA", 
+          "take journal report select assign email 
+          score code "); ?>
+        </ul>
+      </li>
+      <li>LRJA 1.0
+        <ul>
+          <?php links_reports_old("LRJA"); ?>
+          <?php bc_reports_old("LRJA"); ?>
+          <?php if ($role == "teacher" OR $role == "client") { ?>
+            <li><a href="researchers/chooselrja_researcher_1.php">
+              View LRJA researcher data</a></li>
+          <?php } ?>
+          <?php code_score_old("LRJA"); ?>
+        </ul>
+      </li>
+      <?php } ?>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+
+<div id="links_lsua" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Lectical Self-Understanding Assessment</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_lsua']; ?>
+    <ul id="TreeView6" class="SpryTreeView">
+      <li><a href="/_about/showcase.php?instrument_id=LSUA">About the LSUA</a></li>
+      <?php logInLink(); ?>
+      <?php if ($role <> "visitor") { ?>
+      <li class="TreeNodeExpanded">LSUA 2.0
+        <ul>
+          <?php links_la("LSUA", 
+            "take journal report select assign email score code "); ?>
+        </ul>
+      </li>
+      <li>LSUA 1.0
+        <ul>
+          <?php links_reports_old("LSUA"); ?>
+          <?php bc_reports_old("LSUA"); ?>
+          <?php code_score_old("LSUA"); ?>
+        </ul>
+      </li>
+      <?php } ?>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+
+<div id="links_lima" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Lectical Integral Model Assessment</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_lima']; ?>
+    <ul id="TreeView7" class="SpryTreeView">
+      <li><a href="about/assesslima.php">About the LIMA</a></li>
+      <?php logInLink(); ?>
+      <?php if ($role <> "visitor") { ?>
+      <li class="TreeNodeExpanded">LIMA 2.0
+        <ul>
+          <?php links_la("LIMA", 
+            "take report select assign email report
+            score code "); ?>
+        </ul>
+      </li>
+      <li>LIMA 1.0
+        <ul>
+          <?php links_reports_old("LIMA"); ?>
+          <?php bc_reports_old("LIMA"); ?>
+          <?php code_score_old("LIMA"); ?>
+        </ul>
+      </li>
+      <?php } ?>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+
+<div id="links_ldpa" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Lectical Developmental Pedagogy Assessment</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_ldpa']; ?>
+    <ul id="TreeView20" class="SpryTreeView">
+      <!-- <li><a href="about/assesslima.php">About the LDPA</a></li> -->
+      <?php logInLink(); ?>
+      <?php if ($role <> "visitor") { ?>
+        <?php links_la("LDPA", "take report select assign email code "); ?>
+      <?php } ?>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+
+<div id="links_lmbe" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Lectical Mind, Brain, and Education Assessment</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_lmbe']; ?>
+    <ul id="TreeView8" class="SpryTreeView">
+      <li><a href="set_session_var_instrument.php?link_id=la_assess/instructions_lmbe.php&amp;sessionVarName=instrument_id&amp;sessionVarValue=LMBE">About the LMBE</a></li>
+      <?php logInLink(); ?>
+      <?php if ($role <> "visitor") { ?>
+        <li><a href="set_session_var_instrument.php?link_id=la_assess/instructions_lmbe.php&amp;sessionVarName=instrument_id&amp;sessionVarValue=LMBE">Instructions and reading material</a></li>
+      <?php } ?>
+      <?php links_la("LMBE", 
+        "take report select score code teacher-code"); ?>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+
+<div id="links_lsma" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Lectical Solloway Mindfulness Assessment</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_sma']; ?>
+    <ul id="TreeView18" class="SpryTreeView">
+      <li><a href="/_about/showcase.php?instrument_id=LSMA">About the LSMA</a></li>
+      <li><a href="mindfulness/SMS/m-articles.html">Articles</a></li>
+      <!--<li><a href="mindfulness/SMS/m-teacherinfo.php">Teacher information</a></li>-->
+      <?php logInLink(); ?>
+      <?php if ($role <> "visitor") { ?>
+        <?php links_la("SMA", " take code teacher-code 
+                       report select assign email "); ?>
+      <?php } ?>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+
+<div id="links_smj" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Solloway Mindfulness Journal</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_smj']; ?>
+    <ul id="TreeView19" class="SpryTreeView">
+      <!-- <li><a href="about/aboutjournaling.php">About journaling</a></li> -->
+      <?php logInLink(); ?>
+      <?php if ($role <> "visitor") { ?>
+        <?php links_la("SMJ", " take code student-code teacher-code 
+                       report select assign email "); ?>
+      <?php } ?>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+
+<div id="links_sms" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Solloway Mindfulness Survey</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_sms']; ?>
+    <ul id="TreeView2" class="SpryTreeView">
+      <li><a href="mindfulness/SMS/m-intro.html">Introduction</a></li>
+      <li><a href="mindfulness/SMS/m-articles.html">Articles</a></li>
+      <!--<li><a href="mindfulness/SMS/m-teacherinfo.php">Teacher information</a></li>-->
+      <?php logInLink(); ?>
+      <?php if ($role <> "visitor") { ?>
+        <?php links_la("SMS", " take report select assign email "); ?>
+      <?php } ?>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+
+<div id="links_dcs" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">DTS Character Survey</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_dcs']; ?>
+    <ul id="TreeView12" class="SpryTreeView">
+      <li><a href="character/character1.php">Take the DCS</a></li>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+    
+<div id="links_cps" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">DTS Workplace Creative Potential Survey</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_cps']; ?>
+    <ul id="TreeView13" class="SpryTreeView">
+      <?php logInLink(); ?>
+      <?php if ($role <> "visitor") { ?>
+        <?php links_la("CPS", " take report select assign email "); ?>
+      <?php } ?>
+      <li><a href="creativity/c-survey.php">Take the CPS</a></li>
+      <?php if ($role == "employee") { ?>
+        <li><a href="../set_session_var_instrument.php?link_id=scoring/choosecpsw.php&amp;sessionVarName=instrument_id&amp;sessionVarValue=LDMA">CPS results</a></li>
+      <?php } ?>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+    
+<div id="links_dos" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">DTS Optimism Survey</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_dos']; ?>
+      <ul id="TreeView11" class="SpryTreeView">
+        <li><a href="optimism/optimism1.php">Take the DOS</a></li>
+      </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+    
+<div id="links_nts" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">National Testing Survey</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_nts']; ?>
+    <ul id="TreeView14" class="SpryTreeView">
+      <li><a href="http://testingsurvey.us/">Take the NTS</a></li>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+    
+<div id="links_stc" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Sort Task Challenge</h3>
+  </div>
+  <div class="modal-body">
+    <?php echo $boilerplate['landing_popup_stc']; ?>
+    <ul id="TreeView15" class="SpryTreeView">
+      <li><a href="https://dts.lectica.org/set_session_var_instrument.php?link_id=_sorttask/sorttasklead.php&sessionVarName=instrument_id&sessionVarValue=STC">Take the STC</a></li>
+      <?php if ($role == "employee") { ?>
+        <li><a href="../set_session_var_instrument.php?link_id=scoring/choosesorttask.php&amp;sessionVarName=instrument_id&amp;sessionVarValue=LDMA">Sort task results</a></li>
+      <?php } ?>
+    </ul>
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+    
+<div id="links_fola" class="modal hide fade" tabindex="-1" role="dialog" 
+  aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Foundations of Lectical Assessment Course</h3>
+  </div>
+  <div class="modal-body">
+
+    <p>FOLA is a graduate level course, offered by the Lectica Outreach Circle.</p>
+    <ul id="TreeView17" class="SpryTreeView">
+      <? if (WA_Auth_RulePasses("Logged in as senior")) { ?>
+      	<li><a href='courses/courses_list.php'>Manage courses</a></li>
+      <? } ?>
+
+      <!-- link to syllabus for 2013 fall course, for any students -->
+      <? /* No longer need the old course links to the FOLA.
+      if ($fola['i_am_registered'] == 1) { ?>
+      	<li><a href="courses/syllabus.php?coursekey=3">FOLA 2013 syllabus</a></li> */ ?>
+      <? if (!isset($_SESSION['log_userkey'])) { ?>
+      	<li>Previous FOLA students can <a href='security/logIn.php'>log in</a> to view the syllabus and lectures.</li>
+      <? } ?>
+
+      <li><a href="courses/syllabus.php?coursekey=9">FOLA Lecture Series syllabus</a></li>
+      <li><a href="courses/register.php?coursekey=9">Purchase the FOLA Lecture Series</a></li>
+      
+    </ul>
+
+  </div>
+  <div class="modal-footer"><p>&nbsp;</p></div>
+</div>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+<!-- Old LMSA links (no longer used)
+<div>
+  <div align="right" class="popupBar"> 
+    <div class="popupTitle">Lectical Multidimensional Self Assessment</div>
+  </div>
+  <div class="popupContent">
+    <?php echo $boilerplate['landing_popup_lmsa']; ?>
+    <ul id="TreeView9" class="SpryTreeView">
+      <?php if ($role <> "visitor") { ?>
+        <?php links_reports_old("LMSA"); ?>
+        <?php bc_reports_old("LMSA"); ?>
+        <?php code_score_old("LMSA"); ?>
+      <?php } ?>
+    </ul>
+  </div>
+</div>
+
+Old LMLA links (no longer used)
+<div id="spryPopupDialog10" class="popupContainer">
+  <div align="right" class="popupBar"> 
+    <div class="popupTitle">Lectical Multidimensional Leadership Assessment</div>
+  </div>
+  <div class="popupContent">
+    <?php echo $boilerplate['landing_popup_lmla']; ?>
+    <ul id="TreeView10" class="SpryTreeView">
+      <?php if ($role <> "visitor") { ?>
+        <?php links_reports_old("LMLA"); ?>
+        <?php bc_reports_old("LMLA"); ?>
+        <?php code_score_old("LMLA"); ?>
+      <?php } ?>
+    </ul>
+  </div>
+</div>
+-->
+    
+    
+    
+    
+<!--BOTTOM NAVIGATION-->
+<?php include("_includes/navigation/bottom_navigation_select.html"); ?>
+<!--CLOSE BOTTOM NAVIGATION-->
+
+
+  	<?php if ($role == "employee") { ?>
+<div class="container-fluid">
+	<div class="row-fluid">
+		<div class="span12 pull-right margin-bottom-30">
+			<ul class="thumbnails">
+        <li class="span3">
+          <article>
+          <h3>Employees</h3>
+          <p><a href="http://intranet.lectica.org">Intranet</a></p>
+          <p><a href="../archive/archive_landing_page.php">Archive</a></p>
+          <p><a href="scoring/chooseassessment.php">Assessments</a></p>
+          <p><a href="training/t-choosetoscore.php">LAS training</a></p>
+          <p><a href="employees/employee_timesheet_Results.php">My work history</a></p>
+          <p><a href="employees/employee_timesheet_Insert.php">New work entry</a></p>
+            <p><a href="admin/outreach_report_nfp.php">Lectica pipeline</a></p>
+            <p><a href="admin/DTS_pipeline.php">DTS pipeline</a></p>
+          </article>
+        </li>        
+
+        <li class="span3">
+          <article>
+          <h3>Admin</h3>
+          <p><a href="admin/coder_totals.php">Coder pay</a></p>
+          
+					<?php // The admin links only show up for Amy and Theo
+          if ($user_level >= 25 OR $userkey == 1000002535 OR $userkey == 5124) { ?>
+            <p><a href="employees/employee_timesheet_Results_admin.php">Intern time sheets</a></p>
+            <p><a href="admin/bulkbalanceselect.php">Bulk accounts</a></p>
+            <p><a href="la_reports/bc_manage_accounts.php">Manage test takers</a></p>
+            <p><a href="admin/registrations.php">Find registrants</a></p>
+            <p><a href="admin/boilerplate.php">Boilerplate</a></p>
+            <p><a href="la_resources/resources_Results.php">Manage resources</a></p>
+            <p><a href="/_about/dilemmas.php">Dilemmas</a></p>
+            <?php if ($_SESSION['log_firstname'] == "Theo") { ?>
+              <p><a href="admin/query.php">DB query</a></p>
+            <?php } ?>
+          <?php } ?>
+          </article>
+        </li>   
+             
+        <li class="span3">
+          <article>
+          
+						<?php // The admin links only show up for Amy and Theo
+            if ($user_level >= 24) { ?>
+           <h3>Admin</h3>
+             <p><a href='annual_reports/reports_list.php'>Annual reports</a></p>
+              <p>
+              	<a href='donations/donations_list.php'>Donations</a> & 
+              	<a href='donations/carousel_slides_list.php'>carousel slides</a>
+              </p>
+						<? } ?>
+						
+						<? // Links for outreach things
+            $allowed_userkeys = array( 1000013450 ); // Aiden
+            if (in_array($userkey, $allowed_userkeys) OR WA_Auth_RulePasses("Logged in as admin")) { ?>
+              <p><a href='contacts_download.php'>Download inquiries</a></p>
+              <p><a href='courses/courses_list.php'>Manage courses</a></p>
+            <?php } ?>
+	          <?php if (WA_Auth_RulePasses("Logged in as analyst")) { ?>
+							<p><a href="la_reports/download_results.php">Download assessment data</a></p>
+						<?php } ?>
+          </article>
+        </li>
+      </ul>    
+		</div>
+	</div>
+</div>
+     <?php } ?>
+
+
+		<?php // The Client links only show up for Clients
+          if ($user_level = 9) { ?>
+<div class="container-fluid">
+	<div class="row-fluid">
+		<div class="span12 pull-right margin-bottom-30">
+			<ul class="thumbnails">
+        <li class="span3">
+          <article>
+		  <h3>Clients</h3>
+		  <p><a href="../../la_resources/resources_Results_1.php">Resources</a></p>
+          </article>
+        </li>   
+   			
+      </ul>    
+		</div>
+	</div>
+</div>
+        <?php } ?>
+     
+
+<!-- FOOTER COPYRIGHT -->
+<?php include("_includes/navigation/footer_copyright_plain.html"); ?>
+<!--FOOTER COPYRIGHT-->
+
+    
+    
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+    
+     <!-- Javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="/_assets/_js/jquery.js"></script>
+    <script src="/_assets/js/bootstrap.min.js"></script>
+
+	<script src="/SpryAssets/SpryTreeView.js" type="text/javascript"></script>
+   
+  <script type="text/javascript">
+	
+	var TreeView1 = new Spry.Widget.TreeView("TreeView1");
+	var TreeView2 = new Spry.Widget.TreeView("TreeView2");
+	var TreeView3 = new Spry.Widget.TreeView("TreeView3");
+	var TreeView4 = new Spry.Widget.TreeView("TreeView4");
+	var TreeView5 = new Spry.Widget.TreeView("TreeView5");
+	var TreeView6 = new Spry.Widget.TreeView("TreeView6");
+	var TreeView7 = new Spry.Widget.TreeView("TreeView7");
+	var TreeView8 = new Spry.Widget.TreeView("TreeView8");
+	var TreeView11 = new Spry.Widget.TreeView("TreeView11");
+	var TreeView12 = new Spry.Widget.TreeView("TreeView12");
+	var TreeView13 = new Spry.Widget.TreeView("TreeView13");
+	var TreeView14 = new Spry.Widget.TreeView("TreeView14");
+	var TreeView15 = new Spry.Widget.TreeView("TreeView15");
+	var TreeView17 = new Spry.Widget.TreeView("TreeView17");
+	var TreeView18 = new Spry.Widget.TreeView("TreeView18");
+	var TreeView19 = new Spry.Widget.TreeView("TreeView19");
+	var TreeView20 = new Spry.Widget.TreeView("TreeView20");
+		
+  </script>
+
+</body>
+</html>
+<?php
+?>

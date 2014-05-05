@@ -1,0 +1,546 @@
+<?php 
+include_once '../includes/dts_functions.php';	
+
+if (!isset($_GET['reportkey'])) { header("Location: reports_list.php"); exit(); }
+$reportkey = $_GET['reportkey']; 
+$scope = "?reportkey={$reportkey}";
+
+$can_edit = false;
+if (WA_Auth_RulePasses("Logged in as senior")) { $can_edit = true; } 
+
+if (isset($_SESSION['instrument_id'])) { unset($_SESSION['instrument_id']); }
+
+
+// Listeners: AJAX editing
+
+if (isset($_GET['update_title'])) {
+	if (!$can_edit) { die("ERROR - can't edit!"); }
+	if ($_POST['title'] == '') { die("ERROR - can't be blank!"); }
+	$sql = sprintf("UPDATE annual_reports SET title = %s WHERE `key` = %s ",
+		SQLstr($_POST['title'], 'text'),
+		SQLstr($reportkey, 'int'));
+	$result = mysql_query($sql) or die("ERROR saving title!");
+	die($_POST['title']);
+}
+
+if (isset($_GET['update_ck'])) {
+	if (!$can_edit) { die("ERROR - can't edit!"); }
+	$field = $_POST['field'];
+
+	// Is this the introduction field (at the course level)?
+	if ($field == "introduction") {
+		$sql = sprintf("UPDATE annual_reports SET introduction = %s 
+			WHERE `key` = %s",
+				SQLrstr($_POST['text'], 'text'),
+				SQLstr($reportkey, 'int'));
+		$result = mysql_query($sql) or die("<span class='red'>ERROR saving report introduction!</span>");
+		die("<span class='green'>saved</span>");
+	} else {
+		// No, this is a specific section being updated.
+		$sectionkey = $_POST['sectionkey']; 
+		// Should I update the header or the revealed content?
+		if (strpos($field, "header")) {
+			$sql = sprintf("UPDATE annual_report_sections SET text_header = %s 
+				WHERE `key` = %s AND in_reportkey = %s",
+					SQLrstr($_POST['text'], 'text'),
+					SQLstr($sectionkey, 'int'),
+					SQLstr($reportkey, 'int'));
+			$result = mysql_query($sql) or die("<span class='red'>ERROR saving section header text!</span>");
+			die("<span class='green'>saved</span>");
+		} else if (strpos($field, "revealed")) {
+			$sql = sprintf("UPDATE annual_report_sections SET text_revealed = %s 
+				WHERE `key` = %s AND in_reportkey = %s",
+					SQLrstr($_POST['text'], 'text'),
+					SQLstr($sectionkey, 'int'),
+					SQLstr($reportkey, 'int'));
+			$result = mysql_query($sql) or die("<span class='red'>ERROR saving section header text!</span>");
+			die("<span class='green'>saved</span>");
+		} else {
+			die("<span class='red'>ERROR: I don't know what to do with the field '{$field}'.</span>");
+		}
+	} // ENDIF: if section should be updated
+}
+
+// Listeners that refresh the page
+
+if (isset($_GET['section_add'])) {
+	if (!$can_edit) { die("ERROR - can't edit!"); }
+	// get the max order # for this report
+	$sql = sprintf("SELECT MAX(s.order) AS max_order FROM annual_report_sections s WHERE s.in_reportkey = %s",
+		SQLstr($reportkey, 'int'));
+	$rs = mysql_query($sql) or die("ERROR calculating section order.");
+	$row = mysql_fetch_assoc($rs);
+	$order = $row['max_order'] + 1;
+	// create the new section
+	$sql = sprintf("INSERT INTO annual_report_sections (in_reportkey, `order`, text_header, text_revealed)
+		VALUES (%s, %s, 
+			'<h2>New Section</h2><p>Click to edit the copy that will always be visible.</p>', 
+			'<p>Hidden content (click Learn More to show me)</p>')",
+				SQLstr($reportkey, 'int'),
+				SQLstr($order, 'int'));
+	$result = mysql_query($sql) or die("ERROR creating new report section.");
+	// refresh page
+	header("Location: {$scope}"); exit();
+}
+
+if (isset($_GET['section_delete'])) {
+	if (!$can_edit) { die("ERROR - can't edit!"); }
+
+	$sql = sprintf("UPDATE annual_report_sections SET is_deleted = 1 WHERE `key` = %s",
+		SQLstr($_GET['section_delete'], 'int'));
+	$result = mysql_query($sql) or die("ERROR deleting the report section.");
+	// refresh page
+	header("Location: {$scope}"); exit();
+}
+
+if (isset($_GET['section_move_up'])) {
+	if (!$can_edit) { die("ERROR - can't edit!"); }
+	// get the sectionkey & order # of the section above this one
+	$sql = sprintf("SELECT s1.key AS this_key, s1.order AS this_order,
+			s2.key AS other_key, s2.order AS other_order
+		FROM annual_report_sections s1
+			JOIN annual_report_sections s2 ON s1.in_reportkey = s2.in_reportkey AND s1.order > s2.order AND s2.is_deleted = 0
+		WHERE s1.key = %s 
+		ORDER BY s2.order DESC 
+		LIMIT 1",
+		SQLstr($_GET['section_move_up'], 'int'));
+	$rs = mysql_query($sql) or die("ERROR calculating section reordering.");
+
+	// if no results were found, don't do anything
+	if (mysql_num_rows($rs) == 0) { header("Location: {$scope}&nothing_was_moved"); exit(); }
+
+	$row = mysql_fetch_assoc($rs);
+	// Switch the order values.
+	$sql = sprintf("UPDATE annual_report_sections s1
+			JOIN annual_report_sections s2
+		SET s1.order = %s, s2.order = %s
+		WHERE s1.key = %s AND s2.key = %s",
+			SQLstr($row['other_order'], 'int'),
+			SQLstr($row['this_order'], 'int'),
+			SQLstr($row['this_key'], 'int'),
+			SQLstr($row['other_key'], 'int'));
+	$rs = mysql_query($sql) or die("ERROR calculating section reordering.");
+
+	header("Location: {$scope}"); exit();
+}
+
+if (isset($_GET['section_move_down'])) {
+	if (!$can_edit) { die("ERROR - can't edit!"); }
+	// get the sectionkey & order # of the section below this one
+	$sql = sprintf("SELECT s1.key AS this_key, s1.order AS this_order,
+			s2.key AS other_key, s2.order AS other_order
+		FROM annual_report_sections s1
+			JOIN annual_report_sections s2 ON s1.in_reportkey = s2.in_reportkey AND s1.order < s2.order AND s2.is_deleted = 0
+		WHERE s1.key = %s 
+		ORDER BY s2.order ASC 
+		LIMIT 1",
+		SQLstr($_GET['section_move_down'], 'int'));
+	$rs = mysql_query($sql) or die("ERROR calculating section reordering.");
+
+	// if no results were found, don't do anything
+	if (mysql_num_rows($rs) == 0) { header("Location: {$scope}&nothing_was_moved"); exit(); }
+
+	$row = mysql_fetch_assoc($rs);
+	// Switch the order values.
+	$sql = sprintf("UPDATE annual_report_sections s1
+			JOIN annual_report_sections s2
+		SET s1.order = %s, s2.order = %s
+		WHERE s1.key = %s AND s2.key = %s",
+			SQLstr($row['other_order'], 'int'),
+			SQLstr($row['this_order'], 'int'),
+			SQLstr($row['this_key'], 'int'),
+			SQLstr($row['other_key'], 'int'));
+	$rs = mysql_query($sql) or die("ERROR calculating section reordering.");
+
+	header("Location: {$scope}"); exit();
+}
+
+if (isset($_GET['is_public'])) {
+	if (!$can_edit) { die("ERROR - can't edit!"); }
+	$sql = sprintf("UPDATE annual_reports SET is_public = %s WHERE `key` = %s",
+		SQLstr($_GET['is_public'], 'int'),
+		SQLstr($reportkey, 'int'));
+	$result = mysql_query($sql) or die("ERROR changing publicness setting.");
+	// refresh page
+	header("Location: {$scope}"); exit();
+}
+
+
+
+// Fetch data on this report (whole)
+$sql = sprintf("SELECT * FROM annual_reports r WHERE r.key = %s",
+	SQLstr($reportkey, 'int'));
+$rsReport = mysql_query($sql) or die("ERROR: Unable to load this report.");
+$report = mysql_fetch_assoc($rsReport);
+// boot you out if the report isn't public (and you don't have access)
+if (!$report['is_public'] AND !$can_edit) {
+	die("This report isn't publicly available yet. Please contact us with any questions.");
+	header("Location: reports_list.php"); exit(); }
+
+// preview?
+if (isset($_GET['preview'])) { $can_edit = false; }
+
+// Fetch data on each section
+$sql = sprintf("SELECT * FROM annual_report_sections s
+	WHERE s.in_reportkey = %s AND is_deleted = 0
+	ORDER BY s.order",
+		SQLstr($reportkey, 'int'));
+$rsSections = mysql_query($sql) or die("ERROR: Unable to load report sections.");
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title><? echo $report['title']; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<script src="../includes/jquery.js"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<script src="../includes/jquery.dotimeout.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+<script src="../includes/jquery.highlight.js" type="text/javascript"></script>
+<script src="../includes/ckeditor/ckeditor.js"></script>
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+	
+	<? if ($can_edit) { ?>
+
+		// edit title
+		$('#title_display').click(function(){
+			$(this).hide();
+			$('#title_edit_field').show().focus();
+		});
+		$('#title_edit_field').blur(function(){
+			var title = $(this).val();
+			$(this).val('saving...');
+			$('#title_display').load("<? echo $scope; ?>&update_title=yes", {title: title}, function(){
+				$('#title_display').show();
+				$('#title_edit_field').hide().val($('#title_display').html());
+			});
+		});
+
+		$('.ckeditor').click(function(){
+			$(this).parent().find('.status').html("<span class='orange'>Editing</span>");
+		});
+
+		CKEDITOR.disableAutoInline = true;
+
+		// Set up inline editors
+		$('.ckeditor').each(function(){
+			var editor = $(this);
+			// if (editor.text() == '') { editor.append("<p><em>(empty)</em></p>"); }
+			if (editor.attr('id') == '') { alert("ERROR - a ckeditor field has no ID."); }
+			
+			CKEDITOR.inline(editor.attr('id'), {
+			  on: { 
+			  	blur: function(event) {
+			      editor.parent().find('.status').load('<? echo $scope; ?>&update_ck=yes', { 
+			      	text: event.editor.getData(),
+			      	field: editor.attr('id'),
+			      	sectionkey: editor.attr('sectionkey')
+			      });
+			    }
+			  }
+			});
+		});
+
+		// delete section
+		$('.section_delete').click(function(){
+			var key = $(this).attr('sectionkey');
+			if (confirm("Really delete this section?")) {
+				window.location.href = "<? echo $scope; ?>&section_delete="+key;
+			}
+		});
+
+	<? } else { ?>
+
+		// For public (non-editor) viewers: generate Learn More links
+		$('.has_learn_more').each(function(){
+			var key = $(this).attr('sectionkey');
+			$(this).find('p').last().append(" &nbsp; <a class='learn_more' sectionkey='"+key+"'>» learn more</a>");
+		});
+
+		$('.learn_more').click(function(){
+			if ($(this).text() == '» learn more') { $(this).text('« hide'); }
+			else { { $(this).text('» learn more'); } }
+			// $(this).parent().hide();
+			var key = $(this).attr('sectionkey');
+			$('#section_revealed_'+key).slideToggle(200);
+		});
+
+	<? } ?>
+
+});
+
+</script>
+
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+
+<style type="text/css">
+
+	a { color: #008A8C; cursor: pointer; }
+	input[type="button"] { cursor: pointer; }
+
+	#title_edit_field { display: none; }
+	.green { color: green; }
+	.orange { color: orange; }
+
+	.editor_notes { color: #999; font: courier; }
+
+	<? if (!$can_edit) { ?> .revealed { display: none; } <? } ?>
+	<? if ($can_edit) { ?>
+		.ckeditor { border: 1px solid #aaa; }
+		.revealed { border: 1px dashed #aaa; }
+	<? } ?>
+
+	#mainContent { max-width: 700px; }
+
+.tooltip {
+	display:none;
+	font-size:90%;
+	font-weight: 400;
+	line-height:140%;
+	width: 150px;
+	background: #F1F7F6;
+	padding-right: 20px;
+	padding-left: 20px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-left: 10px;
+	-moz-box-shadow: 2px 2px 5px #888;
+	-webkit-box-shadow: 2px 2px 5px #888;
+	box-shadow: 2px 2px 5px #888;
+	z-index: 999;
+}
+
+.hotspot {
+	cursor: pointer; 
+	cursor: hand;	
+	height:100%; 
+	width:100%; 
+	position:relative;
+}
+.twoColFixRtHdr #container #mainContent h2 {
+	font-size: 160%;
+}
+.twoColFixRtHdr #container #mainContent h3 {
+	font-size: 150%;
+	font-weight: 400;
+	color: #007376;
+}
+.twoColFixRtHdr #container #mainContent h4 {
+	font-size: 130%;
+}
+.twoColFixRtHdr #container #mainContent table {
+	margin-top: 20px;
+}
+.twoColFixRtHdr #container #mainContent .minimalist-a tr td p {
+	margin-left: 0px;
+	padding-left: 0px;
+}
+.twoColFixRtHdr #container #mainContent .minimalist-a th {
+	border-bottom-width: 1px;
+}
+.twoColFixRtHdr #container #mainContent h2 {
+	padding-bottom: 6px;
+	border-bottom-width: 2px;
+	border-bottom-style: solid;
+	border-bottom-color: #007376;
+}
+</style>
+
+
+<script type='text/javascript'>
+
+$(document).ready(function(){
+	
+	$('.hotspot').tooltip({
+		position: 'bottom center', 
+		effect: 'fade', 
+		fadeInSpeed: 100,
+		fadeOutSpeed: 100,
+		delay:300,
+		layout: '<span/>',
+		events: {
+			def: 'mouseover, mouseleave'
+		}
+	}); 
+</script>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  
+	<? if ($can_edit) { ?>
+		<div class='editor_notes'>
+			<h3>Editing the report</h3>
+			<ul>
+				<li>The report consists of a title plus many sections. Each section has content that is <em>always visible</em>, as well as optional <em>content that is revealed by clicking a "learn more" button</em>. To remvoe the latter section, simply erase all text in that section.</li>
+				<li>Use the <em>add section</em> link to add new sections to the report. Then use the links on the right of each section, to reorder or remove sections.</em></li>
+				<li>Normal viewers will see the page slightly differently from you. Click on the link "Preview report" to see it exactly as other visitors will (without making the report publicly available yet).</li>
+				<li>When you're done editing, click "make public" to make this report available to anyone with the correct link.</li>
+			</ul>
+		</div>
+	<? } ?>
+
+  <h1>
+  	<span id='title_display'><? echo $report['title']; ?></span>
+  	<? if ($can_edit) { ?>
+  		<input id='title_edit_field' value='<? echo $report['title']; ?>' />
+  	<? } ?>
+	</h1>
+  
+  <!-- build each section -->
+  <? while ($section = mysql_fetch_assoc($rsSections)) { ?>
+		
+		<div class='ckeditor_group'>
+
+			<? if ($can_edit) { ?>
+	  		<div class='fltrt editor_notes'>
+		  		Section &nbsp;
+		  		<span class='status'></span>
+					<a href='<? echo $scope; ?>&section_move_up=<? echo $section['key']; ?>'>↑</a> &nbsp;
+					<a href='<? echo $scope; ?>&section_move_down=<? echo $section['key']; ?>'>↓</a> &nbsp;
+					<a class='section_delete' sectionkey='<? echo $section['key']; ?>'>⨯</a> &nbsp;
+				</div>
+	  	<? } ?>
+
+			<div id='section_header_<? echo $section['key']; ?>' 
+				class='ckeditor fltlft <? if ($section['text_revealed'] <> '') { echo 'has_learn_more'; } ?>' 
+				<? if ($can_edit) { echo "contenteditable='true'"; } ?> sectionkey='<? echo $section['key']; ?>'
+				><? echo $section['text_header']; ?></div>
+			
+		</div>
+
+		<div class='clearfloat'></div>
+		
+		
+		
+  	<div class='ckeditor_group'>
+
+			<? if ($can_edit) { ?>
+				<div class='fltrt editor_notes'>
+					Hidden content
+					<span class='status'></span>
+				</div>
+			<? } ?>
+
+			<div id='section_revealed_<? echo $section['key']; ?>' class='revealed ckeditor fltlft' <? if ($can_edit) { echo "contenteditable='true'"; } ?> sectionkey='<? echo $section['key']; ?>'><? echo $section['text_revealed']; ?></div>
+			
+		</div>
+
+		<div class='clearfloat'></div>
+
+	<? } ?>
+
+	<? if ($can_edit) { ?>
+		<div class='box'>
+			<p><a href='<? echo $scope; ?>&section_add=yes'>+ add section</a></p>
+			<? if ($report['is_public']) { ?>
+				<p>This report <strong>is visible to the public.</strong> 
+					<a href='<? echo $scope; ?>&is_public=0'>un-publish</a>
+				</p>
+			<? } else { ?>
+				<p>This report <strong>is not public.</strong> 
+					<a href='<? echo $scope; ?>&is_public=1'>make public</a>
+				</p>
+			<? } ?>
+			<? if (isset($_GET['preview'])) { ?>
+				<p><a href='<? echo $scope; ?>'>Edit report</a></p>
+			<? } else { ?>
+				<p><a href='<? echo $scope; ?>&preview=yes'>Preview report</a></p>
+			<? } ?>
+	</div>
+	<? } ?>
+  
+
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

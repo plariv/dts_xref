@@ -1,0 +1,1179 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+
+
+// calculate total
+$cscore = 0;
+$cscore += $_POST['workcollab'];
+$cscore += $_POST['probsolvoften'];
+$cscore += $_POST['sparetimelearn'];
+$cscore += $_POST['manyinterests'];
+$cscore += $_POST['thrillchallenge'];
+$cscore += $_POST['expert1'];
+$cscore += $_POST['fieldperspect'];
+$cscore += $_POST['passionate'];
+$cscore += $_POST['illstructured'];
+$cscore += $_POST['noticepeople'];
+$cscore += $_POST['expert2'];
+$cscore += $_POST['understandpersp'];
+$cscore += $_POST['outsideself'];
+$cscore += $_POST['prefercollab'];
+$cscore += $_POST['manyhobbies'];
+$cscore += $_POST['overlapperspec'];
+$cscore += $_POST['excellencetime'];
+$cscore += $_POST['learnwhatever'];
+$cscore += $_POST['transferskills'];
+$cscore += $_POST['wronglearn'];
+$cscore += $_POST['newanticipation'];
+$cscore += $_POST['flow'];
+$cscore += $_POST['varietysources'];
+$cscore += $_POST['newsolution'];
+$cscore += $_POST['manycultures'];
+$cscore += $_POST['questioning'];
+
+$_SESSION["cscore"] = $cscore;
+
+
+// Start trigger
+$formValidation = new tNG_FormValidation();
+$formValidation->addField("age", true, "numeric", "", "", "", "");
+$formValidation->addField("edu", true, "numeric", "", "", "", "");
+$formValidation->addField("profession", true, "text", "", "", "", "");
+$formValidation->addField("expertise1", true, "text", "", "", "", "");
+$formValidation->addField("expertise1years", true, "text", "", "", "", "");
+$formValidation->addField("ethnicity1", true, "numeric", "", "", "", "");
+$formValidation->addField("country", true, "text", "", "", "", "");
+$formValidation->addField("workcollab", true, "numeric", "", "", "", "");
+$formValidation->addField("probsolvoften", true, "numeric", "", "", "", "");
+$formValidation->addField("sparetimelearn", true, "numeric", "", "", "", "");
+$formValidation->addField("manyinterests", true, "numeric", "", "", "", "");
+$formValidation->addField("thrillchallenge", true, "numeric", "", "", "", "");
+$formValidation->addField("expert1", true, "numeric", "", "", "", "");
+$formValidation->addField("fieldperspect", true, "numeric", "", "", "", "");
+$formValidation->addField("passionate", true, "numeric", "", "", "", "");
+$formValidation->addField("illstructured", true, "numeric", "", "", "", "");
+$formValidation->addField("noticepeople", true, "numeric", "", "", "", "");
+$formValidation->addField("expert2", true, "numeric", "", "", "", "");
+$formValidation->addField("understandpersp", true, "numeric", "", "", "", "");
+$formValidation->addField("outsideself", true, "numeric", "", "", "", "");
+$formValidation->addField("prefercollab", true, "numeric", "", "", "", "");
+$formValidation->addField("manyhobbies", true, "numeric", "", "", "", "");
+$formValidation->addField("overlapperspec", true, "numeric", "", "", "", "");
+$formValidation->addField("excellencetime", true, "numeric", "", "", "", "");
+$formValidation->addField("learnwhatever", true, "numeric", "", "", "", "");
+$formValidation->addField("transferskills", true, "numeric", "", "", "", "");
+$formValidation->addField("wronglearn", true, "numeric", "", "", "", "");
+$formValidation->addField("newanticipation", true, "numeric", "", "", "", "");
+$formValidation->addField("flow", true, "numeric", "", "", "", "");
+$formValidation->addField("varietysources", true, "numeric", "", "", "", "");
+$formValidation->addField("newsolution", true, "numeric", "", "", "", "");
+$formValidation->addField("manycultures", true, "numeric", "", "", "", "");
+$formValidation->addField("questioning", true, "numeric", "", "", "", "");
+$formValidation->addField("mostcreative1", true, "text", "", "", "", "");
+$formValidation->addField("fineartcreative", true, "numeric", "", "", "", "");
+$formValidation->addField("probsolvecreative", true, "numeric", "", "", "", "");
+$formValidation->addField("everydaycreative", true, "numeric", "", "", "", "");
+$formValidation->addField("socialcreative", true, "numeric", "", "", "", "");
+$formValidation->addField("imaginative", true, "numeric", "", "", "", "");
+$formValidation->addField("inventive", true, "numeric", "", "", "", "");
+$tNGs->prepareValidation($formValidation);
+// End trigger
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEdu = "SELECT * FROM EduAttainment ORDER BY EduLevelKey ASC";
+$rsEdu = mysql_query($query_rsEdu, $Assessment) or die(mysql_error());
+$row_rsEdu = mysql_fetch_assoc($rsEdu);
+$totalRows_rsEdu = mysql_num_rows($rsEdu);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEthnicity = "SELECT * FROM Ethnicity";
+$rsEthnicity = mysql_query($query_rsEthnicity, $Assessment) or die(mysql_error());
+$row_rsEthnicity = mysql_fetch_assoc($rsEthnicity);
+$totalRows_rsEthnicity = mysql_num_rows($rsEthnicity);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCountry = "SELECT * FROM countries ORDER BY name ASC";
+$rsCountry = mysql_query($query_rsCountry, $Assessment) or die(mysql_error());
+$row_rsCountry = mysql_fetch_assoc($rsCountry);
+$totalRows_rsCountry = mysql_num_rows($rsCountry);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings = "SELECT * FROM Ratings4 ORDER BY Ratings4key ASC";
+$rsRatings = mysql_query($query_rsRatings, $Assessment) or die(mysql_error());
+$row_rsRatings = mysql_fetch_assoc($rsRatings);
+$totalRows_rsRatings = mysql_num_rows($rsRatings);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingsDegree = "SELECT * FROM RatingsDegree";
+$rsRatingsDegree = mysql_query($query_rsRatingsDegree, $Assessment) or die(mysql_error());
+$row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree);
+$totalRows_rsRatingsDegree = mysql_num_rows($rsRatingsDegree);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+
+// Make an insert transaction instance
+$ins_CreativePotential = new tNG_insert($conn_Assessment);
+$tNGs->addTransaction($ins_CreativePotential);
+// Register triggers
+$ins_CreativePotential->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Insert1");
+$ins_CreativePotential->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$ins_CreativePotential->registerTrigger("END", "Trigger_Default_Redirect", 99, "../checkout/checkout1.php");
+// Add columns
+$ins_CreativePotential->setTable("CreativePotential");
+$ins_CreativePotential->addColumn("userkey", "NUMERIC_TYPE", "POST", "userkey", "{SESSION.log_userkey}");
+$ins_CreativePotential->addColumn("ldmakey", "NUMERIC_TYPE", "POST", "ldmakey", "{GET.ldmakey}");
+$ins_CreativePotential->addColumn("cscore", "NUMERIC_TYPE", "VALUE", "{SESSION.cscore}");
+$ins_CreativePotential->addColumn("profession", "STRING_TYPE", "POST", "profession");
+$ins_CreativePotential->addColumn("yrsprofession", "NUMERIC_TYPE", "POST", "yrsprofession");
+$ins_CreativePotential->addColumn("otherprofession", "STRING_TYPE", "POST", "otherprofession");
+$ins_CreativePotential->addColumn("undergradmajor", "STRING_TYPE", "POST", "undergradmajor");
+$ins_CreativePotential->addColumn("gradmajor", "STRING_TYPE", "POST", "gradmajor");
+$ins_CreativePotential->addColumn("othermajor", "STRING_TYPE", "POST", "othermajor");
+$ins_CreativePotential->addColumn("expertise1", "STRING_TYPE", "POST", "expertise1");
+$ins_CreativePotential->addColumn("expertise1years", "STRING_TYPE", "POST", "expertise1years");
+$ins_CreativePotential->addColumn("expertise2", "STRING_TYPE", "POST", "expertise2");
+$ins_CreativePotential->addColumn("expertise2years", "STRING_TYPE", "POST", "expertise2years");
+$ins_CreativePotential->addColumn("expertise3", "STRING_TYPE", "POST", "expertise3");
+$ins_CreativePotential->addColumn("expertise3years", "NUMERIC_TYPE", "POST", "expertise3years");
+$ins_CreativePotential->addColumn("workcollab", "NUMERIC_TYPE", "POST", "workcollab");
+$ins_CreativePotential->addColumn("probsolvoften", "NUMERIC_TYPE", "POST", "probsolvoften");
+$ins_CreativePotential->addColumn("sparetimelearn", "NUMERIC_TYPE", "POST", "sparetimelearn");
+$ins_CreativePotential->addColumn("manyinterests", "NUMERIC_TYPE", "POST", "manyinterests");
+$ins_CreativePotential->addColumn("thrillchallenge", "NUMERIC_TYPE", "POST", "thrillchallenge");
+$ins_CreativePotential->addColumn("expert1", "NUMERIC_TYPE", "POST", "expert1");
+$ins_CreativePotential->addColumn("fieldperspect", "NUMERIC_TYPE", "POST", "fieldperspect");
+$ins_CreativePotential->addColumn("passionate", "NUMERIC_TYPE", "POST", "passionate");
+$ins_CreativePotential->addColumn("illstructured", "NUMERIC_TYPE", "POST", "illstructured");
+$ins_CreativePotential->addColumn("noticepeople", "NUMERIC_TYPE", "POST", "noticepeople");
+$ins_CreativePotential->addColumn("expert2", "NUMERIC_TYPE", "POST", "expert2");
+$ins_CreativePotential->addColumn("understandpersp", "NUMERIC_TYPE", "POST", "understandpersp");
+$ins_CreativePotential->addColumn("outsideself", "NUMERIC_TYPE", "POST", "outsideself");
+$ins_CreativePotential->addColumn("prefercollab", "NUMERIC_TYPE", "POST", "prefercollab");
+$ins_CreativePotential->addColumn("manyhobbies", "NUMERIC_TYPE", "POST", "manyhobbies");
+$ins_CreativePotential->addColumn("overlapperspec", "NUMERIC_TYPE", "POST", "overlapperspec");
+$ins_CreativePotential->addColumn("excellencetime", "NUMERIC_TYPE", "POST", "excellencetime");
+$ins_CreativePotential->addColumn("learnwhatever", "NUMERIC_TYPE", "POST", "learnwhatever");
+$ins_CreativePotential->addColumn("transferskills", "NUMERIC_TYPE", "POST", "transferskills");
+$ins_CreativePotential->addColumn("wronglearn", "NUMERIC_TYPE", "POST", "wronglearn");
+$ins_CreativePotential->addColumn("newanticipation", "NUMERIC_TYPE", "POST", "newanticipation");
+$ins_CreativePotential->addColumn("flow", "NUMERIC_TYPE", "POST", "flow");
+$ins_CreativePotential->addColumn("varietysources", "NUMERIC_TYPE", "POST", "varietysources");
+$ins_CreativePotential->addColumn("newsolution", "NUMERIC_TYPE", "POST", "newsolution");
+$ins_CreativePotential->addColumn("manycultures", "NUMERIC_TYPE", "POST", "manycultures");
+$ins_CreativePotential->addColumn("questioning", "NUMERIC_TYPE", "POST", "questioning");
+$ins_CreativePotential->addColumn("comments", "STRING_TYPE", "POST", "comments");
+$ins_CreativePotential->addColumn("mostcreative1", "STRING_TYPE", "POST", "mostcreative1");
+$ins_CreativePotential->addColumn("mostcreative2", "STRING_TYPE", "POST", "mostcreative2");
+$ins_CreativePotential->addColumn("mostcreative3", "STRING_TYPE", "POST", "mostcreative3");
+$ins_CreativePotential->addColumn("fineartcreative", "NUMERIC_TYPE", "POST", "fineartcreative");
+$ins_CreativePotential->addColumn("probsolvecreative", "NUMERIC_TYPE", "POST", "probsolvecreative");
+$ins_CreativePotential->addColumn("everydaycreative", "NUMERIC_TYPE", "POST", "everydaycreative");
+$ins_CreativePotential->addColumn("socialcreative", "NUMERIC_TYPE", "POST", "socialcreative");
+$ins_CreativePotential->addColumn("imaginative", "NUMERIC_TYPE", "POST", "imaginative");
+$ins_CreativePotential->addColumn("inventive", "NUMERIC_TYPE", "POST", "inventive");
+$ins_CreativePotential->setPrimaryKey("creativitykey", "NUMERIC_TYPE");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsCreativePotential = $tNGs->getRecordset("CreativePotential");
+$row_rsCreativePotential = mysql_fetch_assoc($rsCreativePotential);
+$totalRows_rsCreativePotential = mysql_num_rows($rsCreativePotential);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateldma2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Creative potential survey</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #FFF9F3;
+	background-image: url(/images/skin/LDMAcontainer2.jpg);
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LDMAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 3;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 0px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+	background-image: url(/images/skin/LDMAmenu4.jpg);
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/LDMAfooter2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #menu1 div {
+	color: #FFE1D0;
+}
+.twoColFixRtHdr #container #menu1 #MenuBar2 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" --><?php echo $tNGs->displayValidationRules();?>
+        <td valign="top"><h1>CREATIVITY SECTION (PAGE 9 OF 9)</h1>
+          <p>Your responses to this section will allow us to evaluate your creative potential and provide targeted suggestions designed to enhance your workplace creativity.</p>
+&nbsp;
+        <?php
+	echo $tNGs->getErrorMsg();
+?>
+<form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+            <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+              <tr>
+                <td width="326" class="KT_th"><label for="profession">Current profession</label></td>
+                <td width="407"><input type="text" name="profession" id="profession" value="<?php echo KT_escapeAttribute($row_rsCreativePotential['profession']); ?>" size="43" />
+                    <?php echo $tNGs->displayFieldHint("profession");?> <?php echo $tNGs->displayFieldError("CreativePotential", "profession"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="yrsprofession">Years in your current profession</label></td>
+                <td><input type="text" name="yrsprofession" id="yrsprofession" value="<?php echo KT_escapeAttribute($row_rsCreativePotential['yrsprofession']); ?>" size="3" />
+                    <?php echo $tNGs->displayFieldHint("yrsprofession");?> <?php echo $tNGs->displayFieldError("CreativePotential", "yrsprofession"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="otherprofession">Previous profession(s)</label></td>
+                <td><textarea name="otherprofession" cols="43" rows="2" id="otherprofession"><?php echo KT_escapeAttribute($row_rsCreativePotential['otherprofession']); ?></textarea>
+                    <?php echo $tNGs->displayFieldHint("otherprofession");?> <?php echo $tNGs->displayFieldError("CreativePotential", "otherprofession"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="undergradmajor">Undergraduate major</label></td>
+                <td><input type="text" name="undergradmajor" id="undergradmajor" value="<?php echo KT_escapeAttribute($row_rsCreativePotential['undergradmajor']); ?>" size="43" />
+                    <?php echo $tNGs->displayFieldHint("undergradmajor");?> <?php echo $tNGs->displayFieldError("CreativePotential", "undergradmajor"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="gradmajor">Graduate major</label></td>
+                <td><input type="text" name="gradmajor" id="gradmajor" value="<?php echo KT_escapeAttribute($row_rsCreativePotential['gradmajor']); ?>" size="43" />
+                    <?php echo $tNGs->displayFieldHint("gradmajor");?> <?php echo $tNGs->displayFieldError("CreativePotential", "gradmajor"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="othermajor">Other graduate major or minor</label></td>
+                <td><input type="text" name="othermajor" id="othermajor" value="<?php echo KT_escapeAttribute($row_rsCreativePotential['othermajor']); ?>" size="43" />
+                    <?php echo $tNGs->displayFieldHint("othermajor");?> <?php echo $tNGs->displayFieldError("CreativePotential", "othermajor"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="expertise1">Your primary area of expertise</label></td>
+                <td><input type="text" name="expertise1" id="expertise1" value="<?php echo KT_escapeAttribute($row_rsCreativePotential['expertise1']); ?>" size="43" />
+                    <?php echo $tNGs->displayFieldHint("expertise1");?> <?php echo $tNGs->displayFieldError("CreativePotential", "expertise1"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="expertise1years">Number of years studying + practicing<br />
+                in this area</label></td>
+                <td><input type="text" name="expertise1years" id="expertise1years" value="<?php echo KT_escapeAttribute($row_rsCreativePotential['expertise1years']); ?>" size="3" />
+                    <?php echo $tNGs->displayFieldHint("expertise1years");?> <?php echo $tNGs->displayFieldError("CreativePotential", "expertise1years"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="expertise2">Your secondary area of expertise (if applicable)</label></td>
+                <td><input type="text" name="expertise2" id="expertise2" value="<?php echo KT_escapeAttribute($row_rsCreativePotential['expertise2']); ?>" size="43" />
+                    <?php echo $tNGs->displayFieldHint("expertise2");?> <?php echo $tNGs->displayFieldError("CreativePotential", "expertise2"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="expertise2years">Number of years studying + practicing<br />
+in this area (if applicable)</label></td>
+                <td><input type="text" name="expertise2years" id="expertise2years" value="<?php echo KT_escapeAttribute($row_rsCreativePotential['expertise2years']); ?>" size="3" />
+                    <?php echo $tNGs->displayFieldHint("expertise2years");?> <?php echo $tNGs->displayFieldError("CreativePotential", "expertise2years"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="expertise3">Your third area of expertise <br />
+(if applicable)</label></td>
+                <td><input type="text" name="expertise3" id="expertise3" value="<?php echo KT_escapeAttribute($row_rsCreativePotential['expertise3']); ?>" size="43" />
+                    <?php echo $tNGs->displayFieldHint("expertise3");?> <?php echo $tNGs->displayFieldError("CreativePotential", "expertise3"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="expertise3years">Number of years studying + practicing in this area (if applicable)</label></td>
+                <td><input type="text" name="expertise3years" id="expertise3years" value="<?php echo KT_escapeAttribute($row_rsCreativePotential['expertise3years']); ?>" size="3" />
+                    <?php echo $tNGs->displayFieldHint("expertise3years");?> <?php echo $tNGs->displayFieldError("CreativePotential", "expertise3years"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="workcollab">I often work collaboratively with others to solve challenging problems.</label>
+                </td>
+        <td><select name="workcollab" id="workcollab">
+                    <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['workcollab']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+<?php
+do {  
+?><option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['workcollab']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option><?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "workcollab"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="probsolvoften">My field of work involves frequent problem solving.</label></td>
+                <td><select name="probsolvoften" id="probsolvoften">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['probsolvoften']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['probsolvoften']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "probsolvoften"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="sparetimelearn">I spend much of my “spare” time learning new things.</label></td>
+                <td><select name="sparetimelearn" id="sparetimelearn">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['sparetimelearn']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['sparetimelearn']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "sparetimelearn"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="manyinterests">I have so many interests that I often have a hard time choosing what to learn about next.</label></td>
+                <td><select name="manyinterests" id="manyinterests">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['manyinterests']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['manyinterests']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "manyinterests"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="thrillchallenge">When I encounter a challenging problem, I feel a thrill of anticipation.</label></td>
+                <td><select name="thrillchallenge" id="thrillchallenge">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['thrillchallenge']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['thrillchallenge']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "thrillchallenge"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="expert1">I am considered an expert in my (main) field.</label></td>
+                <td><select name="expert1" id="expert1">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['expert1']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['expert1']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "expert1"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="fieldperspect">I have a good understanding of most of the major perspectives in my field.</label></td>
+                <td><select name="fieldperspect" id="fieldperspect">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['fieldperspect']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['fieldperspect']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "fieldperspect"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="passionate">I tend to become passionate about the things I do.</label></td>
+                <td><select name="passionate" id="passionate">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['passionate']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['passionate']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "passionate"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="illstructured">Many of the issues/problems I encounter in my work do not have straightforward solutions.</label></td>
+                <td><select name="illstructured" id="illstructured">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['illstructured']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['illstructured']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "illstructured"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="noticepeople">I often find myself noticing what people around me are doing and saying.</label></td>
+                <td><select name="noticepeople" id="noticepeople">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['noticepeople']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['noticepeople']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "noticepeople"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="expert2">I am considered an expert in at least two very different fields (two or more of the following: philosophy, math or computation, a hard science, a social science [psychology, sociology], a physical [kinesthetic] discipline, one of the arts [painting, creative writing, music, etc], a social discipline [political science, history], a technical discipline [engineering, programming], a spiritual discipline).</label></td>
+                <td><select name="expert2" id="expert2">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['expert2']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['expert2']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "expert2"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="understandpersp">I strive to understand another's perspective well enough that he or she agrees that I understand it.</label></td>
+                <td><select name="understandpersp" id="understandpersp">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['understandpersp']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['understandpersp']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "understandpersp"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="outsideself">I like to get outside of myself and look at what other people are thinking and doing.</label></td>
+                <td><select name="outsideself" id="outsideself">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['outsideself']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['outsideself']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+                  <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "outsideself"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="prefercollab">When I’m working on a challenging problem, I prefer to work collaboratively with a team representing different areas of expertise.</label></td>
+                <td><select name="prefercollab" id="prefercollab">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['prefercollab']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['prefercollab']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "outsideself"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="manyhobbies">I have several hobbies.</label></td>
+                <td><select name="manyhobbies" id="manyhobbies">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['manyhobbies']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['manyhobbies']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "manyhobbies"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="overlapperspec">In addition to looking at differences between perspectives, I look for the overlap.</label></td>
+                <td><select name="overlapperspec" id="overlapperspec">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['overlapperspec']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['overlapperspec']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "overlapperspec"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="excellencetime">I try to achieve excellence in everything I do—even when I know that getting there may take years.</label></td>
+                <td><select name="excellencetime" id="excellencetime">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['excellencetime']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['excellencetime']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "excellencetime"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="learnwhatever">I’ll learn whatever I need to learn in order to reach a goal.</label></td>
+                <td><select name="learnwhatever" id="learnwhatever">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['learnwhatever']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['learnwhatever']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "learnwhatever"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="transferskills">I frequently use the skills I learn in one area in a completely different area.</label></td>
+                <td><select name="transferskills" id="transferskills">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['transferskills']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['transferskills']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "transferskills"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="wronglearn">When I find out I’ve been wrong, I learn what I need to learn in order to do better next time.</label></td>
+                <td><select name="wronglearn" id="wronglearn">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['wronglearn']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['wronglearn']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "wronglearn"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="newanticipation">When I find myself in an unfamiliar situation in which my well-being is not threatened, I usually feel a positive sense of anticipation.</label></td>
+                <td><select name="newanticipation" id="newanticipation">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['newanticipation']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['newanticipation']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "newanticipation"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="flow">I often lose track of time when I’m working on a problem.</label></td>
+                <td><select name="flow" id="flow">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['flow']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['flow']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "flow"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="varietysources">I frequently consult with a variety of expert sources before making important decisions.</label></td>
+                <td><select name="varietysources" id="varietysources">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['varietysources']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['varietysources']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "varietysources"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="newsolution">I really enjoy the challenge of finding a different way to solve a problem.</label></td>
+                <td><select name="newsolution" id="newsolution">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['newsolution']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['newsolution']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "newsolution"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="manycultures">My lifestyle brings me into contact with people from many different cultures.</label></td>
+                <td><select name="manycultures" id="manycultures">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['manycultures']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['manycultures']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+<?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "manycultures"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="questioning">I often find myself questioning “standard” ways of doing things.</label></td>
+                <td><select name="questioning" id="questioning">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['questioning']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings['Ratings4key']?>"<?php if (!(strcmp($row_rsRatings['Ratings4key'], $row_rsCreativePotential['questioning']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['Rating']?></option>
+                  <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+                  </select>
+                    <?php echo $tNGs->displayFieldError("CreativePotential", "questioning"); ?> </td>
+              </tr>
+              <tr>
+                <td colspan="2" class="KT_th"><strong>The following questions are about your own perspective on your creativity.</strong></td>
+              </tr>
+              <tr>
+                <td rowspan="3" class="KT_th"><label for="mostcreative1">Name up to three areas in which you think of yourself as creative (one area per field, please).</label></td>
+                <td><input type="text" name="mostcreative1" id="mostcreative1" value="<?php echo $row_rsCreativePotential['mostcreative1']; ?>" size="43" />
+                <?php echo $tNGs->displayFieldHint("mostcreative1");?> <?php echo $tNGs->displayFieldError("CreativePotential", "mostcreative1"); ?></td>
+              </tr>
+              <tr>
+                <td><input type="text" name="mostcreative2" id="mostcreative2" value="<?php echo $row_rsCreativePotential['mostcreative2']; ?>" size="43" />
+                <?php echo $tNGs->displayFieldHint("mostcreative2");?> <?php echo $tNGs->displayFieldError("CreativePotential", "mostcreative2"); ?></td>
+              </tr>
+              <tr>
+                <td><input type="text" name="mostcreative3" id="mostcreative3" value="<?php echo $row_rsCreativePotential['mostcreative3']; ?>" size="43" />
+                <?php echo $tNGs->displayFieldHint("mostcreative3");?> <?php echo $tNGs->displayFieldError("CreativePotential", "mostcreative3"); ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="fineartcreative">I consider myself to be artistically creative.</label></td>
+                <td><select name="fineartcreative" id="fineartcreative">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['fineartcreative']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatingsDegree['Ratings4key']?>"<?php if (!(strcmp($row_rsRatingsDegree['Ratings4key'], $row_rsCreativePotential['fineartcreative']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatingsDegree['Rating']?></option>
+                  <?php
+} while ($row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree));
+  $rows = mysql_num_rows($rsRatingsDegree);
+  if($rows > 0) {
+      mysql_data_seek($rsRatingsDegree, 0);
+	  $row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("CreativePotential", "fineartcreative"); ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="probsolvecreative">I consider myself to be a creative problem solver.</label></td>
+                <td><select name="probsolvecreative" id="probsolvecreative">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['probsolvecreative']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatingsDegree['Ratings4key']?>"<?php if (!(strcmp($row_rsRatingsDegree['Ratings4key'], $row_rsCreativePotential['probsolvecreative']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatingsDegree['Rating']?></option>
+                  <?php
+} while ($row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree));
+  $rows = mysql_num_rows($rsRatingsDegree);
+  if($rows > 0) {
+      mysql_data_seek($rsRatingsDegree, 0);
+	  $row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("CreativePotential", "probsolvecreative"); ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="everydaycreative">I consider myself to be creative in the way I live my life.</label></td>
+                <td><select name="everydaycreative" id="everydaycreative">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['everydaycreative']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatingsDegree['Ratings4key']?>"<?php if (!(strcmp($row_rsRatingsDegree['Ratings4key'], $row_rsCreativePotential['everydaycreative']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatingsDegree['Rating']?></option>
+                  <?php
+} while ($row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree));
+  $rows = mysql_num_rows($rsRatingsDegree);
+  if($rows > 0) {
+      mysql_data_seek($rsRatingsDegree, 0);
+	  $row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree);
+  }
+?>
+                </select>
+                  <?php echo $tNGs->displayFieldError("CreativePotential", "everydaycreative"); ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="socialcreative">I consider myself to be creative in social situations.</label></td>
+                <td><select name="socialcreative" id="socialcreative">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['socialcreative']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatingsDegree['Ratings4key']?>"<?php if (!(strcmp($row_rsRatingsDegree['Ratings4key'], $row_rsCreativePotential['socialcreative']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatingsDegree['Rating']?></option>
+                  <?php
+} while ($row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree));
+  $rows = mysql_num_rows($rsRatingsDegree);
+  if($rows > 0) {
+      mysql_data_seek($rsRatingsDegree, 0);
+	  $row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("CreativePotential", "socialcreative"); ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="imaginative">I consider myself to be imaginative.</label></td>
+                <td><select name="imaginative" id="imaginative">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['imaginative']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatingsDegree['Ratings4key']?>"<?php if (!(strcmp($row_rsRatingsDegree['Ratings4key'], $row_rsCreativePotential['imaginative']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatingsDegree['Rating']?></option>
+                  <?php
+} while ($row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree));
+  $rows = mysql_num_rows($rsRatingsDegree);
+  if($rows > 0) {
+      mysql_data_seek($rsRatingsDegree, 0);
+	  $row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("CreativePotential", "imaginative"); ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="inventive">I consider myself to be inventive.</label></td>
+                <td><select name="inventive" id="inventive">
+                  <option value="" <?php if (!(strcmp("", $row_rsCreativePotential['inventive']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatingsDegree['Ratings4key']?>"<?php if (!(strcmp($row_rsRatingsDegree['Ratings4key'], $row_rsCreativePotential['inventive']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatingsDegree['Rating']?></option>
+                  <?php
+} while ($row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree));
+  $rows = mysql_num_rows($rsRatingsDegree);
+  if($rows > 0) {
+      mysql_data_seek($rsRatingsDegree, 0);
+	  $row_rsRatingsDegree = mysql_fetch_assoc($rsRatingsDegree);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("CreativePotential", "inventive"); ?></td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="comments">Please share your comments or observations.</label></td>
+                <td><textarea name="comments" cols="43" rows="5" id="comments"><?php echo KT_escapeAttribute($row_rsCreativePotential['comments']); ?></textarea>
+                    <?php echo $tNGs->displayFieldHint("comments");?> <?php echo $tNGs->displayFieldError("CreativePotential", "comments"); ?> </td>
+              </tr>
+              <tr class="KT_buttons">
+                <td colspan="2"><input type="submit" name="KT_Insert1" id="KT_Insert1" value="SUBMIT & FINISH" />
+                </td>
+              </tr>
+            </table>
+      <input type="hidden" name="userkey" id="userkey" value="<?php echo KT_escapeAttribute($row_rsCreativePotential['userkey']); ?>" />
+      <input type="hidden" name="ldmakey" id="ldmakey" value="<?php echo $_GET['ldmakey']; ?>" />
+          <p>&nbsp;</p>
+          </p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsEdu);
+
+mysql_free_result($rsEthnicity);
+
+mysql_free_result($rsCountry);
+
+mysql_free_result($rsRatings);
+
+mysql_free_result($rsRatingsDegree);
+?>

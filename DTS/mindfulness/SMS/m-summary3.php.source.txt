@@ -1,0 +1,73 @@
+<?php
+ob_start();
+?>
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulness = "SELECT Mindfulness.mindfulkey, Mindfulness.sexkey, Mindfulness.age, Mindfulness.edukey, Mindfulness.ethnicitykey, Mindfulness.timekey, Mindfulness.sms09sum, Mindfulness.`timestamp`, Sex.sex, Sex.sexkey, EduAttainment.EduLevel, EduAttainment.edukey, Ethnicity.Ethnicity, Ethnicity.ethnicitykey, `Time`.timekey, `Time`.`time`, Registrants.user_name, Registrants.userkey, Mindfulness.userkey, Mindfulness.emochange, Mindfulness.emocause, Mindfulness.noticenature, Mindfulness.notcaughtup, Mindfulness.thankful, Mindfulness.flow, Mindfulness.everydayjoy, Mindfulness.lessstress, Mindfulness.listenpeople, Mindfulness.examinelife, Mindfulness.moreinsight, Mindfulness.morecontrol, Mindfulness.morepositive, Mindfulness.newhappiness, Mindfulness.touch, Mindfulness.payattention, Mindfulness.newway, Mindfulness.peaceful, Mindfulness.smell, Mindfulness.objective, Mindfulness.sensation, Mindfulness.attentive, Mindfulness.firsttime, Mindfulness.changes, Mindfulness.attention, Mindfulness.participate, Mindfulness.ordinary, Mindfulness.wander, Mindfulness.equanimity, Mindfulness.newthings, Mindfulness.angerhurt, Mindfulness.compassion, Mindfulness.sand FROM Mindfulness , Sex, EduAttainment, Ethnicity, `Time`, Registrants WHERE Sex.sexkey = Mindfulness.sexkey AND Mindfulness.edukey = EduAttainment.edukey AND Mindfulness.ethnicitykey = Ethnicity.ethnicitykey AND Mindfulness.timekey = `Time`.timekey AND Mindfulness.userkey = Registrants.userkey";
+$rsMindfulness = mysql_query($query_rsMindfulness, $Assessment) or die(mysql_error());
+$row_rsMindfulness = mysql_fetch_assoc($rsMindfulness);
+$totalRows_rsMindfulness = mysql_num_rows($rsMindfulness);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+<?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=smsall.csv\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+<?php do { ?>
+<?php echo $row_rsMindfulness['mindfulkey']; ?>,<?php echo $row_rsMindfulness['user_name']; ?>,<?php echo $row_rsMindfulness['time']; ?>,<?php echo $row_rsMindfulness['sms08sum']; ?>, <?php echo $row_rsMindfulness['age']; ?>,<?php echo $row_rsMindfulness['sex']; ?>,<?php echo $row_rsMindfulness['EduLevel']; ?>,<?php echo $row_rsMindfulness['Ethnicity']; ?>,<?php echo $row_rsMindfulness['emochange']; ?>,<?php echo $row_rsMindfulness['noticenature']; ?>,<?php echo $row_rsMindfulness['notcaughtup']; ?>,<?php echo $row_rsMindfulness['thankful']; ?>,<?php echo $row_rsMindfulness['flow']; ?>,<?php echo $row_rsMindfulness['everydayjoy']; ?>,<?php echo $row_rsMindfulness['lessstress']; ?>,<?php echo $row_rsMindfulness['listenpeople']; ?>,<?php echo $row_rsMindfulness['examinelife']; ?>,<?php echo $row_rsMindfulness['moreinsight']; ?>,<?php echo $row_rsMindfulness['morecontrol']; ?>,<?php echo $row_rsMindfulness['morepositive']; ?>,<?php echo $row_rsMindfulness['newhappiness']; ?>,<?php echo $row_rsMindfulness['touch']; ?>,<?php echo $row_rsMindfulness['payattention']; ?>,<?php echo $row_rsMindfulness['newway']; ?>,<?php echo $row_rsMindfulness['peaceful']; ?>,<?php echo $row_rsMindfulness['smell']; ?>,<?php echo $row_rsMindfulness['objective']; ?>,<?php echo $row_rsMindfulness['sensation']; ?>,<?php echo $row_rsMindfulness['attentive']; ?>,<?php echo $row_rsMindfulness['firsttime']; ?>,<?php echo $row_rsMindfulness['changes']; ?>,<?php echo $row_rsMindfulness['attention']; ?>,<?php echo $row_rsMindfulness['participate']; ?>,<?php echo $row_rsMindfulness['ordinary']; ?>,<?php echo $row_rsMindfulness['wander']; ?>,<?php echo $row_rsMindfulness['equanimity']; ?>,<?php echo $row_rsMindfulness['newthings']; ?>,<?php echo $row_rsMindfulness['angerhurt']; ?>,<?php echo $row_rsMindfulness['compassion']; ?>,<?php echo $row_rsMindfulness['sand']; ?>,
+  <?php } while ($row_rsMindfulness = mysql_fetch_assoc($rsMindfulness)); ?>
+<?
+exit();
+?>
+</body>
+</html>
+<?php
+mysql_free_result($rsMindfulness);
+?>

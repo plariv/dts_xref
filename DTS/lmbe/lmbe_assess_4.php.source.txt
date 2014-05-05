@@ -1,0 +1,376 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><?php require_once('../Connections/Assessment.php'); ?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+
+// initialize $status empty to avoid errors
+$status = "";
+
+
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_insert"])) && ($_POST["MM_insert"] == "form1")) {
+	
+	$updateSQL = sprintf("UPDATE lmbe SET theorypractice = %s, referencelist = %s WHERE lmbekey = %s",
+                       GetSQLValueString($_POST['theorypractice'], "text"),
+                       //GetSQLValueString($_POST['advice'], "text"),
+                       GetSQLValueString($_POST['referencelist'], "text"),
+                       //GetSQLValueString($_POST['comments'], "text"),
+											 GetSQLValueString($_GET['lmbekey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+	// Only proceed to the next page if the "SAVE MY WORK" button was NOT clicked.
+	if (!isset($_POST['save_changes'])) {
+		if (strlen($_POST['theorypractice']) >= 1800) {
+		
+			$insertGoTo = "lmbe_assess_5.php";
+			if (isset($_SERVER['QUERY_STRING'])) {
+				$insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+				$insertGoTo .= $_SERVER['QUERY_STRING'];
+			}
+			header(sprintf("Location: %s", $insertGoTo));
+		
+		} else {
+			// if minimum # of chars is not met, simply go on and build the rest of the page - with a message explaining to the user why they can't go on.
+			$status = "under min chars";
+		}
+	}
+}
+
+
+
+
+
+
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+$colname_rsLmbeData = "-1";
+if (isset($_GET['lmbekey'])) {
+  $colname_rsLmbeData = $_GET['lmbekey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLmbeData = sprintf("SELECT theorypractice, referencelist FROM lmbe WHERE lmbekey = %s", GetSQLValueString($colname_rsLmbeData, "int"));
+$rsLmbeData = mysql_query($query_rsLmbeData, $Assessment) or die(mysql_error());
+$row_rsLmbeData = mysql_fetch_assoc($rsLmbeData);
+$totalRows_rsLmbeData = mysql_num_rows($rsLmbeData);
+
+
+
+
+include("../includes/general_custom_functions.php");
+
+
+
+
+
+?>
+
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mbe1.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>LMBE: Essay 4</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextarea.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #BFDADF;
+	background-image: url(../images/skin/LIMAbackground.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F5FBFB;
+	background-image: url(/images/skin/MBEbackground.gif);
+	position: relative;
+} 
+
+.twoColFixRtHdr #header {
+	height: 160px;
+	margin-top: 0;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	background-image: url(/images/skin/MBEheader.gif);
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #spacer1 {
+	height: 100px;
+	width: 720px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	float: right;
+} 
+.twoColFixRtHdr #menu1 {
+	width: 720px;
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	margin-top: 0;
+	float: right;
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #B9D4DD;
+	background-image: url(/images/skin/MBEmenu.gif);
+	} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 0;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #033;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #033;
+}
+.twoColFixRtHdr #container #menu1 div {
+	color: #0D517F;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #0D517F;
+	line-height: 19px;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a:hover {
+	color: #033;
+}
+.twoColFixRtHdr #container #mainContent h1 {
+	margin-top: 10px;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <div id="spacer1">
+    <div align="right">
+      <!-- end #spacer1 --></div>
+  </div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <!-- end #header --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>QUESTION 4 (OF 6): THEORY AND PRACTICE</h1>
+    <div id="CollapsiblePanel1" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab"><span class="redbold">CLICK HERE FOR IMPORTANT INSTRUCTIONS</span></div>
+      <div class="CollapsiblePanelContent" style="display: block">
+        <p>Please carefully read all instructions before beginning this assessment. </p>
+        <p>First, you should also be well acquainted with the case study materials and relevant course readings, because we expect you to refer to these  in your answers. </p>
+        <p>It is important that your answers are succinct and well supported. They should open with a few sentences that state your judgment, followed by several sentences that  systematically (and thoroughly) explain the reasoning that brought you to this judgment. Feel free build your argument by cross-referencing  responses to different questions. For example, in question 2 you may reference a point you made response to question 1. The key thing here is that you write as clearly as possible, making your judgments explicit and providing clear arguments.</p>
+        <p>Please use references from class readings and cite them in APA format. (There is a field for your reference list following the essay fields.) When referencing the case study material provided on the intro page under &quot;research&quot;, please refer to the different pieces as follows: <span class="emphasis">company description</span>; <span class="emphasis">product description</span>; <span class="emphasis">Science article 1</span>; <span class="emphasis">Science article 2</span>;<span class="emphasis"> NYT article</span>; <span class="emphasis">government document</span>; <span class="emphasis">educator report</span>.</p>
+        <p>You can complete this assignment over several sessions. When you wish to leave a page you are working on, simply save your work and log out. When you are ready to return, log in, click on the LMBE icon, and continue.</p>
+        <p>Each essay question has an approximately <span class="emphasis">1800</span>-character minimum and <span class="emphasis">3000</span>-character maximum. </p>
+        <p><span class="redbold">Important: </span>If you choose to write your responses in a word processor, please save them in <span class="emphasis">text only</span> format before cutting and pasting them into the essay fields. If you do not do this, your work may be difficult to read and score.</p>
+        <p>When you finish reading this, you can close this panel by clicking its title, above.</p>
+      </div>
+    </div>
+    
+    <form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+    
+    <table align="center">
+      <tr valign="baseline">
+        <td>What are the key issues implicated here regarding theory and practice? That is, what are the claims and counter claims and where do you stand.<span class="red">*</span></td>
+        <td><span id="sprytextarea1">
+        <textarea name="theorypractice" cols="60" rows="18" class="textarea240_500"><?php echo $row_rsLmbeData['theorypractice']; ?></textarea>
+        <span id="countsprytextarea1">&nbsp;</span><span class="textareaMaxCharsMsg">Exceeded maximum number of characters.</span></span></td>
+      </tr>
+      <tr valign="baseline">
+        <td>References<span class="red">*</span></td>
+        <td><span id="sprytextarea6">
+        <textarea name="referencelist" cols="60" rows="10" class="textarea080_500"><?php echo $row_rsLmbeData['referencelist']; ?></textarea>
+        <span id="countsprytextarea6">&nbsp;</span><span class="textareaMaxCharsMsg">Exceeded maximum number of characters.</span><span class="textareaRequiredMsg"><br />
+          References are required. See the instructions above for explanation.</span></span></td>
+      </tr>
+      
+      <?php if ($status == "under min chars") { ?>
+    <tr>
+      <td colspan="2"><p class="red">The minimum number of characters has not been met. Your progress is saved when you click on either "SAVE" button, but you cannot go on to the next page until you have fully explained your answer. We find that answers that are shorter than 1800 characters often do not contain adequate explanations.</p></td></tr><?php } ?>
+      
+      <tr valign="baseline">
+        <td height="25"><?php contactUsForHelp(); ?></td>
+        <td><div align="right">
+          <input type="submit" name="save_changes" id="save_changes" value="SAVE YOUR WORK" />&nbsp; &nbsp; &nbsp; <input type="submit" value="SUBMIT AND CONTINUE TO PAGE 5" />
+        </div></td>
+      </tr>
+    </table>
+    
+    <input type="hidden" name="form" value="1" />
+    <input type="hidden" name="MM_insert" value="form1" />
+    
+    </form>
+
+
+    <p>
+      <script type="text/javascript">
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {maxChars:3000, counterId:"countsprytextarea1", counterType:"chars_count", validateOn:["blur", "change"], isRequired:false});
+var sprytextarea6 = new Spry.Widget.ValidationTextarea("sprytextarea6", {validateOn:["blur", "change"], maxChars:3000, counterId:"countsprytextarea6", counterType:"chars_count"});
+      </script>
+    </p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/lmbe/lmbe_intro.php">LMBE instructions</a></li>
+<li><a href="/lmbe/lmbe_assess_start.php">LMBE assessment</a></li>
+<li><a href="/lmbe/indiv_selectlmbe.php">LMBE report</a></li>
+<li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer -->
+  <!-- end #container -->
+</div>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrants);
+
+mysql_free_result($rsLmbeData);
+
+mysql_free_result($rsRegistrant);
+?>

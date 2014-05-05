@@ -1,0 +1,493 @@
+<?php 
+include_once ("../includes/dts_functions.php");
+
+// allow anonymous users 
+$anonymous = false;
+if (isset($_GET['anonymous']) AND $_GET['anonymous'] == "yes") { 
+	$userkey = null;
+	$anonymous = true;
+} else {
+	if (!WA_Auth_RulePasses("Logged in to registrants")) { 
+		WA_Auth_RestrictAccess("../security/logIn.php"); 
+	}
+	$userkey = $_SESSION['log_userkey'];
+}
+$admin_notes = "";	// to tag anonymous surveys
+if (isset($_GET['notes'])) { $admin_notes = $_GET['notes']; }
+
+// delete an incomplete survey record
+if (isset($_GET['delete']) AND $userkey > 0) { 
+	$sql_delete = sprintf("DELETE FROM la_survey_data WHERE lasurveykey = %s AND userkey = %s AND completed = 0",
+		SQLstr($_GET['delete'], 'int'),
+		SQLstr($userkey, 'int'));
+	$result = mysql_query($sql_delete) or die(mysql_error());
+	header("Location: ../landing.php"); exit();
+}
+
+
+// if user hasn't chosen an instrument_id, force them to do so
+if (isset($_GET['instrument_id'])) { $_SESSION['instrument_id'] = $_GET['instrument_id']; }
+if (!isset($_SESSION['instrument_id'])) { WA_Auth_RestrictAccess("../select_instrument.php"); }
+// $instrument_id should be "LERA" or "LERA_JOURNAL" when reaching the page, then set to "EE_SURVEY"
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_base = str_replace("_JOURNAL", "", $instrument_id);
+
+// Initializing frequently used variables
+$currentPage = $_SERVER['PHP_SELF'];
+$editFormAction = $currentPage."?".$_SERVER['QUERY_STRING'];
+$lakey = 0;	// $lakey is structurally optional
+if (isset($_GET['lakey'])) { $lakey = $_GET['lakey']; }
+$lasurveykey = 0;	// 
+if (isset($_GET['lasurveykey'])) { $lasurveykey = $_GET['lasurveykey']; }
+$part = 1;	// $part = what 'page' of the survey. Default only 1 page.
+if (isset($_GET['part'])) { $part = $_GET['part']; }
+
+// Arrays of defaults for each instrument
+
+$default_instrument = array(
+	'LERA' => "EE_SURVEY",
+	'LDMA' => "LDMA_360",
+	'SMS' => "SMS",
+	'FOLA' => "FOLA_EXIT"
+);
+$survey_instrument_name = array(
+	'EE_SURVEY' => "Ethical Emotions Survey",
+	'LDMA_360' => "LDMA 360",
+	'LDMA_360_PRE' => "LDMA 360",
+	'SMS' => "Solloway Mindfulness Survey",
+	'CPS' => "Creative Potential Survey",
+	'WS001' => "Lectica Workshop Evaluation",
+	'FOLA_EXIT' => "FOLA Exit Survey"
+);
+
+// select instrument_id based on the array of defaults.
+if (isset($default_instrument[$instrument_id_base])) { 
+	$instrument_id = $default_instrument[$instrument_id_base]; 
+}
+$instrument_id_name = $survey_instrument_name[$instrument_id];
+
+
+
+// IF NO LASURVEYKEY WAS SPECIFIED
+// either look up the lasurveykey for this lakey (there should never be more than one),
+// or insert a new blank la_survey_data row and refresh with that lasurveykey.
+if ($lasurveykey == 0) { 
+	
+	// Look up this lakey to see if a corresponding la_survey_data row is found.
+	$sql_lookup = sprintf("SELECT lasurveykey FROM la_survey_data
+		WHERE lakey = %s AND lakey > 0 AND userkey = %s AND completed = 0", 
+			SQLstr($lakey, 'int'),
+			SQLstr($userkey, 'int'));
+	$rsLookup = mysql_query($sql_lookup);
+	// topher($sql_lookup); topher();
+	
+	if (mysql_num_rows($rsLookup) > 0) {
+		$row_rsLookup = mysql_fetch_assoc($rsLookup);
+		$lasurveykey = $row_rsLookup['lasurveykey'];
+	} else { // if no la_survey_data row exists for this lakey, create blank one and use that lasurveykey.
+		$sql_testtime = sprintf("SELECT test_time FROM la_survey_data 
+			WHERE userkey = %s AND instrument_id = %s ORDER BY test_time DESC LIMIT 1", 
+				SQLstr($userkey, 'int'),
+				SQLstr($instrument_id, 'text'));
+		$rsTestTime = mysql_query($sql_testtime) or die("ERROR looking up this test time. Please contact us.");
+		$row = mysql_fetch_assoc($rsTestTime);
+		$test_time = $row['test_time'] + 1;
+		
+		// topher("CREATE NEW"); topher();
+		$sql_insert = sprintf("INSERT INTO la_survey_data 
+			(lakey, userkey, instrument_id, test_time, date_started) 
+			VALUES (%s, %s, %s, %s, NOW()) ",
+				SQLstr($lakey, 'int'),
+				SQLstr($userkey, 'int'),
+				SQLstr($instrument_id, 'text'),
+				SQLstr($test_time, 'int'));
+		$result = mysql_query($sql_insert);
+		if (!$result) {
+			error_log("ERROR inserting blank la_survey_data record: ".mysql_error());
+			die("The website is having trouble preparing your survey. We apologize for any inconvenience.");
+		}
+		$lasurveykey = mysql_insert_id();
+	}
+	
+	// start over with this lasurveykey in hand
+	$url = "?lasurveykey={$lasurveykey}&lakey={$lakey}&part=1";
+	if ($anonymous) { $url .= "&anonymous=yes"; }
+	if ($admin_notes <> "") { $url .= "&notes={$admin_notes}"; }
+	header("Location: {$url}"); 
+	exit();
+}
+
+
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  
+	// calculate average for this page
+	$stem_values = array();
+	// track whether the user should be allowed to move on to the next page / finish.
+	$missed_selections = 0;
+	$save_stems = ""; // SQL snippet to update all selections
+	
+	// add each potential SELECT item present, to the queue to save
+	for ($i = zeropad(1, 3); $i < 60; $i = zeropad($i+1, 3)) {
+		// if this selection exists, save it
+		if (isset($_POST['stem'.$i])) {
+			$save_stems .= " sd.stem{$i}=".SQLstr($_POST['stem'.$i], "int").", ";
+			if ($_POST['stem'.$i] == "") { $missed_selections ++; }
+			
+			// look up this selection and add it to the queue to average together
+			$sql_stemVal = sprintf("SELECT item_value FROM la_menus WHERE menukey = %s ",
+				SQLstr($_POST['stem'.$i], 'int'));
+			$rsStemVal = mysql_query($sql_stemVal) or die("ERROR calculating average score!");
+			$row_rsStemVal = mysql_fetch_assoc($rsStemVal);
+			$stem_values[] = $row_rsStemVal['item_value'];
+		}
+	}
+	// print_r($stem_values); topher();
+	// add each potential TEXT item present, to the queue to save
+	for ($i = zeropad(1, 2); $i <= 15; $i = zeropad($i+1, 2)) {
+		// if this selection exists, save it
+		if (isset($_POST['text'.$i])) {
+			$save_stems .= sprintf(" sd.text{$i} = %s, ", SQLstr($_POST['text'.$i], 'text'));
+			// if ($_POST['text'.$i] == "") { $missed_selections ++; }
+		}
+	}
+	
+	// calculate average for this page
+	$avg = 0;
+	if (count($stem_values) > 0) {
+		$avg = array_sum($stem_values) / count($stem_values);
+	}
+	$save_avg = sprintf(" sd.result_avg_page%s = %s, ",
+		SQLstr($part, 'int'),
+		SQLstr($avg, 'double')
+		);
+	
+	$save_completed = "";
+	if (!isset($_POST['save_changes']) AND $missed_selections == 0) { 
+		$save_completed .= " sd.completed = 1, sd.date_completed = NOW(), 
+													d.completed = 1,  d.date_completed = NOW(), ";
+		if ($instrument_id == "SMS") { $save_completed .= " d.finalized = 1, "; }
+	}
+	
+	$updateSQL = sprintf("UPDATE la_survey_data sd
+			LEFT JOIN la_data d ON sd.lakey = d.lakey
+		SET {$save_stems} {$save_avg} {$save_completed} sd.test_taker_comments = %s, 
+			sd.admin_notes = %s, sd.last_updated = NOW()
+		WHERE sd.lasurveykey = %s ",
+    	SQLstr((isset($_POST['test_taker_comments']) ? $_POST['test_taker_comments'] : ""), 'text'),
+			SQLstr($_POST['admin_notes'], 'text'),
+			SQLstr($_POST['lasurveykey'], "int"));
+	// if ($instrument_id == "WS001") { die(str_replace("\n", "<br>", $updateSQL)); }
+  $result = mysql_query($updateSQL);
+	if (!$result) { 
+		error_log("ERROR - failed to update la_survey_data for lasurveykey ".$_POST['lasurveykey']);
+		die("We were unable to save your responses. We apologize for the inconvenience.");
+	}
+	
+	// Only go to next page if "SAVE AND NEXT" button was clicked, and if all items selected.
+	if (!isset($_POST['save_changes']) AND $missed_selections == 0) {
+		$url = "?lasurveykey={$lasurveykey}&lakey={$lakey}&part=".($part+1);
+		// $numParts tells us whether to go to the "finished" page or to refresh on this page again.
+		if ($_POST['numparts'] <= $part) { 
+			$url = "assess_thanks.php?lasurveykey={$lasurveykey}&lakey={$lakey}"; 
+		} 
+		if ($anonymous) { $url .= "&anonymous=yes"; }
+		header("Location: ".$url); exit();
+	}
+	
+	
+}
+
+
+
+// fetch survey stems for this part of the survey
+$sql_stems = sprintf("SELECT s.category, s.stem_type, s.stem_menuname, s.stem_code, s.stem_name, s.stem_description
+	FROM la_survey_stems s WHERE s.instrument_id = %s AND s.part = %s
+	ORDER BY s.stem_order, s.stem_code",
+		SQLstr($instrument_id, "text"),
+		SQLstr($part, "int"));
+// topher($sql_stems); 
+$rsStems = mysql_query($sql_stems) or die(mysql_error());
+
+// count # of parts in this survey
+$sql_parts = sprintf("SELECT s.stemkey
+	FROM la_survey_stems s WHERE s.instrument_id = %s 
+	GROUP BY s.part", SQLstr($instrument_id, "text"));
+$rsParts = mysql_query($sql_parts);
+$numParts = mysql_num_rows($rsParts);
+
+// fetch standard responses for this survey from la_menus
+
+$sql_menus = sprintf("SELECT s.stem_menuname
+	FROM la_survey_stems s
+	WHERE s.instrument_id = %s
+	GROUP BY s.stem_menuname ", 
+		SQLstr($instrument_id, "text"));
+$rsMenus = mysql_query($sql_menus) or die(mysql_error());
+$scales = array(); // [menu_name][item_index][key / text]
+// for each menu we'll use...
+while ($row_rsMenus = mysql_fetch_assoc($rsMenus)) {
+	$sql_scale = sprintf("SELECT m.menu, m.menukey, m.menu_item_name 
+		FROM la_menus m 
+		WHERE m.menu = %s AND m.active = 1
+		ORDER BY item_order ", 
+			SQLstr($row_rsMenus['stem_menuname'], "text"));
+	$rsScale = mysql_query($sql_scale) or die(mysql_error());
+	for ($i = 0; $row = mysql_fetch_assoc($rsScale); $i ++) { 
+		$menu_name = $row['menu'];
+		$item_key = $row['menukey'];
+		$item_text = $row['menu_item_name'];
+		$scales[$menu_name][$i]['key'] = $item_key;
+		$scales[$menu_name][$i]['text'] = $item_text;
+	}
+}
+
+// fetch current selections for this survey record
+$sql_data = sprintf("SELECT sd.*, a.assign_message, rb.company, rb.firstname, rb.lastname
+	FROM la_survey_data sd
+		LEFT JOIN la_data d ON sd.lakey = d.lakey
+		LEFT JOIN la_assignments a ON d.assignmentkey = a.assignmentkey
+		LEFT JOIN registrants rb ON a.bulkcustomerkey = rb.userkey
+	WHERE sd.lasurveykey = %s", SQLstr($lasurveykey, "int"));
+$rsData = mysql_query($sql_data) or die(mysql_error());
+
+$row_rsData = mysql_fetch_assoc($rsData);
+if (mysql_num_rows($rsData) != 1) { 
+	error_log("ERROR - no entry found in la_survey_data for lasurveykey ".$lasurveykey);
+	die("Error retrieving your survey data. We apologize for the inconvenience.");
+}
+
+// any boilerplate (instructions etc.)
+$rsLaBoilerplate = mysql_query("SELECT b.* 
+	FROM la_boilerplate b WHERE type = 'assess' ") 
+	or die("rsLaBoilerplate: ".mysql_error());
+$boilerplate = array();
+while ($row_rsLaBoilerplate = mysql_fetch_assoc($rsLaBoilerplate)) {
+	$boilerplate[$row_rsLaBoilerplate['name']] = $row_rsLaBoilerplate['la_boilerplate_text'];
+}
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: <?php echo $survey_instrument_name[$instrument_id]; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../includes/jquery.js"></script>
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript">
+$(document).ready(function() {
+	
+	
+});
+</script>
+
+
+
+<style type="text/css">
+.twoColFixRtHdr p a {
+	color: #007376;
+}
+</style>
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+		<?php echo $boilerplate['survey_intro_'.strtolower($instrument_id)]; 
+		if ($anonymous) { echo "<p>Your answers will be saved anonymously.</p>"; } ?>
+    
+    <?php 
+		/* REMOVED - the pre-assignment message isn't relevant.
+		if ($part == 1 AND $row_rsData['assign_message'] <> "") { ?>
+    	<h3>A message from <?php if ($row_rsData['company'] <> "") { echo $row_rsData['company']; } 
+				else { echo $row_rsData['firstname']." ".$row_rsData['lastname']; } ?></h3>
+      <p><?php echo $row_rsData['assign_message']; ?></p>
+    <?php } // */ ?>
+    
+    <?php if (isset($missed_selections) AND $missed_selections > 0) { ?>
+			<p class="red">You did not select an answer for <?php echo $missed_selections; ?> item<?php 
+			echo ($missed_selections > 1 ? "s" : ""); ?> below. 
+      Please select an answer for all items before continuing.</p>
+		<?php } ?>
+    
+		<table class="select-b">
+    <form action="" id="form1" name="form1" method="POST">
+      
+      <?php 
+			$n = chr(97); $cur_category = "";
+			while ($row_rsStems = mysql_fetch_assoc($rsStems)) { 
+				$code = zeropad($row_rsStems['stem_code'], 3); 
+				if ($row_rsStems['category'] <> $cur_category AND $row_rsStems['category'] <> "") {
+					$cur_category = $row_rsStems['category'];
+					$n = chr(97); // reset number count ?>
+          <tr><td>&nbsp;</td></tr>
+          <tr>
+          	<th colspan="3">&nbsp;<?php echo ucfirst($cur_category); ?></th>
+          </tr><?php
+				} ?>
+				<tr>
+					<td align="right"><?php echo $n; ?>.</td>
+          <td width="350"><?php echo $row_rsStems['stem_name']; ?></td>
+					<td>
+						<?php if ($row_rsStems['stem_type'] == "select") { 
+							$menu = $row_rsStems['stem_menuname']; ?>
+              <span id="spryselect<?php echo $code; ?>" <?php 
+                if ($row_rsData['stem'.$code] <> "") { ?>class="selectValidState"<?php } ?>>
+              <select name="stem<?php echo $code; ?>" class="width-400">
+                <option value="" <?php if ($row_rsData['stem'.$code] == "") 
+                  { echo "selected='selected'"; } ?>>-select one-</option>
+                <?php 
+                // print out each menu option, stored in $scales[menu][index]['key', 'text']
+                for ($i = 0; isset($scales[$menu][$i]); $i ++) {  ?>
+                <option value="<?php echo $scales[$menu][$i]['key']; ?>"<?php 
+                  if ($row_rsData['stem'.$code] == $scales[$menu][$i]['key']) 
+                  { echo "selected='selected'"; } ?>>
+                  <?php 
+                  echo $scales[$menu][$i]['text']; ?>
+                </option>
+                <?php 
+                } ?>
+              </select></span>
+            <?php } else if ($row_rsStems['stem_type'] == "textarea") { 
+							$code = zeropad($row_rsStems['stem_code'], 2);  ?>
+            	<textarea name="<?php echo 'text'.$code; ?>"><?php echo $row_rsData['text'.$code]; ?></textarea>
+            <?php } else if ($row_rsStems['stem_type'] == "textfield") { 
+							$code = zeropad($row_rsStems['stem_code'], 2);  ?>
+            	<input type='text' name="<?php echo 'text'.$code; ?>" value="<?php echo $row_rsData['text'.$code]; ?>" />
+            <?php } // ?>
+					</td>
+				</tr><?php 
+				$n ++;
+			} ?>
+      
+      <tr>
+        <td>&nbsp;</td>
+      </tr>
+      
+      <?php if ($instrument_id <> "WS001") { ?>
+      <tr>
+      	<td colspan="2">Your comments and thoughts about this survey</td>
+        <td><textarea name="test_taker_comments" rows="2" cols="40"><?php
+        	echo $row_rsData['test_taker_comments']; ?></textarea>
+        </td>
+      </tr>
+      <?php } // ?>
+      
+      <tr>
+      	<td colspan="3">
+					<?php if (isset($missed_selections) AND $missed_selections > 0) { ?>
+            <p class="red">You did not select an answer for <?php echo $missed_selections; ?> item<?php 
+            echo ($missed_selections > 1 ? "s" : ""); ?> above. 
+            Please select an answer for all items before continuing.</p>
+          <?php } ?>
+          <div id="submitButtons" align="right">
+            <input name="lakey" type="hidden" id="lakey" value="<?php echo $lakey; ?>" />
+            <input name="lasurveykey" type="hidden" id="lasurveykey" value="<?php echo $lasurveykey; ?>" />
+            <input name="numparts" type="hidden" id="numparts" value="<?php echo $numParts; ?>" />
+            <input name="admin_notes" type="hidden" value="<?php echo $admin_notes; ?>" />
+            <input type="hidden" name="MM_update" value="form1" />
+            <p><span class="fltlft"><?php contactUsForHelp(); ?></span>&nbsp;
+              <!-- <input type="submit" name="save_changes" id="save_changes" 
+              	value="SAVE YOUR WORK" />&nbsp; -->
+              <?php $finish_text = "";
+              if ($numParts > $part) { $finish_text = "SAVE AND GO TO NEXT PAGE";
+              } else { $finish_text = "SAVE AND FINISH"; } ?>
+              <input type="submit" name="button" id="button" value="<?php echo $finish_text; ?>" />
+            </p>
+            <p>&nbsp;</p>
+          </div>
+    		</td>
+      </tr>
+      
+  	</form>
+    </table>
+    
+  
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+
+
+?>

@@ -1,0 +1,1 @@
+Pages in this folder are old / blank, and all contain just a redirect to www.devtestservice.org. Any old pages that have not yet been updated to reflect our new website and company identity, are in the TO_INTEGRATE folder. Please delete the pages from that folder as you have time to update their content.

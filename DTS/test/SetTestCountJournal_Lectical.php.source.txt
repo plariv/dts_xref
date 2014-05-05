@@ -1,0 +1,41 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+
+<?php
+echo('Set Time Count Test </br>');
+?>
+
+<!-- 2 instances of table name  -->
+
+<?php
+set_time_limit(0);
+$result = mysql_query("SELECT * FROM `journal_lectical` order by userkey, `time`;");
+
+$currentCount = 0;
+$currentKey = 0;
+$newKey = 0; 
+ 
+while ( $row = mysql_fetch_assoc($result) ) {
+	 $newKey = $row['userkey']; 
+	 if ($currentKey <> $newKey)
+	    {
+		 echo('Current: ' . $currentKey . ', New: ' . $newKey . '</br>');
+		 $currentKey = $newKey;
+		 $currentCount = 1;
+		
+		}
+	else 
+	    {
+		 // echo('&nbsp;&nbsp;&nbsp;  Current: ' . $currentKey . ', Count: ' . $currentCount . '</br>');	
+		 $currentCount =  $currentCount + 1;  
+		}
+	
+	 echo('&nbsp;&nbsp;&nbsp;  Current: ' . $currentKey . ', Count: ' . $currentCount . '</br>');
+     // $text = toSlug($row['EstablishmentName']);
+     //               $slug= str_replace(" ", "_", $text);  
+
+
+    mysql_query("UPDATE journal_lectical SET test_time =  ".$currentCount." where journalkey = ".$row['journalkey'].";");
+}
+?>
+
+

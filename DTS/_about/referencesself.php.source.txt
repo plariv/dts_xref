@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Self understanding references</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible p {
+	line-height: 20px;
+}
+.container .inner_container .column1 .TabbedPanelsTab {
+	padding-left: 6px;
+}
+-->
+</style>
+
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+  <p><a href="referencesmj.php">ethical reasoning</a> | <a href="referencesrj.php">reflective judgment</a> | <a href="referencesdm.php">decision making</a> | <a href="referenceslead.php">leadership</a> | <a href="references.php">site</a> | <a href="../creativity/c-results.php">creativity</a></p>
+  <h1>SELECTED SELF UNDERSTANDING REFERENCES  </h1>
+  <div id="TabbedPanels1" class="TabbedPanels">
+    <ul class="TabbedPanelsTabGroup">
+      <li class="TabbedPanelsTab" tabindex="0">A–D</li>
+      <li class="TabbedPanelsTab" tabindex="0">E–H</li>
+      <li class="TabbedPanelsTab" tabindex="0">I–L</li>
+      <li class="TabbedPanelsTab" tabindex="0">M–N</li>
+      <li class="TabbedPanelsTab" tabindex="0">O–R</li>
+      <li class="TabbedPanelsTab" tabindex="0">S–Z</li>
+    </ul>
+    <div class="TabbedPanelsContentGroup">
+      <div class="TabbedPanelsContent">
+        <p>Baldwin, J. M. (1897). The genesis of the ethical self.<em> Philosophical Review, 6, </em>225-241.</p>
+        <p>Bandura, A., &amp; Jourden, F. (1991). Self-regulatory mechanisms governing the impact of social comparison on complex decision making. <em>Journal of Personality and Social Psychology, 60,</em> 941-951.</p>
+        <p>Bandura, A., &amp; Locke, E. A. (2003). Negative self-efficacy and goal effects revisited.<em> Journal of Applied Psychology, 88,</em> 87-99.</p>
+        <p>Baumeister, R. F., Smart, L., &amp; Boden, J. M. (1999). Relation of threatened egotism to violence and aggression: The dark side of high self-esteem. <em>Psychological Review, 103(1)</em>, 5-33.</p>
+        <p>Bernstein, R. M. (1980). The development of the self-system during adolescence. <em>Journal of Genetic Psychology,</em> 136, 231-245.</p>
+        <p>Blasi, A., &amp; Oresick, R. G. (1986). Emotion and cognition in self-consistency. In D. J. Bearison &amp; H. Zimiles (Eds.), <em>Thought and emotion.</em> Hillsdale, N. J.: Earlbaum.</p>
+        <p>Blasi, A., &amp; Milton, K. (1991). The development of the sense of self in adolescence. <em>Journal of Personality, 59,</em> 217-242.</p>
+        <p>Brewer, M. (1991). The social self: on being the same and defferent at the same time. Personality and <em>Social Psychology, 17,</em> 475-482.</p>
+        <p>Brinthaupt, T. M., &amp; Erwin, L. J. (1992). Reporting about the self: Issues and implications. In T. M. Brinthaupt &amp; R. P. Lipka (Eds.), <em>The self: Definitional and methodological issues</em> (pp. 137-171). Albany, NY: State University of New York Press.</p>
+        <p>Broughton, J. M. (1978). Development of concepts of self, mind, reality, and knowledge (Vol. 1).</p>
+        <p>Cohler, B. J., &amp; Galatzer-Levy, R. M. (1990). Self, meaning, and morale across the second half of life. In R. A. Nemiroff &amp; C. A. Colarusso (Eds.), <em>New dimensions in adult development.</em> (pp. 214-263). New York, NY: BasicBooks, Inc.</p>
+        <p>Damon, W., &amp; Hart, D. (1982). The development of self-understanding from infancy through adolescence. <em>Child Development, 53,</em> 841-864.</p>
+        <p>Demetriou, A. (2003). Mind, self, and personality: Dynamic interactions from late childhood to early adulthood. <em>Journal of Adult Development, 10</em>(3), 151-172.</p>
+        <p>Demetriou, A., Kazi, S., &amp; Georgiou, G. (1999). The emerging self: The convergence of mind, personality, and thinking styles. <em>Developmental Science, 2,</em> 387-409.</p>
+        <p>Dusek, J. B., &amp; Flaherty, J. F. (1981). The development of the self-concept during the adolescent years. <em>Monographs of the Society for Research in Child Development,</em> 46.</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <p>Edelstein, W., &amp; Noam, G. G. (1982). Regulatory structures of the self and “postformal” stages in adulthood. <em>Human Development, 25,</em> 407-422.</p>
+        <p>Epstein, S. (1973). The self-concept revisited: Or a theory of a theory. <em>American Psychologist, 28,</em> 404-416.</p>
+        <p>Epstein, S. (1989). Values from the perspective of congnitive-experiential self-theory. In N. Eisenberg, J. Reykowski &amp; E. Staub (Eds.), <em>Social and moral values.</em> Hillsdale, NJ: Lawrence Erlbaum.</p>
+        <p>Gilligan, C. (1977). In a different voice: Women’s conceptions of self and of morality.<em> Harvard Educational Review, 47,</em> 481-517.</p>
+        <p>Greenwald, A. G., Rudman, L. A., Nosek, B. A., Banaji, M. R., Farnham, S. D., &amp; Mellott, D. S. (2002). A unified theory of implicit attitudes, stereotypes, self-esteem, and self-concept.<em> Psychological Review 109</em>(1), 3-25.<br />
+          Hart, D., &amp; Damon, W. (1986). Developmental trends in self-understanding.<em> Social Cognition, 4,</em> 388-407.</p>
+        <p>Hart, D., Lucca-Irizarry, N., &amp; Damon, W. (1986). The development of self-understanding in Puerto Rico and the United States. <em>Journal of Early Adolescence, 6,</em> 293-304.</p>
+        <p>Hart, D. (1988). Self-concept in the social context of the adolescent. In D. Lapsely &amp; F. C. Power (Eds.), <em>Self, ego, and identity: Integrative approaches</em> (pp. 71-90). New York: Springer-Verlag.</p>
+        <p>Hart, D., &amp; Edelstein, W. (1992). Self-understanding development in cross-cultural perspective. In T. M. Brinthaupt &amp; R. P. Lipka (Eds.), <em>The self: Definitional and methodological issues.</em> <em>SUNY series, studying the self.</em> (pp. 291-322): State University of New York Press, Albany, NY, US.</p>
+        <p>Hart, D., &amp; Fegley, S. (1995). Prosocial behavior and caring in adolescence: Relations to self-understanding and social judgment. <em>Child Development, 66,</em> 1346-1359.</p>
+        <p>Harter, S. (1983). Developmental perspectives on the self-system. In E. M. Hetherington (Ed.), <em>Socialization, personality, and social development (4 ed., Vol. 4)</em>. New York: John Wiley and Sons.</p>
+        <p>Harter, S. (1997). The development of self-representations. In N. Eisenberg (Ed.), <em>Handbook of child psychology. Vol 3: Social, emotional, and personality development</em> (5 ed., pp. 553-617). New York: Wiley.</p>
+        <p>Haste, H. (1993). Morality, self, and sociohistorical context: The role of lay social theory. In G. G. Noam, T. E. Wren, G. Nunner-Winkler &amp; W. Edelstein (Eds.),<em> The moral self. Studies in contemporary German social thought.</em> (pp. 175-208). Cambridge, MA: MIT Press.</p>
+        <p>Henderson, A. F., &amp; Kegan, R. (1989). Learning, knowing, and the self: A constructive developmental view. In K. Field, B. J. Cohler &amp; G. Wool (Eds.), <em>Learning and education: Psychoanalytic perspectives. Emotions and behavior monographs, No. 6.</em> (pp. 267-303). Madison, CT: International Universities Press.</p>
+        <p>Higgins, E. T., Klein, R., &amp; Strauman, T. (1985). Self-concept discrepancy theory: A psychological model for distinguishing among different aspects of depression and anxiety. <em>Special Issue: Depression. Social Cognition, 3</em>(1), 51-76.</p>
+        <p>Higgins, A. (1995). Understanding the moral self: Research goals for the next five years. <em>Moral Education Forum, 20,</em> 30-33.</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <p>Johnson, J. A., &amp; Hogan, R. (1981). Moral judgments and self-presentations.<em> Journal of Research in Personality, 15</em>(1), 57-63.</p>
+        <p>Judge, T. A., Bono, J. E., Erez, A., &amp; Locke, E. A. (2005). Core self-evaluations and job and life satisfaction: The role of self-concordance and goal attainment.<em> Journal of Applied Psychology, 90</em>(2), 257-268.</p>
+        <p>Kegan, R. G. (1979). The evolving self: A process conception for ego psychology. <em>Counseling Psychologist, 8</em>(2), 5-34.</p>
+        <p>Labouvie-Vief, G., Hakim-Larson, J., DeVoe, M., &amp; Schoeberlein, S. (1989). Emotions and self-regulation: A life span view.<em> Human Development, 32,</em> 279-299.</p>
+        <p>Labouvie-Vief, G., Chiodo, L. M., Goguen, L. A., &amp; Diehl, M. (1995). Representations of self across the life span. <em>Psychology &amp; Aging, 10,</em> 404-415.</p>
+        <p>Labouvie-Vief, G. (2005). Self-with-other representations and the organization of the self.<em> Journal of Research in Personality, 39,</em> 185-205.</p>
+        <p>Leahy, R. L., &amp; Eiter, M. (1980). Moral judgment and the development of real and ideal androgynous self-image during adolescence and young adulthood. <em>Developmental Psychology, 16,</em> 362-370.</p>
+        <p>Lewis, M. (1979). The self as a developmental concept.<em> Human Development, 22,</em> 416-419.</p>
+        <p>Lewis, M. (1991). Self-conscious emotions and the development of self.<em> Journal of the American</em> <em>Psychoanalytic Association, 39</em>(Suppl), 45-73.</p>
+        <p>Lewis, M. D. (1997). Personality self-organization: Cascading constraints on cognition-emotion interaction Dynamics and indeterminism in developmental and social processes. (pp. 193-216). Mahwah, NJ, USA: Lawrence Erlbaum Associates, Inc.</p>
+        <p>Loevinger, J., &amp; Knoll, E. (1983). Personality: Stages, traits, and the self.<em> Annual Review of Psychology, 34,</em> 195-222.</p>
+</div>
+      <div class="TabbedPanelsContent">
+        <p>Manz, C. C., &amp; Sims, H. P. (1987). Leading workers to lead themselves: The external leadership of self-managing work teams. <em>Administrative Science Quarterly, 32,</em> 106–128.</p>
+        <p>Markus, H., &amp; Sentis, K. (1982). The self in social information processing. In J. Suls (Ed.), <em>Psychological perspectives on the self</em> (Vol. 1, pp. 41-70). Hillsdale, New Jersey: Lawrence Erlbaum.</p>
+        <p>Markus, H., &amp; Nurius, P. (1987). Possible selves: The interface between motivation and the self-concept. In K. Yardley &amp; T. Honess (Eds.),<em> Self and identity: Psychosocial perspectives.</em> (pp. 157-172). Chichester, England: John Wiley &amp; Sons.</p>
+        <p>Markus, H. R., &amp; Kitayama, S. (1991). Culture and the self: Implications for cognition, emotion, and motivation.<em> Psychological Review, 98,</em> 224-253.</p>
+        <p>Marsh, H. W., Byrne, B. M., &amp; Shavelson, R. J. (1992). A multidimensional, hierarchical self-concept. In T. M. Brinthaupt &amp; R. P. Lipka (Eds.),<em> The self: Definitional and methodological issues. SUNY series, studying the self </em>(pp. 44-95). Albany, NY: State University of New York Press.</p>
+        <p>McGregor, I., &amp; Marigold, D. C. (2003). Defensive zeal and the uncertain self: What makes you so sure? <em>Journal of Personality &amp; Social Psychology, 85</em>(5), 838-852.</p>
+        <p>McGuire, W. J., &amp; McGuire, C. V. (1982). Significant others in self-space: Sex differences and developmental trends in the social self. In J. Suls (Ed.), <em>Psychological perspectives on the self</em> (pp. 70-97). Hillsdale, New Jersey: Lawrence Erlbaum.</p>
+        <p>Mead, G. H. (1934). <em>Mind, self, &amp; society from the standpoint of a social behaviorist</em> (Vol. 1). Chicago: University of Chicago Press.</p>
+        <p>Miller, J. G. (1988). Bridging the content-structure dichotomy: Culture and the self. In B. Michael Harris (Ed.), <em>The cross-cultural challenge to social psychology. Cross-cultural research</em> (pp. 266-281). Newbury Park, CA: Sage.</p>
+        <p>Miller, J. G., &amp; Bersoff, D. M. (1994). Cultural influences on the moral status of reciprocity and the discounting of endogenous motivation. Special Issue: The self and the collective.<em> Personality &amp; Social Psychology Bulletin, 20</em>(5), 592-602.</p>
+        <p>Mischel, W., &amp; Mischel, H. N. (1976). A cognitive social-learning approach to morality and self-regulation. In T. Lickona (Ed.), <em>Moral development:  Theory, research and social issues</em> (pp. 84-107). New York: Holt, Rinehart &amp; Winston.</p>
+        <p>Montemayor, R., &amp; Eisen, M. (1977). The development of self-conceptions from childhood to adolescence. <em>Developmental Psychology, 13,</em> 314-319.</p>
+        <p>Noam, G., Kohlberg, L., &amp; Snarey, J. (1983). Steps toward a model of the self. In B. Lee &amp; G. Noam (Eds.),<em> Developmental approaches to the self </em>(pp. 59-141). New York: Plenum Press.</p>
+        <p>Noam, G. G. (1985). Stage, phase, and style: The developmental dynamics of the self. In M. Berkowitz &amp; F. Oser (Eds.),<em> Moral education: Theory and application</em> (pp. 321-346). Hillsdale, NJ: Lawrence Erlbaum.</p>
+        <p>Noam, G. G., Powers, S. I., Kilkenny, R., &amp; Beedy, J. (1990). The interpersonal self in life-span developmental perspective: Theory, measurement, and longitudinal case analyses. In P. B. Baltes, D. L. Featherman &amp; R. M. Lerner (Eds.),<em> Life-span development and behavior, Vol. 10</em>. (pp. 59-104). Hillsdale, NJ: Lawrence Erlbaum.</p>
+        <p>Nurius, P. S., &amp; Markus, H. (1990). Situational variability in the self-concept: Appraisals, expectancies, and asymmetries. <em>Journal of Social &amp; Clinical Psychology, 9</em>(3), 316-333.</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <p>Ogilvie, D. M. (1987). The undesired self: A neglected variable in personality research.<em> Journal of Personality &amp; Social Psychology, 52,</em> 379-385.</p>
+        <p>Ozer, E. M., &amp; Bandura, A. (1990). Mechanisms governing empowerment effects: A self-efficacy analysis. Journal of Personality and Social Psychology, 58(3), 472-486.<br />
+          Peevers, B. H. (1987). The self as observer of the self: A developmental analysis of the subjective self. In T. Honess &amp; K. Yardley (Eds.), <em>Self and identity: Perspectives across the lifespan.</em> (pp. 147-158). Boston, MA: Routledge &amp; Kegan Paul, Inc.</p>
+        <p>Pratt, M. W., Pancer, M., Hunsberger, B., &amp; Manchester, J. (1990). Reasoning about the self and relationships in maturity: An integrative complexity analysis of individual differences.<em> Journal of Personality &amp; Social Psychology, 59</em>(3), 575-581.</p>
+        <p>Rokeach, M., &amp; Cochrane, R. (1972). Self-confrontation and confrontation with another as determinants of long-term value change. <em>Journal of Applied Social Psychology, 2</em>, 283-292.</p>
+        <p>Rokeach, M., &amp; McLellan, D. D. (1972). Feedback of information about the values and attitudes of self and others as determinants of long-term cognitive and behavioral change. <em>Journal of Applied Social Psychology, 2,</em> 236-251.</p>
+        <p>Rosaldo, M. Z. (1984). Towards an anthropology of self and feeling. In R. A. Shweder &amp; R. A. LeVine (Eds.), Culture theory:  Essays on mind, self and emotion (pp. 137-157). Cambridge: Cambridge University Press.</p>
+        <p>Rosenberg, S. (1988). Self and others: Studies in social personality and autobiography. In B. Leonard (Ed.), Advances in experimental social psychology, Vol. 21: Social psychological studies of the self: Perspectives and programs. (pp. 57-95). San Diego, CA: Academic Press.</p>
+        <p>Ross, L., Lepper, M. R., &amp; Hubbard, M. (1975). Perseverance in self-perception and social perception: biased attributional processes in the debriefing paradigm. Journal of Personality and Social Psychology, 32(5), 880-892.</p>
+        <p>Rychlak, J. F. (1991). Telosponsivity, dialectical reasoning, and the concept of self. In D. Ozer, J. M. Healy &amp; A. J. Stewart (Eds.), Perspectives in personality (Vol. 3 (part A), pp. 3-18). London: Jessica Kingsley Publishers.</p>
+        <p>Ryff, C. D. (1982). Self-perceived personality change in adulthood and aging. Journal of Personality &amp; Social Psychology, 42(1), 108-115.</p>
+        <p>Ryff, C. D., Lee, Y. H., Essex, M. J., &amp; Schmutte, P. S. (1994). My children and me: Midlife evaluations of grown children and of self. Psychology &amp; Aging, 9(2), 195-205.</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <p>Schmeck, R. R., Geisler-Brenstein, E., &amp; Cercy, S. P. (1991). Self-concept and learning: The revised Inventory of Learning Processes. <em>Educational Psychology, 11,</em> 343-362.</p>
+        <p>Schorin, M. Z., &amp; Hart, D. (1988). Psychotherapeutic implications of the development of self-understanding. In R. S. Stephen (Ed.), <em>Cognitive development and child psychotherapy. Perspectives in developmental psychology.</em> (pp. 161-186). New York: Plenum Press. </p>
+        <p>Sears, D. O., &amp; Funk, C. L. (1991). The role of self-interest in social and political attitudes Advances in experimental: Academic Press Inc.</p>
+        <p>Shamir, B., House, R. J., &amp; Arthur, M. B. (1993). The motivational effects of charismatic leadership: A self-concept based theory. Organization Science, 4(4), 577-594.</p>
+        <p>Shane, E., &amp; Shane, M. (1990). Object loss and selfobject loss: A consideration of self psychology's contribution to understanding mourning and the failure to mourn. Annual of Psychoanalysis, 18, 115-131.</p>
+        <p>Smith, M. B. (1994). Selfhood at risk: Postmodern perils and the perils of postmodernism. American Psychologist, 49(5), 405-411.</p>
+        <p>Souvaine, E., Lahey, L. L., &amp; Kegan, R. (1990). Life after formal operations: Implications for a psychology of the self. In C. N. Alexander &amp; E. J. Langer (Eds.), <em>Higher stages of human development: Perspectives on adult growth</em> (pp. 229-257). New York: Oxford University Press.</p>
+        <p>Stalder, D. R. (2007). Need for closure, the big five, and public self-consciousness. The Journal of <em>Social Psychology, 147</em>(1), 91-94.</p>
+        <p>Sternberg, R. J. (1988). Mental self-government: A theory of intellectual styles and their development. <em>Human Development, 31,</em> 197-221.</p>
+        <p>Tobin, S. Self psychology as a bridge between exisential-humanistic psychology and psychoanalysis. <em>Journal of Humanistic Psychology, 30,</em> 14-63.</p>
+        <p>Triandis, H. C. (1989). The self and social behavior in differing cultural contexts.<em> Psychological Review, 96,</em> 506-520.</p>
+        <p>Vallacher, R. R. (1978). Objective self awareness and the perception of others. <em>Personality &amp; Social Psychology Bulletin, 4</em>(1), 63-67.</p>
+        <p>Vallacher, R. R., &amp; Solodky, M. (1979). Objective self-awareness, standards of evaluation, and moral behavior. <em>Journal of Experimental Social Psychology, 15</em>(3), 254-262.</p>
+        <p>Vallacher, R. R. (1980). An introduction to self-theory. In D. M. Wagner &amp; R. R. Vallacher (Eds.),<em> The self in social psychology.</em> New York: Oxford University Press.</p>
+        <p>Vallacher, R. R., Wegner, D. M., &amp; Frederick (1987). The presentation of self through action identification. Special Issue: Cognition and action. <em>Social Cognition, 5</em>(3), 301-322.</p>
+        <p>Vallacher, R. R., Wegner, D. M., McMahan, S. C., Cotter, &amp; et al. (1992). On winning friends and influencing people: Action identification and self-presentation success. <em>Social Cognition, 10</em>(3), 335-355.</p>
+        <p>Wegner, D. M. (1980). The self in prosocial action. In D. M. Wegner &amp; R. R. Vallacher (Eds.),<em> The self in social psychology.</em> New York: Oxford University Press.</p>
+        <p>Wren, T. E. (1993). The open-textured concepts of morality and the self. In G. G. Noam, T. E. Wren, G. Nunner-Winkler &amp; W. Edelstein (Eds.), <em>The moral self. Studies in contemporary German social thought</em> (pp. 78-95). Cambridge, MA: MIT Press.</p>
+    </div></div></div><p>&nbsp;</p>
+  <p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+  <div align="center"><br />
+  </div>
+  <!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" --><!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

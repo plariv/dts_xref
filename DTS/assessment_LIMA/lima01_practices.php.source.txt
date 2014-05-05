@@ -1,0 +1,1211 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE LIMA SET userkey=%s, bo_weightlifting=%s, bo_aerobicexercise=%s, bo_fit=%s, bo_martialarts=%s, bo_sports=%s, bo_dancemovement=%s, bo_consciouseating=%s, bo_taichiqigong=%s, bo_breathwork=%s, bo_3bodyworkout=%s, bo_yoga=%s, bo_runningwalkinghiking=%s, bo_biofeedback=%s, bo_other=%s, bo_otherdescription=%s, bodyfrequency=%s, bodyhowlong=%s, em_transmutingemotions=%s, em_emointelligence=%s, em_angermanagement=%s, em_emotionmindfulpractice=%s, em_creativeexpression=%s, em_anxietymanagement=%s, em_depressionmanagement=%s, em_stressreduction=%s, em_traumawork=%s, em_other=%s, em_otherdescription=%s, emotionsfrequency=%s, emotionshowlong=%s, sh_dreamwork=%s, sh_journaling=%s, sh_psychodynamictherapy=%s, sh_voicedialogue=%s, sh_interpersonalfeedback=%s, sh_somatictherapy=%s, sh_321process=%s, sh_other=%s, sh_otherdescription=%s, shadowfrequency=%s, shadowhowlong=%s, mi_readstudywrite=%s, mi_examineassumptions=%s, mi_aqalscanningmapping=%s, mi_jnanayogaphilosophy=%s, mi_bookgroup=%s, mi_socraticdialogue=%s, mi_takingmultipleperspectives=%s, mi_cogbehavtherapy=%s, mi_boardgames=%s, mi_mentalgames=%s, mi_other=%s, mi_otherdescription=%s, mindfrequency=%s, mindhowlong=%s, so_diamondapproach=%s, so_visionquest=%s, so_shamanicpractice=%s, so_westernesotericism=%s, so_luciddreaming=%s, so_devotionalpractices=%s, so_visionaryart=%s, so_visualization=%s, so_worshipsingchant=%s, so_sweatlodge=%s, so_prayer=%s, so_coursemiracles=%s, so_other=%s, so_otherdescription=%s, soulfrequency=%s, soulhowlong=%s, sp_zazenmeditation=%s, sp_contemplativeprayer=%s, sp_practicingpresence=%s, sp_vipassanameditation=%s, sp_tonglen=%s, sp_sufipractice=%s, sp_advaitavedanta=%s, sp_tm=%s, sp_tantra=%s, sp_dzogchenmahamudra=%s, sp_kabbalah=%s, sp_holosynk=%s, sp_other=%s, sp_otherdescription=%s, spiritfrequency=%s, spirithowlong=%s, sx_sexualyoga=%s, sx_westernsextherapy=%s, sx_taoistsexpractices=%s, sx_enlightenedsexuality=%s, sx_celibacy=%s, sx_other=%s, sx_otherdescription=%s, sexfrequency=%s, sexhowlong=%s, se_rightlivelihood=%s, se_philanthropy=%s, se_financialmaturity=%s, se_karmayoga=%s, se_communityservice=%s, se_mindfulnessatwork=%s, se_other=%s, se_otherdescription=%s, servicefrequency=%s, servicehowlong=%s, re_consciousrelationships=%s, re_integralparenting=%s, re_communicationskills=%s, re_dialogicalinquiry=%s, re_couplestherapy=%s, re_nonviolentcommunication=%s, re_discipleship=%s, re_consciousmonogamy=%s, re_beingvulnerable=%s, re_other=%s, re_otherdescription=%s, relationshipsfrequency=%s, relationshipshowlong=%s WHERE limakey=%s",
+                       GetSQLValueString($_POST['userkey'], "int"),
+                       GetSQLValueString(isset($_POST['bo_weightlifting']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['bo_aerobicexercise']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['bo_fit']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['bo_martialarts']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['bo_sports']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['bo_dancemovement']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['bo_consciouseating']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['bo_taichiqigong']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['bo_breathwork']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['bo_3bodyworkout']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['bo_yoga']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['bo_runningwalkinghiking']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['bo_biofeedback']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['bo_other']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['bo_otherdescription'], "text"),
+                       GetSQLValueString($_POST['bodyfrequency'], "int"),
+                       GetSQLValueString($_POST['bodyhowlong'], "int"),
+                       GetSQLValueString(isset($_POST['em_transmutingemotions']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['em_emointelligence']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['em_angermanagement']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['em_emotionmindfulpractice']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['em_creativeexpression']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['em_anxietymanagement']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['em_depressionmanagement']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['em_stressreduction']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['em_traumawork']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['em_other']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['em_otherdescription'], "text"),
+                       GetSQLValueString($_POST['emotionsfrequency'], "int"),
+                       GetSQLValueString($_POST['emotionshowlong'], "int"),
+                       GetSQLValueString(isset($_POST['sh_dreamwork']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sh_journaling']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sh_psychodynamictherapy']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sh_voicedialogue']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sh_interpersonalfeedback']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sh_somatictherapy']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sh_321process']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sh_other']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['sh_otherdescription'], "text"),
+                       GetSQLValueString($_POST['shadowfrequency'], "int"),
+                       GetSQLValueString($_POST['shadowhowlong'], "int"),
+                       GetSQLValueString(isset($_POST['mi_readstudywrite']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['mi_examineassumptions']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['mi_aqalscanningmapping']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['mi_jnanayogaphilosophy']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['mi_bookgroup']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['mi_socraticdialogue']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['mi_takingmultipleperspectives']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['mi_cogbehavtherapy']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['mi_boardgames']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['mi_mentalgames']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['mi_other']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['mi_otherdescription'], "text"),
+                       GetSQLValueString($_POST['mindfrequency'], "int"),
+                       GetSQLValueString($_POST['mindhowlong'], "int"),
+                       GetSQLValueString(isset($_POST['so_diamondapproach']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['so_visionquest']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['so_shamanicpractice']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['so_westernesotericism']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['so_luciddreaming']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['so_devotionalpractices']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['so_visionaryart']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['so_visualization']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['so_worshipsingchant']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['so_sweatlodge']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['so_prayer']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['so_coursemiracles']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['so_other']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['so_otherdescription'], "text"),
+                       GetSQLValueString($_POST['soulfrequency'], "int"),
+                       GetSQLValueString($_POST['soulhowlong'], "int"),
+                       GetSQLValueString(isset($_POST['sp_zazenmeditation']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sp_contemplativeprayer']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sp_practicingpresence']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sp_vipassanameditation']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sp_tonglen']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sp_sufipractice']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sp_advaitavedanta']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sp_tm']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sp_tantra']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sp_dzogchenmahamudra']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sp_kabbalah']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sp_holosynk']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sp_other']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['sp_otherdescription'], "text"),
+                       GetSQLValueString($_POST['spiritfrequency'], "int"),
+                       GetSQLValueString($_POST['spirithowlong'], "int"),
+                       GetSQLValueString(isset($_POST['sx_sexualyoga']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sx_westernsextherapy']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sx_taoistsexpractices']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sx_enlightenedsexuality']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sx_celibacy']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['sx_other']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['sx_otherdescription'], "text"),
+                       GetSQLValueString($_POST['sexfrequency'], "int"),
+                       GetSQLValueString($_POST['sexhowlong'], "int"),
+                       GetSQLValueString(isset($_POST['se_rightlivelihood']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['se_philanthropy']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['se_financialmaturity']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['se_karmayoga']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['se_communityservice']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['se_mindfulnessatwork']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['se_other']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['se_otherdescription'], "text"),
+                       GetSQLValueString($_POST['servicefrequency'], "int"),
+                       GetSQLValueString($_POST['servicehowlong'], "int"),
+                       GetSQLValueString(isset($_POST['re_consciousrelationships']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['re_integralparenting']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['re_communicationskills']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['re_dialogicalinquiry']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['re_couplestherapy']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['re_nonviolentcommunication']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['re_discipleship']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['re_consciousmonogamy']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['re_beingvulnerable']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString(isset($_POST['re_other']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['re_otherdescription'], "text"),
+                       GetSQLValueString($_POST['relationshipsfrequency'], "int"),
+                       GetSQLValueString($_POST['relationshipshowlong'], "int"),
+                       GetSQLValueString($_POST['limakey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "lima01_essays_practice.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));
+}
+
+$colname_rsUser = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsUser = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsUser = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsUser, "int"));
+$rsUser = mysql_query($query_rsUser, $Assessment) or die(mysql_error());
+$row_rsUser = mysql_fetch_assoc($rsUser);
+$totalRows_rsUser = mysql_num_rows($rsUser);
+
+$colname_rsPractices = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsPractices = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsPractices = sprintf("SELECT limakey, userkey, bo_weightlifting, bo_aerobicexercise, bo_fit, bo_martialarts, bo_sports, bo_dancemovement, bo_consciouseating, bo_taichiqigong, bo_breathwork, bo_3bodyworkout, bo_yoga, bo_runningwalkinghiking, bo_biofeedback, bo_other, bo_otherdescription, bodyfrequency, bodyhowlong, em_transmutingemotions, em_emointelligence, em_angermanagement, em_emotionmindfulpractice, em_creativeexpression, em_anxietymanagement, em_depressionmanagement, em_stressreduction, em_traumawork, em_other, em_otherdescription, emotionsfrequency, emotionshowlong, sh_dreamwork, sh_journaling, sh_psychodynamictherapy, sh_voicedialogue, sh_interpersonalfeedback, sh_somatictherapy, sh_321process, sh_other, sh_otherdescription, shadowfrequency, shadowhowlong, mi_readstudywrite, mi_examineassumptions, mi_aqalscanningmapping, mi_jnanayogaphilosophy, mi_bookgroup, mi_socraticdialogue, mi_takingmultipleperspectives, mi_cogbehavtherapy, mi_boardgames, mi_mentalgames, mi_other, mi_otherdescription, mindfrequency, mindhowlong, so_diamondapproach, so_visionquest, so_shamanicpractice, so_westernesotericism, so_luciddreaming, so_devotionalpractices, so_visionaryart, so_visualization, so_worshipsingchant, so_sweatlodge, so_prayer, so_coursemiracles, so_other, so_otherdescription, soulfrequency, soulhowlong, sp_zazenmeditation, sp_contemplativeprayer, sp_practicingpresence, sp_vipassanameditation, sp_tonglen, sp_sufipractice, sp_advaitavedanta, sp_tm, sp_tantra, sp_dzogchenmahamudra, sp_kabbalah, sp_holosynk, sp_other, sp_otherdescription, spiritfrequency, spirithowlong, sx_sexualyoga, sx_westernsextherapy, sx_taoistsexpractices, sx_enlightenedsexuality, sx_celibacy, sx_other, sx_otherdescription, sexfrequency, sexhowlong, se_rightlivelihood, se_philanthropy, se_financialmaturity, se_karmayoga, se_communityservice, se_socialecologicalactivism, se_mindfulnessatwork, se_other, se_otherdescription, servicefrequency, servicehowlong, re_consciousrelationships, re_integralparenting, re_communicationskills, re_dialogicalinquiry, re_couplestherapy, re_nonviolentcommunication, re_discipleship, re_consciousmonogamy, re_beingvulnerable, re_other, re_otherdescription, relationshipsfrequency, relationshipshowlong FROM LIMA WHERE limakey = %s", GetSQLValueString($colname_rsPractices, "int"));
+$rsPractices = mysql_query($query_rsPractices, $Assessment) or die(mysql_error());
+$row_rsPractices = mysql_fetch_assoc($rsPractices);
+$totalRows_rsPractices = mysql_num_rows($rsPractices);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsFrequency = "SELECT * FROM LIMAfrequency ORDER BY limafrequencykey DESC";
+$rsFrequency = mysql_query($query_rsFrequency, $Assessment) or die(mysql_error());
+$row_rsFrequency = mysql_fetch_assoc($rsFrequency);
+$totalRows_rsFrequency = mysql_num_rows($rsFrequency);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTimepractice = "SELECT * FROM LIMAtimepractice";
+$rsTimepractice = mysql_query($query_rsTimepractice, $Assessment) or die(mysql_error());
+$row_rsTimepractice = mysql_fetch_assoc($rsTimepractice);
+$totalRows_rsTimepractice = mysql_num_rows($rsTimepractice);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelima2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LIMA practices</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+.limasmallmenu {
+	width: 100px;
+}
+-->
+</style>
+<script src="../DTSassets/SpryValidationTextarea.js" type="text/javascript"></script>
+<script src="../DTSassets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../DTSassets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<link href="../DTSassets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LIMAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>INTEGRAL LIFE PRACTICES (page 3 of 9)</h1>
+  <p>Hello again <?php echo $row_rsUser['firstname']; ?>. On this page you will <span class="pspaced">be asked for demographic information about your integral life practices. This information will be used to improve our understa</span>nding of the distribution of these practices in our community. </p>
+  <p class="box"><strong class="lima">Note:</strong> If you return to this page after hitting the &quot;submit&quot; button, please check to make sure you have entered responses for all of the required (*) items.</p>
+  <p><br />
+    <img src="../images/lima/IntegralLifePractice.gif" width="687" height="377" alt="Integral Life Practice grid" /><br />
+  </p>
+  <p>&nbsp;</p>
+<p>Please check the box next to each Integral Life Practice in which you have engaged, then indicate, to the best of your ability (and to the extent that it makes sense), (1) the overall frequency with which you  engage in these practices and (2) the length of time you have practiced them. Feel free to add practices that are not on the list to the &quot;other&quot; category.</p>
+      <form id="form1" name="form1" method="POST" action="<?php echo $editFormAction; ?>">
+        <table>
+          <tr valign="baseline">
+            <td colspan="2"><div align="center" class="integralbody">Body</div></td>
+            <td colspan="2"><div align="center" class="integralemotions">Emotions</div></td>
+            <td colspan="2"><div align="center" class="integralshadow">Shadow</div></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Weightlifting</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_weightlifting'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_weightlifting" value="<?php echo $row_rsPractices['bo_weightlifting']; ?>"/></td>
+            <td>Transmuting emotions</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['em_transmutingemotions'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="em_transmutingemotions" value="<?php echo $row_rsPractices['em_transmutingemotions']; ?>"/></td>
+            <td>Dreamwork</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sh_dreamwork'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sh_dreamwork" value="<?php echo $row_rsPractices['sh_dreamwork']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Aerobic exercise</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_aerobicexercise'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_aerobicexercise" value="<?php echo $row_rsPractices['bo_aerobicexercise']; ?>"/></td>
+            <td>Emotional intelligence training</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['em_emointelligence'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="em_emointelligence" value="<?php echo $row_rsPractices['em_emointelligence']; ?>"/></td>
+            <td>Journaling</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sh_journaling'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sh_journaling" value="<?php echo $row_rsPractices['sh_journaling']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>F.I.T.</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_fit'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_fit" value="<?php echo $row_rsPractices['bo_fit']; ?>"/></td>
+            <td>Anger management</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['em_angermanagement'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="em_angermanagement" value="<?php echo $row_rsPractices['em_angermanagement']; ?>"/></td>
+            <td>Psychodynamic therapy</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sh_psychodynamictherapy'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sh_psychodynamictherapy" value="<?php echo $row_rsPractices['sh_psychodynamictherapy']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Martial arts</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_martialarts'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_martialarts" value="<?php echo $row_rsPractices['bo_martialarts']; ?>"/></td>
+            <td>Emotional mindfulness practice</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['em_emotionmindfulpractice'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="em_emotionmindfulpractice" value="<?php echo $row_rsPractices['em_emotionmindfulpractice']; ?>"/></td>
+            <td>Voice dialogue</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sh_voicedialogue'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sh_voicedialogue" value="<?php echo $row_rsPractices['sh_voicedialogue']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Sports</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_sports'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_sports" value="<?php echo $row_rsPractices['bo_sports']; ?>"/></td>
+            <td>Creative expression and art</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['em_creativeexpression'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="em_creativeexpression" value="<?php echo $row_rsPractices['em_creativeexpression']; ?>"/></td>
+            <td>Interpersonal feedback</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sh_interpersonalfeedback'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sh_interpersonalfeedback" value="<?php echo $row_rsPractices['sh_interpersonalfeedback']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Dance and movement</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_dancemovement'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_dancemovement" value="<?php echo $row_rsPractices['bo_dancemovement']; ?>"/></td>
+            <td>Anxiety management</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['em_anxietymanagement'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="em_anxietymanagement" value="<?php echo $row_rsPractices['em_anxietymanagement']; ?>"/></td>
+            <td>Somatic therapy</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sh_somatictherapy'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sh_somatictherapy" value="<?php echo $row_rsPractices['sh_somatictherapy']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Conscious eating, diet, and nutrition</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_consciouseating'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_consciouseating" value="<?php echo $row_rsPractices['bo_consciouseating']; ?>"/></td>
+            <td>Depression management</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['em_depressionmanagement'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="em_depressionmanagement" value="<?php echo $row_rsPractices['em_depressionmanagement']; ?>"/></td>
+            <td>3, 2, 1 process</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sh_321process'],1))) {echo "checked=\"checked\"";} ?> name="sh_321process" type="checkbox" id="sh_321process" value="<?php echo $row_rsPractices['sh_321process']; ?>" /></td>
+          </tr>
+          <tr valign="baseline">
+            <td>T'ai Chi/ Qi Gong</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_taichiqigong'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_taichiqigong" value="<?php echo $row_rsPractices['bo_taichiqigong']; ?>"/></td>
+            <td>Mindfulness-based stress reduction</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['em_stressreduction'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="em_stressreduction" value="<?php echo $row_rsPractices['em_stressreduction']; ?>"/></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+          <tr valign="baseline">
+            <td>Breathwork/ Pranayama</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_breathwork'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_breathwork" value="<?php echo $row_rsPractices['bo_breathwork']; ?>"/></td>
+            <td>Trauma work</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['em_traumawork'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="em_traumawork" value="<?php echo $row_rsPractices['em_traumawork']; ?>"?/></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+          <tr valign="baseline">
+            <td>3-body workout</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_3bodyworkout'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_3bodyworkout" value="<?php echo $row_rsPractices['bo_3bodyworkout']; ?>"/></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+          <tr valign="baseline">
+            <td>Yoga</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_yoga'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_yoga" value="<?php echo $row_rsPractices['bo_yoga']; ?>"/></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+          <tr valign="baseline">
+            <td>Runing, walking, hiking</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_runningwalkinghiking'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_runningwalkinghiking" value="<?php echo $row_rsPractices['bo_runningwalkinghiking']; ?>"/></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+          <tr valign="baseline">
+            <td>Biofeedback</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_biofeedback'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_biofeedback" value="<?php echo $row_rsPractices['bo_biofeedback']; ?>"/></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          </tr>
+          <tr valign="baseline">
+            <td>Other</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['bo_other'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="bo_other" value="<?php echo $row_rsPractices['bo_other']; ?>"/></td>
+            <td>Other</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['em_other'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="em_other" value="<?php echo $row_rsPractices['em_other']; ?>"/></td>
+            <td>Other</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sh_other'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sh_other" value="<?php echo $row_rsPractices['sh_other']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td colspan="2">&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+          </tr>
+          <tr valign="baseline">
+            <td colspan="2">Other integral body practice<br />
+            <textarea name="bo_otherdescription" id="bo_otherdescription" class="textarea080_200"><?php echo $row_rsPractices['bo_otherdescription']; ?></textarea>        <br /></td>
+            <td colspan="2">Other integral emotion practice<br />
+            <textarea name="em_otherdescription" id="em_otherdescription" class="textarea080_200"><?php echo $row_rsPractices['em_otherdescription']; ?></textarea>        <br /></td>
+            <td colspan="2">Other integral shadow practice<br />
+            <textarea name="sh_otherdescription" id="sh_otherdescription" class="textarea080_200"><?php echo $row_rsPractices['sh_otherdescription']; ?></textarea>          <br />
+  </td>
+          </tr>
+          <tr valign="baseline">
+            <td colspan="2"><div align="center" class="integralbody"></div></td>
+            <td colspan="2"><div align="center" class="integralemotions"></div></td>
+            <td colspan="2"><div align="center" class="integralshadow"></div></td>
+          </tr>
+          <tr valign="baseline">
+            <td>To the best of your ability,  rate the overall frequency with which you engage in integral body practices<span class="red">*</span></td>
+            <td><span id="spryselect1">
+            <select name="bodyfrequency" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['bodyfrequency']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsFrequency['limafrequencykey']?>"<?php if (!(strcmp($row_rsFrequency['limafrequencykey'], $row_rsPractices['bodyfrequency']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency['limafrequency']?></option>
+              <?php
+} while ($row_rsFrequency = mysql_fetch_assoc($rsFrequency));
+  $rows = mysql_num_rows($rsFrequency);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency, 0);
+	  $row_rsFrequency = mysql_fetch_assoc($rsFrequency);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+            <td>To the best of your ability,  rate the overall frequency with which you engage in integral emotion practices<span class="red">*</span></td>
+            <td><span id="spryselect2">
+            <select name="emotionsfrequency" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['emotionsfrequency']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsFrequency['limafrequencykey']?>"<?php if (!(strcmp($row_rsFrequency['limafrequencykey'], $row_rsPractices['emotionsfrequency']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency['limafrequency']?></option>
+              <?php
+} while ($row_rsFrequency = mysql_fetch_assoc($rsFrequency));
+  $rows = mysql_num_rows($rsFrequency);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency, 0);
+	  $row_rsFrequency = mysql_fetch_assoc($rsFrequency);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+            <td>To the best of your ability,  rate the overall frequency with which you engage in integral shadow practices<span class="red">*</span></td>
+            <td><span id="spryselect4">
+            <select name="shadowfrequency" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['shadowfrequency']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsFrequency['limafrequencykey']?>"<?php if (!(strcmp($row_rsFrequency['limafrequencykey'], $row_rsPractices['shadowfrequency']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency['limafrequency']?></option>
+              <?php
+} while ($row_rsFrequency = mysql_fetch_assoc($rsFrequency));
+  $rows = mysql_num_rows($rsFrequency);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency, 0);
+	  $row_rsFrequency = mysql_fetch_assoc($rsFrequency);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Length of time you have been engaging in integral body practices<span class="red">*</span></td>
+            <td><span id="spryselect18">
+              <select name="bodyhowlong" class="limasmallmenu">
+                <option value="" <?php if (!(strcmp("", $row_rsPractices['bodyhowlong']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+                <?php
+do {  
+?>
+                <option value="<?php echo $row_rsTimepractice['timepracticekey']?>"<?php if (!(strcmp($row_rsTimepractice['timepracticekey'], $row_rsPractices['bodyhowlong']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsTimepractice['timepractice']?></option>
+                <?php
+} while ($row_rsTimepractice = mysql_fetch_assoc($rsTimepractice));
+  $rows = mysql_num_rows($rsTimepractice);
+  if($rows > 0) {
+      mysql_data_seek($rsTimepractice, 0);
+	  $row_rsTimepractice = mysql_fetch_assoc($rsTimepractice);
+  }
+?>
+              </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+            <td>Length of time you have been engaging in integral emotion practices<span class="red">*</span></td>
+            <td><span id="spryselect3">
+            <select name="emotionshowlong" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['emotionshowlong']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsTimepractice['timepracticekey']?>"<?php if (!(strcmp($row_rsTimepractice['timepracticekey'], $row_rsPractices['emotionshowlong']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsTimepractice['timepractice']?></option>
+              <?php
+} while ($row_rsTimepractice = mysql_fetch_assoc($rsTimepractice));
+  $rows = mysql_num_rows($rsTimepractice);
+  if($rows > 0) {
+      mysql_data_seek($rsTimepractice, 0);
+	  $row_rsTimepractice = mysql_fetch_assoc($rsTimepractice);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+            <td>Length of time you have been engaging in integral shadow practices<span class="red">*</span></td>
+            <td><span id="spryselect5">
+            <select name="shadowhowlong" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['shadowhowlong']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsTimepractice['timepracticekey']?>"<?php if (!(strcmp($row_rsTimepractice['timepracticekey'], $row_rsPractices['shadowhowlong']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsTimepractice['timepractice']?></option>
+              <?php
+} while ($row_rsTimepractice = mysql_fetch_assoc($rsTimepractice));
+  $rows = mysql_num_rows($rsTimepractice);
+  if($rows > 0) {
+      mysql_data_seek($rsTimepractice, 0);
+	  $row_rsTimepractice = mysql_fetch_assoc($rsTimepractice);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+          </tr>
+          <tr valign="baseline">
+            <td colspan="2"><p>&nbsp;</p></td>
+            <td colspan="2"><p>&nbsp;</p></td>
+            <td colspan="2"><p>&nbsp;</p></td>
+          </tr>
+          <tr valign="baseline">
+            <td colspan="2"><div align="center" class="integralmind">Mind</div></td>
+            <td colspan="2"><div align="center" class="integralsoul">Soul</div></td>
+            <td colspan="2"><div align="center" class="integralspirit">Spirit</div></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Reading, study, writing</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['mi_readstudywrite'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="mi_readstudywrite" value="<?php echo $row_rsPractices['mi_readstudywrite']; ?>"/></td>
+            <td>Diamond approach</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['so_diamondapproach'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="so_diamondapproach" value="<?php echo $row_rsPractices['so_diamondapproach']; ?>"/></td>
+            <td>Zazen meditation</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sp_zazenmeditation'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sp_zazenmeditation" value="<?php echo $row_rsPractices['sp_zazenmeditation']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Examining your assumptions</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['mi_examineassumptions'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="mi_examineassumptions" value="<?php echo $row_rsPractices['mi_examineassumptions']; ?>"/></td>
+            <td>Vision quest</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['so_visionquest'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="so_visionquest" value="<?php echo $row_rsPractices['so_visionquest']; ?>"/></td>
+            <td>Contemplative prayer</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sp_contemplativeprayer'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sp_contemplativeprayer" value="<?php echo $row_rsPractices['sp_contemplativeprayer']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>AQAL scanning and mapping</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['mi_aqalscanningmapping'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="mi_aqalscanningmapping" value="<?php echo $row_rsPractices['mi_aqalscanningmapping']; ?>"/></td>
+            <td>Shamanic practice</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['so_shamanicpractice'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="so_shamanicpractice" value="<?php echo $row_rsPractices['so_shamanicpractice']; ?>"/></td>
+            <td>Practicing presence</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sp_practicingpresence'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sp_practicingpresence" value="<?php echo $row_rsPractices['sp_practicingpresence']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Jnana yoga philosophy</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['mi_jnanayogaphilosophy'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="mi_jnanayogaphilosophy" value="<?php echo $row_rsPractices['mi_jnanayogaphilosophy']; ?>"/></td>
+            <td>Western esotericism</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['so_westernesotericism'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="so_westernesotericism" value="<?php echo $row_rsPractices['so_westernesotericism']; ?>"/></td>
+            <td>Vipassana meditation</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sp_vipassanameditation'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sp_vipassanameditation" value="<?php echo $row_rsPractices['sp_vipassanameditation']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Book group</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['mi_bookgroup'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="mi_bookgroup" value="<?php echo $row_rsPractices['mi_bookgroup']; ?>"/></td>
+            <td>Lucid dreaming</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['so_luciddreaming'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="so_luciddreaming" value="<?php echo $row_rsPractices['so_luciddreaming']; ?>"/></td>
+            <td>Tonglen</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sp_tonglen'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sp_tonglen" value="<?php echo $row_rsPractices['sp_tonglen']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Socratic dialogue</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['mi_socraticdialogue'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="mi_socraticdialogue" value="<?php echo $row_rsPractices['mi_socraticdialogue']; ?>"/></td>
+            <td>Devotional practices</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['so_devotionalpractices'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="so_devotionalpractices" value="<?php echo $row_rsPractices['so_devotionalpractices']; ?>"/></td>
+            <td>Sufi practice</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sp_sufipractice'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sp_sufipractice" value="<?php echo $row_rsPractices['sp_sufipractice']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Taking multiple perspectives</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['mi_takingmultipleperspectives'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="mi_takingmultipleperspectives" value="<?php echo $row_rsPractices['mi_takingmultipleperspectives']; ?>"/></td>
+            <td>Visionary art</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['so_visionaryart'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="so_visionaryart" value="<?php echo $row_rsPractices['so_visionaryart']; ?>"/></td>
+            <td>Advaita vedanta</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sp_advaitavedanta'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sp_advaitavedanta" value="<?php echo $row_rsPractices['sp_advaitavedanta']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Cognitive behavioral therapy</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['mi_cogbehavtherapy'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="mi_cogbehavtherapy" value="<?php echo $row_rsPractices['mi_cogbehavtherapy']; ?>"/></td>
+            <td>Visualization</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['so_visualization'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="so_visualization" value="<?php echo $row_rsPractices['so_visualization']; ?>"/></td>
+            <td>Trencendental meditation</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sp_tm'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sp_tm" value="<?php echo $row_rsPractices['sp_tm']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Board games</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['mi_boardgames'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="mi_boardgames" value="<?php echo $row_rsPractices['mi_boardgames']; ?>"/></td>
+            <td>Worship singing and chanting</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['so_worshipsingchant'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="so_worshipsingchant" value="<?php echo $row_rsPractices['so_worshipsingchant']; ?>"/></td>
+            <td>Tantra</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sp_tantra'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sp_tantra" value="<?php echo $row_rsPractices['sp_tantra']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Mental games</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['mi_mentalgames'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="mi_mentalgames" value="<?php echo $row_rsPractices['mi_mentalgames']; ?>"/></td>
+            <td>Sweatlodge</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['so_sweatlodge'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="so_sweatlodge" value="<?php echo $row_rsPractices['so_sweatlodge']; ?>"/></td>
+            <td>Dzogchen/ Mahamudra</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sp_dzogchenmahamudra'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sp_dzogchenmahamudra" value="<?php echo $row_rsPractices['sp_dzogchenmahamudra']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>Prayer</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['so_prayer'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="so_prayer" value="<?php echo $row_rsPractices['so_prayer']; ?>"/></td>
+            <td>Kabbalah</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sp_kabbalah'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sp_kabbalah" value="<?php echo $row_rsPractices['sp_kabbalah']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>Course in miracles</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['so_coursemiracles'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="so_coursemiracles" value="<?php echo $row_rsPractices['so_coursemiracles']; ?>"/></td>
+            <td>Holosync</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sp_holosynk'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sp_holosynk" value="<?php echo $row_rsPractices['sp_holosynk']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Other</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['mi_other'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="mi_other" value="<?php echo $row_rsPractices['mi_other']; ?>"/></td>
+            <td>Other</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['so_other'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="so_other" value="<?php echo $row_rsPractices['so_other']; ?>"/></td>
+            <td>Other</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sp_other'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sp_other" value="<?php echo $row_rsPractices['sp_other']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td colspan="2">&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+          </tr>
+          <tr valign="baseline">
+            <td colspan="2">Other integral mind practice<br />
+              <textarea name="mi_otherdescription" id="mi_otherdescription" class="textarea080_200"><?php echo $row_rsPractices['mi_otherdescription']; ?></textarea><br />
+  </td>
+            <td colspan="2">Other integral soul practice<br />
+              <textarea name="so_otherdescription" id="so_otherdescription" class="textarea080_200"><?php echo $row_rsPractices['so_otherdescription']; ?></textarea><br />
+  </td>
+            <td colspan="2">Other integral spirit practice<br />
+              <textarea name="sp_otherdescription" id="sp_otherdescription" class="textarea080_200"><?php echo $row_rsPractices['sp_otherdescription']; ?></textarea><br />
+  </td>
+          </tr>
+          <tr valign="baseline">
+            <td height="24" colspan="2"><div align="center" class="integralmind"></div></td>
+            <td colspan="2"><div align="center" class="integralsoul"></div></td>
+            <td colspan="2"><div align="center" class="integralspirit"></div></td>
+          </tr>
+          <tr valign="baseline">
+            <td>To the best of your ability,  rate the overall frequency with which you engage in integral mind practices<span class="red">*</span></td>
+            <td><span id="spryselect6">
+            <select name="mindfrequency" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['mindfrequency']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsFrequency['limafrequencykey']?>"<?php if (!(strcmp($row_rsFrequency['limafrequencykey'], $row_rsPractices['mindfrequency']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency['limafrequency']?></option>
+              <?php
+} while ($row_rsFrequency = mysql_fetch_assoc($rsFrequency));
+  $rows = mysql_num_rows($rsFrequency);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency, 0);
+	  $row_rsFrequency = mysql_fetch_assoc($rsFrequency);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+            <td>To the best of your ability,  rate the overall frequency with which you engage in integral soul practices<span class="red">*</span></td>
+            <td><span id="spryselect8">
+            <select name="soulfrequency" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['soulfrequency']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsFrequency['limafrequencykey']?>"<?php if (!(strcmp($row_rsFrequency['limafrequencykey'], $row_rsPractices['soulfrequency']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency['limafrequency']?></option>
+              <?php
+} while ($row_rsFrequency = mysql_fetch_assoc($rsFrequency));
+  $rows = mysql_num_rows($rsFrequency);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency, 0);
+	  $row_rsFrequency = mysql_fetch_assoc($rsFrequency);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+            <td>To the best of your ability,  rate the overall frequency with which you engage in integral spirit practices<span class="red">*</span></td>
+            <td><span id="spryselect10">
+            <select name="spiritfrequency" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['spiritfrequency']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsFrequency['limafrequencykey']?>"<?php if (!(strcmp($row_rsFrequency['limafrequencykey'], $row_rsPractices['spiritfrequency']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency['limafrequency']?></option>
+              <?php
+} while ($row_rsFrequency = mysql_fetch_assoc($rsFrequency));
+  $rows = mysql_num_rows($rsFrequency);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency, 0);
+	  $row_rsFrequency = mysql_fetch_assoc($rsFrequency);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Length of time you have been engaging in integral mind practices<span class="red">*</span></td>
+            <td><span id="spryselect7">
+            <select name="mindhowlong" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['mindhowlong']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsTimepractice['timepracticekey']?>"<?php if (!(strcmp($row_rsTimepractice['timepracticekey'], $row_rsPractices['mindhowlong']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsTimepractice['timepractice']?></option>
+              <?php
+} while ($row_rsTimepractice = mysql_fetch_assoc($rsTimepractice));
+  $rows = mysql_num_rows($rsTimepractice);
+  if($rows > 0) {
+      mysql_data_seek($rsTimepractice, 0);
+	  $row_rsTimepractice = mysql_fetch_assoc($rsTimepractice);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+            <td>Length of time you have been engaging in integral soul practices<span class="red">*</span></td>
+            <td><span id="spryselect9">
+            <select name="soulhowlong" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['soulhowlong']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsTimepractice['timepracticekey']?>"<?php if (!(strcmp($row_rsTimepractice['timepracticekey'], $row_rsPractices['soulhowlong']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsTimepractice['timepractice']?></option>
+              <?php
+} while ($row_rsTimepractice = mysql_fetch_assoc($rsTimepractice));
+  $rows = mysql_num_rows($rsTimepractice);
+  if($rows > 0) {
+      mysql_data_seek($rsTimepractice, 0);
+	  $row_rsTimepractice = mysql_fetch_assoc($rsTimepractice);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+            <td>Length of time you have been engaging in integral spirit practices<span class="red">*</span></td>
+            <td><span id="spryselect11">
+            <select name="spirithowlong" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['spirithowlong']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsTimepractice['timepracticekey']?>"<?php if (!(strcmp($row_rsTimepractice['timepracticekey'], $row_rsPractices['spirithowlong']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsTimepractice['timepractice']?></option>
+              <?php
+} while ($row_rsTimepractice = mysql_fetch_assoc($rsTimepractice));
+  $rows = mysql_num_rows($rsTimepractice);
+  if($rows > 0) {
+      mysql_data_seek($rsTimepractice, 0);
+	  $row_rsTimepractice = mysql_fetch_assoc($rsTimepractice);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+          </tr>
+          <tr valign="baseline">
+            <td colspan="2"><p>&nbsp;</p></td>
+            <td colspan="2"><p>&nbsp;</p></td>
+            <td colspan="2"><p>&nbsp;</p></td>
+          </tr>
+          <tr valign="baseline">
+            <td colspan="2"><div align="center" class="integralsex">Sex</div></td>
+            <td colspan="2"><div align="center" class="integralservice">Service</div></td>
+            <td colspan="2"><div align="center" class="integralrelationships">Relationships</div></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Sexual yoga</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sx_sexualyoga'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sx_sexualyoga" value="<?php echo $row_rsPractices['sx_sexualyoga']; ?>"/></td>
+            <td>Right livelihood</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['se_rightlivelihood'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="se_rightlivelihood" value="<?php echo $row_rsPractices['se_rightlivelihood']; ?>"/></td>
+            <td>Conscious relationships</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['re_consciousrelationships'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="re_consciousrelationships" value="<?php echo $row_rsPractices['re_consciousrelationships']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Western sex therapy</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sx_westernsextherapy'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sx_westernsextherapy" value="<?php echo $row_rsPractices['sx_westernsextherapy']; ?>"/></td>
+            <td>Philanthropy</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['se_philanthropy'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="se_philanthropy" value="<?php echo $row_rsPractices['se_philanthropy']; ?>"/></td>
+            <td>Integral parenting</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['re_integralparenting'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="re_integralparenting" value="<?php echo $row_rsPractices['re_integralparenting']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Taoist sexual practices</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sx_taoistsexpractices'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sx_taoistsexpractices" value="<?php echo $row_rsPractices['sx_taoistsexpractices']; ?>"/></td>
+            <td>Financial maturity</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['se_financialmaturity'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="se_financialmaturity" value="<?php echo $row_rsPractices['se_financialmaturity']; ?>"/></td>
+            <td>Communication skills</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['re_communicationskills'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="re_communicationskills" value="<?php echo $row_rsPractices['re_communicationskills']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Enlightened sexuality (Dieda)</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sx_enlightenedsexuality'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sx_enlightenedsexuality" value="<?php echo $row_rsPractices['sx_enlightenedsexuality']; ?>"/></td>
+            <td>Karma yoga</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['se_karmayoga'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="se_karmayoga" value="<?php echo $row_rsPractices['se_karmayoga']; ?>"/></td>
+            <td>Dialogical inquiry</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['re_dialogicalinquiry'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="re_dialogicalinquiry" value="<?php echo $row_rsPractices['re_dialogicalinquiry']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Celibacy</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sx_celibacy'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sx_celibacy" value="<?php echo $row_rsPractices['sx_celibacy']; ?>"/></td>
+            <td>Community service</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['se_communityservice'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="se_communityservice" value="<?php echo $row_rsPractices['se_communityservice']; ?>"/></td>
+            <td>Couples therapy</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['re_couplestherapy'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="re_couplestherapy" value="<?php echo $row_rsPractices['re_couplestherapy']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>Social or ecological activism</td>
+            <td>&nbsp;</td>
+            <td>Non-violent communication</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['re_nonviolentcommunication'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="re_nonviolentcommunication" value="<?php echo $row_rsPractices['re_nonviolentcommunication']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>Mindfulness at work</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['se_mindfulnessatwork'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="se_mindfulnessatwork" value="<?php echo $row_rsPractices['se_mindfulnessatwork']; ?>"/></td>
+            <td>Discipleship</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['re_discipleship'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="re_discipleship" value="<?php echo $row_rsPractices['re_discipleship']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>Conscious monogamy</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['re_consciousmonogamy'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="re_consciousmonogamy" value="<?php echo $row_rsPractices['re_consciousmonogamy']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>Being vulnerable</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['re_beingvulnerable'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="re_beingvulnerable" value="<?php echo $row_rsPractices['re_beingvulnerable']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Other</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['sx_other'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="sx_other" value="<?php echo $row_rsPractices['sx_other']; ?>"/></td>
+            <td>Other</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['se_other'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="se_other" value="<?php echo $row_rsPractices['se_other']; ?>"/></td>
+            <td>Other</td>
+            <td><input <?php if (!(strcmp($row_rsPractices['re_other'],1))) {echo "checked=\"checked\"";} ?> type="checkbox" name="re_other" value="<?php echo $row_rsPractices['re_other']; ?>"/></td>
+          </tr>
+          <tr valign="baseline">
+            <td colspan="2">&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+            <td colspan="2">&nbsp;</td>
+          </tr>
+          <tr valign="baseline">
+            <td colspan="2">Other integral sex practice<br />
+              <textarea name="sx_otherdescription" id="sx_otherdescription" class="textarea080_200"><?php echo $row_rsPractices['sx_otherdescription']; ?></textarea><br />
+  </td>
+            <td colspan="2">Other integral service practice<br />
+              <textarea name="se_otherdescription" id="se_otherdescription" class="textarea080_200"><?php echo $row_rsPractices['se_otherdescription']; ?></textarea><br />
+            </td>
+            <td colspan="2">Other integral relationship practice<br />
+              <textarea name="re_otherdescription" id="re_otherdescription" class="textarea080_200"><?php echo $row_rsPractices['re_otherdescription']; ?></textarea><br />
+  </td>
+          </tr>
+          <tr valign="baseline">
+            <td colspan="2"><div align="center" class="integralsex"></div></td>
+            <td colspan="2"><div align="center" class="integralservice"></div></td>
+            <td colspan="2"><div align="center" class="integralrelationships"></div></td>
+          </tr>
+          <tr valign="baseline">
+            <td>To the best of your ability,  rate the overall frequency with which you engage in integral sex practices<span class="red">*</span></td>
+            <td><span id="spryselect12">
+            <select name="sexfrequency" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['sexfrequency']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsFrequency['limafrequencykey']?>"<?php if (!(strcmp($row_rsFrequency['limafrequencykey'], $row_rsPractices['sexfrequency']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency['limafrequency']?></option>
+              <?php
+} while ($row_rsFrequency = mysql_fetch_assoc($rsFrequency));
+  $rows = mysql_num_rows($rsFrequency);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency, 0);
+	  $row_rsFrequency = mysql_fetch_assoc($rsFrequency);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+            <td>To the best of your ability,  rate the overall frequency with which you engage in integral service practices<span class="red">*</span></td>
+            <td><span id="spryselect14">
+            <select name="servicefrequency" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['servicefrequency']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsFrequency['limafrequencykey']?>"<?php if (!(strcmp($row_rsFrequency['limafrequencykey'], $row_rsPractices['servicefrequency']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency['limafrequency']?></option>
+              <?php
+} while ($row_rsFrequency = mysql_fetch_assoc($rsFrequency));
+  $rows = mysql_num_rows($rsFrequency);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency, 0);
+	  $row_rsFrequency = mysql_fetch_assoc($rsFrequency);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+            <td>To the best of your ability,  rate the overall frequency with which you engage in integral relationship practices<span class="red">*</span></td>
+            <td><span id="spryselect16">
+            <select name="relationshipsfrequency" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['relationshipsfrequency']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsFrequency['limafrequencykey']?>"<?php if (!(strcmp($row_rsFrequency['limafrequencykey'], $row_rsPractices['relationshipsfrequency']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsFrequency['limafrequency']?></option>
+              <?php
+} while ($row_rsFrequency = mysql_fetch_assoc($rsFrequency));
+  $rows = mysql_num_rows($rsFrequency);
+  if($rows > 0) {
+      mysql_data_seek($rsFrequency, 0);
+	  $row_rsFrequency = mysql_fetch_assoc($rsFrequency);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+          </tr>
+          <tr valign="baseline">
+            <td>Length of time you have been engaging in integral sex practices<span class="red">*</span></td>
+            <td><span id="spryselect13">
+            <select name="sexhowlong" class="limasmallmenu">
+
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['sexhowlong']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsTimepractice['timepracticekey']?>"<?php if (!(strcmp($row_rsTimepractice['timepracticekey'], $row_rsPractices['sexhowlong']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsTimepractice['timepractice']?></option>
+              <?php
+} while ($row_rsTimepractice = mysql_fetch_assoc($rsTimepractice));
+  $rows = mysql_num_rows($rsTimepractice);
+  if($rows > 0) {
+      mysql_data_seek($rsTimepractice, 0);
+	  $row_rsTimepractice = mysql_fetch_assoc($rsTimepractice);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+            <td>Length of time you have been engaging in integral service practices<span class="red">*</span></td>
+            <td><span id="spryselect15">
+            <select name="servicehowlong" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['servicehowlong']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsTimepractice['timepracticekey']?>"<?php if (!(strcmp($row_rsTimepractice['timepracticekey'], $row_rsPractices['servicehowlong']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsTimepractice['timepractice']?></option>
+              <?php
+} while ($row_rsTimepractice = mysql_fetch_assoc($rsTimepractice));
+  $rows = mysql_num_rows($rsTimepractice);
+  if($rows > 0) {
+      mysql_data_seek($rsTimepractice, 0);
+	  $row_rsTimepractice = mysql_fetch_assoc($rsTimepractice);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+            <td>Length of time you have been engaging in integral relationship practices<span class="red">*</span></td>
+            <td><span id="spryselect17">
+            <select name="relationshipshowlong" class="limasmallmenu">
+              <option value="" <?php if (!(strcmp("", $row_rsPractices['relationshipshowlong']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsTimepractice['timepracticekey']?>"<?php if (!(strcmp($row_rsTimepractice['timepracticekey'], $row_rsPractices['relationshipshowlong']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsTimepractice['timepractice']?></option>
+              <?php
+} while ($row_rsTimepractice = mysql_fetch_assoc($rsTimepractice));
+  $rows = mysql_num_rows($rsTimepractice);
+  if($rows > 0) {
+      mysql_data_seek($rsTimepractice, 0);
+	  $row_rsTimepractice = mysql_fetch_assoc($rsTimepractice);
+  }
+?>
+            </select>
+            <span class="selectRequiredMsg">Please select an item.</span></span></td>
+          </tr>
+        </table>
+        <p>&nbsp;</p>
+        <p align="right">
+          <input type="hidden" name="MM_update" value="form1" />
+          <input type="hidden" name="userkey" value="<?php echo $_SESSION['log_userkey']; ?>" />
+          <input type="hidden" name="limakey" value="<?php echo $_GET['limakey']; ?>" />
+          <input type="submit" value="SAVE AND GO TO NEXT PAGE" />
+        </p>
+        <script type="text/javascript">
+<!--
+var spryselect11 = new Spry.Widget.ValidationSelect("spryselect11", {validateOn:["blur", "change"]});
+var spryselect9 = new Spry.Widget.ValidationSelect("spryselect9", {validateOn:["blur", "change"]});
+var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {validateOn:["blur", "change"]});
+var spryselect10 = new Spry.Widget.ValidationSelect("spryselect10", {validateOn:["blur", "change"]});
+var spryselect8 = new Spry.Widget.ValidationSelect("spryselect8", {validateOn:["blur", "change"]});
+var spryselect6 = new Spry.Widget.ValidationSelect("spryselect6", {validateOn:["blur", "change"]});
+var spryselect17 = new Spry.Widget.ValidationSelect("spryselect17", {validateOn:["blur", "change"]});
+var spryselect15 = new Spry.Widget.ValidationSelect("spryselect15", {validateOn:["blur", "change"]});
+var spryselect13 = new Spry.Widget.ValidationSelect("spryselect13", {validateOn:["blur", "change"]});
+var spryselect16 = new Spry.Widget.ValidationSelect("spryselect16", {validateOn:["blur", "change"]});
+var spryselect14 = new Spry.Widget.ValidationSelect("spryselect14", {validateOn:["blur", "change"]});
+var spryselect12 = new Spry.Widget.ValidationSelect("spryselect12", {validateOn:["blur", "change"]});
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {validateOn:["blur", "change"]});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"]});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"]});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"]});
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]});
+var spryselect18 = new Spry.Widget.ValidationSelect("spryselect18", {validateOn:["blur", "change"]});
+//-->
+      </script>
+    </form>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer -->
+  <!-- end #container -->
+</div>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsUser);
+
+mysql_free_result($rsPractices);
+
+mysql_free_result($rsFrequency);
+
+mysql_free_result($rsTimepractice);
+
+mysql_free_result($rsRegistrants);
+?>

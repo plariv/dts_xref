@@ -1,0 +1,725 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_insert"])) && ($_POST["MM_insert"] == "form1")) {
+  $insertSQL = sprintf("INSERT INTO LIMA (limakey, userkey, firstname, lastname, resellerkey, country, age, sexkey, edukey, expertise1key, expertise2key, expertise3key, expertiseother, discipline1key, discipline2key, disciplineother, ethnicity1key, ethnicity1other, ethnicity2key, ethnicity2other, englishqualitykey) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                       GetSQLValueString($_POST['limakey'], "int"),
+                       GetSQLValueString($_POST['userkey'], "int"),
+                       GetSQLValueString($_POST['firstname'], "text"),
+                       GetSQLValueString($_POST['lastname'], "text"),
+                       GetSQLValueString($_POST['resellerkey'], "int"),
+                       GetSQLValueString($_POST['country'], "text"),
+                       GetSQLValueString($_POST['age'], "int"),
+                       GetSQLValueString($_POST['sexkey'], "int"),
+                       GetSQLValueString($_POST['edukey'], "int"),
+                       GetSQLValueString($_POST['expertise1key'], "int"),
+                       GetSQLValueString($_POST['expertise2key'], "int"),
+                       GetSQLValueString($_POST['expertise3key'], "int"),
+                       GetSQLValueString($_POST['expertiseother'], "text"),
+                       GetSQLValueString($_POST['discipline1key'], "int"),
+                       GetSQLValueString($_POST['discipline2key'], "int"),
+                       GetSQLValueString($_POST['disciplineother'], "text"),
+                       GetSQLValueString($_POST['ethnicity1key'], "int"),
+                       GetSQLValueString($_POST['ethnicity1other'], "text"),
+                       GetSQLValueString($_POST['ethnicity2key'], "int"),
+                       GetSQLValueString($_POST['ethnicity2other'], "text"),
+                       GetSQLValueString($_POST['englishqualitykey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($insertSQL, $Assessment) or die(mysql_error());
+  $insert_ID = mysql_insert_id();
+
+  $insertGoTo = "lima01_scales.php?limakey=$insert_ID&bulkcustomerkey={$_POST['resellerkey']}";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+    $insertGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $insertGoTo));
+}
+
+$colname_rsUser = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsUser = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsUser = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsUser, "int"));
+$rsUser = mysql_query($query_rsUser, $Assessment) or die(mysql_error());
+$row_rsUser = mysql_fetch_assoc($rsUser);
+$totalRows_rsUser = mysql_num_rows($rsUser);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTestTime = "SELECT * FROM TestTime";
+$rsTestTime = mysql_query($query_rsTestTime, $Assessment) or die(mysql_error());
+$row_rsTestTime = mysql_fetch_assoc($rsTestTime);
+$totalRows_rsTestTime = mysql_num_rows($rsTestTime);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEdu = "SELECT * FROM EduAttainment ORDER BY edukey ASC";
+$rsEdu = mysql_query($query_rsEdu, $Assessment) or die(mysql_error());
+$row_rsEdu = mysql_fetch_assoc($rsEdu);
+$totalRows_rsEdu = mysql_num_rows($rsEdu);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEthicity = "SELECT * FROM Ethnicity ORDER BY Ethnicity ASC";
+$rsEthicity = mysql_query($query_rsEthicity, $Assessment) or die(mysql_error());
+$row_rsEthicity = mysql_fetch_assoc($rsEthicity);
+$totalRows_rsEthicity = mysql_num_rows($rsEthicity);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsReseller = "SELECT bulkcustomerkey, current, username4students, projectkey FROM BulkCustomerInfo WHERE current = 1 AND projectkey > 0 ORDER BY BulkCustomerInfo.username4students ASC";
+$rsReseller = mysql_query($query_rsReseller, $Assessment) or die(mysql_error());
+$row_rsReseller = mysql_fetch_assoc($rsReseller);
+$totalRows_rsReseller = mysql_num_rows($rsReseller);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsSex = "SELECT * FROM Sex";
+$rsSex = mysql_query($query_rsSex, $Assessment) or die(mysql_error());
+$row_rsSex = mysql_fetch_assoc($rsSex);
+$totalRows_rsSex = mysql_num_rows($rsSex);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCountry = "SELECT * FROM countries ORDER BY name ASC";
+$rsCountry = mysql_query($query_rsCountry, $Assessment) or die(mysql_error());
+$row_rsCountry = mysql_fetch_assoc($rsCountry);
+$totalRows_rsCountry = mysql_num_rows($rsCountry);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEnglishQuality = "SELECT * FROM EnglishQuality";
+$rsEnglishQuality = mysql_query($query_rsEnglishQuality, $Assessment) or die(mysql_error());
+$row_rsEnglishQuality = mysql_fetch_assoc($rsEnglishQuality);
+$totalRows_rsEnglishQuality = mysql_num_rows($rsEnglishQuality);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProjects = "SELECT * FROM ProjectProject";
+$rsProjects = mysql_query($query_rsProjects, $Assessment) or die(mysql_error());
+$row_rsProjects = mysql_fetch_assoc($rsProjects);
+$totalRows_rsProjects = mysql_num_rows($rsProjects);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsExpertise = "SELECT * FROM LIMAexpertise ORDER BY limaexpertise ASC";
+$rsExpertise = mysql_query($query_rsExpertise, $Assessment) or die(mysql_error());
+$row_rsExpertise = mysql_fetch_assoc($rsExpertise);
+$totalRows_rsExpertise = mysql_num_rows($rsExpertise);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDiscipline = "SELECT * FROM Discipline ORDER BY discipline ASC";
+$rsDiscipline = mysql_query($query_rsDiscipline, $Assessment) or die(mysql_error());
+$row_rsDiscipline = mysql_fetch_assoc($rsDiscipline);
+$totalRows_rsDiscipline = mysql_num_rows($rsDiscipline);
+
+$colname_rsLIMApersonal = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLIMApersonal = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLIMApersonal = sprintf("SELECT limakey, userkey, firstname, lastname, testtime, projectkey, resellerkey, country, age, sexkey, edukey, expertise1key, expertise2key, expertise3key, expertiseother, discipline1key, discipline2key, disciplineother, ethnicity1key, ethnicity1other, ethnicity2key, ethnicity2other, englishqualitykey FROM LIMA WHERE userkey = %s", GetSQLValueString($colname_rsLIMApersonal, "int"));
+$rsLIMApersonal = mysql_query($query_rsLIMApersonal, $Assessment) or die(mysql_error());
+$row_rsLIMApersonal = mysql_fetch_assoc($rsLIMApersonal);
+$totalRows_rsLIMApersonal = mysql_num_rows($rsLIMApersonal);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelima2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LIMA personal information LIMA essays</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../DTSassets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../DTSassets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../DTSassets/SpryValidationTextarea.js" type="text/javascript"></script>
+<link href="../DTSassets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../DTSassets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../DTSassets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LIMAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>PERSONAL INFORMATION (page 1 of 9) </h1>
+  <h2>for <em><?php echo $row_rsUser['firstname']; ?> <?php echo $row_rsUser['lastname']; ?></em></h2>
+  <p class="box"><strong class="lima">Note:</strong> If you are returned to this page after hitting the &quot;submit&quot; button, please check to make sure you have entered responses for all of the required (*) items. </p>
+  <form id="form1" name="form1" method="POST" action="<?php echo $editFormAction; ?>">
+    <table>
+      <tr>
+        <td>The ID of the researcher/ teacher/ counselor who asked you to take this assessment.  (If you were not asked to take this assessment by another party, select &quot;none&quot;.)<span class="red">*</span></td>
+        <td><span id="spryselect2">
+          <select name="resellerkey" id="resellerkey">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsReseller['bulkcustomerkey']?>"><?php echo $row_rsReseller['username4students']?></option>
+            <?php
+} while ($row_rsReseller = mysql_fetch_assoc($rsReseller));
+  $rows = mysql_num_rows($rsReseller);
+  if($rows > 0) {
+      mysql_data_seek($rsReseller, 0);
+	  $row_rsReseller = mysql_fetch_assoc($rsReseller);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td>The country in which you reside<span class="red">*</span></td>
+        <td><span id="spryselect3">
+          <select name="country" id="country">
+            <option value="">-select one-</option>
+          <option value="United States">United States</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsCountry['name']?>"><?php echo $row_rsCountry['name']?></option>
+            <?php
+} while ($row_rsCountry = mysql_fetch_assoc($rsCountry));
+  $rows = mysql_num_rows($rsCountry);
+  if($rows > 0) {
+      mysql_data_seek($rsCountry, 0);
+	  $row_rsCountry = mysql_fetch_assoc($rsCountry);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td>Your age<span class="red">*</span></td>
+        <td><span id="sprytextfield1">
+          <input name="age" type="text" id="age" size="3" />
+        <span class="textfieldRequiredMsg">A value is required.</span></span></td>
+      </tr>
+      <tr>
+        <td>Your sex<span class="red">*</span></td>
+        <td><span id="spryselect4">
+          <select name="sexkey" id="sexkey">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsSex['sexkey']?>"><?php echo $row_rsSex['sex']?></option>
+            <?php
+} while ($row_rsSex = mysql_fetch_assoc($rsSex));
+  $rows = mysql_num_rows($rsSex);
+  if($rows > 0) {
+      mysql_data_seek($rsSex, 0);
+	  $row_rsSex = mysql_fetch_assoc($rsSex);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td>Your educational level<span class="red">*</span></td>
+        <td><span id="spryselect5">
+          <select name="edukey" id="edukey">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsEdu['edukey']?>"><?php echo $row_rsEdu['EduLevel']?></option>
+            <?php
+} while ($row_rsEdu = mysql_fetch_assoc($rsEdu));
+  $rows = mysql_num_rows($rsEdu);
+  if($rows > 0) {
+      mysql_data_seek($rsEdu, 0);
+	  $row_rsEdu = mysql_fetch_assoc($rsEdu);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td>Rate the quality of your written English.<span class="red">*</span></td>
+        <td><span id="spryselect6">
+          <select name="englishqualitykey" id="englishqualitykey">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsEnglishQuality['englishqualitykey']?>"><?php echo $row_rsEnglishQuality['EnglishQuality']?></option>
+            <?php
+} while ($row_rsEnglishQuality = mysql_fetch_assoc($rsEnglishQuality));
+  $rows = mysql_num_rows($rsEnglishQuality);
+  if($rows > 0) {
+      mysql_data_seek($rsEnglishQuality, 0);
+	  $row_rsEnglishQuality = mysql_fetch_assoc($rsEnglishQuality);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td>First ethnic affiliation<span class="red">*</span></td>
+        <td><span id="spryselect7">
+          <select name="ethnicity1key" id="ethnicity1key">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsEthicity['ethnicitykey']?>"><?php echo $row_rsEthicity['Ethnicity']?></option>
+            <?php
+} while ($row_rsEthicity = mysql_fetch_assoc($rsEthicity));
+  $rows = mysql_num_rows($rsEthicity);
+  if($rows > 0) {
+      mysql_data_seek($rsEthicity, 0);
+	  $row_rsEthicity = mysql_fetch_assoc($rsEthicity);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td>If you answered &quot;other&quot;, please explain.</td>
+        <td><span id="sprytextfield2">
+          <input name="ethnicity1other" type="text" id="ethnicity1other" size="50" />
+</span></td>
+      </tr>
+      <tr>
+        <td>Second ethnic affiliation<span class="red">*</span></td>
+        <td><span id="spryselect8">
+          <select name="ethnicity2key" id="ethnicity2key">
+            <option value="">-select one-</option>
+            <option value="0">none</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsEthicity['ethnicitykey']?>"><?php echo $row_rsEthicity['Ethnicity']?></option>
+            <?php
+} while ($row_rsEthicity = mysql_fetch_assoc($rsEthicity));
+  $rows = mysql_num_rows($rsEthicity);
+  if($rows > 0) {
+      mysql_data_seek($rsEthicity, 0);
+	  $row_rsEthicity = mysql_fetch_assoc($rsEthicity);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td>If you answered &quot;other&quot;, please explain.</td>
+        <td><span id="sprytextfield3">
+          <input name="ethnicity2other" type="text" id="ethnicity2other" size="50" />
+</span></td>
+      </tr>
+      <tr>
+        <td>First area of expertise/profession<span class="red">*</span></td>
+        <td><span id="spryselect9">
+          <select name="expertise1key" id="expertise1key">
+            <option value="">-select one-</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsExpertise['limaexpertisekey']?>"><?php echo $row_rsExpertise['limaexpertise']?></option>
+            <?php
+} while ($row_rsExpertise = mysql_fetch_assoc($rsExpertise));
+  $rows = mysql_num_rows($rsExpertise);
+  if($rows > 0) {
+      mysql_data_seek($rsExpertise, 0);
+	  $row_rsExpertise = mysql_fetch_assoc($rsExpertise);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td>Second area of expertise/profession<span class="red">*</span></td>
+        <td><span id="spryselect10">
+          <select name="expertise2key" id="expertise2key">
+            <option value="">-select one-</option>
+            <option value="0">none</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsExpertise['limaexpertisekey']?>"><?php echo $row_rsExpertise['limaexpertise']?></option>
+            <?php
+} while ($row_rsExpertise = mysql_fetch_assoc($rsExpertise));
+  $rows = mysql_num_rows($rsExpertise);
+  if($rows > 0) {
+      mysql_data_seek($rsExpertise, 0);
+	  $row_rsExpertise = mysql_fetch_assoc($rsExpertise);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td>Third area of expertise/profession<span class="red">*</span></td>
+        <td><span id="spryselect11">
+          <select name="expertise3key" id="expertise3key">
+            <option value="">-select one-</option>
+            <option value="0">none</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsExpertise['limaexpertisekey']?>"><?php echo $row_rsExpertise['limaexpertise']?></option>
+            <?php
+} while ($row_rsExpertise = mysql_fetch_assoc($rsExpertise));
+  $rows = mysql_num_rows($rsExpertise);
+  if($rows > 0) {
+      mysql_data_seek($rsExpertise, 0);
+	  $row_rsExpertise = mysql_fetch_assoc($rsExpertise);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+      </tr>
+      <tr>
+        <td>If you selected &quot;other&quot; in response to any of the last 3 items, or have something to add, please explain.</td>
+        <td><span id="sprytextarea1">
+          <textarea name="expertiseother" class="textarea080_400" id="expertiseother"></textarea>
+</span></td>
+      </tr>
+      <tr>
+        <td>If you are a teacher or researcher, please select a first discipline.</td>
+        <td><span id="spryselect12">
+          <select name="discipline1key" id="discipline1key">
+            <option value="">-select one- </option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsDiscipline['disciplinekey']?>"><?php echo $row_rsDiscipline['discipline']?></option>
+            <?php
+} while ($row_rsDiscipline = mysql_fetch_assoc($rsDiscipline));
+  $rows = mysql_num_rows($rsDiscipline);
+  if($rows > 0) {
+      mysql_data_seek($rsDiscipline, 0);
+	  $row_rsDiscipline = mysql_fetch_assoc($rsDiscipline);
+  }
+?>
+          </select>
+</span></td>
+      </tr>
+      <tr>
+        <td>If you are a teacher or researcher, please select a second discipline.</td>
+        <td><span id="spryselect13">
+          <select name="discipline2key" id="discipline2key">
+            <option value="">-select one- </option>
+            <option value="value">none</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsDiscipline['disciplinekey']?>"><?php echo $row_rsDiscipline['discipline']?></option>
+            <?php
+} while ($row_rsDiscipline = mysql_fetch_assoc($rsDiscipline));
+  $rows = mysql_num_rows($rsDiscipline);
+  if($rows > 0) {
+      mysql_data_seek($rsDiscipline, 0);
+	  $row_rsDiscipline = mysql_fetch_assoc($rsDiscipline);
+  }
+?>
+          </select>
+</span></td>
+      </tr>
+      <tr>
+        <td>If you selected &quot;other&quot; in response to either of the last 2 questions, or have something to add, please explain.</td>
+        <td><span id="sprytextarea2">
+          <textarea name="disciplineother" cols="48" rows="3" class="textarea080_400" id="disciplineother"></textarea>
+</span></td>
+      </tr>
+    </table>
+    <p align="right">
+      <input name="limakey" type="hidden" id="limakey" value="<?php echo((isset($_POST["limakey"]))?$_POST["limakey"]:"") ?>" />
+      <input name="userkey" type="hidden" id="userkey" value="<?php echo $_SESSION['log_userkey']; ?>" />
+      <input name="lastname" type="hidden" id="lastname" value="<?php echo $row_rsUser['lastname']; ?>" />
+      <input name="firstname" type="hidden" id="firstname" value="<?php echo $row_rsUser['firstname']; ?>" />
+      <input type="submit" value="SAVE AND GO TO NEXT PAGE" />
+    </p>
+    <input type="hidden" name="MM_insert" value="form1" />
+</form>
+  <script type="text/javascript">
+<!--
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "none", {validateOn:["blur", "change"]});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {validateOn:["blur", "change"], isRequired:false});
+var sprytextfield3 = new Spry.Widget.ValidationTextField("sprytextfield3", "none", {validateOn:["blur", "change"], isRequired:false});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"]});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"]});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"]});
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {validateOn:["blur", "change"]});
+var spryselect6 = new Spry.Widget.ValidationSelect("spryselect6", {validateOn:["blur", "change"]});
+var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {validateOn:["blur", "change"]});
+var spryselect8 = new Spry.Widget.ValidationSelect("spryselect8", {validateOn:["blur", "change"]});
+var spryselect9 = new Spry.Widget.ValidationSelect("spryselect9", {validateOn:["blur", "change"]});
+var spryselect10 = new Spry.Widget.ValidationSelect("spryselect10", {validateOn:["blur", "change"]});
+var spryselect11 = new Spry.Widget.ValidationSelect("spryselect11", {validateOn:["blur", "change"]});
+var spryselect12 = new Spry.Widget.ValidationSelect("spryselect12", {validateOn:["blur", "change"], isRequired:false});
+var spryselect13 = new Spry.Widget.ValidationSelect("spryselect13", {validateOn:["blur", "change"], isRequired:false});
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {validateOn:["blur", "change"], isRequired:false});
+var sprytextarea2 = new Spry.Widget.ValidationTextarea("sprytextarea2", {isRequired:false, validateOn:["blur", "change"]});
+//-->
+  </script>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer -->
+  <!-- end #container -->
+</div>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsUser);
+
+mysql_free_result($rsTestTime);
+
+mysql_free_result($rsEdu);
+
+mysql_free_result($rsProjects);
+
+mysql_free_result($rsEthicity);
+
+mysql_free_result($rsReseller);
+
+mysql_free_result($rsSex);
+
+mysql_free_result($rsCountry);
+
+mysql_free_result($rsEnglishQuality);
+
+mysql_free_result($rsExpertise);
+
+mysql_free_result($rsDiscipline);
+
+mysql_free_result($rsLIMApersonal);
+
+mysql_free_result($rsRegistrants);
+?>

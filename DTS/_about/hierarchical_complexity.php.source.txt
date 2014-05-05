@@ -1,0 +1,408 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: hierarchical complexity</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+
+// JQUERY to manage hidden elements on the page
+$(document).ready(function() {
+	
+	$('.hotspot').tooltip({
+		position: 'bottom center', 
+		effect: 'fade', 
+		fadeInSpeed: 100,
+		fadeOutSpeed: 100,
+		delay:300,
+		layout: '<span/>',
+		events: {
+			def: 'mouseover, mouseleave'
+		}
+	}); 
+	
+	$('.hotspot').mouseover(function() {
+		this.style.backgroundColor = "#d0d0d0";	
+	});
+	
+	$('.hotspot').mouseout(function() {
+		this.style.backgroundColor = "";
+	});
+	
+	// Add instrument-specific class to each <a> link
+	$('a').addClass('a-<?php echo strtolower($instrument_id); ?>');
+	
+});
+
+
+</script>
+<style type="text/css">
+
+/* tooltip styling. by default the element to be styled is .tooltip  */
+.tooltip {
+	display:none;
+	background:#FFF;
+	font-size:90%;
+	line-height:140%;
+	min-width: 200px;
+	max-width: 300px;
+	background: #FFC;
+	padding-right: 20px;
+	padding-left: 20px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-left: 10px;
+	-moz-box-shadow: 2px 2px 5px #888;
+	-webkit-box-shadow: 2px 2px 5px #888;
+	box-shadow: 2px 2px 5px #888;
+	z-index: 999;
+}
+
+.hotspot {
+	cursor: pointer; cursor: hand	
+	height:100%; 
+	width:100%; 
+	position:relative;
+}
+.inner_container .column1 .minimalist-a tr th {
+	font-size: 140%;
+}
+</style>
+
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+<h1>Hierarchical complexity	&amp;	the LAS</h1>
+<p><a class="hotspot">Hierarchical complexity</a>  
+	  <span class="tooltip">The origins of the hierarchical complexity construct were in the work of Jean Piaget, whose model of mental representation delineated five developmental stages. In the Piagetian model, development from one form of thought to the subsequent form involved a process of hierarchical integration, in the sense that the actions of the earlier form become the content of the actions of the latter (Piaget, 1985). A number of researchers have described general developmental sequences that elaborate this notion of hierarchical integration (Baldwin, 1894; Case, 1991; Demetriou &amp; Valanides, 1998; Fischer, 1980; Pascual-Leone &amp; Goodman, 1979; Werner, 1948). The concept of hierarchical integration is also fundamental to several neo-Piagetian models of cognitive development, including those of Fischer (1980), who emphasizes the development of skill hierarchies in particular contexts; Pascual-Leone and Goodman (1979), who focus on the growth of mental attention and memory capacity; Case (1991), who describes the development of memory capacity and associated processing structures; and Demetriou &amp; Valanides (1998), who describe hierarchical development in terms of processing functions. Hierarchical integration is observable in performance in the form of hierarchical complexity (Commons et al., 1998; Fischer, 1980; Piaget, 2000).</span>
+	  is the fundamental construct that underlies the Lectical<sup>®</sup> Assessment System (LAS). It is reflected in two aspects of performance, the <i>hierarchical order of abstraction</i> of concepts and the <i>logical organization</i> of arguments. Hierarchical Complexity Theory predicts that some increases in hierarchical complexity will take the form of increasing hierarchical order of abstraction. This is because new concepts are formed at each complexity order as the operations of the previous complexity order are &quot;summarized&quot; into single constructs (Fischer, 1980). Burtis (1982) and Halford (1999) suggest that this summarizing or &quot;chunking&quot; makes more complex thought possible by reducing the number of elements that must be simultaneously coordinated, freeing up processing space and making it possible to produce an argument or conceptualization at a higher complexity order. For example, the concept of <em>honor</em>, which appears for the first time at the abstract mappings level, &quot;summarizes&quot; an argument coordinating concepts of reputation, trustworthiness, and kindness constructed at the single abstractions level. Similarly, the concept of <em>personal integrity</em>, which appears for the first time at the abstract systems level, summarizes an argument coordinating concepts of honor, personal responsibility, and personal values constructed at the abstract mappings level.</p>
+        <p>The figure below illustrates hierarchical integration.</p>
+            <p align="center"><img src="../_images/methods/fischer_cycles.png" alt="Figure showing hierarchical integration" class="margin-t20-b20" style="max-width:428px; width:100%;" /></p>
+            <p>The names and numbers for the most commonly observed skill/lectical levels are shown in the table below, including the approximate ages and educational levels at which they generally become dominant.</p>
+            <div align="center" class="margin-t20-b20">
+              <table class="minimalist-a">
+                <tr>
+                  <th>Level</th>
+                  <th>Fischer name</th>
+                  <th>Age of onset</th>
+                  <th>Education</th>
+                </tr>
+                <tr>
+                  <td>0</td>
+                  <td>Single reflexive actions</td>
+                  <td>Birth</td>
+                  <td>n/a</td>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>Reflexive mappings</td>
+                  <td>6 wks</td>
+                  <td>n/a</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>Reflexive systems</td>
+                  <td>3 mos</td>
+                  <td>n/a</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>Single sensorimotor actions</td>
+                  <td>6 mos</td>
+                  <td>n/a</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>Sensorimotor mappings</td>
+                  <td>10 mos</td>
+                  <td>n/a</td>
+                </tr>
+                <tr>
+                  <td>5</td>
+                  <td>Sensorimotor systems</td>
+                  <td>15 mos</td>
+                  <td>n/a</td>
+                </tr>
+                <tr>
+                  <td>6</td>
+                  <td>Single representations</td>
+                  <td>21 mos</td>
+                  <td>n/a</td>
+                </tr>
+                <tr>
+                  <td>7</td>
+                  <td>Representational mappings</td>
+                  <td>4-5 yrs</td>
+                  <td>0-K</td>
+                </tr>
+                <tr>
+                  <td>8</td>
+                  <td>Representational systems</td>
+                  <td>7-8 yrs</td>
+                  <td>1-2</td>
+                </tr>
+                <tr>
+                  <td>9</td>
+                  <td>Single abstractions</td>
+                  <td>10-11 yrs</td>
+                  <td>4-5</td>
+                </tr>
+                <tr>
+                  <td>10</td>
+                  <td>Abstract mappings</td>
+                  <td>14-15 yrs</td>
+                  <td>8-9</td>
+                </tr>
+                <tr>
+                  <td>11</td>
+                  <td>Abstract systems</td>
+                  <td>22+ years</td>
+                  <td>15-16</td>
+                </tr>
+                <tr>
+                  <td>12</td>
+                  <td>Single principles</td>
+                  <td>26+ years</td>
+                  <td>Ph.D.+</td>
+                </tr>
+              </table>
+            </div>
+            <h3>Hierarchical order of abstraction</h3>
+            <p>Fischer defines 5 tiers, each of which is associated with a primary order of abstraction. These are reflexive actions, sensorimotor actions, representations, abstractions, and principles. Within each tier there are 3 complexity levels. This means there are 13 hierarchical orders of abstraction between single reflexive actions and single principles. These are associated with complexity levels as follows:<br />
+            </p>
+            <div align="center" class="margin-t20-b20">
+              <table class="margin-t20-b20 minimalist-a">
+                <tr>
+                  <th class="tableheader">Level</th>
+                  <th class="tableheader">Fischer name</th>
+                  <th class="tableheader">Order of Abstraction</th>
+                  <th class="tableheader">Logical structure</th>
+                </tr>
+                <tr>
+                  <td>0</td>
+                  <td>Single reflexive actions</td>
+                  <td>1st order actions</td>
+                  <td>Definitional</td>
+                </tr>
+                <tr>
+                  <td>1</td>
+                  <td>Reflexive mappings</td>
+                  <td>2nd order actions</td>
+                  <td>Linear</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>Reflexive systems</td>
+                  <td>3rd order actions</td>
+                  <td>Multivariate</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>Single sensorimotor actions</td>
+                  <td>1st order schemes</td>
+                  <td>Definitional</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>Sensorimotor mappings</td>
+                  <td>2nd order schemes</td>
+                  <td>Linear</td>
+                </tr>
+                <tr>
+                  <td>5</td>
+                  <td>Sensorimotor systems</td>
+                  <td>3rd order schemes</td>
+                  <td>Multivariate</td>
+                </tr>
+                <tr>
+                  <td>6</td>
+                  <td>Single representations</td>
+                  <td>1st order representations</td>
+                  <td>Definitional</td>
+                </tr>
+                <tr>
+                  <td>7</td>
+                  <td>Representational mappings</td>
+                  <td>2nd order representations</td>
+                  <td>Linear</td>
+                </tr>
+                <tr>
+                  <td>8</td>
+                  <td>Representational systems</td>
+                  <td>3rd order representations</td>
+                  <td>Multivariate</td>
+                </tr>
+                <tr>
+                  <td>9</td>
+                  <td>Single abstractions</td>
+                  <td>1st order abstractions</td>
+                  <td>Definitional</td>
+                </tr>
+                <tr>
+                  <td>10</td>
+                  <td>Abstract mappings</td>
+                  <td>2nd order abstractions</td>
+                  <td>Linear</td>
+                </tr>
+                <tr>
+                  <td>11</td>
+                  <td>Abstract systems</td>
+                  <td>3rd order abstractions</td>
+                  <td>Multivariate</td>
+                </tr>
+                <tr>
+                  <td>12</td>
+                  <td>Single principles</td>
+                  <td>1st order principles</td>
+                  <td>Linear</td>
+                </tr>
+                </table>
+            </div>
+        <p>First order, 2nd order, and 3rd order concepts are associated with definitional, linear, and multivariate logical structures, respectively.<br />
+        </p>
+        <p>A definitional logical structure identifies the concept and describes it in terms of a single aspect. For example, at the single representations level (1st order representations), definitional logic allows representations to stand in for persons, objects, simple states, or simple actions—as in, “I not touch that.” At the representational mappings level (2nd order representations), a linear logical structure (referred to as a mapping by Fischer and his colleagues) describes the relationship between representations—as in, “If you're good, your mommy might buy you ice cream,” in which being “good” is coordinated with a particular concrete benefit. At the representational systems level (3rd order representations), the logical structure is multivariate. Multiple outcomes of behavior can be considered—as in, “If I am good, I won't get punished, and I might get to do something fun.” For a simplified example in the leadership area, <a href="/PDF/LAS.pdf">click here</a>. To learn more about skill level definitions, <a href="skill_levels.php">click here</a>.</p>
+        <h3>Using hierarchical complexity and order of abstraction in Lectical Scoring</h3>
+        <p>Hierarchical Complexity Theory posits a three-layer model of conceptual structure. In this model, the surface layer represents <strong>conceptual content</strong>, the middle layer represents <strong>domain-level structure</strong>, and the central layer represents <strong>&quot;core&quot; structure</strong>.</p>
+        <p align="center"><img src="../_images/methods/circle.png" alt="Figure illustrating 3 layers of structure" align="center" class="margin-t20-b20" style="width:100%; max-width:400px;" /></p>
+        <p>The Lectical™ Assessment System (LAS) targets <strong>core structures</strong>. These are <strong>hierarchical order of abstraction</font></strong> and <strong>logical structure</strong></font>. Most domain-based scoring systems target domain-level structures such as sociomoral perspective. Many of these scoring systems also target conceptual content.</p>
+        <p>LAS analysts assign a score based on hierarchical order of abstraction</font> and logical structure</font>. To do this, they must be able to observe how these manifest in a given performance. This means that <strong>scoring is an iterative process</strong>—one in which the rater moves back and forth from one layer of structure to the next, finally converging on an interpretation of the core structure of a performance.</p>
+        <p>For example, a rater was asked to score the following interview segment:</p>
+        <p><em>[COULD YOU HAVE A GOOD LIFE WITHOUT HAVING HAD A GOOD EDUCATION?]<br />
+          Yeah, probably so, I would say. I wouldn’t...it would be richer with education, but it wouldn’t...<br />
+          [WHY DO YOU THINK IT WOULD BE RICHER WITH EDUCATION?]<br />
+          Well, you just, your mind would be open to a lot more things. (Good Education 0212)</em></p>
+        <p>The rater's response illustrates how each layer of structure plays a role in the scoring process:</p>
+        <p>&quot;Well, this isn’t a very sophisticated notion of the role of education in the good life. Especially because, at first, I thought that he was saying that you’d be richer, money-wise (laughter), with an education. That would make 'richer' a <strong>representational</strong> notion, but I see that it’s actually at least <strong>abstract</strong>, because it’s related to this idea of open-mindedness. It seems there are two variables [richer life, open mind] that are in a logical relation to one another…as in, &quot;If you get a good education, your mind will be more open, and therefore you will have a richer life.&quot; This is at least an <strong>abstract mapping</strong>, but could it be higher than that? Well, <i>richer life</i> could be higher than abstract, and so could <i>open mind</i>, so I’m looking for evidence that they are…but the perspective here is of the individual person and his life, without bringing in anyone else’s perspective, or a social perspective, so you can’t say, really. Abstract mappings; I’ll stick with abstract mappings.&quot;</p>
+        <p>In this example, <strong>the rater appeals to all three levels of structure</strong>. The content level is referenced in her initial attempt to understand the argument, and again when she double checks her understanding at the end. The domain structure level is briefly included when she examines the social perspective of the respondent to see if there are grounds for considering the possibility that the statement is higher than abstract mappings. The core structure is reflected in her analysis of the hierarchical order of abstraction and logical structure of the argument (abstract variables, logical relation).</p>
+        <p>It is easy to see from this example how central <strong><i>meaning</i></strong></font> is to the scoring process. Without a correct interpretation of the meaning of a statement, the rater cannot even begin the process of scoring. For example, knowing which sense of <i>richer</i></font> is intended by the respondent is essential to a correct interpretation of the hierarchical order of abstraction of the concept.</p>
+        <p>To learn about how the Lectical Assessment System is used in Assessment development, <a href="devmaieutics.php">click here</a>.</p>
+        <p>&nbsp; </p>
+        <p>&nbsp;</p>
+	  <!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+		<!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" -->
+		<!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

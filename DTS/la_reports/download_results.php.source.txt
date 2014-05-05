@@ -1,0 +1,2106 @@
+<?php 
+include_once '../includes/dts_functions.php';
+include_once 'report_custom_functions.php';
+
+
+$currentPage = $_SERVER["PHP_SELF"];
+$instrument_id = $_GET['instrument_id']; 
+$instrument_id_name = str_replace("_", " ", $instrument_id);
+ 
+$see_all = FALSE;
+$userkey = "";
+if (isset($_SESSION['log_userkey'])) { $userkey = $_SESSION['log_userkey']; } 
+else { WA_Auth_RestrictAccess("../security/logIn.php"); }
+$filter_demog = ""; if (isset($_GET['filter_demog'])) { $filter_demog = $_GET['filter_demog']; }
+
+// Fetch information on the logged-in client
+$query_rsBulkCustomerInfo = sprintf("SELECT bc.bulkcustomerkey, bc.username4students, 
+		r.firstname, r.lastname, r.user_level, r.email, r.company
+	FROM registrants r
+		LEFT JOIN bulkcustomerinfo bc ON bc.bulkcustomerkey = r.userkey
+	WHERE r.userkey = %s ",
+		SQLstr($userkey, "int"));
+// die($query_rsBulkCustomerInfo);
+$rsBulkCustomerInfo = mysql_query($query_rsBulkCustomerInfo, $Assessment) or die(mysql_error());
+$row_rsBulkCustomerInfo = mysql_fetch_assoc($rsBulkCustomerInfo);
+$totalRows_rsBulkCustomerInfo = mysql_num_rows($rsBulkCustomerInfo);
+$user_level = $row_rsBulkCustomerInfo['user_level'];
+// Filter_demog or filter_user should be applied to every data query on this page.
+$filter_user = " AND d.resellerkey = {$userkey} ";
+if ($user_level >= 22) { 
+	$see_all = TRUE; 
+	$filter_user = "";	
+}
+$filter_demog .= $filter_user;
+
+
+
+
+/* 		FILTER QUERIES   */
+
+
+$query_rsFilterBc = sprintf("SELECT r.bulkuserkey, COUNT(DISTINCT d.lakey) AS numpeople, 
+		IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)) AS bulkcustomer
+	FROM registrants r
+		JOIN la_data d ON r.userkey = d.userkey 
+		JOIN registrants rb ON r.bulkuserkey = rb.userkey
+	WHERE rb.userkey IS NOT NULL 
+	GROUP BY rb.userkey
+	ORDER BY bulkcustomer");
+$rsFilterBc = mysql_query($query_rsFilterBc) or die("rsFilterBc: ".mysql_error());
+
+$query_rsFilterProjects = sprintf("SELECT p.projectkey, p.bulkcustomerkey, p.projectid, 
+		LEFT(IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)),20) AS company, 
+		COUNT(DISTINCT d.lakey) AS numpeople
+	FROM registrants r
+		JOIN la_data d ON r.userkey = d.userkey 
+		JOIN students_projects sp ON r.userkey = sp.userkey
+		JOIN projectproject p ON sp.projectkey = p.projectkey
+		LEFT JOIN registrants rb ON p.bulkcustomerkey = rb.userkey
+	WHERE 1=1 {$filter_user} %s
+	GROUP BY projectkey
+	ORDER BY company, projectid",
+	($see_all == false ? " AND p.bulkcustomerkey = ".SQLstr($userkey, "int") : ""));
+// die($query_rsFilterProjects);
+$rsFilterProjects = mysql_query($query_rsFilterProjects) or die("rsFilterProjects: ".mysql_error());
+
+$query_rsFilterAssn = sprintf("SELECT a.assignmentkey, a.instrument_id, a.assign_group, 
+		a.date_start, a.date_end,
+		LEFT(IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)),20) AS company, 
+		COUNT(DISTINCT d.lakey) AS numpeople
+	FROM la_data d 
+		JOIN la_assignments a ON d.assignmentkey = a.assignmentkey
+		LEFT JOIN registrants rb ON d.resellerkey = rb.userkey
+	WHERE 1=1 {$filter_user} %s
+	GROUP BY assignmentkey ORDER BY company, assign_group, date_start",
+	($see_all == false ? " AND d.resellerkey = ".SQLstr($userkey, "int") : ""));
+$rsFilterAssn = mysql_query($query_rsFilterAssn) or die("rsFilterAssn: ".mysql_error());
+
+// topher($query_rsFilterProjects); topher();
+
+$query_rsFilterManLevels = sprintf("SELECT dem.man_level, dem.manlevelkey, d.lakey, 
+		COUNT(DISTINCT d.lakey) AS numpeople 
+	FROM la_data d 
+		JOIN registrants r ON d.userkey = r.userkey
+		JOIN demogs_man_level dem ON r.manlevelkey = dem.manlevelkey
+	WHERE 1=1 {$filter_user}
+	GROUP BY dem.manlevelkey ORDER BY dem.man_level_number");
+$rsFilterManLevels = mysql_query($query_rsFilterManLevels) or die("rsFilterManLevels: ".mysql_error());
+$row_rsFilterManLevels = mysql_fetch_assoc($rsFilterManLevels);
+$totalRows_rsFilterManLevels = mysql_num_rows($rsFilterManLevels);
+
+$query_rsFilterGroup = sprintf("SELECT r.`group`, COUNT(DISTINCT d.lakey) AS numpeople,
+		LEFT(IF(rb.company <> '', rb.company, CONCAT(rb.firstname, ' ', rb.lastname)),20) AS company
+	FROM registrants r 
+		LEFT JOIN registrants rb ON r.bulkuserkey = rb.userkey
+		LEFT JOIN la_data d ON d.userkey = r.userkey 
+	WHERE 1=1 {$filter_user} AND r.`group` <> '' 
+	GROUP BY r.`group`
+	ORDER BY company", 
+		SQLstr($userkey, "int"));
+$rsFilterGroup = mysql_query($query_rsFilterGroup, $Assessment) or die("rsFilterGroup: ".mysql_error());
+
+
+
+
+function filterPeople () {
+	global $_GET, $_POST;
+	$filters = $_GET;
+	if (isset($_POST['download_results_submit'])) { $filters = $_POST; }
+	$sql_filterPeople = "";
+	
+	$people_filter_fields = array("resellerkey", "projectkey", "assignmentkey", "sexkey", "manlevelkey", "group");
+	$people_filter_tables = array("d", "d", "d", "r", "r", "r");
+	
+	while (current($filters) !== false) {
+		$key = key($filters);
+		$value = current($filters);
+		$index = array_search($key, $people_filter_fields);
+		$table_colname = $people_filter_tables[$index].'.'.$people_filter_fields[$index];
+		if ($index !== false AND $value <> '') { $sql_filterPeople .= sprintf(" AND %s = %s ", $table_colname, SQLstr($value, 'text')); }
+		next($filters);
+	}
+	
+	return $sql_filterPeople;
+}
+
+if (isset($_POST['show_resultsets'])) {
+	
+	$sql_filterPeople = filterPeople();
+	$sql_hidden = " AND IFNULL(d.hidden_sumreport, 0) = 0 ";
+	if (isset($_GET['include_hidden']) AND $_GET['include_hidden'] == 1) { $sql_hidden = ""; }
+	
+	// query to fetch result types
+	$sql_resultSets = sprintf("
+		SELECT d.instrument_id, d.test_time, COUNT(DISTINCT r.userkey) AS count
+		FROM registrants r
+			LEFT JOIN (
+				SELECT userkey, instrument_id, completed, test_time, 
+					resellerkey, projectkey, assignmentkey, hidden_sumreport
+				FROM la_data
+				UNION 
+				SELECT sd.userkey, sd.instrument_id, sd.completed, sd.test_time, 
+					d.resellerkey, d.projectkey, d.assignmentkey, d.hidden_sumreport
+				FROM la_survey_data sd 
+					LEFT JOIN la_data d ON sd.lakey = d.lakey
+			) d ON r.userkey = d.userkey
+		WHERE d.completed = 1 AND d.instrument_id <> '' {$sql_hidden} {$sql_filterPeople}
+		GROUP BY instrument_id, test_time
+		ORDER BY instrument_id, test_time");
+	$rsResultSets = mysql_query($sql_resultSets) or die(mysql_error());
+	
+	// echo "<tr><td colspan='2'>{$sql_resultSets}</td></tr>";
+	
+	// 1 row per result type
+	while ($row = mysql_fetch_assoc($rsResultSets)) {
+		echo "<tr>";
+		echo "<td><input type='checkbox' name='resultset[]' value='{$row['instrument_id']}_time_{$row['test_time']}' /></td>";
+		echo "<td>{$row['instrument_id']} test time {$row['test_time']} ({$row['count']})</td>";
+		echo "</tr>";
+	}
+	exit();
+}
+
+
+
+// This function takes an array of SQL columns (which specify table.field) 
+// and outputs them as a string with a descriptive field alias for each column.
+// If it runs into a tag (a colname that indicates a buch of generic columns), 
+// it will recursively construct the columns for that tag, then continue as normal.
+function selectSqlFromArray($arrayOfColumns) {
+	global $sql_snips_select;
+	
+	$sql = "";
+	foreach ($arrayOfColumns as $col) {
+		$col_alias = str_replace('.', '_', $col);
+		if ($col == "[LA_DATA_BASIC]") { $sql .= selectSqlFromArray($sql_snips_select['LA_DATA_BASIC']); }
+		else if ($col == "[ARGUMENTATION]") { $sql .= selectSqlFromArray($sql_snips_select['ARGUMENTATION']); }
+		else if ($col == "[LA_DATA_SURVEYS]") { $sql .= selectSqlFromArray($sql_snips_select['LA_DATA_SURVEYS']); }
+		else if ($col == "[SURVEY_BASIC]") { $sql .= selectSqlFromArray($sql_snips_select['SURVEY_BASIC']); }
+		else if (preg_match("/\w+\[\w+\]/", $col)) { // If is a key col with label col requested
+			// eg: "@.languagekey[demogs_languages]"
+			// Accept specified aliases. Looks like: "@.languagekey[demogs_languages] AS language_spoken"
+			$key_col = substr($col, 0, strpos($col, '['));
+			$key_alias = str_replace('.', '_', $key_col);
+			if (strpos($col, " AS ")) { // If an alias was given, use it. Then remove it from $col to avoid confusion.
+				$key_alias = substr($col, strpos($col, " AS ") + 3);
+				$col = substr($col, 0, strpos($col, " AS ")); 
+			}
+			$label_tablename = substr($col, strpos($col, '['));
+			$label_alias = str_replace("key", "name", $key_alias);
+			if (!strpos($label_alias, "name")) { $label_alias .= "_name"; }
+			$sql .= "{$key_col} AS {$key_alias}, '{$label_tablename}' AS {$label_alias}, ";
+			
+			// For la_menus label columns, add a val column afterwards too. (a third column)
+			if ($label_tablename == '[m]') {
+				$value_alias = str_replace("name", "value", $label_alias);
+				$sql .= " '[m_value]' AS {$value_alias}, ";
+			}
+		}
+		else if (preg_match("/.+<\w>/", $col)) { // If this column should be rounded
+			// don't actually do the rounding here. just defer it to be processed after the download.
+			// eg: "@.lasnumber_1<p>"
+			// should output: @.lasnumber_1 AS @_lasnumber_1, (rounding algorithm...) AS @_lasnumber_1_rounded
+			$value_col = substr($col, 0, strpos($col, '<'));
+			$value_alias = str_replace('.', '_', $value_col);
+			if (strpos($col, " AS ")) { // If an alias was given, use it. Then remove it from $col to avoid confusion.
+				$value_alias = substr($col, strpos($col, " AS ") + 3);
+				$col = substr($col, 0, strpos($col, " AS ")); 
+			}
+			$rounding_type = substr($col, strpos($col, '<')); // should be <i>, <t>, or <p>
+			$round_colnames = array(
+				'<i>' => "_rounded_int",
+				'<t>' => "_rounded_ten",
+				'<p>' => "_rounded_phase",
+			);
+			$round_colname = $round_colnames[$rounding_type];
+			if ($round_colname == "") { die("ERROR - invalid rounding type '{$rounding_type}'. in col '{$col}'."); }
+			$rounded_alias = $value_alias.$round_colname;
+			// no actual rounding is performed here. Column is simply duplicated and marked for roundation later on.
+			$sql .= " {$value_col} AS {$value_alias}, {$value_col} AS {$rounded_alias}, ";
+		}
+		else if (preg_match("/CONCAT_WS/", $col)) { // If this is an averaged scale column, add a rounded col after.
+			// eg: "CONCAT_WS(thing, thing, thing) AS label"
+			// Assumes an 'AS' alias exists.
+			// This isn't really necessary if you put an <i> tag on each CONCAT_WS statement. 
+			// But I don't want to have to change the sql injections more than necessary at this point.
+			$value_col = substr($col, 0, strpos($col, " AS ")); 
+			$value_alias = substr($col, strpos($col, " AS ") + 3);
+			$sql .= " {$value_col} AS {$value_alias}, {$value_col} AS {$value_alias}_rounded_int, ";
+		}
+		else if (strpos($col, " AS ")) { $sql .= "{$col}, "; }
+		else { $sql .= "{$col} AS {$col_alias}, "; }
+	}
+	
+	return $sql;
+}
+
+// Used when parsing through the result set. 
+// Accepts the table name and the key value, and returns the label string.
+// Assumed: the prior column contains the key value, that this label should be based on.
+$known_labels = array(); // $known[table][key][lookup_what]
+function lookupLabel($table, $key, $lookup_what = "label") {
+	
+	if ($key == '') { return ''; }
+	$key = intval($key);
+	
+	// Some tables are frequently referenced. A shorter name is specified here, to save space.
+	$table_aliases = array(
+		'r' => "registrants",
+		'm' => "la_menus"
+	);
+	if (isset($table_aliases[$table])) {
+		$table = $table_aliases[$table];
+	}
+	
+	// if this value is already stored, return the remembered value
+	global $known_labels;
+	if (isset($known_labels[$table][$key][$lookup_what])) { return $known_labels[$table][$key][$lookup_what]; }
+	
+	// Based on the table, looks up the key and value columns.
+	// for each table, lists 1) the key column and 2) the value column. 
+	$known_columns = array(
+		'registrants' => array("userkey", "CONCAT(firstname, ' ', lastname)"),
+		'projectproject' => array("projectkey", "projectid"),
+		'demogs_sex' => array("sexkey", "sex"),
+		'demogs_ethnicity' => array("ethnicitykey", "ethnicity"),
+		'demogs_languages' => array("languagekey", "language"),
+		'demogs_english_quality' => array("englishqualitykey", "english_quality"),
+		'demogs_edu' => array("edukey", "edu_level"),
+		'demogs_sector' => array("sectorkey", "sector"),
+		'demogs_professions' => array("professionkey", "profession"),
+		'demogs_expertise' => array("expertisekey", "expertise"),
+		'demogs_discipline' => array("disciplinekey", "discipline"),
+		'demogs_employee_number' => array("employeenumberkey", "employee_number"),
+		'demogs_supervisees' => array("superviseekey", "supervisees"),
+		'demogs_longest_project' => array("longestprojectkey", "longest_project"),
+		'demogs_man_level' => array("manlevelkey", "man_level"),
+		'demogs_man_level_general' => array("man_level_number", "man_level_general_name"),
+		'la_dilemmas' => array("dilemmakey", "dilemma_name"),
+		'la_menus' => array("menukey", "menu_item_name", "item_value"),
+		'la_codes_strengths_current' => array("currentstrengthkey", "current_strength"),
+		'la_codes_strengths_potential' => array("potentialstrengthkey", "potential_strength"),
+		'la_codes_recommendations' => array("recommendkey", "recommend")
+	);
+	
+	$col_key = $known_columns[$table][0];
+	$col_value = $known_columns[$table][1];
+	if ($lookup_what == "value") { $col_value = $known_columns[$table][2]; }
+	if (!$col_value OR !$col_key) { die("ERROR with lookup to {$table}: table columns unknown!"); }
+	
+	$sql = sprintf("SELECT %s AS val FROM %s WHERE %s = %s", $col_value, $table, $col_key, $key);
+	// echo $sql."<br>";
+	$rsLookup = mysql_query($sql) or die("ERROR with lookup to {$table}: ".mysql_error().'<br>'.$sql);
+	$row = mysql_fetch_assoc($rsLookup);
+	
+	// remember and return this label
+	$known_labels[$table][$key][$lookup_what] = $row['val'];
+	return $row['val'];
+}
+
+
+if (isset($_POST['download_results_submit'])) {
+	
+	// bench();
+	
+	// SQL snippets for each instrument
+	// Damn. These result sets are going to be tricky to define.
+	$sql_snips_select = array();
+	$sql_snips_join = array();
+	
+	// these GENERAL snips are referenced in selectSqlFromArray, whenever a tag like [LA_DATA_BASIC] is called.
+	$sql_snips_select['LA_DATA_BASIC'] = array("@.lakey", "@.instrument_id", 
+		"@.admin_notes", "@.assignmentkey", "@.dilemmakey[la_dilemmas]", 
+		"@.test_time", "@.date_completed", "@.date_finalized", 
+		"@.scorerkey_1[r]", "@.coderkey_1[r]", 
+		"@.hours_to_complete", "@.minutes_to_complete", "@.time_to_complete AS @_time_to_complete_auto_seconds", 
+		"@.languagekey[demogs_languages]", "@.englishqualitykey[demogs_english_quality]", 
+		"@.employeenumberkey[demogs_employee_number]", "@.superviseekey[demogs_supervisees] AS @_num_supervisees_key", 
+		"@.longestprojectkey[demogs_longest_project]", "@.manlevel_gen_adjusted[demogs_man_level_general]" 
+	);
+	$sql_snips_select['ARGUMENTATION'] = array("@_c.argumentation_persuasiveness", 
+		"@_c.argumentation_relevance_scenario", "@_c.argumentation_probe", "@_c.argumentation_clarity", 
+		"@_c.argumentation_fragment", "@_c.argumentation_conciseness", "@_c.argumentation_framing", 
+		"@_c.argumentation_jargon", "@_c.argumentation_on_point", "@_c.argumentation_repetitive", 
+		"@_c.argumentation_vocabulary", "@_c.argumentation_overall<i>", "@_c.argumentation_scale_mechanics<i>"
+	);
+	$sql_snips_select['SURVEY_BASIC'] = array("@.lasurveykey", "@.instrument_id", "@.test_time", "@.admin_notes", 
+		"@.date_completed", "@.test_taker_comments", 
+	);
+	$sql_snips_select['LA_DATA_SURVEYS'] = array("@_d.lakey", "@_d.instrument_id", "@_d.test_time", 
+		"@_d.languagekey[demogs_languages]", "@_d.englishqualitykey[demogs_english_quality]", 
+		"@_d.employeenumberkey[demogs_employee_number]", "@_d.superviseekey[demogs_supervisees]", 
+		"@_d.longestprojectkey[demogs_longest_project]", "@_d.manlevel_gen_adjusted[demogs_man_level_general]" 
+	);
+	
+	// Snippets for individual instruments.
+	//  @  = the basic table name for this set of tables. 
+	// [T] = test_time (int only). 
+	// [H] = the "hidden_sumreports" clause.
+	// [C] = completed = 1 clause.
+	// [I] = specify instrument ID clause.
+	// [table_name], specified right after the column name, says that this is a key column,
+	//  and the corresponding label should be looked up (in the indicated table) and added to a following column.
+	//  Fields with label lookups indicated, should NEVER have "name" at the end of the field alias.
+	//  Also avoid having "value" at the end of the field alias.
+	// ORDINALIZATION. Scale, average, and LAS score columns should be 'rounded' in various ways
+	//  in order to be usable as ordinal variables. 
+	// Columns can be autoconfigured with 3 types of ordinalization:
+	//  <i> - round this decimal to the nearest integer
+	//  <t> - round this dec/int to the nearest 10
+	//  <p> - round this LAS score to its phase range (in format 10.25-10.49)
+	
+	$sql_snips_tablename['LDMA'] = "ldma_[T]";
+	$sql_snips_select['LDMA'] = array("[LA_DATA_BASIC]", "[ARGUMENTATION]", 
+		"@_di.weighting", 
+
+		"@_c.code004",
+		"@_c.code005",
+		"@_c.code006",
+		"@_c.code008",
+		"@_c.code009",
+		"@_c.code011",
+		"@_c.code012",
+		"@_c.code014",
+		"@_c.code015",
+		"@_c.code016",
+		"@_c.code017",
+		"@_c.code019",
+		"@_c.code020",
+		"@_c.code021",
+		"@_c.code022",
+		"@_c.code023",
+		"@_c.code024",
+		"@_c.code025",
+		"@_c.code026",
+		"@_c.code027",
+		"@_c.code028",
+		"@_c.code029",
+		"@_c.code030",
+		"@_c.code031",
+		"@_c.code032",
+		"@_c.code033",
+		"@_c.code034",
+		"@_c.code035",
+		"@_c.code036",
+		"@_c.code052",
+		"@_c.code054",
+		"@_c.code055",
+		"@_c.code056",
+		"@_c.code057",
+		"@_c.code058",
+		"@_c.code059",
+		"@_c.code060",
+		"@_c.code061",
+		"@_c.code062",
+		"@_c.code064",
+		"@_c.code065",
+		"@_c.code066",
+		"@_c.code067",
+		"@_c.code069",
+		"@_c.code070",
+		"@_c.code071",
+		"@_c.code072",
+		"@_c.code073",
+		"@_c.code074",
+		"@_c.code075",
+		"@_c.code076",
+		"@_c.code077",
+		"@_c.code078",
+		"@_c.code079",
+		"@_c.code080",
+		"@_c.code081",
+		"@_c.code082",
+		"@_c.code083",
+		"@_c.code084",
+		"@_c.code085",
+		"@_c.code086",
+		"@_c.code101",
+		"@_c.code103",
+		"@_c.code104",
+		"@_c.code105",
+		"@_c.code106",
+		"@_c.code107",
+		"@_c.code108",
+		"@_c.code109",
+		"@_c.code110",
+		"@_c.code111",
+		"@_c.code112",
+		"@_c.code113",
+		"@_c.code114",
+		"@_c.code115",
+		"@_c.code116",
+		"@_c.code117",
+		"@_c.code118",
+		"@_c.code119",
+		"@_c.code120",
+		"@_c.code121",
+		"@_c.code122",
+		"@_c.code123",
+		"@_c.code124",
+		"@_c.code128",
+		"@_c.code129",
+		"@_c.code130",
+		"@_c.code131",
+		"@_c.code132",
+		"@_c.code133",
+		"@_c.code134",
+		"@_c.code135",
+		"@_c.code136",
+		"@_c.code137",
+		"@_c.code138",
+		"@_c.code139",
+		"@_c.code140",
+		"@_c.code141",
+		"@_c.code142",
+		"@_c.code143",
+		"@_c.code144",
+		"@_c.code145",
+		"@_c.code151",
+		"@_c.code153",
+		"@_c.code154",
+		"@_c.code155",
+		"@_c.code156",
+		"@_c.code157",
+		"@_c.code158",
+		"@_c.code159",
+		"@_c.code160",
+		"@_c.code161",
+		"@_c.code162",
+		"@_c.code163",
+		"@_c.code164",
+		"@_c.code165",
+		"@_c.code166",
+		"@_c.code167",
+		"@_c.code168",
+		"@_c.code169",
+		"@_c.code170",
+		"@_c.code171",
+		"@_c.code172",
+		"@_c.code173",
+		"@_c.code174",
+		"@_c.code178",
+		"@_c.code179",
+		"@_c.code180",
+		"@_c.code181",
+		"@_c.code182",
+		"@_c.code183",
+		"@_c.code184",
+		"@_c.code185",
+		"@_c.code186",
+		"@_c.code187",
+		"@_c.code188",
+		"@_c.code189",
+		"@_c.code190",
+		"@_c.code191",
+		"@_c.code192",
+		"@_c.code193",
+		"@_c.code194",
+		"@_c.code195",
+		"@_c.code201",
+		"@_c.code202",
+		"@_c.code203",
+		"@_c.code206",
+		"@_c.code207",
+		"@_c.code208",
+		"@_c.code209",
+		"@_c.code214",
+		"@_c.code215",
+		"@_c.code216",
+		"@_c.code219",
+		"@_c.code220",
+		"@_c.code221",
+		"@_c.code224",
+		"@_c.code226",
+		"@_c.code227",
+		"@_c.code232",
+		"@_c.code233",
+		"@_c.code234",
+		"@_c.code235",
+		"@_c.code236",
+		"@_c.code237",
+		"@_c.code238",
+		"@_c.code239",
+		"@_c.code240",
+		"@_c.code241",
+		"@_c.code242",
+		"@_c.code243",
+		"@_c.code244",
+		"@_c.code245",
+		"@_c.code246",
+		"@_c.code251",
+		"@_c.code252",
+		"@_c.code253",
+		"@_c.code254",
+		"@_c.code255",
+		"@_c.code256",
+		"@_c.code257",
+		"@_c.code258",
+		"@_c.code259",
+		"@_c.code267",
+		"@_c.code268",
+		"@_c.code269",
+		"@_c.code270",
+		"@_c.code275",
+		"@_c.code276",
+		"@_c.code277",
+		"@_c.code278",
+		"@_c.code279",
+		"@_c.code280",
+		"@_c.code281",
+		"@_c.code282",
+		"@_c.code283",
+		"@_c.code284",
+		"@_c.code285",
+		"@_c.code286",
+		"@_c.code287",
+		"@_c.code288",
+		"@_c.code290",
+		"@_c.code291",
+		"@_c.code292",
+		"@_c.code293",
+		"@_c.code294",
+		"@_c.code295",
+		"@_c.code296",
+		"@_c.code301",
+		"@_c.code302",
+		"@_c.code303",
+		"@_c.code304",
+		"@_c.code305",
+		"@_c.code306",
+		"@_c.code311",
+		"@_c.code312",
+		"@_c.code313",
+		"@_c.code314",
+		"@_c.code315",
+		"@_c.code316",
+		"@_c.code317",
+		"@_c.code326",
+		"@_c.code327",
+		"@_c.code328",
+		"@_c.code329",
+		"@_c.code330",
+		"@_c.code331",
+		"@_c.code332",
+		"@_c.code333",
+		"@_c.code334",
+		"@_c.code335",
+		"@_c.code336",
+		"@_c.code339",
+		"@_c.code340",
+		"@_c.code341",
+		"@_c.code342",
+		"@_c.code343",
+		"@_c.code344",
+		"@_c.code345",
+		"@_c.code346",
+		"@_c.code347",
+		"@_c.code348",
+		"@_c.code355",
+		"@_c.code356",
+		"@_c.code357",
+		"@_c.code358",
+		"@_c.code359",
+		"@_c.code360",
+		"@_c.code361",
+		"@_c.code362",
+		"@_c.code363",
+		"@_c.code364",
+		"@_c.code365",
+		"@_c.code366",
+		"@_c.code367",
+		"@_c.code370",
+		"@_c.code371",
+		"@_c.code372",
+		"@_c.code373",
+		"@_c.code374",
+		"@_c.code375",
+		"@_c.code376",
+		"@_c.code377",
+		"@_c.code378",
+		"@_c.code379",
+		"@_c.code380",
+		"@_c.code381",
+		"@_c.code382",
+		"@_c.code383",
+		"@_c.code391",
+		"@_c.code392",
+		"@_c.code393",
+		"@_c.code394",
+		"@_c.code395",
+		"@_c.code396",
+		"@_c.code397",
+		"@_c.code398",
+		"@_c.code399",
+		"@_c.code400",
+		"@_c.code401",
+		"@_c.code406",
+		"@_c.code407",
+		"@_c.code408",
+		"@_c.code409",
+		"@_c.code410",
+		"@_c.code411",
+		"@_c.code412",
+		"@_c.code413",
+		"@_c.code414",
+		"@_c.code417",
+		"@_c.code418",
+		"@_c.code427",
+		"@_c.code428",
+		"@_c.code429",
+		"@_c.code430",
+		"@_c.code431",
+		"@_c.code432",
+		"@_c.code433",
+		"@_c.code434",
+		"@_c.code435",
+		"@_c.code436",
+		"@_c.code437",
+		"@_c.code438",
+		"@_c.code439",
+		"@_c.code461 AS @_p_NOT_taken",
+
+		"@_c.code451<t> AS @_scale_p_taking_score", 
+		"@_c.code452<t> AS @_scale_p_seeking_score", 
+
+
+		"@_c.code201 AS @_forscale_pcoord_ptaking_deliberation",
+		"@_c.code202 AS @_forscale_pcoord_ptaking_understanding",
+		"@_c.code207 AS @_forscale_pcoord_pseeking_deliberation",
+		"@_c.code208 AS @_forscale_pcoord_pseeking_understanding",
+		"@_c.code224 AS @_forscale_pcoord_perspectives_tensions",
+		"@_c.code227 AS @_forscale_pcoord_perspective_limits",
+		"@_c.code453<i> AS @_scale_p_coordination", 
+
+		"@_c.code203 AS @_forscale_context_ptaking_situation",
+		"@_c.code209 AS @_forscale_context_pseeking_situation",
+		"@_c.code226 AS @_forscale_context_org_culture_context",
+		"@_c.code342 AS @_forscale_context_dm_problem_source",
+		"@_c.code311 AS @_forscale_context_strategic_objectives",
+		"@_c.code316 AS @_forscale_context_uphold_integrity_org",
+		"@_c.code313 AS @_forscale_context_core_values_org",
+		"@_c.code315 AS @_forscale_context_inst_culture_community",
+		"@_c.code304 AS @_forscale_context_org_elements",
+		"@_c.code233 AS @_forscale_context_indiv_diff_circumstances",
+		"@_c.code406 AS @_forscale_context_dmprocess_constraints",
+		"@_c.code454<i> AS @_scale_contextual_thinking", 
+
+		"@_c.code339 AS @_forscale_dm_info_gather_learning",
+		"@_c.code342 AS @_forscale_dm_dm_problem_source",
+		"@_c.code344 AS @_forscale_dm_dm_goal",
+		"@_c.code345 AS @_forscale_dm_dm_process_generality",
+		"@_c.code347 AS @_forscale_dm_dm_review_outcome",
+		"@_c.code455<i> AS @_scale_decision_making", 
+
+		"@_c.code343 AS @_forscale_collab_dm_process_collab",
+		"@_c.code206 AS @_forscale_collab_pseeking_buyin",
+		"@_c.code214 AS @_forscale_collab_communicate_relationships",
+		"@_c.code215 AS @_forscale_collab_communicate_informing",
+		"@_c.code216 AS @_forscale_collab_communicate_decision",
+		"@_c.code456<i> AS @_scale_collab_capacity", 
+
+		"@_s.lasnumber_1<p>",
+		"@_c.strength01[la_codes_strengths_current]", "@_c.strength02[la_codes_strengths_current]", 
+		"@_c.strength03[la_codes_strengths_current]", 
+		"@_c.growth01[la_codes_strengths_potential]", "@_c.growth02[la_codes_strengths_potential]", 
+		"@_c.recommend01[la_codes_recommendations]", "@_c.recommend02[la_codes_recommendations]" );
+	$sql_snips_join['LDMA'] = "LEFT JOIN la_data @ ON r.userkey = @.userkey [I] AND @.test_time = [T] [H] [C]
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey 
+		LEFT JOIN la_scores @_s ON @.lakey = @_s.lakey 
+		LEFT JOIN la_dilemmas @_di ON @.dilemmakey = @_di.dilemmakey ";
+		
+	$sql_snips_tablename['LDMA_JOURNAL'] = "ldmaj_[T]";
+	$sql_snips_select['LDMA_JOURNAL'] = array("[LA_DATA_BASIC]", "[ARGUMENTATION]", 
+		"@_di.weighting", 
+
+		"@_c.code004",
+		"@_c.code005",
+		"@_c.code006",
+		"@_c.code008",
+		"@_c.code009",
+		"@_c.code011",
+		"@_c.code012",
+		"@_c.code014",
+		"@_c.code015",
+		"@_c.code016",
+		"@_c.code017",
+		"@_c.code019",
+		"@_c.code020",
+		"@_c.code021",
+		"@_c.code022",
+		"@_c.code023",
+		"@_c.code024",
+		"@_c.code025",
+		"@_c.code026",
+		"@_c.code027",
+		"@_c.code028",
+		"@_c.code029",
+		"@_c.code030",
+		"@_c.code031",
+		"@_c.code032",
+		"@_c.code033",
+		"@_c.code034",
+		"@_c.code035",
+		"@_c.code036",
+		"@_c.code052",
+		"@_c.code054",
+		"@_c.code055",
+		"@_c.code056",
+		"@_c.code057",
+		"@_c.code058",
+		"@_c.code059",
+		"@_c.code060",
+		"@_c.code061",
+		"@_c.code062",
+		"@_c.code064",
+		"@_c.code065",
+		"@_c.code066",
+		"@_c.code067",
+		"@_c.code069",
+		"@_c.code070",
+		"@_c.code071",
+		"@_c.code072",
+		"@_c.code073",
+		"@_c.code074",
+		"@_c.code075",
+		"@_c.code076",
+		"@_c.code077",
+		"@_c.code078",
+		"@_c.code079",
+		"@_c.code080",
+		"@_c.code081",
+		"@_c.code082",
+		"@_c.code083",
+		"@_c.code084",
+		"@_c.code085",
+		"@_c.code086",
+		"@_c.code101",
+		"@_c.code103",
+		"@_c.code104",
+		"@_c.code105",
+		"@_c.code106",
+		"@_c.code107",
+		"@_c.code108",
+		"@_c.code109",
+		"@_c.code110",
+		"@_c.code111",
+		"@_c.code112",
+		"@_c.code113",
+		"@_c.code114",
+		"@_c.code115",
+		"@_c.code116",
+		"@_c.code117",
+		"@_c.code118",
+		"@_c.code119",
+		"@_c.code120",
+		"@_c.code121",
+		"@_c.code122",
+		"@_c.code123",
+		"@_c.code124",
+		"@_c.code128",
+		"@_c.code129",
+		"@_c.code130",
+		"@_c.code131",
+		"@_c.code132",
+		"@_c.code133",
+		"@_c.code134",
+		"@_c.code135",
+		"@_c.code136",
+		"@_c.code137",
+		"@_c.code138",
+		"@_c.code139",
+		"@_c.code140",
+		"@_c.code141",
+		"@_c.code142",
+		"@_c.code143",
+		"@_c.code144",
+		"@_c.code145",
+		"@_c.code151",
+		"@_c.code153",
+		"@_c.code154",
+		"@_c.code155",
+		"@_c.code156",
+		"@_c.code157",
+		"@_c.code158",
+		"@_c.code159",
+		"@_c.code160",
+		"@_c.code161",
+		"@_c.code162",
+		"@_c.code163",
+		"@_c.code164",
+		"@_c.code165",
+		"@_c.code166",
+		"@_c.code167",
+		"@_c.code168",
+		"@_c.code169",
+		"@_c.code170",
+		"@_c.code171",
+		"@_c.code172",
+		"@_c.code173",
+		"@_c.code174",
+		"@_c.code178",
+		"@_c.code179",
+		"@_c.code180",
+		"@_c.code181",
+		"@_c.code182",
+		"@_c.code183",
+		"@_c.code184",
+		"@_c.code185",
+		"@_c.code186",
+		"@_c.code187",
+		"@_c.code188",
+		"@_c.code189",
+		"@_c.code190",
+		"@_c.code191",
+		"@_c.code192",
+		"@_c.code193",
+		"@_c.code194",
+		"@_c.code195",
+		"@_c.code201",
+		"@_c.code202",
+		"@_c.code203",
+		"@_c.code206",
+		"@_c.code207",
+		"@_c.code208",
+		"@_c.code209",
+		"@_c.code214",
+		"@_c.code215",
+		"@_c.code216",
+		"@_c.code219",
+		"@_c.code220",
+		"@_c.code221",
+		"@_c.code224",
+		"@_c.code226",
+		"@_c.code227",
+		"@_c.code232",
+		"@_c.code233",
+		"@_c.code234",
+		"@_c.code235",
+		"@_c.code236",
+		"@_c.code237",
+		"@_c.code238",
+		"@_c.code239",
+		"@_c.code240",
+		"@_c.code241",
+		"@_c.code242",
+		"@_c.code243",
+		"@_c.code244",
+		"@_c.code245",
+		"@_c.code246",
+		"@_c.code251",
+		"@_c.code252",
+		"@_c.code253",
+		"@_c.code254",
+		"@_c.code255",
+		"@_c.code256",
+		"@_c.code257",
+		"@_c.code258",
+		"@_c.code259",
+		"@_c.code267",
+		"@_c.code268",
+		"@_c.code269",
+		"@_c.code270",
+		"@_c.code275",
+		"@_c.code276",
+		"@_c.code277",
+		"@_c.code278",
+		"@_c.code279",
+		"@_c.code280",
+		"@_c.code281",
+		"@_c.code282",
+		"@_c.code283",
+		"@_c.code284",
+		"@_c.code285",
+		"@_c.code286",
+		"@_c.code287",
+		"@_c.code288",
+		"@_c.code290",
+		"@_c.code291",
+		"@_c.code292",
+		"@_c.code293",
+		"@_c.code294",
+		"@_c.code295",
+		"@_c.code296",
+		"@_c.code301",
+		"@_c.code302",
+		"@_c.code303",
+		"@_c.code304",
+		"@_c.code305",
+		"@_c.code306",
+		"@_c.code311",
+		"@_c.code312",
+		"@_c.code313",
+		"@_c.code314",
+		"@_c.code315",
+		"@_c.code316",
+		"@_c.code317",
+		"@_c.code326",
+		"@_c.code327",
+		"@_c.code328",
+		"@_c.code329",
+		"@_c.code330",
+		"@_c.code331",
+		"@_c.code332",
+		"@_c.code333",
+		"@_c.code334",
+		"@_c.code335",
+		"@_c.code336",
+		"@_c.code339",
+		"@_c.code340",
+		"@_c.code341",
+		"@_c.code342",
+		"@_c.code343",
+		"@_c.code344",
+		"@_c.code345",
+		"@_c.code346",
+		"@_c.code347",
+		"@_c.code348",
+		"@_c.code355",
+		"@_c.code356",
+		"@_c.code357",
+		"@_c.code358",
+		"@_c.code359",
+		"@_c.code360",
+		"@_c.code361",
+		"@_c.code362",
+		"@_c.code363",
+		"@_c.code364",
+		"@_c.code365",
+		"@_c.code366",
+		"@_c.code367",
+		"@_c.code370",
+		"@_c.code371",
+		"@_c.code372",
+		"@_c.code373",
+		"@_c.code374",
+		"@_c.code375",
+		"@_c.code376",
+		"@_c.code377",
+		"@_c.code378",
+		"@_c.code379",
+		"@_c.code380",
+		"@_c.code381",
+		"@_c.code382",
+		"@_c.code383",
+		"@_c.code391",
+		"@_c.code392",
+		"@_c.code393",
+		"@_c.code394",
+		"@_c.code395",
+		"@_c.code396",
+		"@_c.code397",
+		"@_c.code398",
+		"@_c.code399",
+		"@_c.code400",
+		"@_c.code401",
+		"@_c.code406",
+		"@_c.code407",
+		"@_c.code408",
+		"@_c.code409",
+		"@_c.code410",
+		"@_c.code411",
+		"@_c.code412",
+		"@_c.code413",
+		"@_c.code414",
+		"@_c.code417",
+		"@_c.code418",
+		"@_c.code427",
+		"@_c.code428",
+		"@_c.code429",
+		"@_c.code430",
+		"@_c.code431",
+		"@_c.code432",
+		"@_c.code433",
+		"@_c.code434",
+		"@_c.code435",
+		"@_c.code436",
+		"@_c.code437",
+		"@_c.code438",
+		"@_c.code439",
+		"@_c.code461 AS @_p_NOT_taken",
+
+		"(@_c.code451)<t> AS @_scale_p_taking_score", 
+		"(@_c.code452)<t> AS @_scale_p_seeking_score", 
+		
+		"@_c.code201 AS @_forscale_pcoord_ptaking_deliberation",
+		"@_c.code202 AS @_forscale_pcoord_ptaking_understanding",
+		"@_c.code207 AS @_forscale_pcoord_pseeking_deliberation",
+		"@_c.code208 AS @_forscale_pcoord_pseeking_understanding",
+		"@_c.code224 AS @_forscale_pcoord_perspectives_tensions",
+		"@_c.code227 AS @_forscale_pcoord_perspective_limits",
+		"@_c.code453<i> AS @_scale_p_coordination", 
+
+		"@_c.code203 AS @_forscale_context_ptaking_situation",
+		"@_c.code209 AS @_forscale_context_pseeking_situation",
+		"@_c.code226 AS @_forscale_context_org_culture_context",
+		"@_c.code342 AS @_forscale_context_dm_problem_source",
+		"@_c.code311 AS @_forscale_context_strategic_objectives",
+		"@_c.code316 AS @_forscale_context_uphold_integrity_org",
+		"@_c.code313 AS @_forscale_context_core_values_org",
+		"@_c.code315 AS @_forscale_context_inst_culture_community",
+		"@_c.code304 AS @_forscale_context_org_elements",
+		"@_c.code233 AS @_forscale_context_indiv_diff_circumstances",
+		"@_c.code406 AS @_forscale_context_dmprocess_constraints",
+		"@_c.code454<i> AS @_scale_contextual_thinking", 
+
+		"@_c.code339 AS @_forscale_dm_info_gather_learning",
+		"@_c.code342 AS @_forscale_dm_dm_problem_source",
+		"@_c.code344 AS @_forscale_dm_dm_goal",
+		"@_c.code345 AS @_forscale_dm_dm_process_generality",
+		"@_c.code347 AS @_forscale_dm_dm_review_outcome",
+		"@_c.code455<i> AS @_scale_decision_making", 
+
+		"@_c.code343 AS @_forscale_collab_dm_process_collab",
+		"@_c.code206 AS @_forscale_collab_pseeking_buyin",
+		"@_c.code214 AS @_forscale_collab_communicate_relationships",
+		"@_c.code215 AS @_forscale_collab_communicate_informing",
+		"@_c.code216 AS @_forscale_collab_communicate_decision",
+		"@_c.code456<i> AS @_scale_collab_capacity" );
+	$sql_snips_join['LDMA_JOURNAL'] = "LEFT JOIN la_data @ ON r.userkey = @.userkey [I] AND @.test_time = [T] [H] [C]
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey 
+		LEFT JOIN la_dilemmas @_di ON @.dilemmakey = @_di.dilemmakey ";
+			
+	$sql_snips_tablename['LSUA'] = "lsua_[T]";
+	$sql_snips_select['LSUA'] = array("[LA_DATA_BASIC]", 
+		"@_c.code001 AS @_currentstrength_love_learning",
+		"@_c.code002 AS @_currentstrength_accept_constructive_advice",
+		"@_c.code003 AS @_currentstrength_seek_constructive_advice",
+		"@_c.code004 AS @_currentstrength_accept_support",
+		"@_c.code005 AS @_currentstrength_seek_support",
+		"@_c.code006 AS @_currentstrength_care_for_others",
+		"@_c.code007 AS @_currentstrength_care_for_body",
+		"@_c.code008 AS @_currentstrength_work_on_interp_skills",
+		"@_c.code009 AS @_currentstrength_cultivate_compassion_others",
+		"@_c.code010 AS @_currentstrength_cultivate_compassion_self",
+		"@_c.code011 AS @_currentstrength_cultivate_emotional_awareness",
+		"@_c.code012 AS @_currentstrength_cultivate_humility",
+		"@_c.code013 AS @_currentstrength_recognize_mistakes",
+		"@_c.code014 AS @_currentstrength_listen_to_others",
+		"@_c.code015 AS @_currentstrength_maintain_relationships",
+		"@_c.code016 AS @_currentstrength_maintain_boundaries",
+		"@_c.code017 AS @_currentstrength_reflect_trends_in_relationships",
+		"@_c.code018 AS @_currentstrength_seek_perspectives_of_others",
+		"@_c.code019 AS @_currentstrength_tend_personal_needs",
+		"@_c.code020 AS @_currentstrength_mistakes_as_learning_process",
+		"@_c.code021 AS @_currentstrength_advance_wellbeing_others",
+		"@_c.code022 AS @_currentstrength_work_with_counselor",
+		"@_c.code023 AS @_currentstrength_mentor_others",
+		"@_c.code024 AS @_currentstrength_examined_life",
+		"@_c.code025 AS @_currentstrength_respect_for_others",
+		"@_c.code026 AS @_currentstrength_see_others_as_ends",
+		"@_c.code027 AS @_currentstrength_cultivate_trust",
+		"@_c.code028 AS @_currentstrength_personal_integrity",
+		"@_c.code029 AS @_currentstrength_mutually_supportive_relationships",
+		"@_c.code030 AS @_currentstrength_personal_responsibility",
+		"@_c.code031 AS @_currentstrength_maintain_worklife_balance",
+		"@_c.code032 AS @_currentstrength_reflect_own_limitations",
+		"@_c.code033 AS @_currentstrength_emotional_maturity",
+		"@_c.code034 AS @_currentstrength_advocate_own_perspective",
+		"@_c.code035 AS @_currentstrength_guided_by_vision",
+		"@_c.code036 AS @_currentstrength_contribution_to_larger",
+		"@_c.code037 AS @_currentstrength_strive_trustworthy",
+		"@_c.code038 AS @_currentstrength_enjoy_work_with_others",
+		"@_c.code039 AS @_currentstrength_viewed_as_approachable",
+		"@_c.code040 AS @_currentstrength_build_relationships",
+		"@_c.code041 AS @_currentstrength_make_difference_others_lives",
+		"@_c.code042 AS @_currentstrength_protective_of_others",
+		"@_c.code043 AS @_currentstrength_lifelong_learner",
+		"@_c.code044 AS @_currentstrength_active_learner",
+		"@_c.code050[la_codes_strengths_current] AS @_currentstrength_final",
+		"@_c.code051 AS @_potentialstrength_seek_learning_opportunities",
+		"@_c.code052 AS @_potentialstrength_accept_constructive_feedback",
+		"@_c.code053 AS @_potentialstrength_seek_constructive_feedback",
+		"@_c.code054 AS @_potentialstrength_accept_support",
+		"@_c.code055 AS @_potentialstrength_reflect_on_behavior",
+		"@_c.code056 AS @_potentialstrength_cultivate_closer_relationships",
+		"@_c.code057 AS @_potentialstrength_care_for_body",
+		"@_c.code058 AS @_potentialstrength_work_on_interp_skills",
+		"@_c.code059 AS @_potentialstrength_compassion_for_others",
+		"@_c.code060 AS @_potentialstrength_compassion_for_self",
+		"@_c.code061 AS @_potentialstrength_cultivate_emotional_awareness",
+		"@_c.code062 AS @_potentialstrength_cultivate_humility",
+		"@_c.code063 AS @_potentialstrength_learn_from_mistakes",
+		"@_c.code064 AS @_potentialstrength_ability_to_listen",
+		"@_c.code065 AS @_potentialstrength_closer_relationships",
+		"@_c.code066 AS @_potentialstrength_maintain_boundaries",
+		"@_c.code067 AS @_potentialstrength_trends_in_relationships",
+		"@_c.code068 AS @_potentialstrength_seek_perspectives_of_others",
+		"@_c.code069 AS @_potentialstrength_tend_personal_needs",
+		"@_c.code070 AS @_potentialstrength_forgive_personal_mistakes",
+		"@_c.code071 AS @_potentialstrength_openness_in_relationships",
+		"@_c.code072 AS @_potentialstrength_work_with_counselor",
+		"@_c.code073 AS @_potentialstrength_reflect_own_limitations",
+		"@_c.code074 AS @_potentialstrength_recognize_areas_of_conflict",
+		"@_c.code075 AS @_potentialstrength_respect_for_others",
+		"@_c.code076 AS @_potentialstrength_treat_others_as_ends",
+		"@_c.code077 AS @_potentialstrength_cultivate_trust",
+		"@_c.code078 AS @_potentialstrength_live_by_own_values",
+		"@_c.code079 AS @_potentialstrength_mutually_supportive_relationships",
+		"@_c.code080 AS @_potentialstrength_fallibility_of_human_beings",
+		"@_c.code081 AS @_potentialstrength_mastery_of_emotions",
+		"@_c.code082 AS @_potentialstrength_cultivate_assertiveness",
+		"@_c.code083 AS @_potentialstrength_confront_fear_of_mistakes",
+		"@_c.code084 AS @_potentialstrength_manage_stress_better",
+		"@_c.code085 AS @_potentialstrength_cultivate_empathy",
+		"@_c.code086 AS @_potentialstrength_say_no",
+		"@_c.code087 AS @_potentialstrength_develop_communication_skills",
+		"@_c.code088 AS @_potentialstrength_cultivate_equal_relationships",
+		"@_c.code089 AS @_potentialstrength_tension_personal_family_needs",
+		"@_c.code090 AS @_potentialstrength_self_care_to_protect_loved",
+		"@_c.code091 AS @_potentialstrength_self_care_to_improve_relationships",
+		"@_c.code092 AS @_potentialstrength_develop_interpersonal_skills",
+		"@_c.code093 AS @_potentialstrength_develop_interpersonal_skills_cognitive",
+		"@_c.code094 AS @_potentialstrength_tension_work_personal_needs",
+		"@_c.code095 AS @_potentialstrength_identify_personal_weaknesses",
+		"@_c.code096 AS @_potentialstrength_develop_interpersonal_skills_introvert",
+		"@_c.code100[la_codes_strengths_potential] AS @_potentialstrength_final",
+		"@_c.code101[la_codes_recommendations] AS @_recommend_01",
+		"@_c.code102[la_codes_recommendations] AS @_recommend_02",
+		"@_s.lasnumber_1", 
+		"@_o.optimismkey", "@_o.optimismaverage<i>", "@_o.optimismcomment", 
+		"@_ch.characterkey", "@_ch.persistenceaverage<i>", "@_ch.learneraverage<i>", "@_ch.integrityaverage<i>", 
+		"@_ch.emotionaverage<i>", "@_ch.challengeaverage<i>", "@_ch.charactercomment"
+	);
+	$sql_snips_join['LSUA'] = "LEFT JOIN la_data @ ON r.userkey = @.userkey AND @.test_time = [T] [H] [C] [I] 
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey 
+		LEFT JOIN la_scores @_s ON @.lakey = @_s.lakey
+		LEFT JOIN optimismsurvey @_o ON @.lakey = @_o.lsuakey
+		LEFT JOIN charactersurvey @_ch ON @.lakey = @_ch.lsuakey ";
+		
+	$sql_snips_tablename['LSUA_JOURNAL'] = "lsuaj_[T]";
+	$sql_snips_select['LSUA_JOURNAL'] = array("[LA_DATA_BASIC]", 
+		"@_c.code001 AS @_currentstrength_love_learning",
+		"@_c.code002 AS @_currentstrength_accept_constructive_advice",
+		"@_c.code003 AS @_currentstrength_seek_constructive_advice",
+		"@_c.code004 AS @_currentstrength_accept_support",
+		"@_c.code005 AS @_currentstrength_seek_support",
+		"@_c.code006 AS @_currentstrength_care_for_others",
+		"@_c.code007 AS @_currentstrength_care_for_body",
+		"@_c.code008 AS @_currentstrength_work_on_interp_skills",
+		"@_c.code009 AS @_currentstrength_cultivate_compassion_others",
+		"@_c.code010 AS @_currentstrength_cultivate_compassion_self",
+		"@_c.code011 AS @_currentstrength_cultivate_emotional_awareness",
+		"@_c.code012 AS @_currentstrength_cultivate_humility",
+		"@_c.code013 AS @_currentstrength_recognize_mistakes",
+		"@_c.code014 AS @_currentstrength_listen_to_others",
+		"@_c.code015 AS @_currentstrength_maintain_relationships",
+		"@_c.code016 AS @_currentstrength_maintain_boundaries",
+		"@_c.code017 AS @_currentstrength_reflect_trends_in_relationships",
+		"@_c.code018 AS @_currentstrength_seek_perspectives_of_others",
+		"@_c.code019 AS @_currentstrength_tend_personal_needs",
+		"@_c.code020 AS @_currentstrength_mistakes_as_learning_process",
+		"@_c.code021 AS @_currentstrength_advance_wellbeing_others",
+		"@_c.code022 AS @_currentstrength_work_with_counselor",
+		"@_c.code023 AS @_currentstrength_mentor_others",
+		"@_c.code024 AS @_currentstrength_examined_life",
+		"@_c.code025 AS @_currentstrength_respect_for_others",
+		"@_c.code026 AS @_currentstrength_see_others_as_ends",
+		"@_c.code027 AS @_currentstrength_cultivate_trust",
+		"@_c.code028 AS @_currentstrength_personal_integrity",
+		"@_c.code029 AS @_currentstrength_mutually_supportive_relationships",
+		"@_c.code030 AS @_currentstrength_personal_responsibility",
+		"@_c.code031 AS @_currentstrength_maintain_worklife_balance",
+		"@_c.code032 AS @_currentstrength_reflect_own_limitations",
+		"@_c.code033 AS @_currentstrength_emotional_maturity",
+		"@_c.code034 AS @_currentstrength_advocate_own_perspective",
+		"@_c.code035 AS @_currentstrength_guided_by_vision",
+		"@_c.code036 AS @_currentstrength_contribution_to_larger",
+		"@_c.code037 AS @_currentstrength_strive_trustworthy",
+		"@_c.code038 AS @_currentstrength_enjoy_work_with_others",
+		"@_c.code039 AS @_currentstrength_viewed_as_approachable",
+		"@_c.code040 AS @_currentstrength_build_relationships",
+		"@_c.code041 AS @_currentstrength_make_difference_others_lives",
+		"@_c.code042 AS @_currentstrength_protective_of_others",
+		"@_c.code043 AS @_currentstrength_lifelong_learner",
+		"@_c.code044 AS @_currentstrength_active_learner",
+		"@_c.code050[la_codes_strengths_current] AS @_currentstrength_final",
+		"@_c.code051 AS @_potentialstrength_seek_learning_opportunities",
+		"@_c.code052 AS @_potentialstrength_accept_constructive_feedback",
+		"@_c.code053 AS @_potentialstrength_seek_constructive_feedback",
+		"@_c.code054 AS @_potentialstrength_accept_support",
+		"@_c.code055 AS @_potentialstrength_reflect_on_behavior",
+		"@_c.code056 AS @_potentialstrength_cultivate_closer_relationships",
+		"@_c.code057 AS @_potentialstrength_care_for_body",
+		"@_c.code058 AS @_potentialstrength_work_on_interp_skills",
+		"@_c.code059 AS @_potentialstrength_compassion_for_others",
+		"@_c.code060 AS @_potentialstrength_compassion_for_self",
+		"@_c.code061 AS @_potentialstrength_cultivate_emotional_awareness",
+		"@_c.code062 AS @_potentialstrength_cultivate_humility",
+		"@_c.code063 AS @_potentialstrength_learn_from_mistakes",
+		"@_c.code064 AS @_potentialstrength_ability_to_listen",
+		"@_c.code065 AS @_potentialstrength_closer_relationships",
+		"@_c.code066 AS @_potentialstrength_maintain_boundaries",
+		"@_c.code067 AS @_potentialstrength_trends_in_relationships",
+		"@_c.code068 AS @_potentialstrength_seek_perspectives_of_others",
+		"@_c.code069 AS @_potentialstrength_tend_personal_needs",
+		"@_c.code070 AS @_potentialstrength_forgive_personal_mistakes",
+		"@_c.code071 AS @_potentialstrength_openness_in_relationships",
+		"@_c.code072 AS @_potentialstrength_work_with_counselor",
+		"@_c.code073 AS @_potentialstrength_reflect_own_limitations",
+		"@_c.code074 AS @_potentialstrength_recognize_areas_of_conflict",
+		"@_c.code075 AS @_potentialstrength_respect_for_others",
+		"@_c.code076 AS @_potentialstrength_treat_others_as_ends",
+		"@_c.code077 AS @_potentialstrength_cultivate_trust",
+		"@_c.code078 AS @_potentialstrength_live_by_own_values",
+		"@_c.code079 AS @_potentialstrength_mutually_supportive_relationships",
+		"@_c.code080 AS @_potentialstrength_fallibility_of_human_beings",
+		"@_c.code081 AS @_potentialstrength_mastery_of_emotions",
+		"@_c.code082 AS @_potentialstrength_cultivate_assertiveness",
+		"@_c.code083 AS @_potentialstrength_confront_fear_of_mistakes",
+		"@_c.code084 AS @_potentialstrength_manage_stress_better",
+		"@_c.code085 AS @_potentialstrength_cultivate_empathy",
+		"@_c.code086 AS @_potentialstrength_say_no",
+		"@_c.code087 AS @_potentialstrength_develop_communication_skills",
+		"@_c.code088 AS @_potentialstrength_cultivate_equal_relationships",
+		"@_c.code089 AS @_potentialstrength_tension_personal_family_needs",
+		"@_c.code090 AS @_potentialstrength_self_care_to_protect_loved",
+		"@_c.code091 AS @_potentialstrength_self_care_to_improve_relationships",
+		"@_c.code092 AS @_potentialstrength_develop_interpersonal_skills",
+		"@_c.code093 AS @_potentialstrength_develop_interpersonal_skills_cognitive",
+		"@_c.code094 AS @_potentialstrength_tension_work_personal_needs",
+		"@_c.code095 AS @_potentialstrength_identify_personal_weaknesses",
+		"@_c.code096 AS @_potentialstrength_develop_interpersonal_skills_introvert",
+		"@_c.code100[la_codes_strengths_potential] AS @_potentialstrength_final",
+		"@_c.code101[la_codes_recommendations] AS @_recommend_01",
+		"@_c.code102[la_codes_recommendations] AS @_recommend_02",
+		"@_o.optimismkey", "@_o.optimismaverage<i>", "@_o.optimismcomment", 
+		"@_ch.characterkey", "@_ch.persistenceaverage<i>", "@_ch.learneraverage<i>", "@_ch.integrityaverage<i>", 
+		"@_ch.emotionaverage<i>", "@_ch.challengeaverage<i>", "@_ch.charactercomment"
+	);
+	$sql_snips_join['LSUA_JOURNAL'] = "LEFT JOIN la_data @ ON r.userkey = @.userkey AND @.test_time = [T] [H] [C] [I]
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey 
+		LEFT JOIN optimismsurvey @_o ON @.lakey = @_o.lsuakey
+		LEFT JOIN charactersurvey @_ch ON @.lakey = @_ch.lsuakey ";
+		
+	$sql_snips_tablename['LLRA_JOURNAL'] = "llraj_[T]";
+	$sql_snips_select['LLRA_JOURNAL'] = array("[LA_DATA_BASIC]", "[ARGUMENTATION]", 
+		"@_c.code493<p> AS @_score_overall", "@_c.code481<p> AS @_theme_cognition",
+		"@_c.code482<p> AS @_theme_communication", "@_c.code483<p> AS @_theme_emotion", 
+		"@_c.code484<p> AS @_theme_ethics", "@_c.code485<p> AS @_theme_personality",
+		"@_c.code486<p> AS @_theme_social", "@_c.code487<p> AS @_theme_approach" );
+	$sql_snips_join['LLRA_JOURNAL'] = "LEFT JOIN la_data @ ON r.userkey = @.userkey [I] AND @.test_time = [T] [H] [C]
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey  ";
+		
+	$sql_snips_tablename['LRJA_JOURNAL'] = "lrjaj_[T]";
+	$sql_snips_select['LRJA_JOURNAL'] = array("[LA_DATA_BASIC]", "[ARGUMENTATION]", 
+		"@_c.code491<p> AS @_score_overall", 
+		"@_c.code481<p> AS @_theme_complexity", 
+		"@_c.code482<p> AS @_theme_evidence", 
+		"@_c.code483<p> AS @_theme_inquiry",
+		"@_c.code485<p> AS @_theme_perspective", 
+		"@_c.code486<p> AS @_theme_truthcertainty",
+		"@_r101.rubric_name AS @_r101_rubric_name", 
+		"@_r101.item_order AS @_r101_item_order", 
+		"CONCAT(@_r101.rubric_stem, ' ', @_r101.rubric_item) AS @_r101_text",
+		"@_r102.rubric_name AS @_r102_rubric_name", 
+		"@_r102.item_order AS @_r102_item_order", 
+		"CONCAT(@_r102.rubric_stem, ' ', @_r102.rubric_item) AS @_r102_text",
+		"@_r103.rubric_name AS @_r103_rubric_name", 
+		"@_r103.item_order AS @_r103_item_order", 
+		"CONCAT(@_r103.rubric_stem, ' ', @_r103.rubric_item) AS @_r103_text",
+		"@_r104.rubric_name AS @_r104_rubric_name", 
+		"@_r104.item_order AS @_r104_item_order", 
+		"CONCAT(@_r104.rubric_stem, ' ', @_r104.rubric_item) AS @_r104_text",
+		"@_r105.rubric_name AS @_r105_rubric_name", 
+		"@_r105.item_order AS @_r105_item_order", 
+		"CONCAT(@_r105.rubric_stem, ' ', @_r105.rubric_item) AS @_r105_text",
+		"@_r106.rubric_name AS @_r106_rubric_name", 
+		"@_r106.item_order AS @_r106_item_order", 
+		"CONCAT(@_r106.rubric_stem, ' ', @_r106.rubric_item) AS @_r106_text",
+		"@_r107.rubric_name AS @_r107_rubric_name", 
+		"@_r107.item_order AS @_r107_item_order", 
+		"CONCAT(@_r107.rubric_stem, ' ', @_r107.rubric_item) AS @_r107_text",
+		"@_r108.rubric_name AS @_r108_rubric_name", 
+		"@_r108.item_order AS @_r108_item_order", 
+		"CONCAT(@_r108.rubric_stem, ' ', @_r108.rubric_item) AS @_r108_text",
+		"@_r109.rubric_name AS @_r109_rubric_name", 
+		"@_r109.item_order AS @_r109_item_order", 
+		"CONCAT(@_r109.rubric_stem, ' ', @_r109.rubric_item) AS @_r109_text",
+		"@_r111.rubric_name AS @_r111_rubric_name", 
+		"@_r111.item_order AS @_r111_item_order", 
+		"CONCAT(@_r111.rubric_stem, ' ', @_r111.rubric_item) AS @_r111_text",
+		"@_r112.rubric_name AS @_r112_rubric_name", 
+		"@_r112.item_order AS @_r112_item_order", 
+		"CONCAT(@_r112.rubric_stem, ' ', @_r112.rubric_item) AS @_r112_text",
+		"@_r113.rubric_name AS @_r113_rubric_name", 
+		"@_r113.item_order AS @_r113_item_order", 
+		"CONCAT(@_r113.rubric_stem, ' ', @_r113.rubric_item) AS @_r113_text",
+		"@_r114.rubric_name AS @_r114_rubric_name", 
+		"@_r114.item_order AS @_r114_item_order", 
+		"CONCAT(@_r114.rubric_stem, ' ', @_r114.rubric_item) AS @_r114_text",
+		"@_r115.rubric_name AS @_r115_rubric_name", 
+		"@_r115.item_order AS @_r115_item_order", 
+		"CONCAT(@_r115.rubric_stem, ' ', @_r115.rubric_item) AS @_r115_text" );
+	$sql_snips_join['LRJA_JOURNAL'] = "
+		LEFT JOIN la_data @ ON r.userkey = @.userkey [I] AND @.test_time = [T] [H] [C]
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey 
+		LEFT JOIN la_rubrics @_r101 ON @_c.code101 = @_r101.rubrickey
+		LEFT JOIN la_rubrics @_r102 ON @_c.code102 = @_r102.rubrickey
+		LEFT JOIN la_rubrics @_r103 ON @_c.code103 = @_r103.rubrickey
+		LEFT JOIN la_rubrics @_r104 ON @_c.code104 = @_r104.rubrickey
+		LEFT JOIN la_rubrics @_r105 ON @_c.code105 = @_r105.rubrickey
+		LEFT JOIN la_rubrics @_r106 ON @_c.code106 = @_r106.rubrickey
+		LEFT JOIN la_rubrics @_r107 ON @_c.code107 = @_r107.rubrickey
+		LEFT JOIN la_rubrics @_r108 ON @_c.code108 = @_r108.rubrickey
+		LEFT JOIN la_rubrics @_r109 ON @_c.code109 = @_r109.rubrickey
+		LEFT JOIN la_rubrics @_r111 ON @_c.code111 = @_r111.rubrickey
+		LEFT JOIN la_rubrics @_r112 ON @_c.code112 = @_r112.rubrickey
+		LEFT JOIN la_rubrics @_r113 ON @_c.code113 = @_r113.rubrickey
+		LEFT JOIN la_rubrics @_r114 ON @_c.code114 = @_r114.rubrickey
+		LEFT JOIN la_rubrics @_r115 ON @_c.code115 = @_r115.rubrickey ";
+		
+	$sql_snips_tablename['LERA_JOURNAL'] = "leraj_[T]";
+	$sql_snips_select['LERA_JOURNAL'] = array("[LA_DATA_BASIC]", "[ARGUMENTATION]", 
+		"@_c.code491<p> AS @_score_overall", 
+		"@_c.code481<p> AS @_theme_whatmakesethical", "@_c.code482<p> AS @_theme_goodandright", 
+		"@_c.code483<p> AS @_theme_values", "@_c.code484<p> AS @_theme_ethicsperspectives",
+		"@_c.code485<p> AS @_theme_ethicalrelativism", "@_c.code486<p> AS @_theme_spiritualityethics", 
+		"@_c.code487<p> AS @_theme_ethicaldecisionmaking", "@_c.code488<p> AS @_theme_ethicscitizenship" );
+	$sql_snips_join['LERA_JOURNAL'] = "LEFT JOIN la_data @ ON r.userkey = @.userkey [I] AND @.test_time = [T] [H] [C]
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey  ";
+		
+	$sql_snips_tablename['LDMA_360'] = "s360_[T]";
+	$sql_snips_select['LDMA_360'] = array("[SURVEY_BASIC]", "[LA_DATA_SURVEYS]", 
+		"@.stem001[m] AS @_i_timetothink", "@.stem002[m] AS @_i_engaged", "@.stem003[m] AS @_i_questions", 
+		"@.stem004[m] AS @_i_takep", "@.stem005[m] AS @_i_seekp", "@.stem006[m] AS @_i_impactculture", 
+		"@.stem007[m] AS @_i_devcapacity", "@.stem008[m] AS @_i_productive", "@.stem009[m] AS @_i_communicate", 
+		"@.stem010[m] AS @_i_leader", "@.stem011[m] AS @_i_member", "@.stem012[m] AS @_i_changeefforts", 
+		"@.stem014[m] AS @_i_lei", "@.stem022[m] AS @_peers_engaged", "@.stem023[m] AS @_peers_questions", 
+		"@.stem024[m] AS @_peers_seekp", "@.stem025[m] AS @_peers_productive", "@.stem026[m] AS @_peers_lei", 
+		"@.stem032[m] AS @_directs_engaged", "@.stem033[m] AS @_directs_questions", 
+		"@.stem034[m] AS @_directs_seekp", "@.stem035[m] AS @_directs_productive", 
+		"@.stem036[m] AS @_directs_lei", "@.stem042[m] AS @_sup_engaged", "@.stem043[m] AS @_sup_questions", 
+		"@.stem044[m] AS @_sup_seekp", "@.stem045[m] AS @_sup_productive", "@.stem046[m] AS @_sup_lei", 
+		"CONCAT_WS(',', @.stem001, @.stem002, @.stem003, @.stem004, @.stem005, @.stem006, @.stem007, @.stem008, 
+							 @.stem009, @.stem010, @.stem011, @.stem012, @.stem014) AS @_groupavg_i",
+		"CONCAT_WS(',', @.stem022, @.stem023, @.stem024, @.stem025, @.stem026) AS @_groupavg_peers",
+		"CONCAT_WS(',', @.stem032, @.stem033, @.stem034, @.stem035, @.stem036) AS @_groupavg_directs",
+		"CONCAT_WS(',', @.stem042, @.stem043, @.stem044, @.stem045, @.stem046) AS @_groupavg_supervisor",
+	);
+	$sql_snips_join['LDMA_360'] = "LEFT JOIN la_survey_data @ ON r.userkey = @.userkey AND @.test_time = [T] [I] [C]
+		LEFT JOIN la_data @_d ON @.lakey = @_d.lakey";
+	
+	$sql_snips_tablename['LDMA_360_PRE'] = "s360pre_[T]";
+	$sql_snips_select['LDMA_360_PRE'] = array("[SURVEY_BASIC]", "[LA_DATA_SURVEYS]", 
+		"@.stem001[m] AS @_i_timetothink", "@.stem002[m] AS @_i_engaged", "@.stem003[m] AS @_i_questions", 
+		"@.stem004[m] AS @_i_takep", "@.stem005[m] AS @_i_seekp", "@.stem006[m] AS @_i_impactculture", 
+		"@.stem007[m] AS @_i_devcapacity", "@.stem008[m] AS @_i_productive", "@.stem009[m] AS @_i_communicate", 
+		"@.stem010[m] AS @_i_leader", "@.stem011[m] AS @_i_member", "@.stem012[m] AS @_i_changeefforts", 
+		"@.stem014[m] AS @_i_lei", "@.stem022[m] AS @_peers_engaged", "@.stem023[m] AS @_peers_questions", 
+		"@.stem024[m] AS @_peers_seekp", "@.stem025[m] AS @_peers_productive", "@.stem026[m] AS @_peers_lei", 
+		"@.stem032[m] AS @_directs_engaged", "@.stem033[m] AS @_directs_questions", 
+		"@.stem034[m] AS @_directs_seekp", "@.stem035[m] AS @_directs_productive", 
+		"@.stem036[m] AS @_directs_lei", "@.stem042[m] AS @_sup_engaged", "@.stem043[m] AS @_sup_questions", 
+		"@.stem044[m] AS @_sup_seekp", "@.stem045[m] AS @_sup_productive", "@.stem046[m] AS @_sup_lei", 
+		"CONCAT_WS(',', @.stem001, @.stem002, @.stem003, @.stem004, @.stem005, @.stem006, @.stem007, @.stem008, 
+							 @.stem009, @.stem010, @.stem011, @.stem012, @.stem014) AS @_groupavg_i",
+		"CONCAT_WS(',', @.stem022, @.stem023, @.stem024, @.stem025, @.stem026) AS @_groupavg_peers",
+		"CONCAT_WS(',', @.stem032, @.stem033, @.stem034, @.stem035, @.stem036) AS @_groupavg_directs",
+		"CONCAT_WS(',', @.stem042, @.stem043, @.stem044, @.stem045, @.stem046) AS @_groupavg_supervisor",
+	);
+	$sql_snips_join['LDMA_360_PRE'] = "LEFT JOIN la_survey_data @ ON r.userkey = @.userkey AND @.test_time = [T] [I] [C] 
+		LEFT JOIN la_data @_d ON @.lakey = @_d.lakey";
+	
+	$sql_snips_tablename['EE_SURVEY'] = "ee_[T]";
+	$sql_snips_select['EE_SURVEY'] = array( "[SURVEY_BASIC]", "[LA_DATA_SURVEYS]", 
+		"@.stem001[m] AS @_happiness_contentment", "@.stem002[m] AS @_pride_own_accomplishments", 
+		"@.stem003[m] AS @_feel_moral_eval", "@.stem004[m] AS @_longterm_unhappiness", 
+		"@.stem005[m] AS @_personal_fear", "@.stem006[m] AS @_indignation_over_my_suffering", 
+		"@.stem007[m] AS @_anger_specific", "@.stem008[m] AS @_disgust_specific", 
+		"@.stem009[m] AS @_guilt_specific", "@.stem010[m] AS @_sadness_specific", 
+		"@.stem011[m] AS @_shame_specific", "@.stem012[m] AS @_shame_general", 
+		"@.stem013[m] AS @_embarrassment", "@.stem014[m] AS @_happiness_for_another", 
+		"@.stem015[m] AS @_caring_for_others", "@.stem016[m] AS @_feeling_anothers_distress", 
+		"@.stem017[m] AS @_need_to_act_on_others_distress", "@.stem018[m] AS @_pride_for_another", 
+		"@.stem019[m] AS @_fear_for_another", "@.stem020[m] AS @_anger_for_another", 
+		"@.stem021[m] AS @_indignation_for_another", "@.stem022[m] AS @_shame_for_another", 
+		"@.stem023[m] AS @_compassion_for_human_fallibility", "@.stem024[m] AS @_disgust_about_others_actions", 
+		"@.stem025[m] AS @_love_for_humanity", "@.stem026[m] AS @_guilt_general", 
+		"@.stem027[m] AS @_anger_general", "@.stem028[m] AS @_hope_for_future", 
+		"@.stem029[m] AS @_contempt_for_another", "@.stem030[m] AS @_pleasure_at_thought_of_harming_another"
+	);
+	$sql_snips_join['EE_SURVEY'] = "LEFT JOIN la_survey_data @ ON r.userkey = @.userkey AND @.test_time = [T] [I] [C] 
+		LEFT JOIN la_data @_d ON @.lakey = @_d.lakey";
+	
+	$sql_snips_tablename['FOLA_EXIT'] = "folaexit_[T]";
+	$sql_snips_select['FOLA_EXIT'] = array( "[SURVEY_BASIC]", 
+		"@.stem001[m] AS @_course_relevant", 
+		"@.stem002[m] AS @_clearly_presented", 
+		"@.stem003[m] AS @_learned_useful_things", 
+		"@.stem004[m] AS @_interested_learn_more", 
+		"@.text01 AS @_course_thing_worked_well", 
+		"@.text02 AS @_course_thing_didnt_work_well", 
+		"@.stem011[m] AS @_instructor1", 
+		"@.stem012[m] AS @_instructor1_professional", 
+		"@.stem013[m] AS @_instructor1_mastery", 
+		"@.stem014[m] AS @_instructor1_clear", 
+		"@.stem015[m] AS @_instructor1_rapport", 
+		"@.text03 AS @_instructor1_comments", 
+		"@.stem016[m] AS @_instructor2", 
+		"@.stem017[m] AS @_instructor2_professional", 
+		"@.stem018[m] AS @_instructor2_mastery", 
+		"@.stem019[m] AS @_instructor2_clear", 
+		"@.stem020[m] AS @_instructor2_rapport", 
+		"@.text04 AS @_instructor2_comments", 
+		"@.text05 AS @_avg_hours_on_readings", 
+		"@.text06 AS @_avg_hours_on_assignments", 
+		"@.text07 AS @_avg_hours_prep_discussions",
+		"@.stem021[m] AS @_reading_most_helpful_1", 
+		"@.stem022[m] AS @_reading_most_helpful_2", 
+		"@.stem023[m] AS @_reading_most_helpful_3", 
+		"@.text08 AS @_readings_most_helpful_comments", 
+		"@.stem026[m] AS @_reading_least_helpful_1", 
+		"@.stem027[m] AS @_reading_least_helpful_2", 
+		"@.stem028[m] AS @_reading_least_helpful_3", 
+		"@.text09 AS @_readings_least_helpful_comments", 
+		"@.stem031[m] AS @_module_most_learnful_1", 
+		"@.stem032[m] AS @_module_most_learnful_2", 
+		"@.text10 AS @_module_most_learnful_comments", 
+		"@.stem033[m] AS @_module_least_learnful_1", 
+		"@.stem034[m] AS @_module_least_learnful_2", 
+		"@.text11 AS @_module_least_learnful_comments", 
+		"@.stem035[m] AS @_activity_most_useful_1", 
+		"@.stem036[m] AS @_activity_most_useful_2", 
+		"@.text12 AS @_activity_most_useful_comments", 
+		"@.stem037[m] AS @_activity_least_useful_1", 
+		"@.stem038[m] AS @_activity_least_useful_2",  
+		"@.text13 AS @_activity_least_useful_comments", 
+		"@.text14 AS @_other_comments"
+	);
+	$sql_snips_join['FOLA_EXIT'] = "LEFT JOIN la_survey_data @ ON r.userkey = @.userkey AND @.test_time = [T] [I] [C] ";
+	
+	$sql_snips_tablename['WS001'] = "ws001_[T]";
+	$sql_snips_select['WS001'] = array( "[SURVEY_BASIC]", 
+		"@.stem001[m] AS @_workshop_relevant", 
+		"@.stem002[m] AS @_presented_clearly", 
+		"@.stem003[m] AS @_learned_useful_things", 
+		"@.stem004[m] AS @_interested_learn_more", 
+		"@.text01 AS @_workshop_thing_worked_well",
+		"@.text02 AS @_workshop_thing_didnt_work_well",
+		"@.stem010[m] AS @_presenter1", 
+		"@.stem011[m] AS @_presenter1_professional", 
+		"@.stem012[m] AS @_presenter1_mastery", 
+		"@.stem013[m] AS @_presenter1_clear", 
+		"@.stem014[m] AS @_presenter1_rapport", 
+		"@.text03 AS @_presenter1_comments",
+		"@.stem020[m] AS @_presenter2", 
+		"@.stem021[m] AS @_presenter2_professional", 
+		"@.stem022[m] AS @_presenter2_mastery", 
+		"@.stem023[m] AS @_presenter2_clear", 
+		"@.stem024[m] AS @_presenter2_rapport", 
+		"@.text04 AS @_presenter2_comments"
+	);
+	$sql_snips_join['WS001'] = "LEFT JOIN la_survey_data @ ON r.userkey = @.userkey AND @.test_time = [T] [I] ";
+	
+	$sql_snips_tablename['LMBE'] = "lmbe_[T]";
+	$sql_snips_select['LMBE'] = array("[LA_DATA_BASIC]", "[ARGUMENTATION]", "@_s.lasnumber_1<p>",
+		"'remind Topher to fill these results in.' AS @_incomplete" );
+	$sql_snips_join['LMBE'] = "LEFT JOIN la_data @ ON r.userkey = @.userkey [I] AND @.test_time = [T] [H] [C]
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey 
+		LEFT JOIN la_scores @_s ON @.lakey = @_s.lakey ";
+		
+	$sql_snips_tablename['LIMA'] = "lima_[T]";
+	$sql_snips_select['LIMA'] = array("[LA_DATA_BASIC]", "[ARGUMENTATION]", "@_s.lasnumber_1<p>", 
+		"'remind Topher to fill these results in.' AS @_incomplete" );
+	$sql_snips_join['LIMA'] = "LEFT JOIN la_data @ ON r.userkey = @.userkey [I] AND @.test_time = [T] [H] [C]
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey ";
+		
+	$sql_snips_tablename['LDPA'] = "ldpa_[T]";
+	$sql_snips_select['LDPA'] = array("[LA_DATA_BASIC]", "[ARGUMENTATION]",
+		"@_c.code491<p> AS @_score_overall", 
+		"@_c.code481<p> AS @_score_psychologicalstructures", 
+	  "@_c.code482<p> AS @_score_developmentaldynamics",
+		"@_c.code483<p> AS @_score_developmentalpedagogy", 
+		"@_c.code484<p> AS @_score_methodology",
+		"@_c.code485<p> AS @_score_developmentalpsychology", 
+		"@_c.code486<p> AS @_score_theorypractice", 
+		"@_c.code487<p> AS @_score_learning", 
+		"@_c.code488<p> AS @_score_curricula", 
+		"@_c.code489<p> AS @_score_assessment");
+	$sql_snips_join['LDPA'] = "LEFT JOIN la_data @ ON r.userkey = @.userkey [I] AND @.test_time = [T] [H] [C]
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey ";
+		
+	$sql_snips_tablename['LRJA'] = "lrja_[T]";
+	$sql_snips_select['LRJA'] = array("[LA_DATA_BASIC]", "[ARGUMENTATION]",
+		"'remind Topher to fill these results in.' AS @_incomplete");
+	$sql_snips_join['LRJA'] = "LEFT JOIN la_data @ ON r.userkey = @.userkey [I] AND @.test_time = [T] [H] [C]
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey
+		LEFT JOIN la_scores @_s ON @.lakey = @_s.lakey ";
+		
+	$sql_snips_tablename['LERA'] = "lera_[T]";
+	$sql_snips_select['LERA'] = array("[LA_DATA_BASIC]", "[ARGUMENTATION]", 
+		"'remind Topher to fill these results in.' AS @_incomplete");
+	$sql_snips_join['LERA'] = "LEFT JOIN la_data @ ON r.userkey = @.userkey [I] AND @.test_time = [T] [H] [C]
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey
+		LEFT JOIN la_scores @_s ON @.lakey = @_s.lakey ";
+		
+	$sql_snips_tablename['SMA'] = "sma_[T]";
+	$sql_snips_select['SMA'] = array("[LA_DATA_BASIC]", "@_ss.is_sharon_student", "[ARGUMENTATION]",
+		"@_c.code481<p> AS @_theme_emotion", 
+		"@_c.code482<p> AS @_theme_awareness", 
+		"@_c.code483<p> AS @_theme_control",
+		"@_c.code484<p> AS @_theme_insight", 
+		"@_c.code485<p> AS @_theme_nonjudgmentalness", 
+		"@_c.code486<p> AS @_theme_transformation",
+		"@_c.code491<p> AS @_score_overall");
+	$sql_snips_join['SMA'] = "LEFT JOIN la_data @ ON r.userkey = @.userkey [I] AND @.test_time = [T] [H] [C]
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey
+		LEFT JOIN (SELECT 1 AS is_sharon_student) @_ss ON EXISTS (
+			SELECT * 
+			FROM students_assignments @_fsa 
+				JOIN la_assignments @_fa ON @_fsa.assignmentkey = @_fa.assignmentkey 
+			WHERE @_fsa.userkey = r.userkey AND @_fa.assign_group IN( '2012_SS_1', '2012_SS_2', '2013_SS_2', '2013_SS_3', '2013_fall_1_SS', '2013_fall_2_SS' ) ) ";
+		
+	$sql_snips_tablename['SMJ'] = "smj_[T]";
+	$sql_snips_select['SMJ'] = array("[LA_DATA_BASIC]", "@_ss.is_sharon_student", "[ARGUMENTATION]", 
+    "@_m001.item_value AS @_teacher_bodysensations",
+    "@_m002.item_value AS @_teacher_emotions",
+    "@_m003.item_value AS @_teacher_beliefs",
+    "@_m004.item_value AS @_teacher_thoughts",
+    "@_m005.item_value AS @_teacher_values",
+    "@_m006.item_value AS @_teacher_relationships",
+    "@_m101.item_value AS @_student_bodysensations",
+    "@_m102.item_value AS @_student_emotions",
+    "@_m103.item_value AS @_student_beliefs",
+    "@_m104.item_value AS @_student_thoughts",
+    "@_m105.item_value AS @_student_values",
+    "@_m106.item_value AS @_student_relationships",
+		"@_c.code483 AS @_teacher_connectednesswellbeing",
+		"(@_m022.item_value + @_m023.item_value) / 2 AS @_teacher_control",
+		"(@_m021.item_value + @_m024.item_value + @_m025.item_value) / 3 AS @_teacher_connection",
+		"(@_m028.item_value + @_m029.item_value + @_m030.item_value) / 3 AS @_teacher_compassion");
+	$sql_snips_join['SMJ'] = "LEFT JOIN la_data @ ON r.userkey = @.userkey [I] AND @.test_time = [T] [H] [C]
+		LEFT JOIN la_codes @_c ON @.lakey = @_c.lakey
+    LEFT JOIN la_menus @_m001 ON @_c.code001 = @_m001.menukey
+    LEFT JOIN la_menus @_m002 ON @_c.code002 = @_m002.menukey
+    LEFT JOIN la_menus @_m003 ON @_c.code003 = @_m003.menukey
+    LEFT JOIN la_menus @_m004 ON @_c.code004 = @_m004.menukey
+    LEFT JOIN la_menus @_m005 ON @_c.code005 = @_m005.menukey
+    LEFT JOIN la_menus @_m006 ON @_c.code006 = @_m006.menukey
+    LEFT JOIN la_menus @_m101 ON @_c.code101 = @_m101.menukey
+    LEFT JOIN la_menus @_m102 ON @_c.code102 = @_m102.menukey
+    LEFT JOIN la_menus @_m103 ON @_c.code103 = @_m103.menukey
+    LEFT JOIN la_menus @_m104 ON @_c.code104 = @_m104.menukey
+    LEFT JOIN la_menus @_m105 ON @_c.code105 = @_m105.menukey
+    LEFT JOIN la_menus @_m106 ON @_c.code106 = @_m106.menukey
+    LEFT JOIN la_menus @_m021 ON @_c.code021 = @_m021.menukey
+    LEFT JOIN la_menus @_m022 ON @_c.code022 = @_m022.menukey
+    LEFT JOIN la_menus @_m023 ON @_c.code023 = @_m023.menukey
+    LEFT JOIN la_menus @_m024 ON @_c.code024 = @_m024.menukey
+    LEFT JOIN la_menus @_m025 ON @_c.code025 = @_m025.menukey
+    LEFT JOIN la_menus @_m026 ON @_c.code026 = @_m026.menukey
+    LEFT JOIN la_menus @_m027 ON @_c.code027 = @_m027.menukey
+    LEFT JOIN la_menus @_m028 ON @_c.code028 = @_m028.menukey
+    LEFT JOIN la_menus @_m029 ON @_c.code029 = @_m029.menukey
+    LEFT JOIN la_menus @_m030 ON @_c.code030 = @_m030.menukey
+		LEFT JOIN (SELECT 1 AS is_sharon_student) @_ss ON EXISTS (
+			SELECT * 
+			FROM students_assignments @_fsa 
+				JOIN la_assignments @_fa ON @_fsa.assignmentkey = @_fa.assignmentkey 
+			WHERE @_fsa.userkey = r.userkey AND @_fa.assign_group IN( '2012_SS_1', '2012_SS_2', '2013_SS_2', '2013_SS_3', '2013_fall_1_SS', '2013_fall_2_SS' ) )  ";
+		
+	$sql_snips_tablename['SMS'] = "sms_[T]";
+	$sql_snips_select['SMS'] = array( "[SURVEY_BASIC]", "[LA_DATA_SURVEYS]", 
+		"'remind Topher to fill these results in.' AS @_incomplete"
+	);
+	$sql_snips_join['SMS'] = "LEFT JOIN la_survey_data @ ON r.userkey = @.userkey [I] AND @.test_time = [T] [C]
+		LEFT JOIN la_data @_d ON @.lakey = @_d.lakey ";
+	
+	// bench("prepared all SQL snippets");
+	
+	// prepare the SQL snippets for the selected result sets
+	$sql_clause_select = "";
+	$sql_clause_join = "";
+	$sql_hidden = " AND IFNULL(@.hidden_sumreport, 0) = 0 ";
+	if (isset($_POST['include_hidden']) AND $_POST['include_hidden'] == 1) { $sql_hidden = ""; }
+	$sql_completed = " AND @.completed = 1 ";
+	$sql_hasdata = "1=0"; // OR clauses are added to this snippet
+	
+	$selected_sets = $_POST['resultset'];
+	foreach ($_POST['resultset'] AS $selected_set) {
+		$selected_set = explode("_time_", $selected_set);
+		$instrument = $selected_set[0];
+		$sql_instrument = " AND @.instrument_id = ".SQLstr($instrument, 'text');
+		$test_time = intval($selected_set[1]);
+		$table_name = $sql_snips_tablename[$instrument];
+		// the join snippet is easier to construct.
+		$sql_this_join = "\n".$sql_snips_join[$instrument];
+		$sql_this_join = str_replace("[I]", $sql_instrument, $sql_this_join);
+		$sql_this_join = str_replace("[C]", $sql_completed, $sql_this_join);
+		$sql_this_join = str_replace("[H]", $sql_hidden, $sql_this_join);
+		$sql_this_join = str_replace("@", $table_name, $sql_this_join);
+		$sql_this_join = str_replace("[T]", $test_time, $sql_this_join);
+		$sql_clause_join .= $sql_this_join;
+		
+		// digest the array of columns into a string, creating descriptive colnames in the process
+		$sql_this_select = selectSqlFromArray($sql_snips_select[$instrument]);
+		$sql_this_select = str_replace("@", $table_name, $sql_this_select);
+		$sql_this_select = str_replace("[T]", $test_time, $sql_this_select);
+		$sql_clause_select .= $sql_this_select;
+		
+		$sql_hasdata .= " OR {$table_name}.userkey IS NOT NULL";
+		$sql_hasdata = str_replace("[T]", $test_time, $sql_hasdata);
+	}
+	
+	// The following columns are present in all downloads; they're the "core" select fields for the query.
+	// selectSqlFromArray() is used to construct valid SQL for this SELECT snippet.
+	$sql_selectBasicRegistrants = selectSqlFromArray(array(
+		"r.userkey", // "r.firstname", "r.lastname", <- HIDE all test taker names
+		"r.group", "r.bulkuserkey[r]", 
+		"r.projectkey[projectproject]", "r.birth_year", "r.edukey[demogs_edu]", "r.major", "r.occupation", 
+		"r.sectorkey[demogs_sector]", "r.profesionkey[demogs_professions]", "r.sexkey[demogs_sex]", 
+		"r.ethnicity1key[demogs_ethnicity]", "r.expertise1key[demogs_expertise]", "r.discipline1key[demogs_discipline]", 
+		"r.branch", "r.department", "r.manlevelkey[demogs_man_level]", "r.supervisor_userkey", 
+		//"r.supervisor_userkey[r]", <- HIDE all test taker names
+		"COUNT(DISTINCT d.lakey) AS num_LTs_taken"));
+	$sql_filterPeople = filterPeople(); // same as when querying which record sets should be shown as options
+	if (isset($_POST['include_nodata']) AND $_POST['include_nodata'] == 1) { $sql_hasdata = "1=1"; }
+	
+	// bench("Constructed SQL query");
+	
+	$sql_rsDownload = sprintf("SELECT {$sql_selectBasicRegistrants} {$sql_clause_select} ''
+		FROM registrants r	
+			LEFT JOIN registrants rs ON r.supervisor_userkey = rs.userkey
+			LEFT JOIN registrants rb ON r.bulkuserkey = rb.userkey
+			LEFT JOIN la_data d ON r.userkey = d.userkey AND d.completed = 1  # For filters and some basic info
+			LEFT JOIN la_survey_data sd ON r.userkey = sd.userkey  # For filters
+			{$sql_clause_join}
+		WHERE ({$sql_hasdata}) {$sql_filterPeople}
+		GROUP BY r.userkey
+		ORDER BY r.group, r.lastname" );
+	// echo ("<br>= ".$sql_rsDownload); die();
+	$rsDownload = mysql_query($sql_rsDownload) 
+		or die("rsDownload: ".mysql_error()."<br>".str_replace('\n', '<br>', $sql_rsDownload));
+	
+	// bench("Ran SQL query");
+	
+	// First, move the download results from recordset to array form. 
+	// This download buffer, if stored as a 2D array, takes up too much memory (around 100 MB).
+	// My solution is to use json_encode and json_decode to serialize each result row when not in use.
+	$download = array();	// [y] = {serialized string of column keys & values}
+	
+	// Add column names to the download buffer
+	$row_rs = mysql_fetch_assoc($rsDownload);
+	if (!$row_rs) { die("No results were found for download."); }
+	$this_row = array(); 
+	do {
+		$this_row[] = key($row_rs).$append; // add append label to each column name
+	} while (next($row_rs) !== false);
+	$download[0] = json_encode($this_row);
+	mysql_data_seek($rsDownload, 0); // reset the recordset to the 1st row
+	
+	// Add each result row to the download buffer array
+	// Looking for:
+	// - 0s to convert to blank
+	// - [table_name] label values, to look up based on previous column's value (the key)
+	while ($row_rs = mysql_fetch_assoc($rsDownload)) {
+		// Go through each column & check data in this row
+		$prev_col = "";
+		$anteprev_col = "";
+		do {
+			$cur_col = key($row_rs);
+			// Clean out 'AVG's in the fetched row.
+			// I'm no longer removing 0s from the spreadsheet.
+			$to_delete = array('0XXX', 'AVG:');
+			if (in_array($row_rs[$cur_col], $to_delete)) { $row_rs[$cur_col] = null; }
+			// Detect label columns; look up the label based on the prev key & table specified
+			if (preg_match("/\[\w+\]/", $row_rs[$cur_col])) {
+				$table = str_replace(array('[', ']'), "", $row_rs[$cur_col]);
+				$key = $row_rs[$prev_col];
+				$what = 'label';
+				// la_menus label markers are accompanied by a third column, m_value, to display the key's value
+				if ($table == 'm_value') { $table = 'm'; $key = $row_rs[$anteprev_col]; $what = 'value'; }
+				$label = lookupLabel($table, $key, $what);
+				$row_rs[$cur_col] = $label;
+				// echo "Looked up value {$key} from table {$table} for column {$cur_col}.<br>";
+			}
+			// Some columns contain lists of keys, whose values should be averaged together.
+			if (strpos(' '.$cur_col, "groupavg") AND strpos(' '.$row_rs[$cur_col], ",")) {
+				// Assume that groupavg fields come from la_menus.
+				$keys = explode(',', $row_rs[$cur_col]);
+				$values = array();
+				foreach($keys as $k) { if ($k > 0) { $values[] = lookupLabel('m', $k, "value"); } }
+				$average = array_sum($values) / count($values);
+				$row_rs[$cur_col] = round($average, 2);
+			}
+			
+			// Some columns specify that the previous col's value should be rounded.
+			if (strpos(' '.$cur_col, "rounded_")) {
+				$val = $row_rs[$cur_col];
+				$rounding_type = substr($cur_col, strpos($cur_col, "rounded_")+8);
+				if ($val == '') { $val = ''; } // leave blanks alone
+				else if ($rounding_type == 'int') {
+					$val = round($val);
+				} else if ($rounding_type == 'ten') {
+					$val = round($val/10) * 10;
+				} else if ($rounding_type == 'phase') { 
+					$floor = floor($val);
+					$remainder = $val - $floor;
+					$phase_num = floor($remainder * 4);
+					$phase = chr($phase_num + 97);
+					$val = $floor.$phase;
+					if ($floor == 0) { $val = ''; }
+				} else { // time to panic.
+					die("Huh? ERROR: Unknown rounding type detected in post-processing col '{$cur_col}'.");
+				}
+				
+				// store the rounded value and move on
+				$row_rs[$cur_col] = $val;
+			}
+			$anteprev_col = $prev_col;
+			$prev_col = $cur_col;
+		} while (next($row_rs) !== false);
+		// Then add this row to the download buffer, SERIALIZED to save on memory usage.
+		$download[] = json_encode($row_rs);
+	}
+	
+	// bench("parsed download rows");
+	// die();
+	
+	// Now write out the results for download.
+	$filename = date('Y_md')."_results";  // **** more descriptive name for the download sheet?
+	$output = "";
+	
+	for ($y = 0; isset($download[$y]); $y ++) {  
+		// unpack this row (it's serialized as JSON to save space)
+		$this_row = json_decode($download[$y], true);
+		$fixcomma = array();
+		foreach ($this_row as $r) {	
+			array_push($fixcomma, str_replace(",", ";", $r)); 
+		}
+		$line = join(",", $fixcomma);
+		$line = str_replace(array("\r\n", "\r", "\n"), " ", $line);
+		$output .= $line."\n";
+	} 
+	
+	$export_encoding = "utf-8";
+	$export_encoding = ($export_encoding == "") ? "" : ("; charset=".$export_encoding);
+	header("Content-Type: application/xls".$export_encoding);
+	header("Pragma: public");
+	header("Content-Disposition: attachment; filename={$filename}.csv");
+	header("Content-Type: application/force-download");
+	header("Cache-Control: post-check=0, pre-check=0", false);
+	echo $output;
+	exit();
+}
+
+
+
+$rsLaBoilerplate = mysql_query("SELECT b.* 
+	FROM la_boilerplate b WHERE type LIKE '%report' ", $Assessment) 
+	or die("rsLaBoilerplate: ".mysql_error());
+$boilerplate = array();
+while ($row_rsLaBoilerplate = mysql_fetch_assoc($rsLaBoilerplate)) {
+	$boilerplate[$row_rsLaBoilerplate['name']] = $row_rsLaBoilerplate['la_boilerplate_text'];
+}
+
+
+
+
+
+
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: download results</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.dotimeout.js" type="text/javascript"></script>
+<script src="../includes/highcharts.js" type="text/javascript"></script>
+<script src="../includes/highcharts_export.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	
+	$('#filter_header').click(function(){
+		$('#filter_box').toggle(200).doTimeout('animate', 250, function(){
+			$(window).scroll();
+		});
+	});
+	
+	$('#filter_people_submit').click(function(event){
+		event.preventDefault();
+		
+		$('#resultsets_div').show(200);
+		var filter_people = ''+$('#filter_people').find('select, input').filter('[value!=""]').serialize();
+		$('#resultsets_table').html("<tr><td><em>Loading...</em></td></tr>");
+		$('#resultsets_table').load('?'+filter_people, {
+			show_resultsets: 'yes'
+		});
+	});
+	
+});
+</script>
+
+<style type="text/css">
+
+.brief_row { cursor: pointer; }
+.detail_row { display: none; }
+.shaded { background-color: #eee; }
+.responses_table { width: 800px; }
+
+</style>
+
+
+
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" --><!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+  <?php include 'bc_links.php'; ?><br />
+  <!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  
+    <h1>DOWNLOAD RESULTS</h1>
+    
+    <form name='download_results' id='download_results' method='post' action=''>
+    
+    <h3><a id="filter_header" style="cursor:pointer; ">FILTER RESULTS</a></h3>  
+    <div id="filter_people">
+      <table border="0">
+    	<!-- <form id="form1" name="form1" method="post" action=""> -->
+      
+      <?php // initialize all POST values to avoid errors
+			$post_items = array("resellerkey", "projectkey", "assignmentkey", 
+				"date_range_1", "date_range_2",
+				"las_range_low", "las_range_high", "test_time", "all_times_present",
+				"assessments_taken_min", "assessments_taken_max", "management_level_select",
+				"group", "sexkey");
+			for ($i = 0; isset($post_items[$i]); $i ++) { 
+				if (!isset($_POST[$post_items[$i]])) { $_POST[$post_items[$i]] = ""; }
+			} ?>
+      
+        <?php if ($see_all) { ?>
+        <tr>
+          <td>Client</td>
+          <td>
+            <select name="resellerkey" class="pulldown_width_150" id="resellerkey">
+              <option value="" <?php if($_POST['resellerkey'] == "") 
+							{ echo "selected='selected'"; } ?>> - view all - </option>
+              <?php while ($row = mysql_fetch_assoc($rsFilterBc)) { ?>
+              <option value="<?php echo $row['bulkuserkey']?>" 
+								<?php if($_POST['resellerkey'] == $row['bulkuserkey']) 
+                { echo "selected='selected'"; } ?>><?php 
+                echo $row['bulkcustomer'].
+                " &nbsp; (".$row['numpeople'].")"; ?></option>
+              <?php } ?>
+            </select>
+          </td>
+        </tr>
+        <?php } // ?>
+        <?php if (mysql_num_rows($rsFilterProjects) > 0) { ?>
+        <tr>
+          <td>Project</td>
+          <td><select name="projectkey" class="pulldown_width_150" id="projectkey">
+            <option value="" <?php if($_POST['projectkey'] == "") 
+							{ echo "selected=\"selected\""; } ?>> - view all - </option>
+            <?php while ($row = mysql_fetch_assoc($rsFilterProjects)) { ?>
+            <option value="<?php echo $row['projectkey']?>" 
+          	<?php if($_POST['projectkey'] == $row['projectkey']) 
+						{ echo "selected=\"selected\""; } ?>><?php 
+							echo $row['company']." → ".$row['projectid'].
+						" &nbsp; (".$row['numpeople'].")"; ?></option>
+            <?php } ?>
+          </select></td>
+        </tr>
+        <?php } // ?>
+        <tr>
+          <td>Assignment</td>
+          <td>
+            <select name="assignmentkey" class="pulldown_width_150" id="assignmentkey">
+              <option value="" <?php if($_POST['assignmentkey'] == "") 
+							{ echo "selected='selected'"; } ?>> - view all - </option>
+              <?php while ($row = mysql_fetch_assoc($rsFilterAssn)) { ?>
+              <option value="<?php echo $row['assignmentkey']?>" 
+								<?php if($_POST['assignmentkey'] == $row['assignmentkey']) 
+                { echo "selected='selected'"; } ?>><?php 
+                if ($see_all) { echo $row['company']." → "; }
+								$date_start = strtotime($row['date_start']);
+								$date_end = strtotime($row['date_end']);
+								echo $row['assign_group'].", ".$row['instrument_id'].
+									" from ".date('M jS', $date_start).
+									(date('Y', $date_start) <> date('Y') ? ", ".date('Y', $date_start) : "").
+									" to ".date('M jS', $date_end).
+									(date('Y', $date_end) <> date('Y') ? ", ".date('Y', $date_end) : "").
+                	" &nbsp; (".$row['numpeople'].")"; ?></option>
+              <?php } ?>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>Management level</td>
+          <td><span id="spryselect5">
+          <select name="manlevelkey" class="pulldown_width_150" id="manlevelkey">
+            <option value="">- select one -</option>
+            <?php while ($row = mysql_fetch_assoc($rsFilterManLevels)) { ?>
+            	<option value="<?php echo $row['manlevelkey']; ?>" 
+              	<?php if ($_POST['management_level_select'] == $row['manlevelkey']) 
+									{ echo "selected='selected'"; } ?>>
+								<?php echo $row['man_level']." &nbsp; (".$row['numpeople'].")";?></option>
+            <?php } ?>
+          </select>
+          </span></td>
+        </tr>
+        <tr>
+          <td>Group </td>
+          <td><span id="spryselect">
+          <select name="group" class="pulldown_width_080" id="group">
+            <option value="">---</option>
+            <?php while ($row = mysql_fetch_assoc($rsFilterGroup)) { ?>
+              <option value="<?php echo $row['group']?>"
+              	<?php if ($_POST['group'] == $row['group']) { echo "selected='selected'"; } ?>>
+              <?php 
+							if ($row['company'] <> '') { echo $row['company']." -> "; }
+							echo $row['group']." &nbsp; (".$row['numpeople'].")";?></option>
+            <?php } ?>
+          </select>
+          </span></td>
+        </tr>
+        <tr>
+          <td>Sex</td>
+          <td>
+          <select name="sexkey" class="pulldown_width_080" id="sexkey">
+            <option value="">---</option>
+            <option value="1" <?php if ($_POST['sexkey'] == 1) { echo "selected='selected'"; } ?>>
+            	male</option>
+            <option value="2" <?php if ($_POST['sexkey'] == 2) { echo "selected='selected'"; } ?>>
+            	female</option>
+          </select>
+          </td>
+        </tr>
+        <tr>
+          <td>Include hidden</td>
+          <td>
+          <input type='checkbox' name="include_hidden" id="include_hidden" value="1" />
+          </td>
+        </tr>
+        <tr>
+          <td>Include if no data</td>
+          <td>
+          <input type='checkbox' name="include_nodata" id="include_nodata" value="1" />
+          </td>
+        </tr>
+        <tr>
+        	<td></td>
+          <td align="right">
+						<?php if ($filter_humanReadable <> "") { ?>
+              <a href="">clear search</a> &nbsp; 
+            <?php } ?>
+            <input type="submit" id="filter_people_submit" value="SUBMIT" />
+          </td>
+        </tr>
+    	<!-- </form> -->
+      </table>
+    </div>
+    
+    <div id='resultsets_div' style='display: none'>
+    	<h3>Select result sets to include</h3>
+      <!-- table of checkboxes, AJAX loaded -->
+      <table id='resultsets_table'>
+      	
+      </table>
+      
+    	<h3>Submit</h3>
+      <!-- No other options are needed. ("include argumentation" etc.) -->
+      <p>This sheet will contain:</p>
+      <ul>
+      	<li>1 row per test taker</li>
+      	<li>all demographics columns</li>
+      	<li>scores, argumentation, S&R, and other prominent codes for each of the result sets you selected</li>
+      </ul>
+      <input type='submit' name='download_results_submit' value='DOWNLOAD' />
+      
+    </div>
+    
+    </form>
+    
+    
+
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

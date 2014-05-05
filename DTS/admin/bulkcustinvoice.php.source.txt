@@ -1,0 +1,508 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as senior")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+?>
+<?php
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Load the KT_back class
+require_once('../includes/nxt/KT_back.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+
+// Start trigger
+$formValidation = new tNG_FormValidation();
+$formValidation->addField("bulkcustomerkey", true, "numeric", "", "", "", "");
+$formValidation->addField("projectkey", true, "numeric", "", "", "", "");
+$tNGs->prepareValidation($formValidation);
+// End trigger
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsProject = "-1";
+if (isset($_GET['bulkcustomerkey'])) {
+  $colname_rsProject = (get_magic_quotes_gpc()) ? $_GET['bulkcustomerkey'] : addslashes($_GET['bulkcustomerkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProject = sprintf("SELECT projectproject.projectkey, projectproject.projectid, projectproject.bulkcustomerkey, projectproject.paying, projectproject.organization, projectproject.rate, projectproject.ratemulti FROM projectproject, bulkcustomerinfo WHERE paying = 1 AND bulkcustomerinfo.bulkcustomerkey = projectproject.bulkcustomerkey AND projectproject.bulkcustomerkey = %s", GetSQLValueString($colname_rsProject, "int"));
+$rsProject = mysql_query($query_rsProject, $Assessment) or die(mysql_error());
+$row_rsProject = mysql_fetch_assoc($rsProject);
+$totalRows_rsProject = mysql_num_rows($rsProject);
+
+// Make an insert transaction instance
+$ins_bulkcustpay = new tNG_multipleInsert($conn_Assessment);
+$tNGs->addTransaction($ins_bulkcustpay);
+// Register triggers
+$ins_bulkcustpay->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Insert1");
+$ins_bulkcustpay->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$ins_bulkcustpay->registerTrigger("END", "Trigger_Default_Redirect", 99, "bulkbalanceselect.php");
+// Add columns
+$ins_bulkcustpay->setTable("bulkcustpay");
+$ins_bulkcustpay->addColumn("bulkcustomerkey", "NUMERIC_TYPE", "POST", "bulkcustomerkey", "{GET.bulkcustomerkey}");
+$ins_bulkcustpay->addColumn("projectkey", "NUMERIC_TYPE", "POST", "projectkey", "{GET.projectkey}");
+$ins_bulkcustpay->addColumn("organization", "STRING_TYPE", "POST", "organization", "{rsProject.organization}");
+$ins_bulkcustpay->addColumn("invoicenumber", "STRING_TYPE", "POST", "invoicenumber");
+$ins_bulkcustpay->addColumn("date", "STRING_TYPE", "POST", "date");
+$ins_bulkcustpay->addColumn("ldmanumber", "NUMERIC_TYPE", "POST", "ldmanumber");
+$ins_bulkcustpay->addColumn("leranumber", "NUMERIC_TYPE", "POST", "leranumber");
+$ins_bulkcustpay->addColumn("limanumber", "NUMERIC_TYPE", "POST", "limanumber");
+$ins_bulkcustpay->addColumn("llranumber", "NUMERIC_TYPE", "POST", "llranumber");
+$ins_bulkcustpay->addColumn("lrjanumber", "NUMERIC_TYPE", "POST", "lrjanumber");
+$ins_bulkcustpay->addColumn("lsuanumber", "NUMERIC_TYPE", "POST", "lsuanumber");
+$ins_bulkcustpay->addColumn("lmbenumber", "NUMERIC_TYPE", "POST", "lmbenumber");
+$ins_bulkcustpay->addColumn("lcranumber", "NUMERIC_TYPE", "POST", "lcranumber");
+$ins_bulkcustpay->addColumn("lmlanumber", "NUMERIC_TYPE", "POST", "lmlanumber");
+$ins_bulkcustpay->addColumn("lmsanumber", "NUMERIC_TYPE", "POST", "lmsanumber");
+$ins_bulkcustpay->addColumn("ldma2", "NUMERIC_TYPE", "POST", "ldma2");
+$ins_bulkcustpay->addColumn("llra2", "NUMERIC_TYPE", "POST", "llra2");
+$ins_bulkcustpay->addColumn("lera2", "NUMERIC_TYPE", "POST", "lera2");
+$ins_bulkcustpay->addColumn("lrja2", "NUMERIC_TYPE", "POST", "lrja2");
+$ins_bulkcustpay->addColumn("lsua2", "NUMERIC_TYPE", "POST", "lsua2");
+$ins_bulkcustpay->addColumn("lima2", "NUMERIC_TYPE", "POST", "lima2");
+$ins_bulkcustpay->addColumn("lmbe2", "NUMERIC_TYPE", "POST", "lmbe2");
+$ins_bulkcustpay->addColumn("ldma_journal2", "NUMERIC_TYPE", "POST", "ldma_journal2");
+$ins_bulkcustpay->addColumn("llra_journal2", "NUMERIC_TYPE", "POST", "llra_journal2");
+$ins_bulkcustpay->addColumn("lera_journal2", "NUMERIC_TYPE", "POST", "lera_journal2");
+$ins_bulkcustpay->addColumn("lrja_journal2", "NUMERIC_TYPE", "POST", "lrja_journal2");
+$ins_bulkcustpay->addColumn("lsua_journal2", "NUMERIC_TYPE", "POST", "lsua_journal2");
+$ins_bulkcustpay->addColumn("lima_journal2", "NUMERIC_TYPE", "POST", "lima_journal2");
+$ins_bulkcustpay->addColumn("lmbe_journal2", "NUMERIC_TYPE", "POST", "lmbe_journal2");
+$ins_bulkcustpay->addColumn("sms", "NUMERIC_TYPE", "POST", "sms");
+$ins_bulkcustpay->addColumn("smj", "NUMERIC_TYPE", "POST", "smj");
+$ins_bulkcustpay->setPrimaryKey("bulkcustomerinvoicekey", "NUMERIC_TYPE");
+
+// Make an update transaction instance
+$upd_bulkcustpay = new tNG_multipleUpdate($conn_Assessment);
+$tNGs->addTransaction($upd_bulkcustpay);
+// Register triggers
+$upd_bulkcustpay->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Update1");
+$upd_bulkcustpay->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$upd_bulkcustpay->registerTrigger("END", "Trigger_Default_Redirect", 99, "bulkbalanceselect.php");
+// Add columns
+$upd_bulkcustpay->setTable("bulkcustpay");
+$upd_bulkcustpay->addColumn("bulkcustomerkey", "NUMERIC_TYPE", "POST", "bulkcustomerkey");
+$upd_bulkcustpay->addColumn("projectkey", "NUMERIC_TYPE", "POST", "projectkey");
+$upd_bulkcustpay->addColumn("organization", "STRING_TYPE", "POST", "organization");
+$upd_bulkcustpay->addColumn("invoicenumber", "STRING_TYPE", "POST", "invoicenumber");
+$upd_bulkcustpay->addColumn("date", "STRING_TYPE", "POST", "date");
+$upd_bulkcustpay->addColumn("ldmanumber", "NUMERIC_TYPE", "POST", "ldmanumber");
+$upd_bulkcustpay->addColumn("leranumber", "NUMERIC_TYPE", "POST", "leranumber");
+$upd_bulkcustpay->addColumn("limanumber", "NUMERIC_TYPE", "POST", "limanumber");
+$upd_bulkcustpay->addColumn("llranumber", "NUMERIC_TYPE", "POST", "llranumber");
+$upd_bulkcustpay->addColumn("lrjanumber", "NUMERIC_TYPE", "POST", "lrjanumber");
+$upd_bulkcustpay->addColumn("lsuanumber", "NUMERIC_TYPE", "POST", "lsuanumber");
+$upd_bulkcustpay->addColumn("lmbenumber", "NUMERIC_TYPE", "POST", "lmbenumber");
+$upd_bulkcustpay->addColumn("lcranumber", "NUMERIC_TYPE", "POST", "lcranumber");
+$upd_bulkcustpay->addColumn("lmlanumber", "NUMERIC_TYPE", "POST", "lmlanumber");
+$upd_bulkcustpay->addColumn("lmsanumber", "NUMERIC_TYPE", "POST", "lmsanumber");
+$upd_bulkcustpay->addColumn("ldma2", "NUMERIC_TYPE", "POST", "ldma2");
+$upd_bulkcustpay->addColumn("llra2", "NUMERIC_TYPE", "POST", "llra2");
+$upd_bulkcustpay->addColumn("lera2", "NUMERIC_TYPE", "POST", "lera2");
+$upd_bulkcustpay->addColumn("lrja2", "NUMERIC_TYPE", "POST", "lrja2");
+$upd_bulkcustpay->addColumn("lsua2", "NUMERIC_TYPE", "POST", "lsua2");
+$upd_bulkcustpay->addColumn("lima2", "NUMERIC_TYPE", "POST", "lima2");
+$upd_bulkcustpay->addColumn("lmbe2", "NUMERIC_TYPE", "POST", "lmbe2");
+$upd_bulkcustpay->addColumn("ldma_journal2", "NUMERIC_TYPE", "POST", "ldma_journal2");
+$upd_bulkcustpay->addColumn("llra_journal2", "NUMERIC_TYPE", "POST", "llra_journal2");
+$upd_bulkcustpay->addColumn("lera_journal2", "NUMERIC_TYPE", "POST", "lera_journal2");
+$upd_bulkcustpay->addColumn("lrja_journal2", "NUMERIC_TYPE", "POST", "lrja_journal2");
+$upd_bulkcustpay->addColumn("lsua_journal2", "NUMERIC_TYPE", "POST", "lsua_journal2");
+$upd_bulkcustpay->addColumn("lima_journal2", "NUMERIC_TYPE", "POST", "lima_journal2");
+$upd_bulkcustpay->addColumn("lmbe_journal2", "NUMERIC_TYPE", "POST", "lmbe_journal2");
+$upd_bulkcustpay->addColumn("sms", "NUMERIC_TYPE", "POST", "sms");
+$upd_bulkcustpay->addColumn("smj", "NUMERIC_TYPE", "POST", "smj");
+$upd_bulkcustpay->setPrimaryKey("bulkcustomerinvoicekey", "NUMERIC_TYPE", "GET", "bulkcustomerinvoicekey");
+
+// Make an instance of the transaction object
+$del_bulkcustpay = new tNG_multipleDelete($conn_Assessment);
+$tNGs->addTransaction($del_bulkcustpay);
+// Register triggers
+$del_bulkcustpay->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Delete1");
+$del_bulkcustpay->registerTrigger("END", "Trigger_Default_Redirect", 99, "../includes/nxt/back.php");
+// Add columns
+$del_bulkcustpay->setTable("bulkcustpay");
+$del_bulkcustpay->setPrimaryKey("bulkcustomerinvoicekey", "NUMERIC_TYPE", "GET", "bulkcustomerinvoicekey");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsbulkcustpay = $tNGs->getRecordset("bulkcustpay");
+$row_rsbulkcustpay = mysql_fetch_assoc($rsbulkcustpay);
+$totalRows_rsbulkcustpay = mysql_num_rows($rsbulkcustpay);
+
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Bulk customer payments</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<script src="../DTSassets/SpryValidationTextField.js" type="text/javascript"></script>
+<link href="../DTSassets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<?php echo $tNGs->displayValidationRules();?>
+<script src="../includes/nxt/scripts/form.js" type="text/javascript"></script>
+<script src="../includes/nxt/scripts/form.js.php" type="text/javascript"></script>
+<script type="text/javascript">
+$NXT_FORM_SETTINGS = {
+  duplicate_buttons: false,
+  show_as_grid: true,
+  merge_down_value: true
+}
+</script>
+  <link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+  <script src="../includes/common/js/base.js" type="text/javascript"></script>
+  <script src="../includes/common/js/utility.js" type="text/javascript"></script>
+  <script src="../includes/skins/style.js" type="text/javascript"></script>
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <td valign="top"><h1>Invoice for <?php echo $row_rsProject['organization']; ?></h1>
+  <div class='red box'>Warning: This page is only partially functional. To complete new invoices, please use Navicat for now.</div>
+  
+  <p><a href="bulkbalanceselect.php">Back to selection page</a>      
+    </p>
+&nbsp;
+    <?php
+	echo $tNGs->getErrorMsg();
+?>
+  <div class="KT_tng">
+    <div class="KT_tngform">
+      <form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+        <?php $cnt1 = 0; ?>
+        <?php do { ?>
+          <?php $cnt1++; ?>
+          <?php 
+// Show IF Conditional region1 
+if (@$totalRows_rsbulkcustpay > 1) {
+?>
+            <h2><?php echo NXT_getResource("Record_FH"); ?> <?php echo $cnt1; ?></h2>
+            <?php } 
+// endif Conditional region1
+?>
+          <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+            <tr>
+              <td class="KT_th"><label for="organization_<?php echo $cnt1; ?>">Organization</label></td>
+              <td colspan="5"><span id="sprytextfield1">
+                <input type="text" name="organization_<?php echo $cnt1; ?>" id="organization_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['organization']); ?>" size="32" />
+                <span class="textfieldRequiredMsg">A value is required.</span></span><?php echo $tNGs->displayFieldHint("organization");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "organization", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="invoicenumber_<?php echo $cnt1; ?>">Invoice number</label></td>
+              <td><span id="sprytextfield2">
+                <input type="text" name="invoicenumber_<?php echo $cnt1; ?>" id="invoicenumber_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['invoicenumber']); ?>" size="12" maxlength="255" />
+                <span class="textfieldRequiredMsg">A value is required.</span></span><?php echo $tNGs->displayFieldHint("invoicenumber");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "invoicenumber", $cnt1); ?></td>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="date_<?php echo $cnt1; ?>">Invoice date</label></td>
+              <td><span id="sprytextfield3">
+              <input type="text" name="date_<?php echo $cnt1; ?>" id="date_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['date']); ?>" size="10" maxlength="10" />
+              <span class="textfieldRequiredMsg">A value is required.</span><span class="textfieldInvalidFormatMsg">Invalid format.</span></span><?php echo $tNGs->displayFieldHint("date");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "date", $cnt1); ?></td>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="ldmanumber_<?php echo $cnt1; ?>">LDMA number</label></td>
+              <td><span id="sprytextfield4">
+                <input type="text" name="ldmanumber_<?php echo $cnt1; ?>" id="ldmanumber_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['ldmanumber']); ?>" size="3" />
+</span><?php echo $tNGs->displayFieldHint("ldmanumber");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "ldmanumber", $cnt1); ?></td>
+              <td><span class="KT_th">LDMA 2.0 </span></td>
+              <td><span id="sprytextfield14">
+                <input type="text" name="ldma2_<?php echo $cnt1; ?>" id="ldma2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['ldma2']); ?>" size="3" />
+</span><?php echo $tNGs->displayFieldHint("ldma2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "ldma2", $cnt1); ?></td>
+              <td>LDMA Journal </td>
+              <td><span id="sprytextfield21">
+                <input type="text" name="ldma_journal2_<?php echo $cnt1; ?>" id="ldma_journal2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['ldma_journal2']); ?>" size="3" />
+              </span><?php echo $tNGs->displayFieldHint("ldma_journal2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "ldma_journal2", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="leranumber_<?php echo $cnt1; ?>">LERA number</label></td>
+              <td><span id="sprytextfield5">
+                <input type="text" name="leranumber_<?php echo $cnt1; ?>" id="leranumber_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['leranumber']); ?>" size="3" />
+</span><?php echo $tNGs->displayFieldHint("leranumber");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "leranumber", $cnt1); ?></td>
+              <td><span class="KT_th">LERA 2.0</span> </td>
+              <td><span id="sprytextfield15">
+                <input type="text" name="lera2_<?php echo $cnt1; ?>" id="lera2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lera2']); ?>" size="3" />
+              </span><?php echo $tNGs->displayFieldHint("lera2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lera2", $cnt1); ?></td>
+              <td>LERA Journal </td>
+              <td><span id="sprytextfield22">
+                <input type="text" name="lera_journal2_<?php echo $cnt1; ?>" id="lera_journal2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lera_journal2']); ?>" size="3" />
+              </span><?php echo $tNGs->displayFieldHint("lera_journal2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lera_journal2", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="limanumber_<?php echo $cnt1; ?>">LIMA number</label></td>
+              <td><span id="sprytextfield6">
+                <input type="text" name="limanumber_<?php echo $cnt1; ?>" id="limanumber_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['limanumber']); ?>" size="3" />
+</span><?php echo $tNGs->displayFieldHint("limanumber");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "limanumber", $cnt1); ?></td>
+              <td><span class="KT_th">LIMA 2.0</span> </td>
+              <td><span id="sprytextfield16">
+                <input type="text" name="lima2_<?php echo $cnt1; ?>" id="lima2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lima2']); ?>" size="3" />
+              </span><?php echo $tNGs->displayFieldHint("lima2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lima2", $cnt1); ?></td>
+              <td>LIMA Journal </td>
+              <td><span id="sprytextfield23">
+                <input type="text" name="lima_journal2_<?php echo $cnt1; ?>" id="lima_journal2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lima_journal2']); ?>" size="3" />
+              </span><?php echo $tNGs->displayFieldHint("lima_journal2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lima_journal2", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="llranumber_<?php echo $cnt1; ?>">LLRA number</label></td>
+              <td><span id="sprytextfield7">
+                <input type="text" name="llranumber_<?php echo $cnt1; ?>" id="llranumber_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['llranumber']); ?>" size="3" />
+</span><?php echo $tNGs->displayFieldHint("llranumber");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "llranumber", $cnt1); ?></td>
+              <td><span class="KT_th">LLRA 2.0</span> </td>
+              <td><span id="sprytextfield17">
+                <input type="text" name="llra2_<?php echo $cnt1; ?>" id="llra2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['llra2']); ?>" size="3" />
+              </span><?php echo $tNGs->displayFieldHint("llra2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "llra2", $cnt1); ?></td>
+              <td>LLRA Journal </td>
+              <td><span id="sprytextfield24">
+                <input type="text" name="llra_journal2_<?php echo $cnt1; ?>" id="llra_journal2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['llra_journal2']); ?>" size="3" />
+              </span><?php echo $tNGs->displayFieldHint("llra_journal2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "llra_journal2", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="lrjanumber_<?php echo $cnt1; ?>">LRJA number</label></td>
+              <td><span id="sprytextfield8">
+                <input type="text" name="lrjanumber_<?php echo $cnt1; ?>" id="lrjanumber_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lrjanumber']); ?>" size="3" />
+</span><?php echo $tNGs->displayFieldHint("lrjanumber");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lrjanumber", $cnt1); ?></td>
+              <td><span class="KT_th">LRJA 2.0</span> </td>
+              <td><span id="sprytextfield18">
+                <input type="text" name="lrja2_<?php echo $cnt1; ?>" id="lrja2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lrja2']); ?>" size="3" />
+              </span><?php echo $tNGs->displayFieldHint("lrja2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lrja2", $cnt1); ?></td>
+              <td>LRJA Journal </td>
+              <td><span id="sprytextfield25">
+                <input type="text" name="lrja_journal2_<?php echo $cnt1; ?>" id="lrja_journal2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lrja_journal2']); ?>" size="3" />
+              </span><?php echo $tNGs->displayFieldHint("lrja_journal2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lrja_journal2", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="lsuanumber_<?php echo $cnt1; ?>">LSUA number</label></td>
+              <td><span id="sprytextfield9">
+                <input type="text" name="lsuanumber_<?php echo $cnt1; ?>" id="lsuanumber_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lsuanumber']); ?>" size="3" />
+</span><?php echo $tNGs->displayFieldHint("lsuanumber");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lsuanumber", $cnt1); ?></td>
+              <td><span class="KT_th">LSUA 2.0</span> </td>
+              <td><span id="sprytextfield19">
+                <input type="text" name="lsua2_<?php echo $cnt1; ?>" id="lsua2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lsua2']); ?>" size="3" />
+              </span><?php echo $tNGs->displayFieldHint("lsua2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lsua2", $cnt1); ?></td>
+              <td>LSUA Journal </td>
+              <td><span id="sprytextfield26">
+                <input type="text" name="lsua_journal2_<?php echo $cnt1; ?>" id="lsua_journal2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lsua_journal2']); ?>" size="3" />
+              </span><?php echo $tNGs->displayFieldHint("lsua_journal2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lsua_journal2", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="lmbenumber_<?php echo $cnt1; ?>">LMBE number</label></td>
+              <td><span id="sprytextfield10">
+                <input type="text" name="lmbenumber_<?php echo $cnt1; ?>" id="lmbenumber_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lmbenumber']); ?>" size="3" />
+</span><?php echo $tNGs->displayFieldHint("lmbenumber");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lmbenumber", $cnt1); ?></td>
+              <td><span class="KT_th">LMBE 2.0</span> </td>
+              <td><span id="sprytextfield20">
+                <input type="text" name="lmbe2_<?php echo $cnt1; ?>" id="lmbe2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lmbe2']); ?>" size="3" />
+              </span><?php echo $tNGs->displayFieldHint("lmbe2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lmbe2", $cnt1); ?></td>
+              <td>LMBE Journal </td>
+              <td><span id="sprytextfield27">
+                <input type="text" name="lmbe_journal2_<?php echo $cnt1; ?>" id="lmbe_journal2_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lmbe_journal2']); ?>" size="3" />
+              </span><?php echo $tNGs->displayFieldHint("lmbe_journal2");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lmbe_journal2", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="lcranumber_<?php echo $cnt1; ?>">LCRA number</label></td>
+              <td><span id="sprytextfield11">
+                <input type="text" name="lcranumber_<?php echo $cnt1; ?>" id="lcranumber_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lcranumber']); ?>" size="3" />
+</span><?php echo $tNGs->displayFieldHint("lcranumber");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lcranumber", $cnt1); ?></td>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="lmlanumber_<?php echo $cnt1; ?>">LMLA number</label></td>
+              <td><span id="sprytextfield12">
+                <input type="text" name="lmlanumber_<?php echo $cnt1; ?>" id="lmlanumber_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lmlanumber']); ?>" size="3" />
+</span><?php echo $tNGs->displayFieldHint("lmlanumber");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lmlanumber", $cnt1); ?></td>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="lmsanumber_<?php echo $cnt1; ?>">LMSA number</label></td>
+              <td><span id="sprytextfield13">
+                <input type="text" name="lmsanumber_<?php echo $cnt1; ?>" id="lmsanumber_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['lmsanumber']); ?>" size="3" />
+</span><?php echo $tNGs->displayFieldHint("lmsanumber");?> <?php echo $tNGs->displayFieldError("bulkcustpay", "lmsanumber", $cnt1); ?></td>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              </tr>
+            <tr>
+              <td class="KT_th">&nbsp;</td>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+            </tr>
+            
+            </table>
+          <input type="hidden" name="bulkcustomerkey_<?php echo $cnt1; ?>" id="bulkcustomerkey_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['bulkcustomerkey']); ?>" />
+          <input type="hidden" name="kt_pk_bulkcustpay_<?php echo $cnt1; ?>" class="id_field" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['kt_pk_bulkcustpay']); ?>" />
+          <input type="hidden" name="projectkey_<?php echo $cnt1; ?>" id="projectkey_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsbulkcustpay['projectkey']); ?>" />
+          <?php } while ($row_rsbulkcustpay = mysql_fetch_assoc($rsbulkcustpay)); ?>
+        <div class="KT_bottombuttons">
+          <div>
+            <?php 
+      // Show IF Conditional region1
+      if (@$_GET['bulkcustomerinvoicekey'] == "") {
+      ?>
+              <input type="submit" name="KT_Insert1" id="KT_Insert1" value="<?php echo NXT_getResource("Insert_FB"); ?>" />
+              <?php 
+      // else Conditional region1
+      } else { ?>
+              <input type="submit" name="KT_Update1" value="<?php echo NXT_getResource("Update_FB"); ?>" />
+              <input type="submit" name="KT_Delete1" value="<?php echo NXT_getResource("Delete_FB"); ?>" onclick="return confirm('<?php echo NXT_getResource("Are you sure?"); ?>');" />
+              <?php }
+      // endif Conditional region1
+      ?>
+            <input type="button" name="KT_Cancel1" value="<?php echo NXT_getResource("Cancel_FB"); ?>" onclick="return UNI_navigateCancel(event, '../includes/nxt/back.php')" />
+            </div>
+          </div>
+        </form>
+    </div>
+    <br class="clearfixplain" />
+  </div>
+  <p>&nbsp;</p>
+  </p>
+  <p>&nbsp;</p></td>
+      <script type="text/javascript">
+<!--
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "none", {validateOn:["blur", "change"]});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {validateOn:["blur", "change"]});
+var sprytextfield3 = new Spry.Widget.ValidationTextField("sprytextfield3", "date", {validateOn:["blur", "change"], useCharacterMasking:true, format:"yyyy-mm-dd"});
+var sprytextfield4 = new Spry.Widget.ValidationTextField("sprytextfield4", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield5 = new Spry.Widget.ValidationTextField("sprytextfield5", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield6 = new Spry.Widget.ValidationTextField("sprytextfield6", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield7 = new Spry.Widget.ValidationTextField("sprytextfield7", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield8 = new Spry.Widget.ValidationTextField("sprytextfield8", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield9 = new Spry.Widget.ValidationTextField("sprytextfield9", "none", {validateOn:["blur", "change"], isRequired:false});
+var sprytextfield10 = new Spry.Widget.ValidationTextField("sprytextfield10", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield11 = new Spry.Widget.ValidationTextField("sprytextfield11", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield12 = new Spry.Widget.ValidationTextField("sprytextfield12", "none", {validateOn:["blur", "change"], isRequired:false});
+var sprytextfield13 = new Spry.Widget.ValidationTextField("sprytextfield13", "none", {validateOn:["blur", "change"], isRequired:false});
+var sprytextfield4 = new Spry.Widget.ValidationTextField("sprytextfield4", "none", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield14 = new Spry.Widget.ValidationTextField("sprytextfield14", "none", {isRequired:false, validateOn:["blur", "change"]});
+//-->
+      </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsProject);
+
+mysql_free_result($Recordset1);
+?>

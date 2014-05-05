@@ -1,0 +1,987 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['php_self'];
+if (isset($_SERVER['query_string'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['query_string']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE limascoreslevelcodes SET ll_levels_1=%s, ll_levels_1_exemplar=%s, ll_levels_2=%s, ll_levels_2_exemplar=%s, ll_levels_3=%s, ll_levels_3_exemplar=%s, ll_levels_4=%s, ll_levels_4_exemplar=%s, ll_levels_5=%s, ll_levels_5_exemplar=%s, ll_levels_6=%s, ll_levels_6_exemplar=%s, ll_levels_7=%s, ll_levels_7_exemplar=%s, ll_levels_8=%s, ll_levels_8_exemplar=%s, ll_levels_9=%s, ll_levels_9_exemplar=%s, ll_levels_10=%s, ll_levels_10_exemplar=%s, ll_levels_11=%s, ll_levels_11_exemplar=%s, ll_levels_12=%s, ll_levels_12_exemplar=%s, ll_levels_13=%s, ll_levels_13_exemplar=%s, ll_levels_14=%s, ll_levels_14_exemplar=%s, ll_levels_15=%s, ll_levels_15_exemplar=%s, ll_levels_16=%s, ll_levels_16_exemplar=%s, ll_levels_17=%s, ll_levels_17_exemplar=%s, ll_levels_18=%s, ll_levels_18_exemplar=%s, ll_levels_19=%s, ll_levels_19_exemplar=%s, ll_levels_20=%s, ll_levels_20_exemplar=%s, ll_levels_21=%s, ll_levels_21_exemplar=%s, ll_levels_22=%s, ll_levels_22_exemplar=%s, ll_levels_23=%s, ll_levels_23_exemplar=%s, ll_levels_24=%s, ll_levels_24_exemplar=%s, ll_levels_25=%s, ll_levels_25_exemplar=%s, ll_levels_26=%s, ll_levels_26_exemplar=%s, ll_levels_27=%s, ll_levels_27_exemplar=%s, ll_levels_28=%s, ll_levels_28_exemplar=%s, ll_levels_29=%s, ll_levels_29_exemplar=%s, ll_levels_30=%s, ll_levels_30_exemplar=%s, ll_levels_31=%s, ll_levels_31_exemplar=%s, ll_levelsshow_1=%s, ll_levelsshow_1_exemplar=%s, ll_levelsshow_2=%s, ll_levelsshow_2_exemplar=%s, ll_levelsshow_3=%s, ll_levelsshow_3_exemplar=%s, ll_levelsshow_4=%s, ll_levelsshow_4_exemplar=%s, ll_levelsshow_5=%s, ll_levelsshow_5_exemplar=%s, ll_levelsshow_6=%s, ll_levelsshow_6_exemplar=%s, ll_levelsshow_7=%s, ll_levelsshow_7_exemplar=%s, ll_levelsshow_8=%s, ll_levelsshow_8_exemplar=%s WHERE limakey=%s",
+                       GetSQLValueString(isset($_POST['ll_levels_1']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_1_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_2']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_2_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_3']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_3_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_4']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_4_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_5']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_5_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_6']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_6_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_7']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_7_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_8']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_8_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_9']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_9_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_10']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_10_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_11']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_11_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_12']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_12_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_13']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_13_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_14']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_14_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_15']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_15_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_16']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_16_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_17']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_17_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_18']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_18_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_19']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_19_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_20']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_20_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_21']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_21_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_22']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_22_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_23']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_23_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_24']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_24_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_25']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_25_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_26']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_26_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_27']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_27_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_28']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_28_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_29']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_29_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_30']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_30_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levels_31']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levels_31_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levelsshow_1']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levelsshow_1_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levelsshow_2']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levelsshow_2_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levelsshow_3']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levelsshow_3_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levelsshow_4']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levelsshow_4_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levelsshow_5']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levelsshow_5_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levelsshow_6']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levelsshow_6_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levelsshow_7']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levelsshow_7_exemplar'], "text"),
+                       GetSQLValueString(isset($_POST['ll_levelsshow_8']) ? "true" : "", "defined","1","0"),
+                       GetSQLValueString($_POST['ll_levelsshow_8_exemplar'], "text"),
+                       GetSQLValueString($_POST['limakey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "limacodinglevels3.php";
+  if (isset($_SERVER['query_string'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['query_string'];
+  }
+  header(sprintf("location: %s", $updateGoTo));
+}
+
+
+$colname_rsLIMA = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsLIMA = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLIMA = sprintf("SELECT limakey, considerations, quadrants, levelslines, bestresponse FROM lima WHERE limakey = %s", GetSQLValueString($colname_rsLIMA, "int"));
+$rsLIMA = mysql_query($query_rsLIMA, $Assessment) or die(mysql_error());
+$row_rsLIMA = mysql_fetch_assoc($rsLIMA);
+$totalRows_rsLIMA = mysql_num_rows($rsLIMA);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_1 = "SELECT * FROM limacodes_ll WHERE limallkey = 1";
+$rsLL_levels_1 = mysql_query($query_rsLL_levels_1, $Assessment) or die(mysql_error());
+$row_rsLL_levels_1 = mysql_fetch_assoc($rsLL_levels_1);
+$totalRows_rsLL_levels_1 = mysql_num_rows($rsLL_levels_1);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_2 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 2", GetSQLValueString($colname_rsLL_levels_2, "int"));
+$rsLL_levels_2 = mysql_query($query_rsLL_levels_2, $Assessment) or die(mysql_error());
+$row_rsLL_levels_2 = mysql_fetch_assoc($rsLL_levels_2);
+$totalRows_rsLL_levels_2 = mysql_num_rows($rsLL_levels_2);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_3 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 3", GetSQLValueString($colname_rsLL_levels_3, "int"));
+$rsLL_levels_3 = mysql_query($query_rsLL_levels_3, $Assessment) or die(mysql_error());
+$row_rsLL_levels_3 = mysql_fetch_assoc($rsLL_levels_3);
+$totalRows_rsLL_levels_3 = mysql_num_rows($rsLL_levels_3);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_4 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 4", GetSQLValueString($colname_rsLL_levels_4, "int"));
+$rsLL_levels_4 = mysql_query($query_rsLL_levels_4, $Assessment) or die(mysql_error());
+$row_rsLL_levels_4 = mysql_fetch_assoc($rsLL_levels_4);
+$totalRows_rsLL_levels_4 = mysql_num_rows($rsLL_levels_4);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_5 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 5", GetSQLValueString($colname_rsLL_levels_5, "int"));
+$rsLL_levels_5 = mysql_query($query_rsLL_levels_5, $Assessment) or die(mysql_error());
+$row_rsLL_levels_5 = mysql_fetch_assoc($rsLL_levels_5);
+$totalRows_rsLL_levels_5 = mysql_num_rows($rsLL_levels_5);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_6 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 6", GetSQLValueString($colname_rsLL_levels_6, "int"));
+$rsLL_levels_6 = mysql_query($query_rsLL_levels_6, $Assessment) or die(mysql_error());
+$row_rsLL_levels_6 = mysql_fetch_assoc($rsLL_levels_6);
+$totalRows_rsLL_levels_6 = mysql_num_rows($rsLL_levels_6);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_7 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 7", GetSQLValueString($colname_rsLL_levels_7, "int"));
+$rsLL_levels_7 = mysql_query($query_rsLL_levels_7, $Assessment) or die(mysql_error());
+$row_rsLL_levels_7 = mysql_fetch_assoc($rsLL_levels_7);
+$totalRows_rsLL_levels_7 = mysql_num_rows($rsLL_levels_7);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_8 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 8", GetSQLValueString($colname_rsLL_levels_8, "int"));
+$rsLL_levels_8 = mysql_query($query_rsLL_levels_8, $Assessment) or die(mysql_error());
+$row_rsLL_levels_8 = mysql_fetch_assoc($rsLL_levels_8);
+$totalRows_rsLL_levels_8 = mysql_num_rows($rsLL_levels_8);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_9 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 9", GetSQLValueString($colname_rsLL_levels_9, "int"));
+$rsLL_levels_9 = mysql_query($query_rsLL_levels_9, $Assessment) or die(mysql_error());
+$row_rsLL_levels_9 = mysql_fetch_assoc($rsLL_levels_9);
+$totalRows_rsLL_levels_9 = mysql_num_rows($rsLL_levels_9);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_10 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 10", GetSQLValueString($colname_rsLL_levels_10, "int"));
+$rsLL_levels_10 = mysql_query($query_rsLL_levels_10, $Assessment) or die(mysql_error());
+$row_rsLL_levels_10 = mysql_fetch_assoc($rsLL_levels_10);
+$totalRows_rsLL_levels_10 = mysql_num_rows($rsLL_levels_10);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_11 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 11", GetSQLValueString($colname_rsLL_levels_11, "int"));
+$rsLL_levels_11 = mysql_query($query_rsLL_levels_11, $Assessment) or die(mysql_error());
+$row_rsLL_levels_11 = mysql_fetch_assoc($rsLL_levels_11);
+$totalRows_rsLL_levels_11 = mysql_num_rows($rsLL_levels_11);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_12 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 12", GetSQLValueString($colname_rsLL_levels_12, "int"));
+$rsLL_levels_12 = mysql_query($query_rsLL_levels_12, $Assessment) or die(mysql_error());
+$row_rsLL_levels_12 = mysql_fetch_assoc($rsLL_levels_12);
+$totalRows_rsLL_levels_12 = mysql_num_rows($rsLL_levels_12);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_13 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 13", GetSQLValueString($colname_rsLL_levels_13, "int"));
+$rsLL_levels_13 = mysql_query($query_rsLL_levels_13, $Assessment) or die(mysql_error());
+$row_rsLL_levels_13 = mysql_fetch_assoc($rsLL_levels_13);
+$totalRows_rsLL_levels_13 = mysql_num_rows($rsLL_levels_13);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_14 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 14", GetSQLValueString($colname_rsLL_levels_14, "int"));
+$rsLL_levels_14 = mysql_query($query_rsLL_levels_14, $Assessment) or die(mysql_error());
+$row_rsLL_levels_14 = mysql_fetch_assoc($rsLL_levels_14);
+$totalRows_rsLL_levels_14 = mysql_num_rows($rsLL_levels_14);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_15 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 15", GetSQLValueString($colname_rsLL_levels_15, "int"));
+$rsLL_levels_15 = mysql_query($query_rsLL_levels_15, $Assessment) or die(mysql_error());
+$row_rsLL_levels_15 = mysql_fetch_assoc($rsLL_levels_15);
+$totalRows_rsLL_levels_15 = mysql_num_rows($rsLL_levels_15);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_16 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 16", GetSQLValueString($colname_rsLL_levels_16, "int"));
+$rsLL_levels_16 = mysql_query($query_rsLL_levels_16, $Assessment) or die(mysql_error());
+$row_rsLL_levels_16 = mysql_fetch_assoc($rsLL_levels_16);
+$totalRows_rsLL_levels_16 = mysql_num_rows($rsLL_levels_16);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_17 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 17", GetSQLValueString($colname_rsLL_levels_17, "int"));
+$rsLL_levels_17 = mysql_query($query_rsLL_levels_17, $Assessment) or die(mysql_error());
+$row_rsLL_levels_17 = mysql_fetch_assoc($rsLL_levels_17);
+$totalRows_rsLL_levels_17 = mysql_num_rows($rsLL_levels_17);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_18 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 18", GetSQLValueString($colname_rsLL_levels_18, "int"));
+$rsLL_levels_18 = mysql_query($query_rsLL_levels_18, $Assessment) or die(mysql_error());
+$row_rsLL_levels_18 = mysql_fetch_assoc($rsLL_levels_18);
+$totalRows_rsLL_levels_18 = mysql_num_rows($rsLL_levels_18);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_19 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 19", GetSQLValueString($colname_rsLL_levels_19, "int"));
+$rsLL_levels_19 = mysql_query($query_rsLL_levels_19, $Assessment) or die(mysql_error());
+$row_rsLL_levels_19 = mysql_fetch_assoc($rsLL_levels_19);
+$totalRows_rsLL_levels_19 = mysql_num_rows($rsLL_levels_19);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_20 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 20", GetSQLValueString($colname_rsLL_levels_20, "int"));
+$rsLL_levels_20 = mysql_query($query_rsLL_levels_20, $Assessment) or die(mysql_error());
+$row_rsLL_levels_20 = mysql_fetch_assoc($rsLL_levels_20);
+$totalRows_rsLL_levels_20 = mysql_num_rows($rsLL_levels_20);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_21 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 21", GetSQLValueString($colname_rsLL_levels_21, "int"));
+$rsLL_levels_21 = mysql_query($query_rsLL_levels_21, $Assessment) or die(mysql_error());
+$row_rsLL_levels_21 = mysql_fetch_assoc($rsLL_levels_21);
+$totalRows_rsLL_levels_21 = mysql_num_rows($rsLL_levels_21);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_22 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 22", GetSQLValueString($colname_rsLL_levels_22, "int"));
+$rsLL_levels_22 = mysql_query($query_rsLL_levels_22, $Assessment) or die(mysql_error());
+$row_rsLL_levels_22 = mysql_fetch_assoc($rsLL_levels_22);
+$totalRows_rsLL_levels_22 = mysql_num_rows($rsLL_levels_22);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_23 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 23", GetSQLValueString($colname_rsLL_levels_23, "int"));
+$rsLL_levels_23 = mysql_query($query_rsLL_levels_23, $Assessment) or die(mysql_error());
+$row_rsLL_levels_23 = mysql_fetch_assoc($rsLL_levels_23);
+$totalRows_rsLL_levels_23 = mysql_num_rows($rsLL_levels_23);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_24 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 24", GetSQLValueString($colname_rsLL_levels_24, "int"));
+$rsLL_levels_24 = mysql_query($query_rsLL_levels_24, $Assessment) or die(mysql_error());
+$row_rsLL_levels_24 = mysql_fetch_assoc($rsLL_levels_24);
+$totalRows_rsLL_levels_24 = mysql_num_rows($rsLL_levels_24);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_25 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 25", GetSQLValueString($colname_rsLL_levels_25, "int"));
+$rsLL_levels_25 = mysql_query($query_rsLL_levels_25, $Assessment) or die(mysql_error());
+$row_rsLL_levels_25 = mysql_fetch_assoc($rsLL_levels_25);
+$totalRows_rsLL_levels_25 = mysql_num_rows($rsLL_levels_25);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_26 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 26", GetSQLValueString($colname_rsLL_levels_26, "int"));
+$rsLL_levels_26 = mysql_query($query_rsLL_levels_26, $Assessment) or die(mysql_error());
+$row_rsLL_levels_26 = mysql_fetch_assoc($rsLL_levels_26);
+$totalRows_rsLL_levels_26 = mysql_num_rows($rsLL_levels_26);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_27 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 27", GetSQLValueString($colname_rsLL_levels_27, "int"));
+$rsLL_levels_27 = mysql_query($query_rsLL_levels_27, $Assessment) or die(mysql_error());
+$row_rsLL_levels_27 = mysql_fetch_assoc($rsLL_levels_27);
+$totalRows_rsLL_levels_27 = mysql_num_rows($rsLL_levels_27);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_28 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 28", GetSQLValueString($colname_rsLL_levels_28, "int"));
+$rsLL_levels_28 = mysql_query($query_rsLL_levels_28, $Assessment) or die(mysql_error());
+$row_rsLL_levels_28 = mysql_fetch_assoc($rsLL_levels_28);
+$totalRows_rsLL_levels_28 = mysql_num_rows($rsLL_levels_28);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_29 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 29", GetSQLValueString($colname_rsLL_levels_29, "int"));
+$rsLL_levels_29 = mysql_query($query_rsLL_levels_29, $Assessment) or die(mysql_error());
+$row_rsLL_levels_29 = mysql_fetch_assoc($rsLL_levels_29);
+$totalRows_rsLL_levels_29 = mysql_num_rows($rsLL_levels_29);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_30 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 30", GetSQLValueString($colname_rsLL_levels_30, "int"));
+$rsLL_levels_30 = mysql_query($query_rsLL_levels_30, $Assessment) or die(mysql_error());
+$row_rsLL_levels_30 = mysql_fetch_assoc($rsLL_levels_30);
+$totalRows_rsLL_levels_30 = mysql_num_rows($rsLL_levels_30);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levels_31 = "SELECT * FROM limacodes_ll WHERE limallkey = 31";
+$rsLL_levels_31 = mysql_query($query_rsLL_levels_31, $Assessment) or die(mysql_error());
+$row_rsLL_levels_31 = mysql_fetch_assoc($rsLL_levels_31);
+$totalRows_rsLL_levels_31 = mysql_num_rows($rsLL_levels_31);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levelsshow_1 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 32", GetSQLValueString($colname_rsLL_levelsshow_1, "int"));
+$rsLL_levelsshow_1 = mysql_query($query_rsLL_levelsshow_1, $Assessment) or die(mysql_error());
+$row_rsLL_levelsshow_1 = mysql_fetch_assoc($rsLL_levelsshow_1);
+$totalRows_rsLL_levelsshow_1 = mysql_num_rows($rsLL_levelsshow_1);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levelsshow_2 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 33", GetSQLValueString($colname_rsLL_levelsshow_2, "int"));
+$rsLL_levelsshow_2 = mysql_query($query_rsLL_levelsshow_2, $Assessment) or die(mysql_error());
+$row_rsLL_levelsshow_2 = mysql_fetch_assoc($rsLL_levelsshow_2);
+$totalRows_rsLL_levelsshow_2 = mysql_num_rows($rsLL_levelsshow_2);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levelsshow_3 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 34", GetSQLValueString($colname_rsLL_levelsshow_3, "int"));
+$rsLL_levelsshow_3 = mysql_query($query_rsLL_levelsshow_3, $Assessment) or die(mysql_error());
+$row_rsLL_levelsshow_3 = mysql_fetch_assoc($rsLL_levelsshow_3);
+$totalRows_rsLL_levelsshow_3 = mysql_num_rows($rsLL_levelsshow_3);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levelsshow_4 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 35", GetSQLValueString($colname_rsLL_levelsshow_4, "int"));
+$rsLL_levelsshow_4 = mysql_query($query_rsLL_levelsshow_4, $Assessment) or die(mysql_error());
+$row_rsLL_levelsshow_4 = mysql_fetch_assoc($rsLL_levelsshow_4);
+$totalRows_rsLL_levelsshow_4 = mysql_num_rows($rsLL_levelsshow_4);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levelsshow_5 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 36", GetSQLValueString($colname_rsLL_levelsshow_5, "int"));
+$rsLL_levelsshow_5 = mysql_query($query_rsLL_levelsshow_5, $Assessment) or die(mysql_error());
+$row_rsLL_levelsshow_5 = mysql_fetch_assoc($rsLL_levelsshow_5);
+$totalRows_rsLL_levelsshow_5 = mysql_num_rows($rsLL_levelsshow_5);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levelsshow_6 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 37", GetSQLValueString($colname_rsLL_levelsshow_6, "int"));
+$rsLL_levelsshow_6 = mysql_query($query_rsLL_levelsshow_6, $Assessment) or die(mysql_error());
+$row_rsLL_levelsshow_6 = mysql_fetch_assoc($rsLL_levelsshow_6);
+$totalRows_rsLL_levelsshow_6 = mysql_num_rows($rsLL_levelsshow_6);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levelsshow_7 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 38", GetSQLValueString($colname_rsLL_levelsshow_7, "int"));
+$rsLL_levelsshow_7 = mysql_query($query_rsLL_levelsshow_7, $Assessment) or die(mysql_error());
+$row_rsLL_levelsshow_7 = mysql_fetch_assoc($rsLL_levelsshow_7);
+$totalRows_rsLL_levelsshow_7 = mysql_num_rows($rsLL_levelsshow_7);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLL_levelsshow_8 = sprintf("SELECT * FROM limacodes_ll WHERE limallkey = 39", GetSQLValueString($colname_rsLL_levelsshow_8, "int"));
+$rsLL_levelsshow_8 = mysql_query($query_rsLL_levelsshow_8, $Assessment) or die(mysql_error());
+$row_rsLL_levelsshow_8 = mysql_fetch_assoc($rsLL_levelsshow_8);
+$totalRows_rsLL_levelsshow_8 = mysql_num_rows($rsLL_levelsshow_8);
+
+$colname_rsLIMAll = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsLIMAll = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLIMAll = sprintf("SELECT limakey, ll_levels_1, ll_levels_1_exemplar, ll_levels_2, ll_levels_2_exemplar, ll_levels_3, ll_levels_3_exemplar, ll_levels_4, ll_levels_4_exemplar, ll_levels_5, ll_levels_5_exemplar, ll_levels_6, ll_levels_6_exemplar, ll_levels_7, ll_levels_7_exemplar, ll_levels_8, ll_levels_8_exemplar, ll_levels_9, ll_levels_9_exemplar, ll_levels_10, ll_levels_10_exemplar, ll_levels_11, ll_levels_11_exemplar, ll_levels_12, ll_levels_12_exemplar, ll_levels_13, ll_levels_13_exemplar, ll_levels_14, ll_levels_14_exemplar, ll_levels_15, ll_levels_15_exemplar, ll_levels_16, ll_levels_16_exemplar, ll_levels_17, ll_levels_17_exemplar, ll_levels_18, ll_levels_18_exemplar, ll_levels_19, ll_levels_19_exemplar, ll_levels_20, ll_levels_20_exemplar, ll_levels_21, ll_levels_21_exemplar, ll_levels_22, ll_levels_22_exemplar, ll_levels_23, ll_levels_23_exemplar, ll_levels_24, ll_levels_24_exemplar, ll_levels_25, ll_levels_25_exemplar, ll_levels_26, ll_levels_26_exemplar, ll_levels_27, ll_levels_27_exemplar, ll_levels_28, ll_levels_28_exemplar, ll_levels_29, ll_levels_29_exemplar, ll_levels_30, ll_levels_30_exemplar, ll_levels_31, ll_levels_31_exemplar, ll_levelsshow_1, ll_levelsshow_1_exemplar, ll_levelsshow_2, ll_levelsshow_2_exemplar, ll_levelsshow_3, ll_levelsshow_3_exemplar, ll_levelsshow_4, ll_levelsshow_4_exemplar, ll_levelsshow_5, ll_levelsshow_5_exemplar, ll_levelsshow_6, ll_levelsshow_6_exemplar, ll_levelsshow_7, ll_levelsshow_7_exemplar, ll_levelsshow_8, ll_levelsshow_8_exemplar FROM limascoreslevelcodes WHERE limakey = %s", GetSQLValueString($colname_rsLIMAll, "int"));
+$rsLIMAll = mysql_query($query_rsLIMAll, $Assessment) or die(mysql_error());
+$row_rsLIMAll = mysql_fetch_assoc($rsLIMAll);
+$totalRows_rsLIMAll = mysql_num_rows($rsLIMAll);
+
+
+?><div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelimascore1.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LIMA coding</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" --><!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #5F8F8C;
+	background-image: url(/images/skin/LIMAbackground.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 1300px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LIMAheaderWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #7DACAC;
+	background-image: url(/images/skin/LIMAmenu.jpg);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #7DACAC;
+	background-image: url(/images/skin/LIMAmenu.jpg);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 1246px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 2;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footerWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:link {
+	color: #929292;
+}
+.twoColFixRtHdr #container .indent46 a:visited {
+	color: #929292;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:hover {
+	color: #474A47;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="/" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="../" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+<a href="/scoring/chooseassessment.php">choose assessment</a> | <a href="/scoring/chooselima.php">choose LIMA</a>  | <a href="/scoring/bulkcustomerselect.php">sortable</a><a href="/scoring_lima/lima_sortable.php"></a> | <a href="/scoring_lima/lima-comments1.php">phase comments</a> | <a href="/scoring_lima/lima-strengthmeaning1.php">strength integral meaning</a> | <a href="/scoring_lima/lima-strengthlife1.php">strength integral life</a> | <a href="/scoring_lima/lima-strengthmodel1.php">strength  model</a> | <br />
+<a href="/scoring_lima/lima-strengthlines1.php">strength lines</a> | <a href="/scoring_lima/lima-strengthleadership1.php">strength integral leadership</a> | <a href="/scoring_lima/lima-growthmeaning1.php">growth integral meaning</a> | <a href="/scoring_lima/lima-growthlife1.php">growth</a><a href="/codingLIMA/lima-emotion1.php"> integral life</a> | <a href="/scoring_lima/lima-growthmodel1.php">growth integral model</a> | <a href="/codingLIMA/lima-communication1.php">growth lines</a> | <a href="/codingLIMA/lima-communication1.php">growth integral leadership</a> | <a href="/scoring_lima/lima-recommendations1.php">recommendations</a>  
+</div>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>LEVELS  CODING FOR LIMA NUMBER <?php echo $_GET['limakey']; ?> (page 1)  </h1>
+  <h3>Level descriptions and mechanisms</h3>
+  <form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+    <table>
+      <tr class="tablehead">
+        <td colspan="2">Code</td>
+        <td>Exemplar or summary</td>
+        <td>Quadrants essay</td>
+      </tr>
+      <tr>
+        <td colspan="3"><strong>Levels…</strong></td>
+        <td rowspan="48"><p><?php echo $row_rsLIMA['levelslines']; ?></p></td>
+      </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_1'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_1" type="checkbox" id="ll_levels_1" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_1['ll_description']; ?></td>
+        <td><textarea name="ll_levels_1_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_1_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_2'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_2" type="checkbox" id="ll_levels_2" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_2['ll_description']; ?></td>
+        <td><textarea name="ll_levels_2_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_2_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_3'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_3" type="checkbox" id="ll_levels_3" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_3['ll_description']; ?></td>
+        <td><textarea name="ll_levels_3_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_3_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+          <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_4'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_4" type="checkbox" id="ll_levels_4" value="1" /></td>
+       <td width="170"><?php echo $row_rsLL_levels_4['ll_description']; ?></td>
+        <td><textarea name="ll_levels_4_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_4_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_5'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_5" type="checkbox" id="ll_levels_5" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_5['ll_description']; ?></td>
+        <td><textarea name="ll_levels_5_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_5_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_6'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_6" type="checkbox" id="ll_levels_6" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_6['ll_description']; ?></td>
+        <td><textarea name="ll_levels_6_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_6_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_7'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_7" type="checkbox" id="ll_levels_7" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_7['ll_description']; ?></td>
+        <td><textarea name="ll_levels_7_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_7_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_8'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_8" type="checkbox" id="ll_levels_8" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_8['ll_description']; ?></td>
+        <td><textarea name="ll_levels_8_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_8_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+          <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_9'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_9" type="checkbox" id="ll_levels_9" value="1" /></td>
+       <td width="170"><?php echo $row_rsLL_levels_9['ll_description']; ?></td>
+        <td><textarea name="ll_levels_9_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_9_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_10'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_10" type="checkbox" id="ll_levels_10" value="1" /></td>
+       <td width="170"><?php echo $row_rsLL_levels_10['ll_description']; ?></td>
+         <td><textarea name="ll_levels_10_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_10_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_11'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_11" type="checkbox" id="ll_levels_11" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_11['ll_description']; ?></td>
+        <td><textarea name="ll_levels_11_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_11_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_12'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_12" type="checkbox" id="ll_levels_12" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_12['ll_description']; ?></td>
+        <td><textarea name="ll_levels_12_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_12_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_13'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_13" type="checkbox" id="ll_levels_13" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_13['ll_description']; ?></td>
+        <td><textarea name="ll_levels_13_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_13_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_14'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_14" type="checkbox" id="ll_levels_14" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_14['ll_description']; ?></td>
+        <td><textarea name="ll_levels_14_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_14_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_15'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_15" type="checkbox" id="ll_levels_15" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_15['ll_description']; ?></td>
+        <td><textarea name="ll_levels_15_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_15_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_16'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_16" type="checkbox" id="ll_levels_16" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_16['ll_description']; ?></td>
+        <td><textarea name="ll_levels_16_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_16_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_17'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_17" type="checkbox" id="ll_levels_17" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_17['ll_description']; ?></td>
+        <td><textarea name="ll_levels_17_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_17_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+          <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_18'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_18" type="checkbox" id="ll_levels_18" value="1" /></td>
+       <td width="170"><?php echo $row_rsLL_levels_18['ll_description']; ?></td>
+        <td><textarea name="ll_levels_18_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_18_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_19'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_19" type="checkbox" id="ll_levels_19" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_19['ll_description']; ?></td>
+        <td><textarea name="ll_levels_19_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_19_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+          <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_20'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_20" type="checkbox" id="ll_levels_20" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_20['ll_description']; ?></td>
+        <td><textarea name="ll_levels_20_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_20_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_21'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_21" type="checkbox" id="ll_levels_21" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_21['ll_description']; ?></td>
+        <td><textarea name="ll_levels_21_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_21_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_22'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_22" type="checkbox" id="ll_levels_22" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_22['ll_description']; ?></td>
+        <td><textarea name="ll_levels_22_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_22_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_23'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_23" type="checkbox" id="ll_levels_23" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_23['ll_description']; ?></td>
+        <td><textarea name="ll_levels_23_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_23_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_24'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_24" type="checkbox" id="ll_levels_24" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_24['ll_description']; ?></td>
+        <td><textarea name="ll_levels_24_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_24_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_25'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_25" type="checkbox" id="ll_levels_25" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_25['ll_description']; ?></td>
+        <td><textarea name="ll_levels_25_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_25_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+          <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_26'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_26" type="checkbox" id="ll_levels_26" value="1" /></td>
+       <td width="170"><?php echo $row_rsLL_levels_26['ll_description']; ?></td>
+        <td><textarea name="ll_levels_26_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_26_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+          <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_27'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_27" type="checkbox" id="ll_levels_27" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_27['ll_description']; ?></td>
+        <td><textarea name="ll_levels_27_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_27_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_28'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_28" type="checkbox" id="ll_levels_28" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_28['ll_description']; ?></td>
+        <td><textarea name="ll_levels_28_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_28_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_29'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_29" type="checkbox" id="ll_levels_29" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_29['ll_description']; ?></td>
+        <td><textarea name="ll_levels_29_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_29_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_30'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_30" type="checkbox" id="ll_levels_30" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_30['ll_description']; ?></td>
+        <td><textarea name="ll_levels_30_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_30_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levels_31'],1))) {echo "checked=\"checked\"";} ?> name="ll_levels_31" type="checkbox" id="ll_levels_31" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levels_31['ll_description']; ?></td>
+        <td><textarea name="ll_levels_31_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levels_31_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+        <td colspan="3"><strong>How levels work</strong></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levelsshow_1'],1))) {echo "checked=\"checked\"";} ?> name="ll_levelsshow_1" type="checkbox" id="ll_levelsshow_1" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levelsshow_1['ll_description']; ?></td>
+        <td><textarea name="ll_levelsshow_1_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levelsshow_1_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levelsshow_2'],1))) {echo "checked=\"checked\"";} ?> name="ll_levelsshow_2" type="checkbox" id="ll_levelsshow_2" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levelsshow_2['ll_description']; ?></td>
+        <td><textarea name="ll_levelsshow_2_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levelsshow_2_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+          <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levelsshow_3'],1))) {echo "checked=\"checked\"";} ?> name="ll_levelsshow_3" type="checkbox" id="ll_levelsshow_3" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levelsshow_3['ll_description']; ?></td>
+        <td><textarea name="ll_levelsshow_3_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levelsshow_3_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levelsshow_4'],1))) {echo "checked=\"checked\"";} ?> name="ll_levelsshow_4" type="checkbox" id="ll_levelsshow_4" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levelsshow_4['ll_description']; ?></td>
+        <td><textarea name="ll_levelsshow_4_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levelsshow_4_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levelsshow_5'],1))) {echo "checked=\"checked\"";} ?> name="ll_levelsshow_5" type="checkbox" id="ll_levelsshow_5" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levelsshow_5['ll_description']; ?></td>
+        <td><textarea name="ll_levelsshow_5_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levelsshow_5_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levelsshow_6'],1))) {echo "checked=\"checked\"";} ?> name="ll_levelsshow_6" type="checkbox" id="ll_levelsshow_6" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levelsshow_6['ll_description']; ?></td>
+        <td><textarea name="ll_levelsshow_6_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levelsshow_6_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levelsshow_7'],1))) {echo "checked=\"checked\"";} ?> name="ll_levelsshow_7" type="checkbox" id="ll_levelsshow_7" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levelsshow_7['ll_description']; ?></td>
+        <td><textarea name="ll_levelsshow_7_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levelsshow_7_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+      <tr>
+         <td><input <?php if (!(strcmp($row_rsLIMAll['ll_levelsshow_8'],1))) {echo "checked=\"checked\"";} ?> name="ll_levelsshow_8" type="checkbox" id="ll_levelsshow_8" value="1" /></td>
+        <td width="170"><?php echo $row_rsLL_levelsshow_8['ll_description']; ?></td>
+        <td><textarea name="ll_levelsshow_8_exemplar" cols="50" rows="4"><?php echo htmlentities($row_rsLIMAll['ll_levelsshow_8_exemplar'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+        <td>&nbsp;</td>
+        <td width="170">&nbsp;</td>
+        <td><div align="right">
+          <input type="submit" value="SUBMIT" />
+        </div></td>
+        <td>&nbsp;</td>
+      </tr>
+    </table>
+    <input type="hidden" name="limakey" value="<?php echo $row_rsLIMAll['limakey']; ?>" />
+    <input type="hidden" name="MM_update" value="form1" />
+    <input type="hidden" name="limakey" value="<?php echo $row_rsLIMAll['limakey']; ?>" />
+  </form>
+  <p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+<!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href=/landing.phpl">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer -->
+  <!-- end #container -->
+</div>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLIMA);
+
+mysql_free_result($rsLL_levels_1);
+
+mysql_free_result($rsLL_levels_2);
+
+mysql_free_result($rsLL_levels_3);
+
+mysql_free_result($rsLL_levels_4);
+
+mysql_free_result($rsLL_levels_5);
+
+mysql_free_result($rsLL_levels_6);
+
+mysql_free_result($rsLL_levels_7);
+
+mysql_free_result($rsLL_levels_8);
+
+mysql_free_result($rsLL_levels_9);
+
+mysql_free_result($rsLL_levels_10);
+
+mysql_free_result($rsLL_levels_11);
+
+mysql_free_result($rsLL_levels_12);
+
+mysql_free_result($rsLL_levels_13);
+
+mysql_free_result($rsLL_levels_14);
+
+mysql_free_result($rsLL_levels_15);
+
+mysql_free_result($rsLL_levels_16);
+
+mysql_free_result($rsLL_levels_17);
+
+mysql_free_result($rsLL_levels_18);
+
+mysql_free_result($rsLL_levels_19);
+
+mysql_free_result($rsLL_levels_20);
+
+mysql_free_result($rsLL_levels_21);
+
+mysql_free_result($rsLL_levels_22);
+
+mysql_free_result($rsLL_levels_23);
+
+mysql_free_result($rsLL_levels_24);
+
+mysql_free_result($rsLL_levels_25);
+
+mysql_free_result($rsLL_levels_26);
+
+mysql_free_result($rsLL_levels_27);
+
+mysql_free_result($rsLL_levels_28);
+
+mysql_free_result($rsLL_levels_29);
+
+mysql_free_result($rsLL_levels_30);
+
+mysql_free_result($rsLL_levels_31);
+
+mysql_free_result($rsLL_levelsshow_1);
+
+mysql_free_result($rsLL_levelsshow_2);
+
+mysql_free_result($rsLL_levelsshow_3);
+
+mysql_free_result($rsLL_levelsshow_4);
+
+mysql_free_result($rsLL_levelsshow_5);
+
+mysql_free_result($rsLL_levelsshow_6);
+
+mysql_free_result($rsLL_levelsshow_7);
+
+mysql_free_result($rsLL_levelsshow_8);
+
+mysql_free_result($rsLIMAll);
+?>

@@ -1,0 +1,225 @@
+<? require_once('../includes/dts_functions.php'); 
+
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php"); }
+$userkey = $_SESSION['log_userkey']; 
+
+$sql = sprintf("SELECT r.firstname, r.lastname FROM registrants r WHERE r.userkey = %s", 
+    SQLstr($userkey, 'int'));
+$rsRegistrant = mysql_query($sql) or die("ERROR fetching data on this user.");
+$registrant = mysql_fetch_assoc($rsRegistrant);
+
+if (!isset($_GET['paymentkey'])) { die("ERROR: No paymentkey was specified. Please <a href='../contactus.php'>contact us</a> for help."); }
+$paymentkey = $_GET['paymentkey'];
+
+// look up this payment info
+$sql = sprintf("SELECT p.invoiceno, p.assessment, p.amount, p.comments, 
+    p.for_project, pr.organization, pr.is_for_profit AS project_is_for_profit,
+    p.for_course, c.key AS coursekey, c.title AS course_title
+  FROM payments p
+    LEFT JOIN projectproject pr ON p.for_project = pr.projectkey
+    LEFT JOIN courses c ON p.for_course = c.key
+  WHERE p.paymentkey = %s",
+    SQLstr($paymentkey, 'int'));
+$rsPayment = mysql_query($sql) or die("ERROR fetching information on this payment.");
+if (mysql_num_rows($rsPayment) == 0) { die("ERROR preparing this payment. Please <a href='../contactus.php'>contact us</a> for help."); } 
+$payment = mysql_fetch_assoc($rsPayment);
+
+// nonprofit_status
+// First, check whether you're paying for a course. (NFP)
+// Then, look up the FP status of the project attached to this payment (through the invoice).
+// If info isn't available for either of these, crash.
+$is_for_profit = false;
+if ($payment['for_course'] > 0) { $is_for_profit = false; }
+else if ($payment['for_project'] > 0) { $is_for_profit = $payment['project_is_for_profit']; }
+else { die("ERROR: No information available on what this payment is for. Please <a href='../contactus.php'>contact us</a> for help."); }
+$pay_to_email = "";
+if ($is_for_profit) { $pay_to_email = "dts@lectica.org"; }
+if (!$is_for_profit) { $pay_to_email = "admin@lectica.org"; } 
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="//fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: Make a payment</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+.twoColFixRtHdr #container #mainContent p {
+	font-size: 110%;
+	font-weight: 400;
+}
+.twoColFixRtHdr #container #mainContent td {
+	font-size: 110%;
+	font-weight: 400;
+}
+.twoColFixRtHdr #container #mainContent table {
+	width: 100%;
+	max-width: 650px;
+	min-width: 200px;	
+}
+</style>
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  
+  <h1>Check out</h1>
+  <p>Please verify the following information before you proceed.</p>
+  <p>When you click on "buy now", you will be redirected to the PayPal site.</p>
+  
+  <table>
+    <tr>
+      <td>Name</td>
+      <td><? echo $registrant['firstname'].' '.$registrant['lastname']; ?></td>
+    </tr>
+    <? if ($payment['invoiceno'] <> '') { ?>
+      <tr>
+        <td>Invoice #</td>
+        <td><? echo $payment['invoiceno']; ?></td>
+      </tr>
+    <? } ?>
+    <? if ($payment['assessment'] <> '') { ?>
+      <tr>
+        <td>For assessment</td>
+        <td><? echo $payment['assessment']; ?></td>
+      </tr>
+    <? } ?>
+    <? if ($payment['for_project'] <> '') { ?>
+      <tr>
+        <td>For project</td>
+        <td><? echo $payment['organization']; ?></td>
+      </tr>
+    <? } ?>
+    <? if ($payment['for_course'] <> '') { ?>
+      <tr>
+        <td>For course</td>
+        <td><? echo $payment['course_title']; ?></td>
+      </tr>
+    <? } ?>
+    <tr>
+      <td>Amount to pay</td>
+      <td>$<? echo $payment['amount']; ?></td>
+    </tr>
+
+    <tr>
+      <td>&nbsp;</td>
+      <td>
+        <form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+          <input type="hidden" name="cmd" value="_xclick" />
+          <input type="hidden" name="business" value="<? echo $pay_to_email; ?>" />
+          <input type="hidden" name="item_name" value="<? 
+            echo '#'.$paymentkey;
+            if ($payment['invoiceno'] <> '') { echo '_invoice#'.$payment['invoiceno']; }
+            if ($payment['assessment'] <> '') { echo '_'.$payment['assessment']; }
+            if ($payment['for_project'] <> '') { echo '_project#'.$payment['for_project']; }
+            if ($payment['for_course'] <> '') { echo '_course#'.$payment['for_course']; }
+            ?>" />
+          <input type="hidden" name="amount" value="<? echo $payment['amount']; ?>" />
+          <input type="hidden" name="buyer_credit_promo_code" value="" />
+          <input type="hidden" name="buyer_credit_product_category" value="" />
+          <input type="hidden" name="buyer_credit_shipping_method" value="" />
+          <input type="hidden" name="buyer_credit_user_address_change" value="" />
+          <input type="hidden" name="no_shipping" value="0" />
+          <input type="hidden" name="no_note" value="1" />
+          <input type="hidden" name="currency_code" value="USD" />
+          <input type="hidden" name="lc" value="US" />
+          <input type="hidden" name="bn" value="PP-BuyNowBF" />
+          <? if ($payment['coursekey'] > 0) { ?>
+            <input type="hidden" name="return" value="https://dts.lectica.org/checkout/thanks.php?coursekey=<? echo $payment['coursekey']; ?>" />
+          <? } ?>
+          <input name="submit" type="image" src="https://www.paypal.com/en_US/i/btn/btn_buynow_SM.gif" alt="Make payments with PayPal - it's fast, free and secure!" />
+        </form>
+      </td>
+    </tr>
+  </table>
+  <p>&nbsp;</p>
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrant);
+
+mysql_free_result($rsEmailAddress);
+
+mysql_free_result($rsEmailaddresses);
+?>

@@ -1,0 +1,1361 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Load the KT_back class
+require_once('../includes/nxt/KT_back.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+// Start trigger
+$formValidation = new tNG_FormValidation();
+$tNGs->prepareValidation($formValidation);
+// End trigger
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsCommunitycodes = "-1";
+if (isset($_GET['communitykey'])) {
+  $colname_rsCommunitycodes = $_GET['communitykey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCommunitycodes = sprintf("SELECT * FROM community_codes WHERE communitykey = %s", GetSQLValueString($colname_rsCommunitycodes, "int"));
+$rsCommunitycodes = mysql_query($query_rsCommunitycodes, $Assessment) or die(mysql_error());
+$row_rsCommunitycodes = mysql_fetch_assoc($rsCommunitycodes);
+$totalRows_rsCommunitycodes = mysql_num_rows($rsCommunitycodes);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRating = "SELECT * FROM Rating_implicitexplicit ORDER BY explicitimplicitkey ASC";
+$rsRating = mysql_query($query_rsRating, $Assessment) or die(mysql_error());
+$row_rsRating = mysql_fetch_assoc($rsRating);
+$totalRows_rsRating = mysql_num_rows($rsRating);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCommunitycodes2 = "SELECT * FROM Community_codes WHERE communitycodeskey = 1";
+$rsCommunitycodes2 = mysql_query($query_rsCommunitycodes2, $Assessment) or die(mysql_error());
+$row_rsCommunitycodes2 = mysql_fetch_assoc($rsCommunitycodes2);
+$totalRows_rsCommunitycodes2 = mysql_num_rows($rsCommunitycodes2);
+
+$colname_rsEssays = "-1";
+if (isset($_GET['communitykey'])) {
+  $colname_rsEssays = $_GET['communitykey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEssays = sprintf("SELECT communitykey, partof, teacher, disagreement, disputes1, what, disputes2, dictate, ross_trips, `values`, iraq1, iraq2, iraq3, democracy_peace, ross_influence, other FROM community_data WHERE communitykey = %s", GetSQLValueString($colname_rsEssays, "int"));
+$rsEssays = mysql_query($query_rsEssays, $Assessment) or die(mysql_error());
+$row_rsEssays = mysql_fetch_assoc($rsEssays);
+$totalRows_rsEssays = mysql_num_rows($rsEssays);
+
+// Make an insert transaction instance
+$ins_Community_codes = new tNG_multipleInsert($conn_Assessment);
+$tNGs->addTransaction($ins_Community_codes);
+// Register triggers
+$ins_Community_codes->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Insert1");
+$ins_Community_codes->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$ins_Community_codes->registerTrigger("END", "Trigger_Default_Redirect", 99, "community_coding2.php?communitykey={GET.communitykey}&communitycodeskey={communitycodeskey}");
+// Add columns
+$ins_Community_codes->setTable("Community_codes");
+$ins_Community_codes->addColumn("communitykey", "NUMERIC_TYPE", "POST", "communitykey", "{GET.communitykey}");
+$ins_Community_codes->addColumn("code_1", "NUMERIC_TYPE", "POST", "code_1");
+$ins_Community_codes->addColumn("exemplar_1", "STRING_TYPE", "POST", "exemplar_1");
+$ins_Community_codes->addColumn("code_2", "NUMERIC_TYPE", "POST", "code_2");
+$ins_Community_codes->addColumn("exemplar_2", "STRING_TYPE", "POST", "exemplar_2");
+$ins_Community_codes->addColumn("code_3", "NUMERIC_TYPE", "POST", "code_3");
+$ins_Community_codes->addColumn("exemplar_3", "STRING_TYPE", "POST", "exemplar_3");
+$ins_Community_codes->addColumn("code_4", "NUMERIC_TYPE", "POST", "code_4");
+$ins_Community_codes->addColumn("exemplar_4", "STRING_TYPE", "POST", "exemplar_4");
+$ins_Community_codes->addColumn("code_5", "NUMERIC_TYPE", "POST", "code_5");
+$ins_Community_codes->addColumn("exemplar_5", "STRING_TYPE", "POST", "exemplar_5");
+$ins_Community_codes->addColumn("code_6", "NUMERIC_TYPE", "POST", "code_6");
+$ins_Community_codes->addColumn("exemplar_6", "STRING_TYPE", "POST", "exemplar_6");
+$ins_Community_codes->addColumn("code_7", "NUMERIC_TYPE", "POST", "code_7");
+$ins_Community_codes->addColumn("exemplar_7", "STRING_TYPE", "POST", "exemplar_7");
+$ins_Community_codes->addColumn("code_8", "NUMERIC_TYPE", "POST", "code_8");
+$ins_Community_codes->addColumn("exemplar_8", "STRING_TYPE", "POST", "exemplar_8");
+$ins_Community_codes->addColumn("code_9", "NUMERIC_TYPE", "POST", "code_9");
+$ins_Community_codes->addColumn("exemplar_9", "STRING_TYPE", "POST", "exemplar_9");
+$ins_Community_codes->addColumn("code_10", "NUMERIC_TYPE", "POST", "code_10");
+$ins_Community_codes->addColumn("exemplar_10", "STRING_TYPE", "POST", "exemplar_10");
+$ins_Community_codes->addColumn("code_11", "NUMERIC_TYPE", "POST", "code_11");
+$ins_Community_codes->addColumn("exemplar_11", "STRING_TYPE", "POST", "exemplar_11");
+$ins_Community_codes->addColumn("code_12", "NUMERIC_TYPE", "POST", "code_12");
+$ins_Community_codes->addColumn("exemplar_12", "STRING_TYPE", "POST", "exemplar_12");
+$ins_Community_codes->addColumn("code_13", "NUMERIC_TYPE", "POST", "code_13");
+$ins_Community_codes->addColumn("exemplar_13", "STRING_TYPE", "POST", "exemplar_13");
+$ins_Community_codes->addColumn("code_14", "NUMERIC_TYPE", "POST", "code_14");
+$ins_Community_codes->addColumn("exemplar_14", "STRING_TYPE", "POST", "exemplar_14");
+$ins_Community_codes->addColumn("code_15", "NUMERIC_TYPE", "POST", "code_15");
+$ins_Community_codes->addColumn("exemplar_15", "STRING_TYPE", "POST", "exemplar_15");
+$ins_Community_codes->addColumn("code_16", "NUMERIC_TYPE", "POST", "code_16");
+$ins_Community_codes->addColumn("exemplar_16", "STRING_TYPE", "POST", "exemplar_16");
+$ins_Community_codes->addColumn("code_17", "NUMERIC_TYPE", "POST", "code_17");
+$ins_Community_codes->addColumn("exemplar_17", "STRING_TYPE", "POST", "exemplar_17");
+$ins_Community_codes->addColumn("code_18", "NUMERIC_TYPE", "POST", "code_18");
+$ins_Community_codes->addColumn("exemplar_18", "STRING_TYPE", "POST", "exemplar_18");
+$ins_Community_codes->addColumn("code_19", "NUMERIC_TYPE", "POST", "code_19");
+$ins_Community_codes->addColumn("exemplar_19", "STRING_TYPE", "POST", "exemplar_19");
+$ins_Community_codes->addColumn("code_20", "NUMERIC_TYPE", "POST", "code_20");
+$ins_Community_codes->addColumn("exemplar_20", "STRING_TYPE", "POST", "exemplar_20");
+$ins_Community_codes->addColumn("code_21", "NUMERIC_TYPE", "POST", "code_21");
+$ins_Community_codes->addColumn("exemplar_21", "STRING_TYPE", "POST", "exemplar_21");
+$ins_Community_codes->addColumn("code_22", "NUMERIC_TYPE", "POST", "code_22");
+$ins_Community_codes->addColumn("exemplar_22", "STRING_TYPE", "POST", "exemplar_22");
+$ins_Community_codes->addColumn("code_23", "NUMERIC_TYPE", "POST", "code_23");
+$ins_Community_codes->addColumn("exemplar_23", "STRING_TYPE", "POST", "exemplar_23");
+$ins_Community_codes->addColumn("code_24", "NUMERIC_TYPE", "POST", "code_24");
+$ins_Community_codes->addColumn("exemplar_24", "STRING_TYPE", "POST", "exemplar_24");
+$ins_Community_codes->addColumn("code_25", "NUMERIC_TYPE", "POST", "code_25");
+$ins_Community_codes->addColumn("exemplar_25", "STRING_TYPE", "POST", "exemplar_25");
+$ins_Community_codes->addColumn("code_26", "NUMERIC_TYPE", "POST", "code_26");
+$ins_Community_codes->addColumn("exemplar_26", "STRING_TYPE", "POST", "exemplar_26");
+$ins_Community_codes->addColumn("code_27", "NUMERIC_TYPE", "POST", "code_27");
+$ins_Community_codes->addColumn("exemplar_27", "STRING_TYPE", "POST", "exemplar_27");
+$ins_Community_codes->addColumn("code_28", "NUMERIC_TYPE", "POST", "code_28");
+$ins_Community_codes->addColumn("exemplar_28", "STRING_TYPE", "POST", "exemplar_28");
+$ins_Community_codes->addColumn("code_29", "NUMERIC_TYPE", "POST", "code_29");
+$ins_Community_codes->addColumn("exemplar_29", "STRING_TYPE", "POST", "exemplar_29");
+$ins_Community_codes->addColumn("code_30", "NUMERIC_TYPE", "POST", "code_30");
+$ins_Community_codes->addColumn("exemplar_30", "STRING_TYPE", "POST", "exemplar_30");
+$ins_Community_codes->setPrimaryKey("communitycodeskey", "NUMERIC_TYPE");
+
+// Make an update transaction instance
+$upd_Community_codes = new tNG_multipleUpdate($conn_Assessment);
+$tNGs->addTransaction($upd_Community_codes);
+// Register triggers
+$upd_Community_codes->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Update1");
+$upd_Community_codes->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$upd_Community_codes->registerTrigger("END", "Trigger_Default_Redirect", 99, "community_coding2.php?communitykey={GET.communitykey}&communitycodeskey={communitycodeskey}");
+// Add columns
+$upd_Community_codes->setTable("Community_codes");
+$upd_Community_codes->addColumn("code_1", "NUMERIC_TYPE", "POST", "code_1");
+$upd_Community_codes->addColumn("exemplar_1", "STRING_TYPE", "POST", "exemplar_1");
+$upd_Community_codes->addColumn("code_2", "NUMERIC_TYPE", "POST", "code_2");
+$upd_Community_codes->addColumn("exemplar_2", "STRING_TYPE", "POST", "exemplar_2");
+$upd_Community_codes->addColumn("code_3", "NUMERIC_TYPE", "POST", "code_3");
+$upd_Community_codes->addColumn("exemplar_3", "STRING_TYPE", "POST", "exemplar_3");
+$upd_Community_codes->addColumn("code_4", "NUMERIC_TYPE", "POST", "code_4");
+$upd_Community_codes->addColumn("exemplar_4", "STRING_TYPE", "POST", "exemplar_4");
+$upd_Community_codes->addColumn("code_5", "NUMERIC_TYPE", "POST", "code_5");
+$upd_Community_codes->addColumn("exemplar_5", "STRING_TYPE", "POST", "exemplar_5");
+$upd_Community_codes->addColumn("code_6", "NUMERIC_TYPE", "POST", "code_6");
+$upd_Community_codes->addColumn("exemplar_6", "STRING_TYPE", "POST", "exemplar_6");
+$upd_Community_codes->addColumn("code_7", "NUMERIC_TYPE", "POST", "code_7");
+$upd_Community_codes->addColumn("exemplar_7", "STRING_TYPE", "POST", "exemplar_7");
+$upd_Community_codes->addColumn("code_8", "NUMERIC_TYPE", "POST", "code_8");
+$upd_Community_codes->addColumn("exemplar_8", "STRING_TYPE", "POST", "exemplar_8");
+$upd_Community_codes->addColumn("code_9", "NUMERIC_TYPE", "POST", "code_9");
+$upd_Community_codes->addColumn("exemplar_9", "STRING_TYPE", "POST", "exemplar_9");
+$upd_Community_codes->addColumn("code_10", "NUMERIC_TYPE", "POST", "code_10");
+$upd_Community_codes->addColumn("exemplar_10", "STRING_TYPE", "POST", "exemplar_10");
+$upd_Community_codes->addColumn("code_11", "NUMERIC_TYPE", "POST", "code_11");
+$upd_Community_codes->addColumn("exemplar_11", "STRING_TYPE", "POST", "exemplar_11");
+$upd_Community_codes->addColumn("code_12", "NUMERIC_TYPE", "POST", "code_12");
+$upd_Community_codes->addColumn("exemplar_12", "STRING_TYPE", "POST", "exemplar_12");
+$upd_Community_codes->addColumn("code_13", "NUMERIC_TYPE", "POST", "code_13");
+$upd_Community_codes->addColumn("exemplar_13", "STRING_TYPE", "POST", "exemplar_13");
+$upd_Community_codes->addColumn("code_14", "NUMERIC_TYPE", "POST", "code_14");
+$upd_Community_codes->addColumn("exemplar_14", "STRING_TYPE", "POST", "exemplar_14");
+$upd_Community_codes->addColumn("code_15", "NUMERIC_TYPE", "POST", "code_15");
+$upd_Community_codes->addColumn("exemplar_15", "STRING_TYPE", "POST", "exemplar_15");
+$upd_Community_codes->addColumn("code_16", "NUMERIC_TYPE", "POST", "code_16");
+$upd_Community_codes->addColumn("exemplar_16", "STRING_TYPE", "POST", "exemplar_16");
+$upd_Community_codes->addColumn("code_17", "NUMERIC_TYPE", "POST", "code_17");
+$upd_Community_codes->addColumn("exemplar_17", "STRING_TYPE", "POST", "exemplar_17");
+$upd_Community_codes->addColumn("code_18", "NUMERIC_TYPE", "POST", "code_18");
+$upd_Community_codes->addColumn("exemplar_18", "STRING_TYPE", "POST", "exemplar_18");
+$upd_Community_codes->addColumn("code_19", "NUMERIC_TYPE", "POST", "code_19");
+$upd_Community_codes->addColumn("exemplar_19", "STRING_TYPE", "POST", "exemplar_19");
+$upd_Community_codes->addColumn("code_20", "NUMERIC_TYPE", "POST", "code_20");
+$upd_Community_codes->addColumn("exemplar_20", "STRING_TYPE", "POST", "exemplar_20");
+$upd_Community_codes->addColumn("code_21", "NUMERIC_TYPE", "POST", "code_21");
+$upd_Community_codes->addColumn("exemplar_21", "STRING_TYPE", "POST", "exemplar_21");
+$upd_Community_codes->addColumn("code_22", "NUMERIC_TYPE", "POST", "code_22");
+$upd_Community_codes->addColumn("exemplar_22", "STRING_TYPE", "POST", "exemplar_22");
+$upd_Community_codes->addColumn("code_23", "NUMERIC_TYPE", "POST", "code_23");
+$upd_Community_codes->addColumn("exemplar_23", "STRING_TYPE", "POST", "exemplar_23");
+$upd_Community_codes->addColumn("code_24", "NUMERIC_TYPE", "POST", "code_24");
+$upd_Community_codes->addColumn("exemplar_24", "STRING_TYPE", "POST", "exemplar_24");
+$upd_Community_codes->addColumn("code_25", "NUMERIC_TYPE", "POST", "code_25");
+$upd_Community_codes->addColumn("exemplar_25", "STRING_TYPE", "POST", "exemplar_25");
+$upd_Community_codes->addColumn("code_26", "NUMERIC_TYPE", "POST", "code_26");
+$upd_Community_codes->addColumn("exemplar_26", "STRING_TYPE", "POST", "exemplar_26");
+$upd_Community_codes->addColumn("code_27", "NUMERIC_TYPE", "POST", "code_27");
+$upd_Community_codes->addColumn("exemplar_27", "STRING_TYPE", "POST", "exemplar_27");
+$upd_Community_codes->addColumn("code_28", "NUMERIC_TYPE", "POST", "code_28");
+$upd_Community_codes->addColumn("exemplar_28", "STRING_TYPE", "POST", "exemplar_28");
+$upd_Community_codes->addColumn("code_29", "NUMERIC_TYPE", "POST", "code_29");
+$upd_Community_codes->addColumn("exemplar_29", "STRING_TYPE", "POST", "exemplar_29");
+$upd_Community_codes->addColumn("code_30", "NUMERIC_TYPE", "POST", "code_30");
+$upd_Community_codes->addColumn("exemplar_30", "STRING_TYPE", "POST", "exemplar_30");
+$upd_Community_codes->setPrimaryKey("communitykey", "NUMERIC_TYPE", "GET", "communitykey");
+
+// Make an instance of the transaction object
+$del_Community_codes = new tNG_multipleDelete($conn_Assessment);
+$tNGs->addTransaction($del_Community_codes);
+// Register triggers
+$del_Community_codes->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Delete1");
+$del_Community_codes->registerTrigger("END", "Trigger_Default_Redirect", 99, "../includes/nxt/back.php");
+// Add columns
+$del_Community_codes->setTable("Community_codes");
+$del_Community_codes->setPrimaryKey("communitycodeskey", "NUMERIC_TYPE", "GET", "communitycodeskey");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsCommunity_codes = $tNGs->getRecordset("Community_codes");
+$row_rsCommunity_codes = mysql_fetch_assoc($rsCommunity_codes);
+$totalRows_rsCommunity_codes = mysql_num_rows($rsCommunity_codes);
+?>
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatescore1.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Community coding</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<script src="../includes/nxt/scripts/form.js" type="text/javascript"></script>
+      <script src="../includes/nxt/scripts/form.js.php" type="text/javascript"></script>
+      <script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+    <script type="text/javascript">
+$NXT_FORM_SETTINGS = {
+  duplicate_buttons: true,
+  show_as_grid: true,
+  merge_down_value: true
+}
+      </script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<script src="../SpryAssetsAssessments/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="../SpryAssetsAssessments/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #929292;
+	background-image: url(/images/skin/background.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 1300px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #EAEAEA;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/headerWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footerWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.logintext {
+	line-height: 20px;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="/" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="../" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+<p><?php echo $tNGs->displayValidationRules();?></p>
+<h1>COMMUNITY CODING (page 2 of 9)    </h1>
+<?php
+	echo $tNGs->getErrorMsg();
+?>
+    <div class="KT_tng">
+      <div class="KT_tngform">
+        <form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+          <?php $cnt1 = 0; ?>
+          <?php do { ?>
+            <?php $cnt1++; ?>
+            <?php 
+// Show IF Conditional region1 
+if (@$totalRows_rsCommunity_codes > 1) {
+?>
+              <h3><?php echo NXT_getResource("Record_FH"); ?> <?php echo $cnt1; ?></h3>
+              <?php } 
+// endif Conditional region1
+?>
+            <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+              <tr>
+                <td colspan="4" class="KT_th"><strong>Community characteristics</strong></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_1_<?php echo $cnt1; ?>"><?php echo $row_rsCommunitycodes2['exemplar_1']; ?></label></td>
+                <td><span id="spryselect1">
+                  <select name="code_1_<?php echo $cnt1; ?>" id="code_1_<?php echo $cnt1; ?>">
+                    <option value="" <?php if (!(strcmp("", $row_rsCommunity_codes['code_1']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_1']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_1", $cnt1); ?></td>
+                <td><textarea name="exemplar_1_<?php echo $cnt1; ?>" id="exemplar_1_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo $row_rsCommunitycodes['exemplar_1']; ?></textarea>
+                <?php echo $tNGs->displayFieldHint("exemplar_1");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_1", $cnt1); ?></td>
+                <td width="464" rowspan="30"><br />
+                  <br />
+<div id="CollapsiblePanel2" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Part of</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['partof']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Teacher</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['teacher']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel4" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Disagreement</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['disagreement']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel5" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Disputes 1</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['disputes1']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel6" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">What</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['what']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Disputes 2</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['disputes2']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel7" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Dictate</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['dictate']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel8" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Ross trips</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['ross_trips']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel9" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Values</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['values']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel10" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Iraq 1</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['iraq1']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel11" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Iraq 2</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['iraq2']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel12" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Iraq 3</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['iraq3']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel13" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Democracy</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['democracy_peace']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel14" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Ross influence</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['ross_influence']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel15" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Other</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['other']; ?></div>
+                  </div>                  <p>&nbsp;</p>
+	</td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_2_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_2']; ?></td>
+                <td><span id="spryselect2">
+                  <select name="code_2_<?php echo $cnt1; ?>" id="code_2_<?php echo $cnt1; ?>">
+                    <option value="" <?php if (!(strcmp("", $row_rsCommunity_codes['code_2']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_2']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_2", $cnt1); ?></td>
+                <td><textarea name="exemplar_2_<?php echo $cnt1; ?>" id="exemplar_2_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_2']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_2");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_2", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_3_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_3']; ?></td>
+                <td><span id="spryselect3">
+                  <select name="code_3_<?php echo $cnt1; ?>" id="code_3_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_3']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_3", $cnt1); ?></td>
+                <td><textarea name="exemplar_3_<?php echo $cnt1; ?>" id="exemplar_3_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_3']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_3");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_3", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_4_<?php echo $cnt1; ?>"><?php echo $row_rsCommunitycodes2['exemplar_4']; ?></label></td>
+                <td><span id="spryselect4">
+                  <select name="code_4_<?php echo $cnt1; ?>" id="code_4_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_4']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_4", $cnt1); ?></td>
+                <td><textarea name="exemplar_4_<?php echo $cnt1; ?>" id="exemplar_4_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_4']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_4");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_4", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_5_<?php echo $cnt1; ?>"><?php echo $row_rsCommunitycodes2['exemplar_5']; ?></label></td>
+                <td><span id="spryselect5">
+                  <select name="code_5_<?php echo $cnt1; ?>" id="code_5_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_5']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_5", $cnt1); ?></td>
+                <td><textarea name="exemplar_5_<?php echo $cnt1; ?>" id="exemplar_5_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_5']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_5");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_5", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_6_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_6']; ?></td>
+                <td><span id="spryselect6">
+                  <select name="code_6_<?php echo $cnt1; ?>" id="code_6_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_6']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_6", $cnt1); ?></td>
+                <td><textarea name="exemplar_6_<?php echo $cnt1; ?>" id="exemplar_6_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_6']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_6");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_6", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_7_<?php echo $cnt1; ?>"><?php echo $row_rsCommunitycodes2['exemplar_7']; ?></label></td>
+                <td><span id="spryselect7">
+                  <select name="code_7_<?php echo $cnt1; ?>" id="code_7_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_7']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_7", $cnt1); ?></td>
+                <td><textarea name="exemplar_7_<?php echo $cnt1; ?>" id="exemplar_7_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_7']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_7");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_7", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_8_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_8']; ?></td>
+                <td><span id="spryselect8">
+                  <select name="code_8_<?php echo $cnt1; ?>" id="code_8_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_8']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_8", $cnt1); ?></td>
+                <td><textarea name="exemplar_8_<?php echo $cnt1; ?>" id="exemplar_8_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_8']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_8");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_8", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_9_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_9']; ?></td>
+                <td><span id="spryselect9">
+                  <select name="code_9_<?php echo $cnt1; ?>" id="code_9_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_9']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_9", $cnt1); ?></td>
+                <td><textarea name="exemplar_9_<?php echo $cnt1; ?>" id="exemplar_9_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_9']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_9");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_9", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_10_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_10']; ?></td>
+                <td><span id="spryselect10">
+                  <select name="code_10_<?php echo $cnt1; ?>" id="code_10_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_10']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_10", $cnt1); ?></td>
+                <td><textarea name="exemplar_10_<?php echo $cnt1; ?>" id="exemplar_10_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_10']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_10");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_10", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_11_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_11']; ?></td>
+                <td><span id="spryselect11">
+                  <select name="code_11_<?php echo $cnt1; ?>" id="code_11_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_11']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_11", $cnt1); ?></td>
+                <td><textarea name="exemplar_11_<?php echo $cnt1; ?>" id="exemplar_11_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_11']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_11");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_11", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_12_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_12']; ?></td>
+                <td><span id="spryselect12">
+                  <select name="code_12_<?php echo $cnt1; ?>" id="code_12_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_12']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_12", $cnt1); ?></td>
+                <td><textarea name="exemplar_12_<?php echo $cnt1; ?>" id="exemplar_12_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_12']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_12");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_12", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_13_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_13']; ?></td>
+                <td><span id="spryselect13">
+                  <select name="code_13_<?php echo $cnt1; ?>" id="code_13_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_13']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_13", $cnt1); ?></td>
+                <td><textarea name="exemplar_13_<?php echo $cnt1; ?>" id="exemplar_13_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_13']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_13");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_13", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_14_<?php echo $cnt1; ?>"><?php echo $row_rsCommunitycodes2['exemplar_14']; ?></label></td>
+                <td><span id="spryselect14">
+                  <select name="code_14_<?php echo $cnt1; ?>" id="code_14_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_14']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_14", $cnt1); ?></td>
+                <td><textarea name="exemplar_14_<?php echo $cnt1; ?>" id="exemplar_14_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_14']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_14");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_14", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_15_<?php echo $cnt1; ?>"><?php echo $row_rsCommunitycodes2['exemplar_15']; ?></label></td>
+                <td><span id="spryselect15">
+                  <select name="code_15_<?php echo $cnt1; ?>" id="code_15_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_15']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_15", $cnt1); ?></td>
+                <td><textarea name="exemplar_15_<?php echo $cnt1; ?>" id="exemplar_15_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_15']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_15");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_15", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_16_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_16']; ?></td>
+                <td><span id="spryselect16">
+                  <select name="code_16_<?php echo $cnt1; ?>" id="code_16_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_16']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_16", $cnt1); ?></td>
+                <td><textarea name="exemplar_16_<?php echo $cnt1; ?>" id="exemplar_16_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_16']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_16");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_16", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_17_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_17']; ?></td>
+                <td><span id="spryselect17">
+                  <select name="code_17_<?php echo $cnt1; ?>" id="code_17_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_17']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_17", $cnt1); ?></td>
+                <td><textarea name="exemplar_17_<?php echo $cnt1; ?>" id="exemplar_17_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_17']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_17");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_17", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_18_<?php echo $cnt1; ?>"><?php echo $row_rsCommunitycodes2['exemplar_18']; ?></label></td>
+                <td><span id="spryselect18">
+                  <select name="code_18_<?php echo $cnt1; ?>" id="code_18_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_18']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_18", $cnt1); ?></td>
+                <td><textarea name="exemplar_18_<?php echo $cnt1; ?>" id="exemplar_18_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_18']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_18");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_18", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_19_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_19']; ?></td>
+                <td><span id="spryselect19">
+                  <select name="code_19_<?php echo $cnt1; ?>" id="code_19_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_19']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_19", $cnt1); ?></td>
+                <td><textarea name="exemplar_19_<?php echo $cnt1; ?>" id="exemplar_19_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_19']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_19");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_19", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_20_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_20']; ?></td>
+                <td><span id="spryselect20">
+                  <select name="code_20_<?php echo $cnt1; ?>" id="code_20_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_20']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_20", $cnt1); ?></td>
+                <td><textarea name="exemplar_20_<?php echo $cnt1; ?>" id="exemplar_20_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_20']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_20");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_20", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_21_<?php echo $cnt1; ?>"><?php echo $row_rsCommunitycodes2['exemplar_21']; ?></label></td>
+                <td><span id="spryselect21">
+                  <select name="code_21_<?php echo $cnt1; ?>" id="code_21_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_21']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_21", $cnt1); ?></td>
+                <td><textarea name="exemplar_21_<?php echo $cnt1; ?>" id="exemplar_21_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_21']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_21");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_21", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_22_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_22']; ?></td>
+                <td><span id="spryselect22">
+                  <select name="code_22_<?php echo $cnt1; ?>" id="code_22_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_22']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_22", $cnt1); ?></td>
+                <td><textarea name="exemplar_22_<?php echo $cnt1; ?>" id="exemplar_22_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_22']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_22");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_22", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_23_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_23']; ?></td>
+                <td><span id="spryselect23">
+                  <select name="code_23_<?php echo $cnt1; ?>" id="code_23_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_23']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_23", $cnt1); ?></td>
+                <td><textarea name="exemplar_23_<?php echo $cnt1; ?>" id="exemplar_23_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_23']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_23");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_23", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_24_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_24']; ?></td>
+                <td><span id="spryselect24">
+                  <select name="code_24_<?php echo $cnt1; ?>" id="code_24_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_24']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_24", $cnt1); ?></td>
+                <td><textarea name="exemplar_24_<?php echo $cnt1; ?>" id="exemplar_24_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_24']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_24");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_24", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_25_<?php echo $cnt1; ?>"><?php echo $row_rsCommunitycodes2['exemplar_25']; ?></label></td>
+                <td><span id="spryselect25">
+                  <select name="code_25_<?php echo $cnt1; ?>" id="code_25_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_25']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_25", $cnt1); ?></td>
+                <td><textarea name="exemplar_25_<?php echo $cnt1; ?>" id="exemplar_25_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_25']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_25");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_25", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_26_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_26']; ?></td>
+                <td><span id="spryselect26">
+                  <select name="code_26_<?php echo $cnt1; ?>" id="code_26_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_26']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_26", $cnt1); ?></td>
+                <td><textarea name="exemplar_26_<?php echo $cnt1; ?>" id="exemplar_26_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_26']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_26");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_26", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_27_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_27']; ?></td>
+                <td><span id="spryselect27">
+                  <select name="code_27_<?php echo $cnt1; ?>" id="code_27_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_27']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_27", $cnt1); ?></td>
+                <td><textarea name="exemplar_27_<?php echo $cnt1; ?>" id="exemplar_27_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_27']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_27");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_27", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_28_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_28']; ?></td>
+                <td><span id="spryselect28">
+                  <select name="code_28_<?php echo $cnt1; ?>" id="code_28_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_28']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_28", $cnt1); ?></td>
+                <td><textarea name="exemplar_28_<?php echo $cnt1; ?>" id="exemplar_28_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_28']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_28");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_28", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_29_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_29']; ?></td>
+                <td><span id="spryselect29">
+                  <select name="code_29_<?php echo $cnt1; ?>" id="code_29_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_29']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("Community_codes", "code_29", $cnt1); ?></td>
+                <td><textarea name="exemplar_29_<?php echo $cnt1; ?>" id="exemplar_29_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_29']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_29");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_29", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_30_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsCommunitycodes2['exemplar_30']; ?></td>
+                <td><span id="spryselect30">
+                  <select name="code_30_<?php echo $cnt1; ?>" id="code_30_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsCommunity_codes['code_30']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span>
+                  <p>&nbsp;</p></td>
+                <td><textarea name="exemplar_30_<?php echo $cnt1; ?>" id="exemplar_30_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsCommunitycodes['exemplar_30']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_30");?> <?php echo $tNGs->displayFieldError("Community_codes", "exemplar_30", $cnt1); ?></td>
+                <td>&nbsp;</td>
+              </tr>
+            </table>
+            <input type="hidden" name="kt_pk_Community_codes_<?php echo $cnt1; ?>" class="id_field" value="<?php echo KT_escapeAttribute($row_rsCommunity_codes['kt_pk_Community_codes']); ?>" />
+            <input name="communitykey" type="hidden" id="communitykey" value="<?php echo $_GET['communitykey']; ?>" />
+            <?php } while ($row_rsCommunity_codes = mysql_fetch_assoc($rsCommunity_codes)); ?>
+          <div class="KT_bottombuttons">
+            <div>
+              <?php 
+      // Show IF Conditional region1
+      if (@$_GET['communitycodeskey'] == "") {
+      ?>
+                <input type="submit" name="KT_Insert1" id="KT_Insert1" value="<?php echo NXT_getResource("Insert_FB"); ?>" />
+                <?php 
+      // else Conditional region1
+      } else { ?>
+                <input type="submit" name="KT_Update1" value="<?php echo NXT_getResource("Update_FB"); ?>" />
+                <input type="submit" name="KT_Delete1" value="<?php echo NXT_getResource("Delete_FB"); ?>" onClick="return confirm('<?php echo NXT_getResource("Are you sure?"); ?>');" />
+                <?php }
+      // endif Conditional region1
+      ?>
+              <input type="button" name="KT_Cancel1" value="<?php echo NXT_getResource("Cancel_FB"); ?>" onClick="return UNI_navigateCancel(event, '../includes/nxt/back.php')" />
+            </div>
+          </div>
+        </form>
+      </div>
+      <br class="clearfixplain" />
+    </div>
+    <p>&nbsp;</p>
+    </p>
+<p>&nbsp;</p>
+  <script type="text/javascript">
+<!--
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"], isRequired:false});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"], isRequired:false});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"], isRequired:false});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"], isRequired:false});
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {validateOn:["blur", "change"], isRequired:false});
+var spryselect6 = new Spry.Widget.ValidationSelect("spryselect6", {validateOn:["blur", "change"], isRequired:false});
+var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {validateOn:["blur", "change"], isRequired:false});
+var spryselect8 = new Spry.Widget.ValidationSelect("spryselect8", {validateOn:["blur", "change"], isRequired:false});
+var spryselect9 = new Spry.Widget.ValidationSelect("spryselect9", {validateOn:["blur", "change"], isRequired:false});
+var spryselect10 = new Spry.Widget.ValidationSelect("spryselect10", {validateOn:["blur", "change"], isRequired:false});
+var spryselect11 = new Spry.Widget.ValidationSelect("spryselect11", {validateOn:["blur", "change"], isRequired:false});
+var spryselect12 = new Spry.Widget.ValidationSelect("spryselect12", {validateOn:["blur", "change"], isRequired:false});
+var spryselect13 = new Spry.Widget.ValidationSelect("spryselect13", {validateOn:["blur", "change"], isRequired:false});
+var spryselect14 = new Spry.Widget.ValidationSelect("spryselect14", {validateOn:["blur", "change"], isRequired:false});
+var spryselect15 = new Spry.Widget.ValidationSelect("spryselect15", {validateOn:["blur", "change"], isRequired:false});
+var spryselect16 = new Spry.Widget.ValidationSelect("spryselect16", {validateOn:["blur", "change"], isRequired:false});
+var spryselect17 = new Spry.Widget.ValidationSelect("spryselect17", {validateOn:["blur", "change"], isRequired:false});
+var spryselect18 = new Spry.Widget.ValidationSelect("spryselect18", {validateOn:["blur", "change"], isRequired:false});
+var spryselect19 = new Spry.Widget.ValidationSelect("spryselect19", {validateOn:["blur", "change"], isRequired:false});
+var spryselect20 = new Spry.Widget.ValidationSelect("spryselect20", {validateOn:["blur", "change"], isRequired:false});
+var spryselect21 = new Spry.Widget.ValidationSelect("spryselect21", {validateOn:["blur", "change"], isRequired:false});
+var spryselect22 = new Spry.Widget.ValidationSelect("spryselect22", {validateOn:["blur", "change"], isRequired:false});
+var spryselect23 = new Spry.Widget.ValidationSelect("spryselect23", {validateOn:["blur", "change"], isRequired:false});
+var spryselect24 = new Spry.Widget.ValidationSelect("spryselect24", {validateOn:["blur", "change"], isRequired:false});
+var spryselect25 = new Spry.Widget.ValidationSelect("spryselect25", {validateOn:["blur", "change"], isRequired:false});
+var spryselect26 = new Spry.Widget.ValidationSelect("spryselect26", {validateOn:["blur", "change"], isRequired:false});
+var spryselect27 = new Spry.Widget.ValidationSelect("spryselect27", {validateOn:["blur", "change"], isRequired:false});
+var spryselect28 = new Spry.Widget.ValidationSelect("spryselect28", {validateOn:["blur", "change"], isRequired:false});
+var spryselect29 = new Spry.Widget.ValidationSelect("spryselect29", {validateOn:["blur", "change"], isRequired:false});
+var spryselect30 = new Spry.Widget.ValidationSelect("spryselect30", {validateOn:["blur", "change"], isRequired:false});
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel4 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel4");
+var CollapsiblePanel5 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel5");
+var CollapsiblePanel6 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel6");
+var CollapsiblePanel7 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel7");
+var CollapsiblePanel8 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel8");
+var CollapsiblePanel9 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel9");
+var CollapsiblePanel10 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel10");
+var CollapsiblePanel11 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel11");
+var CollapsiblePanel12 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel12");
+var CollapsiblePanel13 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel13");
+var CollapsiblePanel14 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel14");
+var CollapsiblePanel15 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel15");
+//-->
+  </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsCommunitycodes);
+
+mysql_free_result($rsCommunitycodes2);
+
+mysql_free_result($rsEssays);
+
+mysql_free_result($rsRating);
+
+mysql_free_result($rsRegistrant);
+?>

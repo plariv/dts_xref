@@ -1,0 +1,601 @@
+<?php 
+require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" );
+include_once '../includes/dts_functions.php';
+
+if (!WA_Auth_RulePasses("Logged in as senior")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+$projectkey = "-1";
+if (isset($_GET['projectkey'])) {
+  $projectkey = $_GET['projectkey'];
+}
+
+$userkey = "-1";
+if (isset($_SESSION['userkey'])) {
+  $userkey = $_SESSION['userkey'];
+}
+
+$bulkcustomerkey = "-1";
+if (isset($_GET['bulkcustomerkey'])) {
+  $bulkcustomerkey = $_GET['bulkcustomerkey'];
+}
+
+
+
+
+$query_countLDMA = sprintf("SELECT 
+COUNT(l1.ldmakey) AS incomplete, 
+COUNT(l2.ldmakey) AS completed, 
+COUNT(l3.ldmakey) AS finalized
+FROM ldma l0
+LEFT JOIN ldma l1 ON l0.ldmakey = l1.ldmakey AND l1.completed < 1 AND l1.finalized < 1
+LEFT JOIN ldma l2 ON l0.ldmakey = l2.ldmakey AND l2.completed > 0 AND l2.finalized < 1
+LEFT JOIN ldma l3 ON l0.ldmakey = l3.ldmakey AND l3.finalized > 0
+WHERE l0.projectkey = %s ",
+		GetSQLValueString($projectkey, "int"));
+$rsCountLDMA = mysql_query($query_countLDMA, $Assessment) or die("rsCountLDMA: ".mysql_error());
+$row_rsCountLDMA = mysql_fetch_assoc($rsCountLDMA);
+$totalRows_rsCountLDMA = mysql_num_rows($rsCountLDMA);
+
+$query_countLERA = sprintf("SELECT 
+COUNT(l1.lerakey) AS incomplete, 
+COUNT(l2.lerakey) AS completed, 
+COUNT(l3.lerakey) AS finalized
+FROM lera l0
+LEFT JOIN lera l1 ON l0.lerakey = l1.lerakey AND l1.completed < 1 AND l1.finalized < 1
+LEFT JOIN lera l2 ON l0.lerakey = l2.lerakey AND l2.completed > 0 AND l2.finalized < 1
+LEFT JOIN lera l3 ON l0.lerakey = l3.lerakey AND l3.finalized > 0
+WHERE l0.projectkey = %s ",
+		GetSQLValueString($projectkey, "int"));
+$rsCountLERA = mysql_query($query_countLERA, $Assessment) or die("rsCountLERA: ".mysql_error());
+$row_rsCountLERA = mysql_fetch_assoc($rsCountLERA);
+$totalRows_rsCountLERA = mysql_num_rows($rsCountLERA);
+
+$query_countLRJA = sprintf("SELECT 
+COUNT(l1.lrjakey) AS incomplete, 
+COUNT(l2.lrjakey) AS completed, 
+COUNT(l3.lrjakey) AS finalized
+FROM lrja l0
+LEFT JOIN lrja l1 ON l0.lrjakey = l1.lrjakey AND l1.completed < 1 AND l1.finalized < 1
+LEFT JOIN lrja l2 ON l0.lrjakey = l2.lrjakey AND l2.completed > 0 AND l2.finalized < 1
+LEFT JOIN lrja l3 ON l0.lrjakey = l3.lrjakey AND l3.finalized > 0
+WHERE l0.projectkey = %s ",
+		GetSQLValueString($projectkey, "int"));
+$rsCountLRJA = mysql_query($query_countLRJA, $Assessment) or die("rsCountLRJA: ".mysql_error());
+$row_rsCountLRJA = mysql_fetch_assoc($rsCountLRJA);
+$totalRows_rsCountLRJA = mysql_num_rows($rsCountLRJA);
+
+$query_countLLRA = sprintf("SELECT 
+COUNT(l1.llrakey) AS incomplete, 
+COUNT(l2.llrakey) AS completed, 
+COUNT(l3.llrakey) AS finalized
+FROM llra l0
+LEFT JOIN llra l1 ON l0.llrakey = l1.llrakey AND l1.completed < 1 AND l1.finalized < 1
+LEFT JOIN llra l2 ON l0.llrakey = l2.llrakey AND l2.completed > 0 AND l2.finalized < 1
+LEFT JOIN llra l3 ON l0.llrakey = l3.llrakey AND l3.finalized > 0
+WHERE l0.projectkey = %s ",
+		GetSQLValueString($projectkey, "int"));
+$rsCountLLRA = mysql_query($query_countLLRA, $Assessment) or die("rsCountLLRA: ".mysql_error());
+$row_rsCountLLRA = mysql_fetch_assoc($rsCountLLRA);
+$totalRows_rsCountLLRA = mysql_num_rows($rsCountLLRA);
+
+$query_countLSUA = sprintf("SELECT 
+COUNT(l1.lsuakey) AS incomplete, 
+COUNT(l2.lsuakey) AS completed, 
+COUNT(l3.lsuakey) AS finalized
+FROM lsua l0
+LEFT JOIN lsua l1 ON l0.lsuakey = l1.lsuakey AND l1.completed < 1 AND l1.finalized < 1
+LEFT JOIN lsua l2 ON l0.lsuakey = l2.lsuakey AND l2.completed > 0 AND l2.finalized < 1
+LEFT JOIN lsua l3 ON l0.lsuakey = l3.lsuakey AND l3.finalized > 0
+WHERE l0.projectkey = %s ",
+		GetSQLValueString($projectkey, "int"));
+$rsCountLSUA = mysql_query($query_countLSUA, $Assessment) or die("rsCountLSUA: ".mysql_error());
+$row_rsCountLSUA = mysql_fetch_assoc($rsCountLSUA);
+$totalRows_rsCountLSUA = mysql_num_rows($rsCountLSUA);
+
+$query_countLIMA = sprintf("SELECT 
+COUNT(l1.limakey) AS incomplete, 
+COUNT(l2.limakey) AS completed, 
+COUNT(l3.limakey) AS finalized
+FROM lima l0
+LEFT JOIN lima l1 ON l0.limakey = l1.limakey AND l1.completed < 1 AND l1.finalized < 1
+LEFT JOIN lima l2 ON l0.limakey = l2.limakey AND l2.completed > 0 AND l2.finalized < 1
+LEFT JOIN lima l3 ON l0.limakey = l3.limakey AND l3.finalized > 0
+WHERE l0.projectkey = %s ",
+		GetSQLValueString($projectkey, "int"));
+$rsCountLIMA = mysql_query($query_countLIMA, $Assessment) or die("rsCountLIMA: ".mysql_error());
+$row_rsCountLIMA = mysql_fetch_assoc($rsCountLIMA);
+$totalRows_rsCountLIMA = mysql_num_rows($rsCountLIMA);
+
+$query_countLMBE = sprintf("SELECT 
+COUNT(l1.lmbekey) AS incomplete, 
+COUNT(l2.lmbekey) AS completed, 
+COUNT(l3.lmbekey) AS finalized
+FROM lmbe l0
+LEFT JOIN lmbe l1 ON l0.lmbekey = l1.lmbekey AND l1.completed < 1 AND l1.finalized < 1
+LEFT JOIN lmbe l2 ON l0.lmbekey = l2.lmbekey AND l2.completed > 0 AND l2.finalized < 1
+LEFT JOIN lmbe l3 ON l0.lmbekey = l3.lmbekey AND l3.finalized > 0
+WHERE l0.takey = %s ",
+		GetSQLValueString($bulkcustomerkey, "int"));
+$rsCountLMBE = mysql_query($query_countLMBE, $Assessment) or die("rsCountLMBE: ".mysql_error());
+$row_rsCountLMBE = mysql_fetch_assoc($rsCountLMBE);
+$totalRows_rsCountLMBE = mysql_num_rows($rsCountLMBE);
+		
+
+
+$query_rsCountInvoiced = sprintf("SELECT 
+SUM(ldmanumber) AS ldmatotal, SUM(leranumber) AS leratotal, 
+SUM(lrjanumber) AS lrjatotal, SUM(llranumber) AS llratotal, 
+SUM(lsuanumber) AS lsuatotal, SUM(limanumber) AS limatotal, 
+SUM(lmlanumber) AS lmlatotal, SUM(lmsanumber) AS lmsatotal, 
+SUM(lmbenumber) AS lmbetotal, SUM(lmbenumber) AS lmbetotal,
+SUM(ldma2) AS ldma2, SUM(llra2) AS llra2, 
+SUM(lera2) AS lera2, SUM(lrja2) AS lrja2, SUM(lsua2) AS lsua2, 
+SUM(lima2) AS lima2, SUM(lmbe2) AS lmbe2, 
+SUM(ldma_journal2) AS ldma_journal2, SUM(llra_journal2) AS llra_journal2, 
+SUM(lera_journal2) AS lera_journal2, SUM(lrja_journal2) AS lrja_journal2, 
+SUM(lsua_journal2) AS lsua_journal2, SUM(lima_journal2) AS lima_journal2  
+FROM bulkcustpay 
+WHERE bulkcustpay.projectkey = %s", 
+		GetSQLValueString($projectkey, "int"));
+$rsCountInvoiced = mysql_query($query_rsCountInvoiced, $Assessment) or die(mysql_error());
+$row_rsCountInvoiced = mysql_fetch_assoc($rsCountInvoiced);
+$totalRows_rsCountInvoiced = mysql_num_rows($rsCountInvoiced);
+
+
+
+// Count numbers for the la_ 2.0 assessments. Invoiced #s are account for in the general count-invoices query. 
+
+$query_rsLaCounts = sprintf("SELECT 
+COUNT(ldma_q.lakey) AS ldma_queued, COUNT(ldma_f.lakey) AS ldma_finalized, 
+COUNT(ldmaj_q.lakey) AS ldmaj_queued, COUNT(ldmaj_f.lakey) AS ldmaj_finalized, 
+COUNT(llra_q.lakey) AS llra_queued, COUNT(llra_f.lakey) AS llra_finalized, 
+COUNT(llraj_q.lakey) AS llraj_queued, COUNT(llraj_f.lakey) AS llraj_finalized, 
+COUNT(lera_q.lakey) AS lera_queued, COUNT(lera_f.lakey) AS lera_finalized, 
+COUNT(leraj_q.lakey) AS leraj_queued, COUNT(leraj_f.lakey) AS leraj_finalized, 
+COUNT(lrja_q.lakey) AS lrja_queued, COUNT(lrja_f.lakey) AS lrja_finalized, 
+COUNT(lrjaj_q.lakey) AS lrjaj_queued, COUNT(lrjaj_f.lakey) AS lrjaj_finalized, 
+COUNT(lsua_q.lakey) AS lsua_queued, COUNT(lsua_f.lakey) AS lsua_finalized, 
+COUNT(lsuaj_q.lakey) AS lsuaj_queued, COUNT(lsuaj_f.lakey) AS lsuaj_finalized, 
+COUNT(lima_q.lakey) AS lima_queued, COUNT(lima_f.lakey) AS lima_finalized, 
+COUNT(limaj_q.lakey) AS limaj_queued, COUNT(limaj_f.lakey) AS limaj_finalized, 
+COUNT(lmbe_q.lakey) AS lmbe_queued, COUNT(lmbe_f.lakey) AS lmbe_finalized, 
+COUNT(lmbej_q.lakey) AS lmbej_queued, COUNT(lmbej_f.lakey) AS lmbej_finalized 
+FROM la_data d
+LEFT JOIN la_data ldma_q ON d.lakey = ldma_q.lakey AND ldma_q.finalized < 1 AND ldma_q.instrument_id = 'LDMA' 
+LEFT JOIN la_data ldma_f ON d.lakey = ldma_f.lakey AND ldma_f.finalized > 0 AND ldma_f.instrument_id = 'LDMA' 
+LEFT JOIN la_data ldmaj_q ON d.lakey = ldmaj_q.lakey AND ldmaj_q.finalized < 1 AND ldmaj_q.instrument_id = 'LDMA_JOURNAL' 
+LEFT JOIN la_data ldmaj_f ON d.lakey = ldmaj_f.lakey AND ldmaj_f.finalized > 0 AND ldmaj_f.instrument_id = 'LDMA_JOURNAL' 
+LEFT JOIN la_data llra_q ON d.lakey = llra_q.lakey AND llra_q.finalized < 1 AND llra_q.instrument_id = 'LLRA' 
+LEFT JOIN la_data llra_f ON d.lakey = llra_f.lakey AND llra_f.finalized > 0 AND llra_f.instrument_id = 'LLRA' 
+LEFT JOIN la_data llraj_q ON d.lakey = llraj_q.lakey AND llraj_q.finalized < 1 AND llraj_q.instrument_id = 'LLRA_JOURNAL' 
+LEFT JOIN la_data llraj_f ON d.lakey = llraj_f.lakey AND llraj_f.finalized > 0 AND llraj_f.instrument_id = 'LLRA_JOURNAL' 
+LEFT JOIN la_data lera_q ON d.lakey = lera_q.lakey AND lera_q.finalized < 1 AND lera_q.instrument_id = 'LERA' 
+LEFT JOIN la_data lera_f ON d.lakey = lera_f.lakey AND lera_f.finalized > 0 AND lera_f.instrument_id = 'LERA' 
+LEFT JOIN la_data leraj_q ON d.lakey = leraj_q.lakey AND leraj_q.finalized < 1 AND leraj_q.instrument_id = 'LERA_JOURNAL' 
+LEFT JOIN la_data leraj_f ON d.lakey = leraj_f.lakey AND leraj_f.finalized > 0 AND leraj_f.instrument_id = 'LERA_JOURNAL' 
+LEFT JOIN la_data lrja_q ON d.lakey = lrja_q.lakey AND lrja_q.finalized < 1 AND lrja_q.instrument_id = 'LRJA' 
+LEFT JOIN la_data lrja_f ON d.lakey = lrja_f.lakey AND lrja_f.finalized > 0 AND lrja_f.instrument_id = 'LRJA' 
+LEFT JOIN la_data lrjaj_q ON d.lakey = lrjaj_q.lakey AND lrjaj_q.finalized < 1 AND lrjaj_q.instrument_id = 'LRJA_JOURNAL' 
+LEFT JOIN la_data lrjaj_f ON d.lakey = lrjaj_f.lakey AND lrjaj_f.finalized > 0 AND lrjaj_f.instrument_id = 'LRJA_JOURNAL' 
+LEFT JOIN la_data lsua_q ON d.lakey = lsua_q.lakey AND lsua_q.finalized < 1 AND lsua_q.instrument_id = 'LSUA' 
+LEFT JOIN la_data lsua_f ON d.lakey = lsua_f.lakey AND lsua_f.finalized > 0 AND lsua_f.instrument_id = 'LSUA' 
+LEFT JOIN la_data lsuaj_q ON d.lakey = lsuaj_q.lakey AND lsuaj_q.finalized < 1 AND lsuaj_q.instrument_id = 'LSUA_JOURNAL' 
+LEFT JOIN la_data lsuaj_f ON d.lakey = lsuaj_f.lakey AND lsuaj_f.finalized > 0 AND lsuaj_f.instrument_id = 'LSUA_JOURNAL' 
+LEFT JOIN la_data lima_q ON d.lakey = lima_q.lakey AND lima_q.finalized < 1 AND lima_q.instrument_id = 'LIMA' 
+LEFT JOIN la_data lima_f ON d.lakey = lima_f.lakey AND lima_f.finalized > 0 AND lima_f.instrument_id = 'LIMA' 
+LEFT JOIN la_data limaj_q ON d.lakey = limaj_q.lakey AND limaj_q.finalized < 1 AND limaj_q.instrument_id = 'LIMA_JOURNAL' 
+LEFT JOIN la_data limaj_f ON d.lakey = limaj_f.lakey AND limaj_f.finalized > 0 AND limaj_f.instrument_id = 'LIMA_JOURNAL' 
+LEFT JOIN la_data lmbe_q ON d.lakey = lmbe_q.lakey AND lmbe_q.finalized < 1 AND lmbe_q.instrument_id = 'LMBE' 
+LEFT JOIN la_data lmbe_f ON d.lakey = lmbe_f.lakey AND lmbe_f.finalized > 0 AND lmbe_f.instrument_id = 'LMBE' 
+LEFT JOIN la_data lmbej_q ON d.lakey = lmbej_q.lakey AND lmbej_q.finalized < 1 AND lmbej_q.instrument_id = 'LMBE_JOURNAL' 
+LEFT JOIN la_data lmbej_f ON d.lakey = lmbej_f.lakey AND lmbej_f.finalized > 0 AND lmbej_f.instrument_id = 'LMBE_JOURNAL' 
+WHERE d.completed = 1
+AND d.resellerkey = %s", 
+		GetSQLValueString($bulkcustomerkey, "int"));
+$rsLaCounts = mysql_query($query_rsLaCounts, $Assessment) or die("rsLaCounts: ".mysql_error());
+$row_rsLaCounts = mysql_fetch_assoc($rsLaCounts);
+$totalRows_rsLaCounts = mysql_num_rows($rsLaCounts);
+// topher($query_rsLaCounts);
+
+
+
+
+
+
+$query_rsProject = sprintf("SELECT projectproject.projectkey, projectproject.projectid, projectproject.bulkcustomerkey, projectproject.paying, projectproject.organization, projectproject.rate, projectproject.ratemulti, bulkcustomerinfo.bulkcustomerkey, bulkcustomerinfo.username4students  
+FROM projectproject, bulkcustomerinfo 
+WHERE paying > 0 AND bulkcustomerinfo.bulkcustomerkey = projectproject.bulkcustomerkey AND projectproject.bulkcustomerkey = %s", GetSQLValueString($bulkcustomerkey, "int"));
+$rsProject = mysql_query($query_rsProject, $Assessment) or die(mysql_error());
+$row_rsProject = mysql_fetch_assoc($rsProject);
+$totalRows_rsProject = mysql_num_rows($rsProject);
+
+
+$maxRows_rsInvoices = 10;
+$pageNum_rsInvoices = 0;
+if (isset($_GET['pageNum_rsInvoices'])) {
+  $pageNum_rsInvoices = $_GET['pageNum_rsInvoices'];
+}
+$startRow_rsInvoices = $pageNum_rsInvoices * $maxRows_rsInvoices;
+
+$query_rsInvoices = sprintf("SELECT bulkcustpay.bulkcustomerinvoicekey, bulkcustpay.projectkey, bulkcustpay.organization, bulkcustpay.invoicenumber, bulkcustpay.`date`, bulkcustpay.ldmanumber, bulkcustpay.leranumber, bulkcustpay.limanumber, bulkcustpay.llranumber, bulkcustpay.lrjanumber, bulkcustpay.lsuanumber, bulkcustomerinfo.firstname, bulkcustomerinfo.lastname, bulkcustpay.bulkcustomerkey FROM bulkcustpay, bulkcustomerinfo WHERE bulkcustpay.bulkcustomerkey = %s AND bulkcustpay.projectkey = %s AND bulkcustpay.bulkcustomerkey = bulkcustomerinfo.bulkcustomerkey ORDER BY bulkcustpay.invoicenumber DESC", GetSQLValueString($bulkcustomerkey, "int"),GetSQLValueString($projectkey, "int"));
+$query_limit_rsInvoices = sprintf("%s LIMIT %d, %d", $query_rsInvoices, $startRow_rsInvoices, $maxRows_rsInvoices);
+$rsInvoices = mysql_query($query_limit_rsInvoices, $Assessment) or die(mysql_error());
+$row_rsInvoices = mysql_fetch_assoc($rsInvoices);
+
+if (isset($_GET['totalRows_rsInvoices'])) {
+  $totalRows_rsInvoices = $_GET['totalRows_rsInvoices'];
+} else {
+  $all_rsInvoices = mysql_query($query_rsInvoices);
+  $totalRows_rsInvoices = mysql_num_rows($all_rsInvoices);
+}
+$totalPages_rsInvoices = ceil($totalRows_rsInvoices/$maxRows_rsInvoices)-1;
+
+
+$query_rsAccess = sprintf("SELECT userkey, user_level FROM registrants WHERE userkey = %s AND user_level = 10", GetSQLValueString($userkey, "int"));
+$rsAccess = mysql_query($query_rsAccess, $Assessment) or die(mysql_error());
+$row_rsAccess = mysql_fetch_assoc($rsAccess);
+$totalRows_rsAccess = mysql_num_rows($rsAccess);
+
+
+
+
+
+$queryString_rsInvoices = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsInvoices") == false && 
+        stristr($param, "totalRows_rsInvoices") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsInvoices = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsInvoices = sprintf("&totalRows_rsInvoices=%d%s", $totalRows_rsInvoices, $queryString_rsInvoices);
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Balance detail</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../includes/formatNumber.js" type="text/javascript"></script>
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+<td valign="top"><h1>ASSESSMENT NUMBERS: <?php echo $row_rsProject['organization']; ?></h1>
+<p>Rate = <?php echo $row_rsProject['rate']; ?> | <a href="bulkcustinvoice.php?bulkcustomerkey=<?php echo $row_rsProject['bulkcustomerkey']; ?>&amp;username4students=<?php echo $row_rsProject['username4students']; ?>&amp;projectkey=<?php echo $row_rsProject['projectkey']; ?>">invoice <?php echo $row_rsProject['organization']; ?></a></p>
+<p>&nbsp;</p>
+<table border="0" cellpadding="4" cellspacing="0">
+<tr class="tablehead">
+            <td>Assessment</td>
+            <td width="70">Queued</td>
+            <td width="70">Finalized</td>
+      <td width="70">Invoiced</td>
+      </tr>
+      		
+      		<tr>
+          	<td width="130">LDMA</td>
+            <td width="70" align="right"><?php echo ($row_rsCountLDMA['completed'] > 0 ? $row_rsCountLDMA['completed'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountLDMA['finalized'] > 0 ? $row_rsCountLDMA['finalized'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountInvoiced['ldmatotal'] > 0 ? $row_rsCountInvoiced['ldmatotal'] : 0); ?></td>
+          </tr>
+          <tr>
+          	<td>LDMA 2.0</td>
+            <td align="right"><?php echo ($row_rsLaCounts['ldma_queued'] > 0 ? $row_rsLaCounts['ldma_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['ldma_finalized'] > 0 ? $row_rsLaCounts['ldma_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['ldma2'] > 0 ? $row_rsCountInvoiced['ldma2'] : 0); ?></td>
+          </tr>
+          <tr>
+          	<td>LDMA Journal</td>
+            <td align="right"><?php echo ($row_rsLaCounts['ldmaj_queued'] > 0 ? $row_rsLaCounts['ldmaj_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['ldmaj_finalized'] > 0 ? $row_rsLaCounts['ldmaj_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['ldma_journal2'] > 0 ? $row_rsCountInvoiced['ldma_journal2'] : 0); ?></td>
+          </tr>
+          
+          <tr>
+          	<td width="130">LLRA</td>
+            <td width="70" align="right"><?php echo ($row_rsCountLLRA['completed'] > 0 ? $row_rsCountLLRA['completed'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountLLRA['finalized'] > 0 ? $row_rsCountLLRA['finalized'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountInvoiced['llratotal'] > 0 ? $row_rsCountInvoiced['llratotal'] : 0); ?></td>
+          </tr>
+          <!--<tr>
+          	<td>LLRA 2.0</td>
+            <td align="right"><?php echo ($row_rsLaCounts['llra_queued'] > 0 ? $row_rsLaCounts['llra_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['llra_finalized'] > 0 ? $row_rsLaCounts['llra_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['llra2'] > 0 ? $row_rsCountInvoiced['llra2'] : 0); ?></td>
+          </tr>
+          <tr>
+          	<td>LLRA Journal</td>
+            <td align="right"><?php echo ($row_rsLaCounts['llraj_queued'] > 0 ? $row_rsLaCounts['llraj_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['llraj_finalized'] > 0 ? $row_rsLaCounts['llraj_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['llra_journal2'] > 0 ? $row_rsCountInvoiced['llra_journal2'] : 0); ?></td>
+          </tr>-->
+          
+          <tr>
+          	<td width="130">LERA</td>
+            <td width="70" align="right"><?php echo ($row_rsCountLERA['completed'] > 0 ? $row_rsCountLERA['completed'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountLERA['finalized'] > 0 ? $row_rsCountLERA['finalized'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountInvoiced['leratotal'] > 0 ? $row_rsCountInvoiced['leratotal'] : 0); ?></td>
+          </tr>
+          <!--<tr>
+          	<td>LERA 2.0</td>
+            <td align="right"><?php echo ($row_rsLaCounts['lera_queued'] > 0 ? $row_rsLaCounts['lera_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['lera_finalized'] > 0 ? $row_rsLaCounts['lera_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['lera2'] > 0 ? $row_rsCountInvoiced['lera2'] : 0); ?></td>
+          </tr>
+          <tr>
+          	<td>LERA Journal</td>
+            <td align="right"><?php echo ($row_rsLaCounts['leraj_queued'] > 0 ? $row_rsLaCounts['leraj_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['leraj_finalized'] > 0 ? $row_rsLaCounts['leraj_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['lera_journal2'] > 0 ? $row_rsCountInvoiced['lera_journal2'] : 0); ?></td>
+          </tr>-->
+          
+          <tr>
+          	<td width="130">LRJA</td>
+            <td width="70" align="right"><?php echo ($row_rsCountLRJA['completed'] > 0 ? $row_rsCountLRJA['completed'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountLRJA['finalized'] > 0 ? $row_rsCountLRJA['finalized'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountInvoiced['lrjatotal'] > 0 ? $row_rsCountInvoiced['lrjatotal'] : 0); ?></td>
+          </tr>
+          <!--<tr>
+          	<td>LRJA 2.0</td>
+            <td align="right"><?php echo ($row_rsLaCounts['lrja_queued'] > 0 ? $row_rsLaCounts['lrja_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['lrja_finalized'] > 0 ? $row_rsLaCounts['lrja_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['lrja2'] > 0 ? $row_rsCountInvoiced['lrja2'] : 0); ?></td>
+          </tr>
+          <tr>
+          	<td>LRJA Journal</td>
+            <td align="right"><?php echo ($row_rsLaCounts['lrjaj_queued'] > 0 ? $row_rsLaCounts['lrjaj_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['lrjaj_finalized'] > 0 ? $row_rsLaCounts['lrjaj_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['lrja_journal2'] > 0 ? $row_rsCountInvoiced['lrja_journal2'] : 0); ?></td>
+          </tr>-->
+          
+          <tr>
+          	<td width="130">LSUA</td>
+            <td width="70" align="right"><?php echo ($row_rsCountLSUA['completed'] > 0 ? $row_rsCountLSUA['completed'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountLSUA['finalized'] > 0 ? $row_rsCountLSUA['finalized'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountInvoiced['lsuatotal'] > 0 ? $row_rsCountInvoiced['lsuatotal'] : 0); ?></td>
+          </tr>
+          <tr>
+          	<td>LSUA 2.0</td>
+            <td align="right"><?php echo ($row_rsLaCounts['lsua_queued'] > 0 ? $row_rsLaCounts['lsua_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['lsua_finalized'] > 0 ? $row_rsLaCounts['lsua_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['lsua2'] > 0 ? $row_rsCountInvoiced['lsua2'] : 0); ?></td>
+          </tr>
+          <tr>
+          	<td>LSUA Journal</td>
+            <td align="right"><?php echo ($row_rsLaCounts['lsuaj_queued'] > 0 ? $row_rsLaCounts['lsuaj_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['lsuaj_finalized'] > 0 ? $row_rsLaCounts['lsuaj_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['lsua_journal2'] > 0 ? $row_rsCountInvoiced['lsua_journal2'] : 0); ?></td>
+          </tr>
+          
+          <tr>
+          	<td width="130">LIMA</td>
+            <td width="70" align="right"><?php echo ($row_rsCountLIMA['completed'] > 0 ? $row_rsCountLIMA['completed'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountLIMA['finalized'] > 0 ? $row_rsCountLIMA['finalized'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountInvoiced['limatotal'] > 0 ? $row_rsCountInvoiced['limatotal'] : 0); ?></td>
+          </tr>
+          <tr>
+          	<td>LIMA 2.0</td>
+            <td align="right"><?php echo ($row_rsLaCounts['lima_queued'] > 0 ? $row_rsLaCounts['lima_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['lima_finalized'] > 0 ? $row_rsLaCounts['lima_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['lima2'] > 0 ? $row_rsCountInvoiced['lima2'] : 0); ?></td>
+          </tr>
+          <tr>
+          	<td>LIMA Journal</td>
+            <td align="right"><?php echo ($row_rsLaCounts['limaj_queued'] > 0 ? $row_rsLaCounts['limaj_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['limaj_finalized'] > 0 ? $row_rsLaCounts['limaj_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['lima_journal2'] > 0 ? $row_rsCountInvoiced['lima_journal2'] : 0); ?></td>
+          </tr>
+          
+          <tr>
+          	<td width="130">LMBE</td>
+            <td width="70" align="right"><?php echo ($row_rsCountLMBE['completed'] > 0 ? $row_rsCountLMBE['completed'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountLMBE['finalized'] > 0 ? $row_rsCountLMBE['finalized'] : 0); ?></td>
+            <td width="70" align="right"><?php echo ($row_rsCountInvoiced['lmbetotal'] > 0 ? $row_rsCountInvoiced['lmbetotal'] : 0); ?></td>
+          </tr>
+          <tr>
+          	<td>LMBE 2.0</td>
+            <td align="right"><?php echo ($row_rsLaCounts['lmbe_queued'] > 0 ? $row_rsLaCounts['lmbe_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['lmbe_finalized'] > 0 ? $row_rsLaCounts['lmbe_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['lmbe2'] > 0 ? $row_rsCountInvoiced['lmbe2'] : 0); ?></td>
+          </tr>
+          <tr>
+          	<td>LMBE Journal</td>
+            <td align="right"><?php echo ($row_rsLaCounts['lmbej_queued'] > 0 ? $row_rsLaCounts['lmbej_queued'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsLaCounts['lmbej_finalized'] > 0 ? $row_rsLaCounts['lmbej_finalized'] : 0); ?></td>
+            <td align="right"><?php echo ($row_rsCountInvoiced['lmbe_journal2'] > 0 ? $row_rsCountInvoiced['lmbe_journal2'] : 0); ?></td>
+          </tr>
+          
+    </table>
+    
+    
+    
+
+<p>&nbsp;</p>
+    <h2>INVOICES</h2>
+    <p class="copyright">Record <?php echo ($startRow_rsInvoices + 1) ?> &nbsp;to <?php echo min($startRow_rsInvoices + $maxRows_rsInvoices, $totalRows_rsInvoices) ?>&nbsp;of <?php echo $totalRows_rsInvoices ?>&nbsp;&nbsp;
+      <?php //$TFM_navLinks
+if ($pageNum_rsInvoices > 0) {
+  printf('<a href="'."%s?pageNum_rsInvoices=%d%s", $currentPage, 0, $queryString_rsInvoices.'">First</a>');
+}else{
+  echo "First";
+}
+echo " | ";
+if ($pageNum_rsInvoices > 0) {
+  printf('<a href="'."%s?pageNum_rsInvoices=%d%s", $currentPage, max(0, $pageNum_rsInvoices - 1), $queryString_rsInvoices.'">Previous</a>');
+}else{
+  echo "Previous";
+}
+echo " | ";
+if ($pageNum_rsInvoices < $totalPages_rsInvoices) { 
+  printf('<a href="'."%s?pageNum_rsInvoices=%d%s", $currentPage, $pageNum_rsInvoices + 1, $queryString_rsInvoices.'">Next</a>');
+}else{
+  echo "Next";
+}
+echo " | ";
+if ($pageNum_rsInvoices < $totalPages_rsInvoices) { 
+  printf('<a href="'."%s?pageNum_rsInvoices=%d%s", $currentPage, $totalPages_rsInvoices, $queryString_rsInvoices.'">Last</a>');
+}else{
+  echo "Last";
+}
+?>
+    </p>
+    <table width="400"  border="0" cellpadding="4" cellspacing="0">
+          <tr class="tablehead">
+            <td>Number</td>
+            <td>Date</td>
+            <!--<td>Assessment counts</td>
+            <td>LDMA</td>
+            <td>LERA</td>
+            <td>LIMA</td>
+            <td>LLRA</td>
+            <td>LRJA</td>
+            <td>LSUA</td>-->
+            <td>Edit</td>
+          </tr>
+          <?php do { ?>
+          <tr>
+            <td><div align="center"><?php echo $row_rsInvoices['invoicenumber']; ?></div></td>
+            <td><?php echo $row_rsInvoices['date']; ?></td>
+            
+            <!--<td><div align="center">LDMA (5), LDMA 2.0 (1)</div></td>
+            <td><div align="center"><?php echo $row_rsInvoices['ldmanumber']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsInvoices['leranumber']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsInvoices['limanumber']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsInvoices['llranumber']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsInvoices['lrjanumber']; ?></div></td>
+            <td><div align="center"><?php echo $row_rsInvoices['lsuanumber']; ?></div></td>-->
+            <td><div align="center"><a href="bulkcustinvoice.php?bulkcustomerinvoicekey=<?php echo $row_rsInvoices['bulkcustomerinvoicekey']; ?>&bulkcustomerkey=<?php echo $row_rsInvoices['bulkcustomerkey']; ?>">edit</a></div></td>
+          </tr>
+          <?php } while ($row_rsInvoices = mysql_fetch_assoc($rsInvoices)); ?>
+    </table>
+        <p>&nbsp;</p>
+<p>&nbsp;</p>
+    <p>&nbsp;</p></td>
+      <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+
+
+?>

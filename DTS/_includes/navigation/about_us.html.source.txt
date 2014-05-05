@@ -1,0 +1,12 @@
+About</a></p>
+        <p><a href="/landing.php">Select</a></p>
+        <p><a href="/_about/mission.php">Mission</a></p>
+        <p><a href="/_about/articles.php">Literature</a></p>
+        <p><a href="/_about/legal.php">Legal</a></p>
+        <p><a href="http://discotest.org/index_discotest.html">DiscoTest™</a>        </p>
+        <p><a href="/_about/work_with_us.php">Jobs and internships</a></p>
+        <p><a href="/_about/bios.php?type=client">Our clients</a></p>
+        <p><a href="/_about/bios.php?type=board">Executive Board</a></p>
+        <p><a href="/_about/bios.php?type=advisor">Advisory Board</a></p>
+        <p><a href="http://theodawson.net/?page_id=2">FAQ</a></p>
+        <p>&nbsp;</p>

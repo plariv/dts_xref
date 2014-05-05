@@ -1,0 +1,521 @@
+<?php 
+require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" );
+include_once ("../includes/general_custom_functions.php");
+
+mysql_select_db($database_Assessment, $Assessment);
+
+// restrict access if not logged in
+if (!WA_Auth_RulePasses("Logged in as coder")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+$userkey = $_SESSION['log_userkey'];
+
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_name = str_replace("_", " ", $_SESSION['instrument_id']);
+$instrument_id_base = str_replace("_JOURNAL", "", $_SESSION['instrument_id']);
+
+$lakey = $_GET['lakey'];
+
+
+
+
+// decide whether to read / write with the normal codes table or the 2nd-coder table.
+// also decide whether you have a right to make edits on this page. If not, the controls are grayed out. By DEFAULT, 1st- and 2nd-scorers as well as 1st-coder are allowed to edit the page. But if no selections have been made, then any coder may edit.
+
+// Figure out which coder you are, and which coding table you should be writing to.
+// Whether you can edit these codes, and which page you are sent to, also varies by coder role.
+$coder = 0;
+if (isset($_GET['coder'])) { $coder = SQLstr($_GET['coder'], "int"); }
+if (isset($_GET['scorer_no'])) { $coder = 1; }
+
+// The codes on this page are always read from / saved to la_codes.
+$table = "la_codes";
+$allowed_to_edit = false;
+$updateGoTo = "";
+// If this is a journal entry, you shouldn't be sent to the strengths page. 
+if ($coder == 1 AND !strpos($instrument_id, "JOURNAL")) { $updateGoTo = "code_strengths.php"; } 
+else { $updateGoTo = "code_argumentation.php"; }
+if ($coder == 1) { $allowed_to_edit = true; }
+
+// For trainee coders (where a lacodeskey is specified), target the training table and allow coding.
+$sql_lacodeskey = "";
+if (isset($_GET['lacodeskey'])) { 
+	$sql_lacodeskey = sprintf(" AND lacodeskey = %s ", SQLstr($_GET['lacodeskey'])); 
+	$table = "la_codes_4";
+	$allowed_to_edit = true; 
+}  
+
+
+
+// Recordset: la_codes table
+$query_rsLaCodes = sprintf("SELECT d.coded_1, d.coded_2, d.coded_3, codercomment, code_recommend, 
+		code407, code408, code409, code410, code411, code412, code413, code414 
+	FROM {$table} c JOIN la_data d ON c.lakey = d.lakey
+	WHERE c.lakey = %s {$sql_lacodeskey}", 
+		SQLstr($lakey, "int"));
+$rsLaCodes = mysql_query($query_rsLaCodes, $Assessment) or die(mysql_error());
+$row_rsLaCodes = mysql_fetch_assoc($rsLaCodes);
+$totalRows_rsLaCodes = mysql_num_rows($rsLaCodes);
+
+// If codes 407 or 408 are NULL or 0, then the viewer automatically has permission to set them.
+if ($row_rsLaCodes['code407'] + $row_rsLaCodes['code408'] < 1) { 
+	$allowed_to_edit = true;
+}
+
+
+
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+
+//	             //////////////////////////////////////////////////////////////
+//  SQL UPDATE COMMAND
+//	             //////////////////////////////////////////////////////////////
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+	
+	$codercomment = str_replace(array("\r\n", "\n", "\r", "\t"), "   ---   ", $_POST['codercomment']);
+	$code_recommend = str_replace(array("\r\n", "\n", "\r", "\t"), "   ---   ", $_POST['code_recommend']);
+	
+  $updateSQL = sprintf("UPDATE {$table} SET code407=%s, code408=%s, code409=%s, code410=%s, 
+		code411=%s, code412=%s, code413=%s, code414=%s, 
+		codercomment=%s, code_recommend=%s  
+	WHERE lakey = %s {$sql_lacodeskey}",
+				 SQLstr($_POST['dm_second_solution'], "int"),
+				 SQLstr($_POST['dm_detected_tension'], "int"),
+				 SQLstr(isset($_POST['dm_process_canned']) ? $_POST['dm_process_canned'] : "", "int"),
+				 SQLstr(isset($_POST['dm_decision_before']) ? $_POST['dm_decision_before'] : "", "int"),
+				 SQLstr(isset($_POST['dm_answer_first']) ? $_POST['dm_answer_first'] : "", "int"),
+				 SQLstr(isset($_POST['dm_compare_risks_3_4']) ? $_POST['dm_compare_risks_3_4'] : "", "int"),
+				 SQLstr($_POST['dm_described_process_relation'], "int"),
+				 SQLstr($_POST['dm_is_process'], "int"),
+				 SQLstr($codercomment, "text"),
+				 SQLstr($code_recommend, "text"),
+				 SQLstr($lakey, "int"));
+	if ($_POST['dm_second_solution'] > 0 AND $allowed_to_edit) { 
+  	$Result1 = mysql_query($updateSQL, $Assessment) or die("ERROR saving LDMA quality codes: ".mysql_error());
+	}
+
+
+
+	// Different coding / scoring roles should be sent either to their confidence pages, or to the strengths page. The updateGoTo page is defined above along with the roles.
+	// $updateGoTo = "code_strengths.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));	
+	
+	
+}
+
+
+
+
+
+
+//              //////////////////////////////////////////////////////////////
+//	RECORDSETS
+//	            //////////////////////////////////////////////////////////////
+
+
+//	Recordset: la_data
+$query_rsLaData = sprintf("SELECT dilemmakey, probe01, probe02, probe03, probe04, probe05, probe06, probe07 FROM la_data WHERE lakey = %s", SQLstr($lakey, "int"));
+$rsLaData = mysql_query($query_rsLaData, $Assessment) or die(mysql_error());
+$row_rsLaData = mysql_fetch_assoc($rsLaData);
+$totalRows_rsLaData = mysql_num_rows($rsLaData);
+
+
+$query_rsLaCodeDescriptions = sprintf("SELECT code_name407, code_name408, code_name409, code_name410, code_name411, code_name412, code_name413, code_name414
+FROM la_code_descriptions WHERE instrument_id = %s", 
+		SQLstr($instrument_id_base, "text"));
+$rsLaCodeDescriptions = mysql_query($query_rsLaCodeDescriptions, $Assessment) or die(mysql_error());
+$row_rsLaCodeDescriptions = mysql_fetch_assoc($rsLaCodeDescriptions);
+$totalRows_rsLaCodeDescriptions = mysql_num_rows($rsLaCodeDescriptions);
+
+
+// Recordset: la_code_menus
+$query_rsLaCodeMenus = "SELECT pulldownkey, 
+dm_second_solution, dm_detected_tension, dm_described_process_relation, dm_is_process 
+FROM la_code_menus";
+$rsLaCodeMenus = mysql_query($query_rsLaCodeMenus, $Assessment) or die(mysql_error());
+$row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+$totalRows_rsLaCodeMenus = mysql_num_rows($rsLaCodeMenus);
+
+
+
+
+// topher($query_rsLaCodes);
+
+
+
+
+// Recordset: la_probes
+$query_rsLaProbes = sprintf("SELECT probe_number, probe_name FROM la_probes WHERE instrument_id = %s", 
+		SQLstr($instrument_id_base, "text"));
+$rsLaProbes = mysql_query($query_rsLaProbes, $Assessment) or die(mysql_error());
+$row_rsLaProbes = mysql_fetch_assoc($rsLaProbes);
+$totalRows_rsLaProbes = mysql_num_rows($rsLaProbes);
+
+
+$query_rsLaDilemmas = sprintf("SELECT dilemma_name, dilemma FROM la_dilemmas WHERE dilemmakey = %s", SQLstr($row_rsLaData['dilemmakey'], "int"));
+$rsLaDilemmas = mysql_query($query_rsLaDilemmas, $Assessment) or die(mysql_error());
+$row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas);
+$totalRows_rsLaDilemmas = mysql_num_rows($rsLaDilemmas);
+
+
+$query_rsLaBoilerplate = sprintf("SELECT la_boilerplate_text FROM la_boilerplate WHERE name = %s", 
+		SQLstr("LDMA", "text"),
+		SQLstr("coders_definitions", "text"));
+$rsLaBoilerplate = mysql_query($query_rsLaBoilerplate, $Assessment) or die(mysql_error());
+$row_rsLaBoilerplate = mysql_fetch_assoc($rsLaBoilerplate);
+$totalRows_rsLaBoilerplate = mysql_num_rows($rsLaBoilerplate);
+
+
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Coding LDMA quality of decision-making</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><?php include 'code_quickmenu.php'; ?><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>CODE <?php echo $instrument_id_name; ?> #<?php echo $lakey; ?> - QUALITY OF DM</h1>
+    <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">The dilemma text (<?php echo $row_rsLaDilemmas['dilemma_name']; ?>)</div>
+      <div class="CollapsiblePanelContent"><p><?php echo $row_rsLaDilemmas['dilemma']; ?></p></div>
+    </div>
+    
+    <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">Definitions</div>
+      <div class="CollapsiblePanelContent">
+        <?php echo $row_rsLaBoilerplate['la_boilerplate_text']; ?>
+      </div>
+    </div>
+    <div id="CollapsiblePanel4" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">Incomplete decision-making process vs. course of action</div>
+      <div class="CollapsiblePanelContent">
+        <h3> Incomplete decision making process</h3>
+        <p>This is an example of an incomplete decision making process that only includes information gathering, however it still qualifies as a decision making process, because the information gathering is intended to inform the final decision.</p>
+        <p><strong>From #100592</strong>: <strong>Probe 5, Decision making process</strong><u></u></p>
+        <ol>
+          <li><em>Understand the stakeholders and what is important to them: you need to make sure you have enough background information on why they may be making the decisions they are making and what they are expecting to get out of something to be able to work through next steps.&nbsp;</em></li>
+          <li><em>Understand the root cause of the issues: it is important to understand exactly what is causing the problem - what is making that a &quot;problem&quot; to determine where to focus, or what options you might have to overcome the obstacle.&nbsp;</em></li>
+          <li><em>Common understanding: by making sure that all parties are provided with the same information and have a common understanding of the what is important, what the expected outcomes are, what are the root cause issues, it them puts everyone on a level playing field to discuss the issues.&nbsp;</em></li>
+          <li><em>Informed: make sure that all parties involved are also aware of the information being provided to others about the issue, so that when approached, they can provide a united front.</em></li>
+        </ol>
+        <h3>Course of action</h3>
+        <p>This is an example of an incomplete decision making process that only includes information gathering, however it does not quality as a decision making process, because the information gathering is not intended to inform the final decision. Rather, it is done in order to implement a decision that has already been made. </p>
+        <p><strong>From #100686: Probe 5, Decision making process</strong>&nbsp;<u></u></p>
+        <ol>
+          <li><em>Clearly know what topic you are meeting to discuss. This will ensure that you are the correct individual to meet with the Council member. Is the topic within your authority and responsibility?</em></li>
+          <li><em>Discuss with my General Manager in case she has already met on this same issue and ensure that we have the Department/Corporate messaging correct. This will also ensure we are not at odds and an opportunity to get some pointers. Basically keeping those that need to know in the loop.</em></li>
+          <li><em>Review the topic and have all the facts; you can never be too prepared. Review the topic with your subject matter expert as a trial run. Practice makes perfect. This process is no different that responding to a written information report; you are just delivering the facts differently.</em></li>
+          <li><em>You want to meet to keep communication open but you also want to be cautious to ensure that accountability is in place as well.</em></li>
+          <li><em>Building relationships is important at all levels.</em></li>
+        </ol>
+      </div>
+    </div>
+    <div id="CollapsiblePanel1" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">TEST-TAKER RESPONSES</div>
+      <div class="CollapsiblePanelContent">
+      	<?php 
+					do {
+						echo "<h3>Probe ".$row_rsLaProbes['probe_number'].": ".$row_rsLaProbes['probe_name']."</h3>";
+						echo "<p>";
+						// Output the la_data interview text for the corresponding probe!
+						echo str_replace("\n", "<br>", $row_rsLaData['probe'.$row_rsLaProbes['probe_number']]);
+						echo "</p>";
+					} while ($row_rsLaProbes = mysql_fetch_assoc($rsLaProbes));
+				?>
+      </div>
+    </div>
+    <!-- The two above collapsible panels are fine to stay on this page - just copied wholesale from the prior page. -->
+    <form id="form1" name="form1" method="POST" action="<?php echo $editFormAction; ?>">
+      <table border="0" class="tablenoborders">
+        <tr>
+        <td width="300" scope="col">&nbsp;</td>
+        <td scope="col"><div align="right">
+          <input name="SUBMIT2" type="submit" value="SUBMIT" />
+        </div></td>
+      </tr>
+        
+    <!-- DM: the quality of the 2nd solution offered -->
+    <tr>
+      <td width="300"><?php echo $row_rsLaCodeDescriptions['code_name407']; ?><span class="red">*</span></td>
+      <td><span id="spryselect3">
+        <select name="dm_second_solution" class="pulldown_width_450" id="dm_second_solution" <?php
+					if (!$allowed_to_edit) { ?>disabled="disabled"<?php } ?>>
+          <option value="" <?php if (!(strcmp("", $row_rsLaCodeDescriptions['code_name407']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+          <?php
+		do {  
+			if ($row_rsLaCodeMenus['dm_second_solution'] <> "") { 
+			?>
+          <option value="<?php echo $row_rsLaCodeMenus['pulldownkey']?>"<?php if (!(strcmp($row_rsLaCodeMenus['pulldownkey'], $row_rsLaCodes['code407']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaCodeMenus['dm_second_solution']?></option>
+          <?php
+		}} while ($row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus));
+			$rows = mysql_num_rows($rsLaCodeMenus);
+			if($rows > 0) {
+					mysql_data_seek($rsLaCodeMenus, 0);
+				$row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+			}
+		?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td width="300"><?php echo $row_rsLaCodeDescriptions['code_name408']; ?><span class="red">*</span></td>
+      <td><span id="spryselect4">
+        <select name="dm_detected_tension" class="pulldown_width_450" id="dm_detected_tension" <?php
+					if (!$allowed_to_edit) { ?>disabled="disabled"<?php } ?>>
+          <option value="" <?php if (!(strcmp("", $row_rsLaCodes['code408']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+          <?php
+		do {  
+			if ($row_rsLaCodeMenus['dm_detected_tension'] <> "") { 
+			?>
+          <option value="<?php echo $row_rsLaCodeMenus['pulldownkey']?>"<?php if (!(strcmp($row_rsLaCodeMenus['pulldownkey'], $row_rsLaCodes['code408']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaCodeMenus['dm_detected_tension']?></option>
+          <?php
+		}} while ($row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus));
+			$rows = mysql_num_rows($rsLaCodeMenus);
+			if($rows > 0) {
+					mysql_data_seek($rsLaCodeMenus, 0);
+				$row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+			}
+		?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    
+    <tr>
+      <td width="300"><?php echo $row_rsLaCodeDescriptions['code_name409']; ?><span class="red">*</span></td>
+      <td>
+      	<input <?php if (!(strcmp($row_rsLaCodes['code409'],1))) {echo "checked=\"checked\"";} ?> name="dm_process_canned" type="checkbox" value="1" <?php
+					if (!$allowed_to_edit) { ?>disabled="disabled"<?php } ?> />
+      </td>
+    </tr>
+    
+    <!-- makes a decision before asking what the desired outcome should be -->
+    <tr>
+      <td width="300"><?php echo $row_rsLaCodeDescriptions['code_name410']; ?><span class="red">*</span></td>
+      <td>
+      	<input <?php if (!(strcmp($row_rsLaCodes['code410'],1))) {echo "checked=\"checked\"";} ?> name="dm_decision_before" type="checkbox" value="1" <?php
+					if (!$allowed_to_edit) { ?>disabled="disabled"<?php } ?> />
+      </td>
+    </tr>
+    
+    <!-- provides an answer in the first response -->
+    <tr>
+      <td width="300"><?php echo $row_rsLaCodeDescriptions['code_name411']; ?><span class="red">*</span></td>
+      <td>
+      	<input <?php if (!(strcmp($row_rsLaCodes['code411'],1))) {echo "checked=\"checked\"";} ?> name="dm_answer_first" type="checkbox" value="1" <?php
+					if (!$allowed_to_edit) { ?>disabled="disabled"<?php } ?> />
+      </td>
+    </tr>
+    
+    <!-- compares the potential risks and benefits of the response to probe 4 with probe 3 -->
+    <tr>
+      <td width="300"><?php echo $row_rsLaCodeDescriptions['code_name412']; ?><span class="red">*</span></td>
+      <td>
+      	<input <?php if (!(strcmp($row_rsLaCodes['code412'],1))) {echo "checked=\"checked\"";} ?> name="dm_compare_risks_3_4" type="checkbox" value="1" <?php
+					if (!$allowed_to_edit) { ?>disabled="disabled"<?php } ?> />
+      </td>
+    </tr>
+    
+    <!-- degree to which the DM process in essay 5 reflects the process employed in essays 1-4 -->
+    <tr>
+      <td width="300"><?php echo $row_rsLaCodeDescriptions['code_name413']; ?><span class="red">*</span></td>
+      <td><span id="spryselect5">
+        <select name="dm_described_process_relation" class="pulldown_width_450" 
+        	id="dm_described_process_relation" <?php
+					if (!$allowed_to_edit AND $row_rsLaCodes['code413'] > 0) { ?>disabled="disabled"<?php } ?>>
+          <option value="" <?php if (!(strcmp("", $row_rsLaCodes['code413']))) 
+						{echo "selected=\"selected\"";} ?>>- select one -</option>
+          <?php
+				do {  
+					if ($row_rsLaCodeMenus['dm_described_process_relation'] <> "") { 
+					?>
+							<option value="<?php echo $row_rsLaCodeMenus['pulldownkey']?>"<?php 
+							if (!(strcmp($row_rsLaCodeMenus['pulldownkey'], $row_rsLaCodes['code413']))) 
+								{echo "selected=\"selected\"";} 
+								?>><?php echo $row_rsLaCodeMenus['dm_described_process_relation']?></option>
+							<?php
+				}} while ($row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus));
+				$rows = mysql_num_rows($rsLaCodeMenus);
+				if($rows > 0) {
+						mysql_data_seek($rsLaCodeMenus, 0);
+					$row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+				}
+				?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    
+    <tr>
+    	<td width="300"><?php echo $row_rsLaCodeDescriptions['code_name414']; ?><span class="red">*</span></td>
+      <td><span id="spryselect">
+      <select name="dm_is_process" class="pulldown_width_450" id="dm_is_process" <?php
+					if (!$allowed_to_edit AND $row_rsLaCodes['code414'] > 0) { ?>disabled="disabled"<?php } ?>>
+        <option value="" <?php if (!(strcmp("", $row_rsLaCodes['code414']))) 
+						{echo "selected=\"selected\"";} ?>>- select one -</option>
+        <?php
+				do {  
+					if ($row_rsLaCodeMenus['dm_is_process'] <> "") { 
+					?>
+        <option value="<?php echo $row_rsLaCodeMenus['pulldownkey']?>"<?php 
+							if (!(strcmp($row_rsLaCodeMenus['pulldownkey'], $row_rsLaCodes['code414']))) 
+								{echo "selected=\"selected\"";} 
+								?>><?php echo $row_rsLaCodeMenus['dm_is_process']?></option>
+        <?php
+				}} while ($row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus));
+				$rows = mysql_num_rows($rsLaCodeMenus);
+				if($rows > 0) {
+						mysql_data_seek($rsLaCodeMenus, 0);
+					$row_rsLaCodeMenus = mysql_fetch_assoc($rsLaCodeMenus);
+				}
+				?>
+      </select>
+      <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    
+    <tr>
+    	<td width="300">&nbsp;</td>
+    </tr>
+   
+  <tr>
+    <td width="300" scope="col">Suggestions for new / changed codes: (Press ENTER to separate different suggestions.)</td>
+    <td scope="col"><textarea name="code_recommend" cols="45" rows="5" class="textarea080_450" id="code_recommend"><?php echo $row_rsLaCodes['code_recommend']; ?></textarea></td>
+  </tr>
+  <tr>
+    <td width="300" scope="col">Coder comments about the performance:</td>
+    <td scope="col"><textarea name="codercomment" cols="45" rows="5" class="textarea080_450" id="codercomment"><?php echo $row_rsLaCodes['codercomment']; ?></textarea></td>
+  </tr>
+  <tr>
+    <td width="300" scope="col">&nbsp;</td>
+    <td scope="col"><div align="right">
+      <input name="SUBMIT" type="submit" value="SUBMIT" />
+    </div></td>
+  </tr>
+</table>
+<input type="hidden" name="MM_update" value="form1" />
+    </form>
+    <p>&nbsp;</p>
+
+
+  <script type="text/javascript">
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"]});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"]});
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {validateOn:["blur", "change"]});
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel4 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel4");
+var spryselect = new Spry.Widget.ValidationSelect("spryselect", {validateOn:["blur", "change"]});
+  </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+
+
+<?php
+mysql_free_result($rsLaData);
+mysql_free_result($rsLaCodeDescriptions);
+mysql_free_result($rsLaCodeMenus);
+mysql_free_result($rsLaCodes);
+mysql_free_result($rsLaProbes);
+mysql_free_result($rsLaDilemmas);
+?>

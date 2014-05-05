@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ldmadilemmas>
+<ldmatopic name="office reorganization">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>You have been a manager in one of the most technically savvy and productive offices in the company for the last three years. Almost 80% of the employees have at least Masters degrees and many have doctoral degrees in engineering or computer science. This has been much easier than your last management position, because here you have such great respect for the ability and drive of your employees. When your supervisor retired 3 months ago, the senior leadership team decided to replace her with an executive hired from outside the company. The individual that was finally selected after a lengthy interview process has only been on the job for 1 week and is already stirring things up. After his first walk-through of the spaces, essentially a large cubicle farm, he announced that he was going to redesign the space to "open things up" and encourage greater collaboration and exchange of ideas among members of the group. You have been presented with a drawing of how the space will be reconfigured and a very aggressive time-line for the work, both of which you share with your employees. This normally quiet, reserved group is visibly outraged. How can they be expected to do highly technical work without the quiet and privacy of their cubicles? What's wrong with using a conference room when collaboration is called for? They are looking to you to stand up for them.</p>
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="chain of command">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>You are responsible for one of the most creative organizations in a multinational corporation. You notice that your superior's calendar indicates that she is meeting with one of your direct reports next week and that the employee scheduled the meeting. You pride yourself on being approachable and easily accessible to your direct reports, but over the last several months, you have been blindsided on several occasions by your supervisor's tendency to deal directly with your employees on her favorite projects.</p>
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="trust and dependence">
+	<ldmadilemma>	
+		<![CDATA[  
+		<p>Your office has become extremely dependent on its sole contracting expert.  If she left, you know that it would be nearly impossible to replace her, and your organization would be in serious trouble.  You have insider information that senior management believes that she is not promotable.  You were in a meeting where this was discussed and it was made very clear that this information was "not to leave the room."  The contracting person trusts you and comes to you for career advice.</p>
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="funding issue">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>The senior management of your office fought a long, difficult battle to receive funding for a multi-million dollar project.  Several months into the project, the technical director has come to believe that the project is not feasible and should be terminated. The engineers working the project are growing increasingly frustrated at having missed every single project milestone so far, yet senior management is saying, “we fought hard to get this opportunity - make it work.”  Your office receives a request from the funder for a status report on the project and you are responsible for preparing the report.</p>		
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="employee conflict">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>Over the last 6 months in your new organization, you have come to see that several of the people you manage are extraordinarily productive&mdash;clearly your top performers&mdash;but several appear to be retired in place. At your last meeting with your direct reports, one person observed that you didn’t seem to treat everyone fairly, and several others chimed in with supportive comments. They brought up the example that if one of your “favorites” took a two-hour lunch, you wouldn’t seem to notice; but if one of your “less favorites” took a one-hour lunch, you’d comment on it.</p>
+		]]>
+		</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="superstar">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>You have just had a one-on-one with the technical superstar of your organization to go over his 360 results. As usual, some of his numbers are in the stratosphere reflecting his hard charging, take-no-prisoners approach to work. His high energy and intelligence have helped the division to become one of the most productive in the organization. However, some of his numbers&mdash;especially those related to his interpersonal skills&mdash;are much lower. You were totally taken by surprise when he asked you to consider him for an upcoming management position, so you told him you’d think about it and get back to him. You are concerned about his interpersonal skills; he has never been a particularly good team player because he prefers to be out in front of the pack. Also, the other employees are a little intimidated by him because he is so confident and capable and, you admit to yourself, on occasion a little arrogant and impatient. You are feeling overwhelmed by all the factors to consider in this decision: the obvious sincerity of this individual in wanting a new challenge, his track record of bringing in numerous home runs for your organization, the potential downside of some of his personality traits, your hunch that maybe he could become a superstar manager if he put his mind to it, etc.</p>
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="law firm: gender preference">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>You are a managing partner in a major law firm. You have been asked to provide advice on a litigation case by ValuedClient who provide over $1m in revenue each year to the firm and are notoriously hard to please. You know of two people in your firm who might be able to do the work, which is not likely to be of sufficient scope to justify asking two people from the firm to work on it. John is a highly experienced lawyer, and has extensive experience with similar cases. Judith is young, clearly extremely competent, and has gained a good reputation from all the projects she has completed to date at a similar level of complexity (although she has never worked on a litigation case like this and is thus untested in that respect). As managing partner you have been involved in an effort to shift the culture of the firm to provide more opportunities for young women and you are keen to provide whatever opportunities you can for Judith as she clearly has great potential. On this basis you decide to assign the case to Judith. Two months later, just as Judith is finalizing discovery, you hear through the grapevine that the Managing Director of ValuedClient, Horace, is unhappy about a young woman working on the case and has been heard to say that your law firm has ‘gone a bit mad’ assigning a young woman to their account.  As far as you can tell Judith has been performing strongly and there is  no obvious reason to remove her from the case. On the other hand, you are worried that continuing on your current course might jeopardize the client relationship.</p>
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="health service: possible racism">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>You are a clinical leader in a major health service. You have been asked to assign one team-member to an important cross-disciplinary committee advising on a new policy and service framework that will directly impact upon your team's functioning well into the future. You know that successful membership of the committee is critical for the role and reputation of your team in the health service. You know of two people in your team who might be able to represent the team on the committee. Sarah has extensive experience working on similar committees, but she is somewhat over-committed at present. Trevor is a young, extremely competent recent immigrant from Iran who speaks impeccable English and has gained a good reputation for his clinical work, although he has never worked on a project like this. As clinical leader you have been in support of efforts to shift the culture of the health service to provide more opportunities for young professionals in leadership and strategic roles and you are keen to provide whatever opportunities you can for Trevor as he clearly has great potential. On this basis, you decide to assign the role to Trevor. Two months later, you hear through the grapevine that the chair of the committee, Harold, appears to be ignoring Trevor's input and has been heard to comment that you should have appointed someone more experienced and "better suited to communicating effectively" in the role. As far as you can tell, Trevor has some great ideas that might be helpful for the committee, and there is no obvious reason to remove him from the committee. On the other hand, you are worried that continuing on your current course might jeopardize your team's opportunity to contribute to this important committee.</p>
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="task assignment">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>You are a team-leader in your organization. Overall your team is performing well, however the range of abilities within your team varies widely. In particular, one member of your team, John, has world-class technical skills and a track record of producing superior work when working on his own. However, his people-skills appear not to be as developed as his technical skills. In your discussions with John, he often appears arrogant and dismissive of suggestions related to tasks within his area of expertise. And about every two or three months he is involved in a disagreement with one of the other team members that usually requires your intervention. About 3 months ago a team member (not one of the best) left the organization, citing difficulties working with John as the main reason. Yesterday John came to you suggesting that he be appointed as leader of an important new project ideally suited to his technical expertise. The project would involve approximately half of the team over a period of about six months, including some of the people with whom he has clashed in the past. If completed successfully, the project would make a substantial contribution to the organization. On the other hand, you sense that there is a significant risk that the project may flounder due to interpersonal problems and that this might have a devastating impact upon your team.</p>
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="maternity">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>As the manager of a recently downsized team, you are becoming increasingly concerned about your employees burning out. Your workload seems to be constantly increasing, yet it has been made very clear to you that you aren’t getting any more staff. One of your employees has just returned from 6 weeks of maternity leave and is in your office asking to work 4-day weeks because her highest priority has become spending more time with her baby. You agree to try it for 3 months since she is a new mother. Then she announces that because of the baby, she will have to leave promptly at 4:30 every afternoon to get to child care, she won’t be available for any [late meetings/shift-work], and she won’t be able to go on any out-of-town assignments. In the past, this kind of temporary arrangment has been considered acceptable, but in this case, most of the other employees in your team, who are either single or married with no children or older children, are likely to be very upset. They have already had to put in even more hours than usual for the last 6 weeks, and have been showing signs of exhaustion.</p>
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="senior management: strategy">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>You are the new CEO of a public corporation. It has come to your attention that there is a serious problem in one of the most high-tech and productive organizations in the company. Almost 80% of the employees in this organization have PhDs in engineering or computer science. Their current supervisor, Judith, reports that this group has been very easy to manage, partly because of their ability and drive. However, when her supervisor retired 3 months ago, the senior leadership team decided to replace him with an executive hired from outside the company. After the new supervisor's first walk-through of the workspace, essentially a large room full of cubicles, he announced that he was going to redesign the space to "open things up" and encourage greater collaboration and exchange of ideas among members of the group. Judith has been presented with a drawing of how the space will be reconfigured and a very aggressive time-line for the work, both of which she has shared with her employees. This normally quiet, reserved group is outraged. Several are asking, "How can the company support this kind of unilateral action?" And there are rumors that some are seeking work elsewhere.</p>
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="senior management: human resources">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>You are the new CEO of a recently downsized technology business. One of the high-level technical organiations, which has recently undergone substantial downsizing, is experiencing considerable internal conflict. Overall this team has been performing remarkably well under difficult circumstances, but the supervisor and his manager (who is a member of the sentor management team) are becoming increasingly concerned about employee burnout. Their workload is increasing, yet you are unable to provide them with any more staff. One of the employees has just returned from 6 weeks of maternity leave and has asked to work 4-day weeks because her highest priority has become spending more time with her baby. The supervisor agreed to try it for 3 months since she is a new mother. Then she announced that because of the baby, she will have to leave promptly at 4:30 every afternoon to get to child care, she won’t be available for any [late meetings/shift-work], and she won’t be able to go on any out-of-town assignments. In the past, this kind of temporary arrangment has been considered acceptable, but in this situation many of the other employees, who are either single or married with no children or older children, are outraged that they will be expected to take up the slack. The company does not have a written policy on this issue.</p>
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="school principal: teacher performance">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>You are the principal of a large inner-city high school. A very popular, highly qualified teacher with 15 years of service disagrees with the findings of a performance management review undertaken by your assistant principal. The assistant principal strongly defends the findings of the review, and insists that its findings should be entered into the teacher’s record. Since the No Child Left Behind Initiative was implemented, the teacher has been involved in a number of disputes with the school management, most of them related to changes in curricula. Although she is much loved by her students and has an excellent teaching record, she has been difficult to work with and the assistant principal feels that her behavior has been unacceptable.</p>
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="school principal: board member">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>You are the principal of a large public high school in a highly rated school district. Soon after being elected for the first time, a schoolboard member begins her tenure by criticising the procedures and systems of the board and your school. She makes direct contact with you, demands information from your office staff, and is disrespectful toward other members of the board.</p>
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+<ldmatopic name="pastor dilemma">
+	<ldmadilemma>
+		<![CDATA[  
+		<p>You have been the pastor of a growing church for some years. Over time you have introduced new practices which, in your view, are only minor changes to non-essential parts of the way you conduct worship and teaching. For example, you have allowed lay members to perform duties normally performed by clergy, have introduced worship practices not normally used in your denomination and have allowed non-Christians to lead some activities. Your congregation has responded very positively, worship is more lively, new members have joined and new areas of ministry have begun. Your congregation are saying that this is the way that the church should be: happy, caring and engaging. Then you are accused by a senior figure in the church hierarchy of teaching flawed doctrine and breaking rules about acceptable forms of worship by doing so. You are asked by your immediate superior to follow a more conventional set of teachings and practices. You suspect that others with more authority are involved. You believe that you are being asked to compromise some important beliefs and that this will harm the life of your church. You are particularly concerned that it will hurt the more disadvantaged within your church because it would reduce their sense of belonging by limiting opportunities for their participation and the appeal of the worship style.</p>
+		]]>
+	</ldmadilemma>
+</ldmatopic>
+</ldmadilemmas>
+

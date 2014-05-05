@@ -1,0 +1,1165 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['php_self'];
+if (isset($_SERVER['query_string'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['query_string']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE lerascores SET strength1=%s, strength2=%s, strength3=%s, caveat1=%s, caveat2=%s, recommendstrength=%s, recommendgrowth=%s, rating_justice_1=%s, rating_goodright_2=%s, rating_motives_3=%s, rating_ends_4=%s, rating_religious_5=%s, rating_secular_6=%s, rating_sensitivity_7=%s, rating_care_8=%s, rating_seek_9=%s, rating_take_10=%s, rating_goodperson_11=%s, rating_satisfied_12=%s, rating_happy_13=%s, rating_antisocial_14=%s, rating_social_15=%s, goodlife_total=%s, positive_total=%s, pos_neg_total=%s, negative_total=%s WHERE lerakey=%s",
+                       GetSQLValueString($_POST['strength1'], "text"),
+                       GetSQLValueString($_POST['strength2'], "text"),
+                       GetSQLValueString($_POST['strength3'], "text"),
+                       GetSQLValueString($_POST['caveat1'], "text"),
+                       GetSQLValueString($_POST['caveat2'], "text"),
+                       GetSQLValueString($_POST['recommendstrength'], "text"),
+                       GetSQLValueString($_POST['recommendgrowth'], "text"),
+                       GetSQLValueString($_POST['rating_justice_1'], "int"),
+                       GetSQLValueString($_POST['rating_goodright_2'], "int"),
+                       GetSQLValueString($_POST['rating_motives_3'], "int"),
+                       GetSQLValueString($_POST['rating_ends_4'], "int"),
+                       GetSQLValueString($_POST['rating_religious_5'], "int"),
+                       GetSQLValueString($_POST['rating_secular_6'], "int"),
+                       GetSQLValueString($_POST['rating_sensitivity_7'], "int"),
+                       GetSQLValueString($_POST['rating_care_8'], "int"),
+                       GetSQLValueString($_POST['rating_seek_9'], "int"),
+                       GetSQLValueString($_POST['rating_take_10'], "int"),
+                       GetSQLValueString($_POST['rating_goodperson_11'], "int"),
+                       GetSQLValueString($_POST['rating_satisfied_12'], "int"),
+                       GetSQLValueString($_POST['rating_happy_13'], "int"),
+                       GetSQLValueString($_POST['rating_antisocial_14'], "int"),
+                       GetSQLValueString($_POST['rating_social_15'], "int"),
+                       GetSQLValueString($_POST['goodlife_total'], "int"),
+                       GetSQLValueString($_POST['positive_total'], "int"),
+                       GetSQLValueString($_POST['pos_neg_total'], "int"),
+                       GetSQLValueString($_POST['negative_total'], "int"),
+                       GetSQLValueString($_POST['lerakey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "lerascoring4.php";
+  if (isset($_SERVER['query_string'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['query_string'];
+  }
+  header(sprintf("location: %s", $updateGoTo));
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_15 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 15";
+$rsRatingTopic_15 = mysql_query($query_rsRatingTopic_15, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_15 = mysql_fetch_assoc($rsRatingTopic_15);
+$totalRows_rsRatingTopic_15 = mysql_num_rows($rsRatingTopic_15);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_14 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 14";
+$rsRatingTopic_14 = mysql_query($query_rsRatingTopic_14, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_14 = mysql_fetch_assoc($rsRatingTopic_14);
+$totalRows_rsRatingTopic_14 = mysql_num_rows($rsRatingTopic_14);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_13 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 13";
+$rsRatingTopic_13 = mysql_query($query_rsRatingTopic_13, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_13 = mysql_fetch_assoc($rsRatingTopic_13);
+$totalRows_rsRatingTopic_13 = mysql_num_rows($rsRatingTopic_13);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_12 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 12";
+$rsRatingTopic_12 = mysql_query($query_rsRatingTopic_12, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_12 = mysql_fetch_assoc($rsRatingTopic_12);
+$totalRows_rsRatingTopic_12 = mysql_num_rows($rsRatingTopic_12);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_11 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 11";
+$rsRatingTopic_11 = mysql_query($query_rsRatingTopic_11, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_11 = mysql_fetch_assoc($rsRatingTopic_11);
+$totalRows_rsRatingTopic_11 = mysql_num_rows($rsRatingTopic_11);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_10 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 10";
+$rsRatingTopic_10 = mysql_query($query_rsRatingTopic_10, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_10 = mysql_fetch_assoc($rsRatingTopic_10);
+$totalRows_rsRatingTopic_10 = mysql_num_rows($rsRatingTopic_10);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_9 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 9";
+$rsRatingTopic_9 = mysql_query($query_rsRatingTopic_9, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_9 = mysql_fetch_assoc($rsRatingTopic_9);
+$totalRows_rsRatingTopic_9 = mysql_num_rows($rsRatingTopic_9);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_8 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 8";
+$rsRatingTopic_8 = mysql_query($query_rsRatingTopic_8, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_8 = mysql_fetch_assoc($rsRatingTopic_8);
+$totalRows_rsRatingTopic_8 = mysql_num_rows($rsRatingTopic_8);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_7 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 7";
+$rsRatingTopic_7 = mysql_query($query_rsRatingTopic_7, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_7 = mysql_fetch_assoc($rsRatingTopic_7);
+$totalRows_rsRatingTopic_7 = mysql_num_rows($rsRatingTopic_7);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_6 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 6";
+$rsRatingTopic_6 = mysql_query($query_rsRatingTopic_6, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_6 = mysql_fetch_assoc($rsRatingTopic_6);
+$totalRows_rsRatingTopic_6 = mysql_num_rows($rsRatingTopic_6);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_5 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 5";
+$rsRatingTopic_5 = mysql_query($query_rsRatingTopic_5, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_5 = mysql_fetch_assoc($rsRatingTopic_5);
+$totalRows_rsRatingTopic_5 = mysql_num_rows($rsRatingTopic_5);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_4 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 4";
+$rsRatingTopic_4 = mysql_query($query_rsRatingTopic_4, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_4 = mysql_fetch_assoc($rsRatingTopic_4);
+$totalRows_rsRatingTopic_4 = mysql_num_rows($rsRatingTopic_4);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_3 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 3";
+$rsRatingTopic_3 = mysql_query($query_rsRatingTopic_3, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_3 = mysql_fetch_assoc($rsRatingTopic_3);
+$totalRows_rsRatingTopic_3 = mysql_num_rows($rsRatingTopic_3);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_2 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 2";
+$rsRatingTopic_2 = mysql_query($query_rsRatingTopic_2, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_2 = mysql_fetch_assoc($rsRatingTopic_2);
+$totalRows_rsRatingTopic_2 = mysql_num_rows($rsRatingTopic_2);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatingTopic_1 = "SELECT * FROM leraratingtopics WHERE leraratingskey = 1";
+$rsRatingTopic_1 = mysql_query($query_rsRatingTopic_1, $Assessment) or die(mysql_error());
+$row_rsRatingTopic_1 = mysql_fetch_assoc($rsRatingTopic_1);
+$totalRows_rsRatingTopic_1 = mysql_num_rows($rsRatingTopic_1);
+
+$colname_rsStrength = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsStrength = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrength = sprintf("SELECT lerastrength.strengthkey, lerastrength.lasname, lerastrength.strengthname, lerascores.lerakey, lerascores.lasnumber_1 FROM lerastrength, lerascores WHERE lerastrength.lasname = lerascores.lasname AND lerascores.lerakey = %s ORDER BY lerastrength.strengthname asc", GetSQLValueString($colname_rsStrength, "int"));
+$rsStrength = mysql_query($query_rsStrength, $Assessment) or die(mysql_error());
+$row_rsStrength = mysql_fetch_assoc($rsStrength);
+$totalRows_rsStrength = mysql_num_rows($rsStrength);
+
+$colname_rsCaveat = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsCaveat = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCaveat = sprintf("SELECT leracaveat.caveatkey, leracaveat.lasname, leracaveat.caveatname, lerascores.lerakey, lerascores.lasnumber_1 FROM leracaveat, lerascores WHERE leracaveat.lasname = lerascores.lasname AND lerascores.lerakey = %s  ORDER BY leracaveat.caveatname asc", GetSQLValueString($colname_rsCaveat, "int"));
+$rsCaveat = mysql_query($query_rsCaveat, $Assessment) or die(mysql_error());
+$row_rsCaveat = mysql_fetch_assoc($rsCaveat);
+$totalRows_rsCaveat = mysql_num_rows($rsCaveat);
+
+$colname_rsRecommendStrength = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsRecommendStrength = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecommendStrength = sprintf("SELECT lerarecommendstrength.recommendstrengthkey, lerarecommendstrength.lasname, lerarecommendstrength.recommendstrengthname, lerascores.lerakey, lerascores.lasnumber_1 FROM lerarecommendstrength, lerascores WHERE lerarecommendstrength.lasname = lerascores.lasname AND lerascores.lerakey = %s ORDER BY lerarecommendstrength.recommendstrengthname asc", GetSQLValueString($colname_rsRecommendStrength, "int"));
+$rsRecommendStrength = mysql_query($query_rsRecommendStrength, $Assessment) or die(mysql_error());
+$row_rsRecommendStrength = mysql_fetch_assoc($rsRecommendStrength);
+$totalRows_rsRecommendStrength = mysql_num_rows($rsRecommendStrength);
+
+$colname_rsLERAessays = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAessays = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAessays = sprintf("SELECT lerakey, lera.goodlife, lera.goodcitizen, lera.moralmean, lera.personaldilemma, lera.dilemma1, lera.dilemma2, lera.dilemma3  FROM lera WHERE lerakey = %s", GetSQLValueString($colname_rsLERAessays, "int"));
+$rsLERAessays = mysql_query($query_rsLERAessays, $Assessment) or die(mysql_error());
+$row_rsLERAessays = mysql_fetch_assoc($rsLERAessays);
+$totalRows_rsLERAessays = mysql_num_rows($rsLERAessays);
+
+$colname_rsLERAscores = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAscores = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAscores = sprintf("SELECT lerakey, lasname, strength1, strength2, strength3, caveat1, caveat2, recommendstrength, recommendgrowth, rating_justice_1, rating_goodright_2, rating_motives_3, rating_ends_4, rating_religious_5, rating_secular_6, rating_sensitivity_7, rating_care_8, rating_seek_9, rating_take_10, rating_goodperson_11, rating_satisfied_12, rating_happy_13, rating_antisocial_14, rating_social_15, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total FROM lerascores WHERE lerakey = %s", GetSQLValueString($colname_rsLERAscores, "int"));
+$rsLERAscores = mysql_query($query_rsLERAscores, $Assessment) or die(mysql_error());
+$row_rsLERAscores = mysql_fetch_assoc($rsLERAscores);
+$totalRows_rsLERAscores = mysql_num_rows($rsLERAscores);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings = "SELECT * FROM ratingsdegree ORDER BY ratings4key desc";
+$rsRatings = mysql_query($query_rsRatings, $Assessment) or die(mysql_error());
+$row_rsRatings = mysql_fetch_assoc($rsRatings);
+$totalRows_rsRatings = mysql_num_rows($rsRatings);
+
+$colname_rsMoralGood = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralGood = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralGood = sprintf("SELECT lerascores.lerakey, lerascores.mudita_14, lerascores.pride_forother_18, lerascores.daad_16, lerascores.hope_28, lerascores.happiness_1, lerascores.pride_self_2, lerascores.sadness_general_4, lerascores.fear_forself_5 FROM lerascores WHERE lerascores.lerakey = %s", GetSQLValueString($colname_rsMoralGood, "int"));
+$rsMoralGood = mysql_query($query_rsMoralGood, $Assessment) or die(mysql_error());
+$row_rsMoralGood = mysql_fetch_assoc($rsMoralGood);
+$totalRows_rsMoralGood = mysql_num_rows($rsMoralGood);
+
+$colname_rsMoralPositive = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralPositive = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralPositive = sprintf("SELECT lerascores.lerakey,  lerascores.compassion_17, lerascores.fear_forother_19,  lerascores.anger_atself_25, lerascores.indignation_forother_21, lerascores.anger_forother_20, lerascores.elevation_3, lerascores.disgust_specific_8, lerascores.guilt_specific_9, lerascores.shame_specific_11, lerascores.embarrassment_self_13, lerascores.sympathy_15 FROM lerascores WHERE lerascores.lerakey = %s", GetSQLValueString($colname_rsMoralPositive, "int"));
+$rsMoralPositive = mysql_query($query_rsMoralPositive, $Assessment) or die(mysql_error());
+$row_rsMoralPositive = mysql_fetch_assoc($rsMoralPositive);
+$totalRows_rsMoralPositive = mysql_num_rows($rsMoralPositive);
+
+$colname_rsMoralPosNeg = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralPosNeg = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralPosNeg = sprintf("SELECT lerascores.lerakey, lerascores.indignation_atother_6, lerascores.disgust_atother_24, lerascores.embarrassment_forother_23, lerascores.shame_forother_22, lerascores.sadness_specific_10, lerascores.anger_atother_7 FROM lerascores WHERE lerascores.lerakey = %s", GetSQLValueString($colname_rsMoralPosNeg, "int"));
+$rsMoralPosNeg = mysql_query($query_rsMoralPosNeg, $Assessment) or die(mysql_error());
+$row_rsMoralPosNeg = mysql_fetch_assoc($rsMoralPosNeg);
+$totalRows_rsMoralPosNeg = mysql_num_rows($rsMoralPosNeg);
+
+$colname_rsMoralNegative = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralNegative = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralNegative = sprintf("SELECT lerascores.lerakey, lerascores.schadenfreude_30, lerascores.contempt_29, lerascores.guilt_general_26, lerascores.disgust_general_27, lerascores.shame_general_12 FROM lerascores WHERE lerascores.lerakey = %s", GetSQLValueString($colname_rsMoralNegative, "int"));
+$rsMoralNegative = mysql_query($query_rsMoralNegative, $Assessment) or die(mysql_error());
+$row_rsMoralNegative = mysql_fetch_assoc($rsMoralNegative);
+$totalRows_rsMoralNegative = mysql_num_rows($rsMoralNegative);
+
+$colname_rsRecommendGrowth = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsRecommendGrowth = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecommendGrowth = sprintf("SELECT lerarecommendgrowth.recommendgrowthkey, lerarecommendgrowth.lasname, lerarecommendgrowth.recommendgrowthname, lerascores.lerakey, lerascores.lasnumber_1 FROM lerarecommendgrowth, lerascores WHERE lerarecommendgrowth.lasname = lerascores.lasname AND lerascores.lerakey = %s ORDER BY lerarecommendgrowth.recommendgrowthname asc", GetSQLValueString($colname_rsRecommendGrowth, "int"));
+$rsRecommendGrowth = mysql_query($query_rsRecommendGrowth, $Assessment) or die(mysql_error());
+$row_rsRecommendGrowth = mysql_fetch_assoc($rsRecommendGrowth);
+$totalRows_rsRecommendGrowth = mysql_num_rows($rsRecommendGrowth);
+
+// calculate total
+$goodlife_sum = 0;
+$goodlife_sum += $row_rsMoralGood['happiness_1'];
+$goodlife_sum += $row_rsMoralGood['pride_self_2'];
+$goodlife_sum += $row_rsMoralGood['sadness_general_4'];
+$goodlife_sum += $row_rsMoralGood['fear_forself_5'];
+$goodlife_sum += $row_rsMoralGood['mudita_14'];
+$goodlife_sum += $row_rsMoralGood['daad_16'];
+$goodlife_sum += $row_rsMoralGood['pride_forother_18'];
+$goodlife_sum += $row_rsMoralGood['hope_28'];
+
+// calculate total
+$moralpositive_sum = 0;
+$moralpositive_sum += $row_rsMoralPositive['elevation_3'];
+$moralpositive_sum += $row_rsMoralPositive['disgust_specific_8'];
+$moralpositive_sum += $row_rsMoralPositive['guilt_specific_9'];
+$moralpositive_sum += $row_rsMoralPositive['shame_specific_11'];
+$moralpositive_sum += $row_rsMoralPositive['embarrassment_self_13'];
+$moralpositive_sum += $row_rsMoralPositive['sympathy_15'];
+$moralpositive_sum += $row_rsMoralPositive['compassion_17'];
+$moralpositive_sum += $row_rsMoralPositive['fear_forother_19'];
+$moralpositive_sum += $row_rsMoralPositive['anger_forother_20'];
+$moralpositive_sum += $row_rsMoralPositive['indignation_forother_21'];
+$moralpositive_sum += $row_rsMoralPositive['anger_atself_25'];
+
+// calculate total
+$moralposneg_sum = 0;
+$moralposneg_sum += $row_rsMoralPosNeg['indignation_atother_6'];
+$moralposneg_sum += $row_rsMoralPosNeg['anger_atother_7'];
+$moralposneg_sum += $row_rsMoralPosNeg['sadness_specific_10'];
+$moralposneg_sum += $row_rsMoralPosNeg['shame_forother_22'];
+$moralposneg_sum += $row_rsMoralPosNeg['embarrassment_forother_23'];
+$moralposneg_sum += $row_rsMoralPosNeg['disgust_atother_24'];
+
+// calculate total
+$moralnegative_sum = 0;
+$moralnegative_sum += $row_rsMoralNegative['shame_general_12'];
+$moralnegative_sum += $row_rsMoralNegative['guilt_general_26'];
+$moralnegative_sum += $row_rsMoralNegative['disgust_general_27'];
+$moralnegative_sum += $row_rsMoralNegative['contempt_29'];
+$moralnegative_sum += $row_rsMoralNegative['schadenfreude_30'];
+
+$_SESSION["goodlife_sum"] = $goodlife_sum;
+$_SESSION["moralpositive_sum"] = $moralpositive_sum;
+$_SESSION["moralposneg_sum"] = $moralposneg_sum;
+$_SESSION["moralnegative_sum"] = $moralnegative_sum;
+?>
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelerascore2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>LERA: Scoring 3</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #916446;
+	background-image: url(/images/skin/LERAbackground.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LERAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #A78166;
+	background-image: url(/images/skin/LERAmenu.jpg);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #A78166;
+	background-image: url(/images/skin/LERAmenu.jpg);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container .indent46 a:link {
+	color: #929292;
+}
+.twoColFixRtHdr #container .indent46 a:visited {
+	color: #929292;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:hover {
+	color: #474A47;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="#" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="/" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <a href="/scoring/chooseassessment.php">choose assessment</a> | <a href="/scoring/chooselera.php">choose lera</a> | <a href="/scoring/bulkcustomerselect.php">sortable</a><a href="/scoring_lera/lera_sortable.php"></a> | <a href="/scoring_lera/lera_essaycom.php">essay comments</a> | <a href="/scoring_lera/lera_generalcom.php">general comment</a> | <a href="/scoring_lera/lera_strengths.php">strengths</a> | <a href="/scoring_lera/lera_growthareas.php">growth areas</a> | <a href="/scoring_lera/lera_resources.php">resources</a> | <a href="/scoring_lera/lera_strengthcom.php">strength comments</a> | <a href="/scoring_lera/lera_growthcom.php">growth comments</a> | <a href="/scoring_lera/lera_recommendstrength.php">recommendation strength</a> | <a href="/scoring_lera/lera_recommendgrowth.php">recommendation growth</a> | <a href="/scoring_lera/lera_emotions.php">moral emotions</a></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+<h1>CODE ASSESSMENT <?php echo $_GET['lerakey']; ?> (page 2)</h1>
+<p>Score: <?php echo $row_rsLERAscores['lasname']; ?></p>
+<form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+  <table width="100%">
+    <tr>
+      <td colspan="2" class="tablehead2">Rate the extent to which the respondent…</td>
+    </tr>
+    <tr>
+      <td width="57%">&nbsp;</td>
+      <td width="43%">&nbsp;</td>
+      </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_1['leraratingdescription']; ?></td>
+      <td><span id="spryselect1">
+        <select name="rating_justice_1" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", htmlentities($row_rsLERAscores['rating_justice_1'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], htmlentities($row_rsLERAscores['rating_justice_1'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_2['leraratingdescription']; ?></td>
+      <td><span id="spryselect2">
+        <select name="rating_goodright_2" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_goodright_2']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_goodright_2']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_3['leraratingdescription']; ?></td>
+      <td><span id="spryselect3">
+        <select name="rating_motives_3" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_motives_3']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_motives_3']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_4['leraratingdescription']; ?></td>
+      <td><span id="spryselect4">
+        <select name="rating_ends_4" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_ends_4']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_ends_4']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_5['leraratingdescription']; ?></td>
+      <td><span id="spryselect5">
+        <select name="rating_religious_5" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_religious_5']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_religious_5']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_6['leraratingdescription']; ?></td>
+      <td><span id="spryselect6">
+        <select name="rating_secular_6" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_secular_6']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_secular_6']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_7['leraratingdescription']; ?></td>
+      <td><span id="spryselect7">
+        <select name="rating_sensitivity_7" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_sensitivity_7']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_sensitivity_7']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_8['leraratingdescription']; ?></td>
+      <td><span id="spryselect8">
+        <select name="rating_care_8" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_care_8']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_care_8']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_9['leraratingdescription']; ?></td>
+      <td><span id="spryselect9">
+        <select name="rating_seek_9" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_seek_9']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_seek_9']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_10['leraratingdescription']; ?></td>
+      <td><span id="spryselect10">
+        <select name="rating_take_10" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_take_10']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_take_10']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_11['leraratingdescription']; ?></td>
+      <td><span id="spryselect11">
+        <select name="rating_goodperson_11" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_goodperson_11']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_goodperson_11']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_12['leraratingdescription']; ?></td>
+      <td><span id="spryselect12">
+        <select name="rating_satisfied_12" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_satisfied_12']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_satisfied_12']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_13['leraratingdescription']; ?></td>
+      <td><span id="spryselect13">
+        <select name="rating_happy_13" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_happy_13']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_happy_13']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_14['leraratingdescription']; ?></td>
+      <td><span id="spryselect14">
+        <select name="rating_antisocial_14" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_antisocial_14']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_antisocial_14']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td><?php echo $row_rsRatingTopic_15['leraratingdescription']; ?></td>
+      <td><span id="spryselect15">
+        <select name="rating_social_15" class="pulldownwidth200">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['rating_social_15']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRatings['ratings4key']?>"<?php if (!(strcmp($row_rsRatings['ratings4key'], $row_rsLERAscores['rating_social_15']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings['rating']?></option>
+          <?php
+} while ($row_rsRatings = mysql_fetch_assoc($rsRatings));
+  $rows = mysql_num_rows($rsRatings);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings, 0);
+	  $row_rsRatings = mysql_fetch_assoc($rsRatings);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+  </table>
+  <table width="100%">
+    <tr>
+      <td colspan="3" class="tablehead2">Choose strengths, weaknesses, and a recommendation. If you select only 2 strengths, choose from 1 and 3.</td>
+    </tr>
+    <tr>
+      <td width="120">&nbsp;</td>
+      <td colspan="2">&nbsp;</td>
+      </tr>
+    <tr>
+      <td>Strength 1</td>
+      <td colspan="2"><span id="spryselect16">
+        <select name="strength1" class="pulldownwidth">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['strength1']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsStrength['strengthkey']?>"<?php if (!(strcmp($row_rsStrength['strengthkey'], $row_rsLERAscores['strength1']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsStrength['strengthname']?></option>
+          <?php
+} while ($row_rsStrength = mysql_fetch_assoc($rsStrength));
+  $rows = mysql_num_rows($rsStrength);
+  if($rows > 0) {
+      mysql_data_seek($rsStrength, 0);
+	  $row_rsStrength = mysql_fetch_assoc($rsStrength);
+  }
+?>
+        </select>
+</span></td>
+    </tr>
+    <tr>
+      <td>Strength 2</td>
+      <td colspan="2"><span id="spryselect17">
+        <select name="strength2" class="pulldownwidth">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['strength2']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsStrength['strengthkey']?>"<?php if (!(strcmp($row_rsStrength['strengthkey'], $row_rsLERAscores['strength2']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsStrength['strengthname']?></option>
+          <?php
+} while ($row_rsStrength = mysql_fetch_assoc($rsStrength));
+  $rows = mysql_num_rows($rsStrength);
+  if($rows > 0) {
+      mysql_data_seek($rsStrength, 0);
+	  $row_rsStrength = mysql_fetch_assoc($rsStrength);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td>Strength 3</td>
+      <td colspan="2"><span id="spryselect18">
+        <select name="strength3" class="pulldownwidth">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['strength3']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsStrength['strengthkey']?>"<?php if (!(strcmp($row_rsStrength['strengthkey'], $row_rsLERAscores['strength3']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsStrength['strengthname']?></option>
+          <?php
+} while ($row_rsStrength = mysql_fetch_assoc($rsStrength));
+  $rows = mysql_num_rows($rsStrength);
+  if($rows > 0) {
+      mysql_data_seek($rsStrength, 0);
+	  $row_rsStrength = mysql_fetch_assoc($rsStrength);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td>Weakness 1</td>
+      <td colspan="2"><span id="spryselect19">
+        <select name="caveat1" class="pulldownwidth">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['caveat1']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsCaveat['caveatkey']?>"<?php if (!(strcmp($row_rsCaveat['caveatkey'], $row_rsLERAscores['caveat1']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsCaveat['caveatname']?></option>
+          <?php
+} while ($row_rsCaveat = mysql_fetch_assoc($rsCaveat));
+  $rows = mysql_num_rows($rsCaveat);
+  if($rows > 0) {
+      mysql_data_seek($rsCaveat, 0);
+	  $row_rsCaveat = mysql_fetch_assoc($rsCaveat);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td>Weakness 2</td>
+      <td colspan="2"><span id="spryselect20">
+        <select name="caveat2" class="pulldownwidth">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['caveat2']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsCaveat['caveatkey']?>"<?php if (!(strcmp($row_rsCaveat['caveatkey'], $row_rsLERAscores['caveat2']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsCaveat['caveatname']?></option>
+          <?php
+} while ($row_rsCaveat = mysql_fetch_assoc($rsCaveat));
+  $rows = mysql_num_rows($rsCaveat);
+  if($rows > 0) {
+      mysql_data_seek($rsCaveat, 0);
+	  $row_rsCaveat = mysql_fetch_assoc($rsCaveat);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td>Recommendation strength</td>
+      <td colspan="2"><span id="spryselect22">
+        <select name="recommendstrength" class="pulldownwidth">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['recommendstrength']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRecommendStrength['recommendstrengthkey']?>"<?php if (!(strcmp($row_rsRecommendStrength['recommendstrengthkey'], $row_rsLERAscores['recommendstrength']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRecommendStrength['recommendstrengthname']?></option>
+          <?php
+} while ($row_rsRecommendStrength = mysql_fetch_assoc($rsRecommendStrength));
+  $rows = mysql_num_rows($rsRecommendStrength);
+  if($rows > 0) {
+      mysql_data_seek($rsRecommendStrength, 0);
+	  $row_rsRecommendStrength = mysql_fetch_assoc($rsRecommendStrength);
+  }
+?>
+        </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td>Recommendation weakness</td>
+      <td colspan="2"><span id="spryselect21">
+        <select name="recommendgrowth" class="pulldownwidth">
+          <option value="" <?php if (!(strcmp("", $row_rsLERAscores['recommendgrowth']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+          <?php
+do {  
+?>
+          <option value="<?php echo $row_rsRecommendGrowth['recommendgrowthkey']?>"<?php if (!(strcmp($row_rsRecommendGrowth['recommendgrowthkey'], $row_rsLERAscores['recommendgrowth']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRecommendGrowth['recommendgrowthname']?></option>
+          <?php
+} while ($row_rsRecommendGrowth = mysql_fetch_assoc($rsRecommendGrowth));
+  $rows = mysql_num_rows($rsRecommendGrowth);
+  if($rows > 0) {
+      mysql_data_seek($rsRecommendGrowth, 0);
+	  $row_rsRecommendGrowth = mysql_fetch_assoc($rsRecommendGrowth);
+  }
+?>
+          </select>
+        <span class="selectRequiredMsg">Please select an item.</span></span></td>
+    </tr>
+    <tr>
+      <td colspan="2">&nbsp;</td>
+      <td width="498"><div align="right">
+        <input type="submit" value="SUBMIT" />
+      </div></td>
+    </tr>
+  </table>
+  <p>
+    <input type="hidden" name="lerakey" value="<?php echo $row_rsLERAscores['lerakey']; ?>" />
+    <input type="hidden" name="goodlife_total" value="<?php echo $_SESSION['goodlife_sum']; ?>" />
+    <input type="hidden" name="positive_total" value="<?php echo $_SESSION['moralpositive_sum']; ?>" />
+    <input type="hidden" name="pos_neg_total" value="<?php echo $_SESSION['moralposneg_sum']; ?>" />
+    <input type="hidden" name="negative_total" value="<?php echo $_SESSION['moralnegative_sum']; ?>" />
+    <input type="hidden" name="MM_update" value="form1" />
+    <input type="hidden" name="lerakey" value="<?php echo $row_rsLERAscores['lerakey']; ?>" />
+  </p>
+</form>
+<h2>Essays</h2>
+<h3>Good life</h3>
+<p><?php echo $row_rsLERAessays['goodlife']; ?></p>
+<h3>Good citizen</h3>
+<p><?php echo $row_rsLERAessays['goodcitizen']; ?></p>
+<h3>Meaning of morality</h3>
+<p><?php echo $row_rsLERAessays['moralmean']; ?></p>
+<h3>Dilemma 1</h3>
+<p><?php echo $row_rsLERAessays['personaldilemma']; ?> <?php echo $row_rsLERAessays['dilemma1']; ?></p>
+<h3>Dilemma 2</h3>
+<p><?php echo $row_rsLERAessays['dilemma2']; ?></p>
+<h3>Dilemma 3</h3>
+<p><?php echo $row_rsLERAessays['dilemma3']; ?></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p></p>
+<p>&nbsp;</p>
+  <script type="text/javascript">
+<!--
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"]});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"]});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"]});
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {validateOn:["blur", "change"]});
+var spryselect6 = new Spry.Widget.ValidationSelect("spryselect6", {validateOn:["blur", "change"]});
+var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {validateOn:["blur", "change"]});
+var spryselect8 = new Spry.Widget.ValidationSelect("spryselect8", {validateOn:["blur", "change"]});
+var spryselect9 = new Spry.Widget.ValidationSelect("spryselect9", {validateOn:["blur", "change"]});
+var spryselect10 = new Spry.Widget.ValidationSelect("spryselect10", {validateOn:["blur", "change"]});
+var spryselect11 = new Spry.Widget.ValidationSelect("spryselect11", {validateOn:["blur", "change"]});
+var spryselect12 = new Spry.Widget.ValidationSelect("spryselect12", {validateOn:["blur", "change"]});
+var spryselect13 = new Spry.Widget.ValidationSelect("spryselect13", {validateOn:["blur", "change"]});
+var spryselect14 = new Spry.Widget.ValidationSelect("spryselect14", {validateOn:["blur", "change"]});
+var spryselect15 = new Spry.Widget.ValidationSelect("spryselect15", {validateOn:["blur", "change"]});
+var spryselect16 = new Spry.Widget.ValidationSelect("spryselect16", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect17 = new Spry.Widget.ValidationSelect("spryselect17", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect18 = new Spry.Widget.ValidationSelect("spryselect18", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect19 = new Spry.Widget.ValidationSelect("spryselect19", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect20 = new Spry.Widget.ValidationSelect("spryselect20", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect21 = new Spry.Widget.ValidationSelect("spryselect21", {isRequired:false, validateOn:["blur", "change"]});
+var spryselect22 = new Spry.Widget.ValidationSelect("spryselect22", {isRequired:false, validateOn:["blur", "change"]});
+//-->
+  </script>
+  <!-- InstanceEndEditable -->
+<!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRatingTopic_15);
+
+mysql_free_result($rsLERAscores);
+
+mysql_free_result($rsRatingTopic_1);
+
+mysql_free_result($rsStrength);
+
+mysql_free_result($rsCaveat);
+
+mysql_free_result($rsRecommendStrength);
+
+mysql_free_result($rsLERAessays);
+
+mysql_free_result($rsLERAscores);
+
+mysql_free_result($rsRatings);
+
+mysql_free_result($rsMoralGood);
+
+mysql_free_result($rsMoralPositive);
+
+mysql_free_result($rsMoralNegative);
+
+mysql_free_result($rsRecommendGrowth);
+
+mysql_free_result($rsMoralPosNeg);
+
+mysql_free_result($rsRatingTopic_2);
+
+mysql_free_result($rsRatingTopic_3);
+
+mysql_free_result($rsRatingTopic_4);
+
+mysql_free_result($rsRatingTopic_5);
+
+mysql_free_result($rsRatingTopic_6);
+
+mysql_free_result($rsRatingTopic_7);
+
+mysql_free_result($rsRatingTopic_8);
+
+mysql_free_result($rsRatingTopic_9);
+
+mysql_free_result($rsRatingTopic_10);
+
+mysql_free_result($rsRatingTopic_11);
+
+mysql_free_result($rsRatingTopic_12);
+
+mysql_free_result($rsRatingTopic_13);
+
+mysql_free_result($rsRatingTopic_14);
+
+mysql_free_result($rsRatingTopic_15);
+
+mysql_free_result($rsRegistrant);
+?>

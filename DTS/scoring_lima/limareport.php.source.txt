@@ -1,0 +1,570 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Load the KT_back class
+require_once('../includes/nxt/KT_back.php');
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLIMA = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsLIMA = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLIMA = sprintf("SELECT lima.limakey, lima.dilemmakey, lima.itmean, lima.itapply, lima.considerations, lima.quadrants, lima.levelslines, lima.bestresponse, lima.comments, limadilemma.limadilemmakey, limadilemma.limadilemma, lima.userkey, registrants.userkey, limascores.limakey, limascores.lasname, limascores.strength01, limascores.strength02, limascores.strength03, limascores.growth01, limascores.growth02, limascores.recommend01, limascores.recommend02, registrants.firstname, registrants.lastname, lima.testtime, lima.`date` FROM lima, limadilemma, registrants, limascores WHERE lima.limakey = %s AND limadilemma.limadilemmakey = lima.dilemmakey and lima.userkey = registrants.userkey and limascores.limakey = lima.limakey", GetSQLValueString($colname_rsLIMA, "int"));
+$rsLIMA = mysql_query($query_rsLIMA, $Assessment) or die(mysql_error());
+$row_rsLIMA = mysql_fetch_assoc($rsLIMA);
+$totalRows_rsLIMA = mysql_num_rows($rsLIMA);
+
+$colname_rsLIMAmeanings = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsLIMAmeanings = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLIMAmeanings = sprintf("SELECT limascores.limascoringkey, limascores.limakey, limascores.lasname, limameanings.limageneralquadrants, limameanings.limageneralmodel, limameanings.lasname, limameanings.limagenerallines, limameanings.limagenerallife FROM limascores, limameanings WHERE limascores.limakey = %s AND limascores.lasname = limameanings.lasname", GetSQLValueString($colname_rsLIMAmeanings, "int"));
+$rsLIMAmeanings = mysql_query($query_rsLIMAmeanings, $Assessment) or die(mysql_error());
+$row_rsLIMAmeanings = mysql_fetch_assoc($rsLIMAmeanings);
+$totalRows_rsLIMAmeanings = mysql_num_rows($rsLIMAmeanings);
+
+$colname_rsCoherenceOverall = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsCoherenceOverall = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceOverall = sprintf("SELECT limascores.limakey, limascores.coherenceoverallkey, limascores.lasname, coherenceoverallinfer.lasname, coherenceoverallinfer.coherencekey, coherenceoverallinfer.implication, coherenceoverallinfer.cohereoverinfer FROM limascores, coherenceoverallinfer WHERE limascores.coherenceoverallkey = coherenceoverallinfer.coherencekey AND limascores.limakey = %s and coherenceoverallinfer.lasname = limascores.lasname", GetSQLValueString($colname_rsCoherenceOverall, "int"));
+$rsCoherenceOverall = mysql_query($query_rsCoherenceOverall, $Assessment) or die(mysql_error());
+$row_rsCoherenceOverall = mysql_fetch_assoc($rsCoherenceOverall);
+$totalRows_rsCoherenceOverall = mysql_num_rows($rsCoherenceOverall);
+
+$colname_rsCoherenceConcise = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsCoherenceConcise = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceConcise = sprintf("SELECT coherenceconcise.coherenceconcisekey, coherenceconcise.coherenceconcise, limascores.coherenceconcisekey, limascores.limakey FROM coherenceconcise, limascores WHERE limascores.coherenceconcisekey = coherenceconcise.coherenceconcisekey AND limascores.limakey = %s", GetSQLValueString($colname_rsCoherenceConcise, "int"));
+$rsCoherenceConcise = mysql_query($query_rsCoherenceConcise, $Assessment) or die(mysql_error());
+$row_rsCoherenceConcise = mysql_fetch_assoc($rsCoherenceConcise);
+$totalRows_rsCoherenceConcise = mysql_num_rows($rsCoherenceConcise);
+
+$colname_rsRelevanceArg = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsRelevanceArg = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRelevanceArg = sprintf("SELECT coherencerelevancearg.coherencekey, coherencerelevancearg.coherencerelevancearg, limascores.coherencerelevanceargkey, limascores.limakey FROM coherencerelevancearg, limascores WHERE limascores.coherencerelevanceargkey = coherencerelevancearg.coherencekey AND limascores.limakey = %s", GetSQLValueString($colname_rsRelevanceArg, "int"));
+$rsRelevanceArg = mysql_query($query_rsRelevanceArg, $Assessment) or die(mysql_error());
+$row_rsRelevanceArg = mysql_fetch_assoc($rsRelevanceArg);
+$totalRows_rsRelevanceArg = mysql_num_rows($rsRelevanceArg);
+
+$colname_rsRelevanceExamp = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsRelevanceExamp = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRelevanceExamp = sprintf("SELECT coherencerelevanceexamp.coherenceno, coherencerelevanceexamp.coherencerelevexamp, limascores.coherencerelevanceexampkey, limascores.limakey, coherencerelevanceexamp.coherenceno, coherencerelevanceexamp.coherencerelevexamp FROM coherencerelevanceexamp, limascores WHERE limascores.coherencerelevanceexampkey = coherencerelevanceexamp.coherenceno AND limascores.limakey = %s", GetSQLValueString($colname_rsRelevanceExamp, "int"));
+$rsRelevanceExamp = mysql_query($query_rsRelevanceExamp, $Assessment) or die(mysql_error());
+$row_rsRelevanceExamp = mysql_fetch_assoc($rsRelevanceExamp);
+$totalRows_rsRelevanceExamp = mysql_num_rows($rsRelevanceExamp);
+
+$colname_rsCoherenceFragment = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsCoherenceFragment = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceFragment = sprintf("SELECT coherencefragment.coherencekey, coherencefragment.coherencefragment, limascores.coherencefragmentkey, limascores.limakey FROM coherencefragment, limascores WHERE limascores.coherencefragmentkey = coherencefragment.coherencekey AND limascores.limakey = %s", GetSQLValueString($colname_rsCoherenceFragment, "int"));
+$rsCoherenceFragment = mysql_query($query_rsCoherenceFragment, $Assessment) or die(mysql_error());
+$row_rsCoherenceFragment = mysql_fetch_assoc($rsCoherenceFragment);
+$totalRows_rsCoherenceFragment = mysql_num_rows($rsCoherenceFragment);
+
+$colname_rsCoherenceFraming = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsCoherenceFraming = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceFraming = sprintf("SELECT coherenceframing.coherencekey, coherenceframing.coherenceframing, limascores.coherenceframingkey, limascores.limakey FROM coherenceframing, limascores WHERE limascores.coherenceframingkey = coherenceframing.coherencekey AND limascores.limakey = %s", GetSQLValueString($colname_rsCoherenceFraming, "int"));
+$rsCoherenceFraming = mysql_query($query_rsCoherenceFraming, $Assessment) or die(mysql_error());
+$row_rsCoherenceFraming = mysql_fetch_assoc($rsCoherenceFraming);
+$totalRows_rsCoherenceFraming = mysql_num_rows($rsCoherenceFraming);
+
+$colname_rsCoherenceEnglish = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsCoherenceEnglish = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceEnglish = sprintf("SELECT limascores.limakey, limascores.coherenceenglishkey, limascores.lasname, coherenceenglishinfer.coherencekey, coherenceenglishinfer.lasname, coherenceenglishinfer.coherenceenglishinfer, coherenceenglishinfer.implication FROM limascores, coherenceenglishinfer WHERE limascores.coherenceenglishkey = coherenceenglishinfer.coherencekey AND limascores.limakey = %s and limascores.lasname = coherenceenglishinfer.lasname", GetSQLValueString($colname_rsCoherenceEnglish, "int"));
+$rsCoherenceEnglish = mysql_query($query_rsCoherenceEnglish, $Assessment) or die(mysql_error());
+$row_rsCoherenceEnglish = mysql_fetch_assoc($rsCoherenceEnglish);
+$totalRows_rsCoherenceEnglish = mysql_num_rows($rsCoherenceEnglish);
+
+$colname_rsCoherencePersuade = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsCoherencePersuade = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherencePersuade = sprintf("SELECT coherencepersuade.persuasivekey, coherencepersuade.persuasiveness, limascores.limakey, limascores.coherencepersuadekey FROM coherencepersuade, limascores WHERE limascores.coherencepersuadekey = coherencepersuade.persuasivekey AND limascores.limakey = %s", GetSQLValueString($colname_rsCoherencePersuade, "int"));
+$rsCoherencePersuade = mysql_query($query_rsCoherencePersuade, $Assessment) or die(mysql_error());
+$row_rsCoherencePersuade = mysql_fetch_assoc($rsCoherencePersuade);
+$totalRows_rsCoherencePersuade = mysql_num_rows($rsCoherencePersuade);
+
+$colname_rsInstructor = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsInstructor = $_GET['limakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsInstructor = sprintf("SELECT lima.limakey, registrants.userkey, registrants.firstname, registrants.lastname, lima.commenterkey, lima.teacherstrengths, lima.teachergrowth, lima.teacherrecommend FROM lima, registrants WHERE lima.limakey = %s AND registrants.userkey = lima.commenterkey", GetSQLValueString($colname_rsInstructor, "int"));
+$rsInstructor = mysql_query($query_rsInstructor, $Assessment) or die(mysql_error());
+$row_rsInstructor = mysql_fetch_assoc($rsInstructor);
+$totalRows_rsInstructor = mysql_num_rows($rsInstructor);
+
+$colname_rsLasByAge = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLasByAge = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasByAge = sprintf("SELECT lasname, lasbyageart, lasbyageart2 FROM lasbyage WHERE lasname = %s", GetSQLValueString($colname_rsLasByAge, "text"));
+$rsLasByAge = mysql_query($query_rsLasByAge, $Assessment) or die(mysql_error());
+$row_rsLasByAge = mysql_fetch_assoc($rsLasByAge);
+$totalRows_rsLasByAge = mysql_num_rows($rsLasByAge);
+
+$colname_rsCoherenceClarity = "-1";
+if (isset($_GET['limakey'])) {
+  $colname_rsCoherenceClarity = (get_magic_quotes_gpc()) ? $_GET['limakey'] : addslashes($_GET['limakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCoherenceClarity = sprintf("SELECT coherenceclarity.claritykey, coherenceclarity.clarity, limascores.limakey, limascores.coherenceclaritykey FROM coherenceclarity, limascores WHERE limascores.coherenceclaritykey = coherenceclarity.claritykey AND limascores.limakey = %s", GetSQLValueString($colname_rsCoherenceClarity, "int"));
+$rsCoherenceClarity = mysql_query($query_rsCoherenceClarity, $Assessment) or die(mysql_error());
+$row_rsCoherenceClarity = mysql_fetch_assoc($rsCoherenceClarity);
+$totalRows_rsCoherenceClarity = mysql_num_rows($rsCoherenceClarity);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelima2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: LIMA report</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LIMAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>Report for <?php echo $row_rsLIMA['firstname']; ?> <?php echo $row_rsLIMA['lastname']; ?><em><br />
+    </em><br />
+  </h1>
+  <div id="TabbedPanels1" class="TabbedPanels">
+    <ul class="TabbedPanelsTabGroup">
+      <li class="TabbedPanelsTab">Introduction</li>
+      <li class="TabbedPanelsTab">Results</li>
+      <li class="TabbedPanelsTab">Personal comments</li>
+      <li class="TabbedPanelsTab">Comparison</li>
+<li class="TabbedPanelsTab">Suggestions</li>
+<li class="TabbedPanelsTab">Instructor comments</li>
+      <li class="TabbedPanelsTab">Essays</li>
+      </ul>
+    <div class="TabbedPanelsContentGroup">
+      <div class="TabbedPanelsContent">
+        <h3>About  Lectical® Assessments</h3>
+        <p>Lectical assessments are unlike other adult developmental assessments in a number of ways, two of which have a big impact on the interpretation of your performance. First, a &quot;finished&quot; lectical assessment includes (1) a developmental score, which is awarded on the basis of its hierarchical complexity, (2) a set of general comments and suggestions that focus on the phase of your performance, and (3) comments upon the particular arguments and concepts present in your performance. In this version of the LIMA (the second research version), the general comments (2) should be considered provisional and evolving.  </p>
+        <p>Lectical assessments are intended to be educative. When they are &quot;finished&quot;, they include rich suggestions that are intended to help individuals progress in their development (in a particular area). We are aware that many people engaged in integral theory are also interested in receiving recommendations that might lead to further growth in their understanding and application of the theory, and  we thank you for being willing to accept limited feedback while we complete our research.        </p>
+        <p>Second, we do not claim that the score you receive captures your <em>center of gravity</em>. In fact, we do not claim that we are scoring <em>you</em> at all. We score  performances in particular areas. These performances reflect the complexity of your current knowledge and skills, but they  also reflect attitude, mood, how much time you invest in your answers, several contextual factors, etc. Given this—and the fact that no assessment can measure everything of importance—it is clear that no single assessment or form of assessment can capture your capabilities.</p>
+        <h3>About the LIMA</h3>
+        <p><img src="../images/lima/ItFigure2.gif" alt="IT figure" width="316" height="224" align="left" class="imageleft" />The LIMA does not assess your <em>center of gravity</em>, your general intelligence, or even the way you embody Integral in your life and in the world. Its function is very specific: to measure the developmental sophistication of how you deploy key concepts and ideas from Integral Theory. To put it very roughly, the LIMA measures one single line of development—the Integral Model line. Assessment results should be interpreted accordingly. This is not about who you are or about whether you are Integral. This is about the structure and quality of your use of key integral concepts.</p>
+        <p>The LIMA is an educational assessment. The goal is to gain insights into your thinking that will help us (and your instructor or mentor) determine what you are most likely to benefit from learning next—what kind of knowledge or skills are most likely to help you progress in your development as an Integral thinker/practitioner. Clear reasoning, justified beliefs, and well-structured arguments are necessary but not sufficient for bringing Integral Theory into the world. In other words, the skills assessed with the LIMA are important, but they are not the whole story. All of the great philosophical traditions have emphasized some form of judicious thinking and conceptual insight—even if this is eventually to be transcended and included in a broader non-conceptual awareness. Please take any feedback as a kind of provisional diagnosis—pointing out where greater clarity, carefulness, and rigor might help you in your use of Integral Theory.        </p>
+        <p>&nbsp;</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <p><br />
+          TEST TIME: <?php echo $row_rsLIMA['testtime']; ?></p>
+        <p>DATE: <?php echo $row_rsLIMA['date']; ?></p>
+        <h3>SCORE: <strong><?php echo $row_rsLIMA['lasname']; ?></strong></h3>
+        <h3>The general meaning of your score</h3>
+        <p>Your score represents one of 4 phases of elaboration within a level on <a href="http://www.gse.harvard.edu/~ddl/publication.htm">Fischer's</a> dynamic <a href="http://devtestservice.org/PDF/LAS.pdf">skill scale</a>—which covers birth through adulthood. This scale has been shown to capture the same underlying developmental dimension tapped by high-quality longitudinally validated instruments like Kohlberg's Moral Judgment Interview, Kitchener &amp; King's Reflective Judgment Interview, Armon's Good Life Interview, Perry's Epistemological Interview, and Piaget's tasks (<a href="http://devtestservice.org/about/articles.php">articles</a>). The &quot;adult&quot; levels range from 10 through 13. </p>
+        <p>Optimal applications of the integral model require a solid understanding of the model and how it has developed over time; knowledge about developmental theory and research; information gathering skills; reasoning, decision making, and problem-solving skills; emotional, social, and spiritual maturity; knowledge of individual and group psychology; skills for perspective-seeking, communication, and collaboration; and an understanding of complex systems and their interactions. It takes considerable time and effort to develop the wide-ranging skills and knowledge required to apply the model well in highly complex, thorny situations. The LIMA is designed to provide you with an opportunity to demonstrate your current  level of skill on some of the dimensions listed here. Right now, we can provide only a phase score, some provisional general comments about the meaning of your score, and specific comments about your performance. However, your responses will help us to understand, in an increasingly nuanced way, how the concepts and skills that comprise these dimensions develop over time. Next time you take this assessment, your feedback will be richer and more accurate.</p>
+        <h3>In phase <strong><?php echo $row_rsLIMA['lasname']; ?></strong></h3>
+        <p><?php echo $row_rsLIMAmeanings['limageneralmodel']; ?></p>
+        <p> <span><?php echo $row_rsLIMAmeanings['limagenerallines']; ?></span></p>
+        <p><span><?php echo $row_rsLIMAmeanings['limageneralquadrants']; ?></span></p>
+        <div class = "box"><p><strong>Note:</strong> We did not base your score on the particular conceptual content of your performance. We base our scores on what cognitive developmental researchers call the &quot;hierarchical&quot; (level of hierarchical integration) and &quot;horizontal&quot; (degree of elaboration within a level) complexity of  performances. The first two digits in your score denote the hierarchical integration; the second two digits denote the degree of elaboration. To read a short description of our scoring system, the Lectical Assessment System (LAS), <a href="../PDF/LAS.pdf">click here</a>.</p></div>
+        <p>&nbsp;</p>
+        <p></p>
+        </div>
+      <div class="TabbedPanelsContent">
+        <h3>Comments on your argumentation</h3>
+        <p>The way we make arguments is important for at least two reasons. First, our argumentation affects the way we organize our thinking, and the way we organize our thinking has an impact on our future development. This is because each new developmental level &quot;transcends and includes&quot; the content and structures of the previous level. So, for example, learning to construct excellent <em>linear</em> arguments is necessary for learning to construct excellent <em>systems</em> arguments.  Second, our ability to make good arguments affects how well we can share our knowledge with others or persuade others to take our perspective seriously.</p>
+        <p>We hope these comments will help you to achieve excellence and to make progress in your personal development.</p>
+        <p><?php echo $row_rsCoherenceFraming['coherenceframing']; ?> <?php echo $row_rsRelevanceExamp['coherencerelevexamp']; ?> <?php echo $row_rsCoherenceConcise['coherencconcise']; ?> <?php echo $row_rsCoherenceClarity['clarity']; ?> <?php echo $row_rsCoherencePersuade['persuasiveness']; ?> <?php echo $row_rsCoherenceFragment['coherencefragment']; ?> <?php echo $row_rsRelevanceArg['coherencerelevancearg']; ?></p>
+        <p><?php echo $row_rsCoherenceOverall['implication']; ?> <?php echo $row_rsCoherenceOverall['cohereoverinfer']; ?> </p>
+        <p><?php echo $row_rsCoherenceEnglish['coherenceenglishinfer']; ?> <?php echo $row_rsCoherenceEnglish['implication']; ?></p>
+        <h3>Comments on present and potential strengths</h3>
+        <p><?php echo $row_rsLIMA['strength01']; ?> <?php echo $row_rsLIMA['strength02']; ?> <?php echo $row_rsLIMA['strength03']; ?></p>
+        <p><?php echo $row_rsLIMA['growth01']; ?> <?php echo $row_rsLIMA['growth02']; ?></p>
+        <p><?php echo $row_rsLIMA['recommend01']; ?> <?php echo $row_rsLIMA['recommend02']; ?></p>
+        <p>&nbsp;</p>
+      </div>
+      <div class="TabbedPanelsContent">
+        <p></p>
+        <p><img src="<?php echo $row_rsLasByAge['lasbyageart2']; ?>" alt="Graph of level distribution in adult population" width="645" height="230" hspace="0" align="baseline" /></p>
+        <h3><br />
+          Your score relative to the approximate distribution of skill levels in the adult population</h3>
+        <p>The figure above shows the approximate distribution of American adults' skill levels—in areas of expertise. There is no single source for the numbers that inform this figure. They are informed by the cognitive developmental research literature, our own data, and consultations with other developmentalists. We are least clear about the ends of the distribution—especially the top end—but despite this we feel confident that the general picture is accurate. Most American adults perform in level 10 or the first phase of level 11. A much smaller percentage performs above phase 11:1.</p>
+        <p>The figure shows a symmetrical bell curve. The average score American adults receive in any given area of expertise is  in the middle of the curve. Most people (68%, or 34% + 34%)  perform within one segment of the average score. Each of the second segments (to the right and left of the two middle segments) represent 14% of the population, and each of the segments on the far right and left represent 2% of the adult population. These percentages are shown on the horizontal axis. The location of your score (phase <?php echo $row_rsLIMA['lasname']; ?>) is indicated by a vertical line with translucent bars on either side. Those bars represent the range in which your &quot;true&quot; score is most likely to fall. </p>
+        <p>Although it is clear that scores of 12:1 or above are achieved only by a small percentage of the general population, it will take some time to get a clear picture  of the distribution of scores within the integral community.</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+      </div>
+<div class="TabbedPanelsContent">
+  <p><br />
+          <em>As the research we are conducting with iTeach progresses,  will include increasingly specific learning suggestions.</em></p>
+        <h3>Reflection</h3>
+        <p>You are far more likely to benefit from learning experiences if you take every opportunity to (1) put new knowledge and skills to work, and (2) reflect upon the results. Putting knowledge to work means applying it in real-world contexts. Try out new skills in low-stakes contexts first, then gradually begin to apply them in higher-stakes contexts until you've mastered them. Reflecting on outcomes means evaluating  the results of  your efforts. This works best if you keep a record—such as a journal—and share your experiences with other members of your family, circle of friends, or community of practice.</p>
+        <h3>Note</h3>
+        <p>You should also keep in mind that this assessment and all of our comments and recommendations  are focused on helping you to develop your knowledge about the Integral Model and improve your ability to apply this model in real-world contexts. These are important, but they are by no means the only things that are important for your  development as an Integral practitioner. </p>
+        <div class = "box"><p>All Lectical assessments are assessments of performances, not people. All individuals function in a developmental range. Neither a single assessment nor a single form of assessment can represent that range. Further, our assessments are discipline-specific. Individuals generally function at different levels in different disciplines. Consequently, performance on one assessment in any one area cannot be taken as a general indicator of cognitive ability.</p></div>
+    </div>
+<div class="TabbedPanelsContent">
+  <h3>Comments by <?php echo $row_rsInstructor['firstname']; ?>&nbsp;<?php echo $row_rsInstructor['lastname']; ?></h3>
+        <p><strong>Strengths</strong></p>
+        <p><?php echo $row_rsInstructor['teacherstrengths']; ?></p>
+        <p><strong>Areas for growth</strong></p>
+        <p><?php echo $row_rsInstructor['teachergrowth']; ?></p>
+        <p><strong>Suggestions</strong></p>
+        <p><?php echo $row_rsInstructor['teacherrecommend']; ?></p>
+      </div>
+  <div class="TabbedPanelsContent">
+    <span><br />
+      </span>
+    <table>
+      <tr>
+        <td colspan="2"><em>Essay 1: What does the term integral theory mean to you? Please describe three of the most important aspects of the theory and explain why, from your perspective, they are important.</em></td>
+        </tr>
+      <tr>
+        <td colspan="2"><?php echo $row_rsLIMA['itmean']; ?></td>
+        </tr>
+      <tr>
+        <td colspan="2"><em><br />
+          Essay 2: How do you apply integral theory in your own life? Please describe 3 integral life practices in which you engage, and explain why  you have chosen each of them?</em></td>
+        </tr>
+      <tr>
+        <td colspan="2"><?php echo $row_rsLIMA['itapply']; ?></td>
+        </tr>
+      <tr>
+        <td colspan="2"><em><br />
+          Dilemma: <?php echo $row_rsLIMA['limadilemma']; ?></em></td>
+        </tr>
+      <tr>
+        <td colspan="2"><em><br />
+          Essay 3: From an integral perspective, what are the most important things to consider in this situation. Why?</em></td>
+        </tr>
+      <tr>
+        <td colspan="2"><?php echo $row_rsLIMA['considerations']; ?></td>
+        </tr>
+      <tr>
+        <td colspan="2"><em><br />
+          Essay 4: Please describe how you would approach this problem from the perspective of each of the quadrants in the model presented above. (Feel free to use this particular model as a starting place for your answer, expanding or critiquing it as required to provide your best response.)</em></td>
+        </tr>
+      <tr>
+        <td colspan="2"><?php echo $row_rsLIMA['quadrants']; ?></td>
+        </tr>
+      <tr>
+        <td colspan="2"><em><br />
+          Essay 5: Please describe how the notion of levels and lines would play a role in thinking about this problem from an integral perspective. (The figure above presents an example of possible lines.  Feel free to use the example above as a starting place for your answer, expanding, altering, or critiquing it as required to provide your best response.)</em></td>
+        </tr>
+      <tr>
+        <td colspan="2"><?php echo $row_rsLIMA['levelslines']; ?></td>
+        </tr>
+      <tr>
+        <td colspan="2"><em><br />
+          Essay 6: Given your answers so far, what would be the best approach to this issue from an integral perspective? Why?</em></td>
+        </tr>
+      <tr>
+        <td colspan="2"><?php echo $row_rsLIMA['bestresponse']; ?></td>
+        </tr>
+      <tr>
+        <td width="278"><em><br />
+          Student comments</em></td>
+        <td width="463"><br />
+          <?php echo $row_rsLIMA['comments']; ?></td>
+        </tr>
+      </table>
+    </div>
+      </div>
+  </div>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+<h3>&nbsp;</h3>
+<h3>&nbsp;</h3>
+<h3>&nbsp;</h3>
+<p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <p>&nbsp;</p>
+  <script type="text/javascript">
+<!--
+var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+//-->
+  </script>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer -->
+  <!-- end #container -->
+</div>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLIMA);
+
+mysql_free_result($rsLIMAmeanings);
+
+mysql_free_result($rsInstructor);
+
+mysql_free_result($rsLasByAge);
+
+mysql_free_result($rsCoherenceClarity);
+
+mysql_free_result($rsRegistrants);
+?>

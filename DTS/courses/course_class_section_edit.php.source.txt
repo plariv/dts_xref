@@ -1,0 +1,242 @@
+<?php 
+include_once '../includes/dts_functions.php';	
+
+if (!WA_Auth_RulePasses("Logged in as senior")) { 
+	WA_Auth_RestrictAccess("../security/logIn.php"); } 
+$userkey = $_SESSION['log_userkey'];
+
+if (!isset($_GET['sectionkey'])) { 
+	header("Location: courses_list.php?message=specify_key"); exit(); }
+$sectionkey = $_GET['sectionkey']; 
+
+// update details on this section
+if (isset($_POST['update'])) { 
+  $time_of_day_raw = $_POST['time_of_day'];
+  $time_of_day_hours = date('h', strtotime($time_of_day_raw));
+  $time_of_day_minutes = date('i', strtotime($time_of_day_raw));
+  if (strpos($time_of_day_raw, 'pm')) { $time_of_day_hours += 12; }
+  $time_of_day = $time_of_day_hours.':'.$time_of_day_minutes.':00';
+
+	$sql_update = sprintf("UPDATE course_class_sections s
+		SET day_of_week = %s, time_of_day = %s, duration_mins = %s, max_num_students = %s
+		WHERE s.key = %s ",
+			SQLstr($_POST['day_of_week'], 'int'),
+			SQLstr($time_of_day, 'text'),
+      SQLstr($_POST['duration_mins'], 'int'),
+      SQLstr($_POST['max_num_students'], 'int'),
+			SQLstr($_POST['key'], 'int'));
+	$result = mysql_query($sql_update) or die("ERROR updating this class section: ".mysql_error());
+
+	header("Location: syllabus.php?coursekey=".$_POST['coursekey']); exit();
+}
+
+
+
+// fetch details on this section
+$sql = sprintf("SELECT c.key AS coursekey, c.title AS course_title, s.*,
+		r.firstname, r.lastname
+	FROM course_class_sections s
+		JOIN courses c ON s.coursekey = c.key
+		JOIN registrants r ON s.created_by_userkey = r.userkey
+	WHERE s.key = %s",
+		SQLstr($sectionkey, 'int'));
+$rsSection = mysql_query($sql) 
+	or die("ERROR fetching details on this course section: ".mysql_error());
+if (mysql_num_rows($rsSection) <> 1) { 
+	die("ERROR: A course section wasn't found for key {$sectionkey}."); }
+$section = mysql_fetch_assoc($rsSection);
+
+// Array of days of week. Indexed 0-6 same as date() does it.
+$days = array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday');
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: Edit class section for course: <?php echo $section['course_title']; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<script src="../includes/jquery.js"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<script src="../includes/jquery.dotimeout.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+<script src="../includes/jquery.highlight.js" type="text/javascript"></script>
+<link href="../includes/js_res/jquery.ui.smoothness.css" rel="stylesheet" type="text/css" />
+
+<script src="../includes/jquery.timepicker.js" type="text/javascript"></script>
+<link href="../includes/jquery.timepicker.css" rel="stylesheet" type="text/css"></script>
+
+<?php include_once '../includes/html_editor/html_editor.html'; ?>
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+	
+  $('.time').timepicker();
+
+});
+
+</script>
+
+
+<style type="text/css">
+
+	a { color: #008A8C; cursor: pointer; }
+	td { font-size: 14px; }
+	.input-small { width: 80px; }
+	.input-big { width: 400px; }
+
+</style>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1><? echo $section['course_title']; ?>: Edit section</h1>
+  
+  <p><a href='syllabus.php?coursekey=<? echo $section['coursekey']; ?>'>
+    « syllabus</a></p>
+
+  <table>
+  <form action='' method='post'>
+  	<tr>
+  		<td>Created by</td>
+  		<td><? echo $section['firstname'].' '.$section['lastname']; ?></td>
+  	</tr>
+  	<tr>
+  		<td>Created on</td>
+  		<td><? echo date('Y-m-d', strtotime($section['date_created'])); ?></td>
+  	</tr>
+  	<tr>
+  		<td>Last updated</td>
+  		<td><? echo date('Y-m-d', strtotime($section['date_updated'])); ?></td>
+  	</tr>
+
+  	<tr>
+  		<td>Day of week</td>
+  		<td>This section will meet on this day each week.<br />
+        <select name='day_of_week'>
+          <? foreach ($days as $day_num => $day_name) { ?>
+            <option value='<? echo $day_num; ?>' 
+              <? if ($section['day_of_week'] == $day_num) { echo "selected='selected'"; } ?>>
+              <? echo $day_name; ?>
+            </option> 
+          <? } ?>
+        </select>
+      </td>
+  	</tr>
+    <tr>
+      <td>Time of day</td>
+      <td>
+        <input type='text' class='time input-small' name='time_of_day'  
+          value='<? echo $section['time_of_day']; ?>' />
+      </td>
+    </tr>
+    <tr>
+      <td>Duration</td>
+      <td>in minutes<br />
+        <input type='text' class='input-small' name='duration_mins'  
+          value='<? echo $section['duration_mins']; ?>' />
+      </td>
+    </tr>
+    <tr>
+      <td># of slots</td>
+      <td>The max number of students that may register for this section<br />
+        <input type='text' class='input-small' name='max_num_students'  
+          value='<? echo $section['max_num_students']; ?>' />
+      </td>
+    </tr>
+
+  	<tr>
+  		<td></td>
+  		<td>
+  			<input type='hidden' name='key' value='<? echo $section['key']; ?>' />
+        <input type='hidden' name='coursekey' value='<? echo $section['coursekey']; ?>' />
+  			<input type='submit' name='update' value='Save' />
+  		</td>
+  </form>
+  </table>
+  
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

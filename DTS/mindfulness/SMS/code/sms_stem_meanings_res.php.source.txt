@@ -1,0 +1,490 @@
+<?php require_once('../../../Connections/Assessment.php'); ?>
+<?php
+//WA Database Search Include
+require_once("../../../WADbSearch/HelperPHP.php");
+?>
+<?php require_once( "../../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as researcher")){
+	WA_Auth_RestrictAccess("../../../security/logIn.php");
+}
+?>
+<?php
+//WA Database Search Include
+require_once("../../../WADbSearch/HelperPHP.php");
+?>
+<?php
+// WA QueryString Binding (Copyright 2007, WebAssist.com)
+$WA_QSBind_FilteredString = WA_QSBind_QueryString((isset($_SERVER["QUERY_STRING"])?strval($_SERVER["QUERY_STRING"]):""), "sort");
+function WA_QSBind_QueryString($tStr, $exList) {
+  $exArr = array();
+  $retArr = array();
+  $varArr = array();
+  $exList = explode(",", str_replace(" ", "", $exList));
+  $tStr = preg_replace("/\&amp;/i", "&", $tStr);
+  for ($n=0; $n<sizeof($exList); $n++) {
+    $exArr[$exList[$n]] = true;
+  }
+  $qsArr = explode("&", $tStr);
+  for ($n=0; $n<sizeof($qsArr); $n++) {
+    $tstArr = explode("=", $qsArr[$n]);
+    if (!isset($exArr[$tstArr[0]]) || !$exArr[$tstArr[0]]) {
+      $retArr[] = $qsArr[$n];
+      $varArr[$tstArr[0]] = sizeof($retArr)-1;
+    }
+  }
+  if (sizeof($retArr)) {
+    return implode("&", $retArr);
+  }
+  return "";
+}
+?>
+<?php
+//WA Database Search (Copyright 2005, WebAssist.com)
+//Recordset: rsMindfulness;
+//Searchpage: sms_stem_meanings_res.php;
+//Form: form1;
+$WADbSearch1_DefaultWhere = "";
+if (!session_id()) session_start();
+if ((isset($_POST["WADbSearch1"])) && ($_POST["WADbSearch1"] != "")) {
+  $WADbSearch1 = new FilterDef;
+  $WADbSearch1->initializeQueryBuilder("MYSQL","1");
+  //keyword array declarations
+  $KeyArr1 = array("firstname");
+  $KeyArr2 = array("lastname");
+  $KeyArr3 = array("{$_GET['prompt_name']}");
+
+  //comparison list additions
+  $WADbSearch1->addComparisonFromEdit("mindfulkey","mindfulKey","AND","=",1);
+  $WADbSearch1->addComparisonFromEdit("timestamp","startDate","AND",">=",2);
+  $WADbSearch1->addComparison("timestamp","".WAQB_getEndDate($_POST["endDate"])  ."","AND","<=",2);
+  $WADbSearch1->addComparisonFromList("teacherno","teacherNo","AND","=",1);
+  $WADbSearch1->keywordComparison($KeyArr1,"".((isset($_POST["firstName"]))?$_POST["firstName"]:"")  ."","AND","Includes",",%20","%20","%22","%22",0);
+  $WADbSearch1->keywordComparison($KeyArr2,"".((isset($_POST["lastName"]))?$_POST["lastName"]:"")  ."","AND","Includes",",%20","%20","%22","%22",0);
+  $WADbSearch1->keywordComparison($KeyArr3,"".((isset($_POST["stemDescription"]))?$_POST["stemDescription"]:"")  ."","AND","Includes",",%20","%20","%22","%22",0);
+
+  //save the query in a session variable
+  if (1 == 1) {
+    $_SESSION["WADbSearch1_sms_stem_meanings_res"]=$WADbSearch1->whereClause;
+  }
+}
+else     {
+  $WADbSearch1 = new FilterDef;
+  $WADbSearch1->initializeQueryBuilder("MYSQL","1");
+  //get the filter definition from a session variable
+  if (1 == 1)     {
+    if (isset($_SESSION["WADbSearch1_sms_stem_meanings_res"]) && $_SESSION["WADbSearch1_sms_stem_meanings_res"] != "")     {
+      $WADbSearch1->whereClause = $_SESSION["WADbSearch1_sms_stem_meanings_res"];
+    }
+    else     {
+      $WADbSearch1->whereClause = $WADbSearch1_DefaultWhere;
+    }
+  }
+  else     {
+    $WADbSearch1->whereClause = $WADbSearch1_DefaultWhere;
+  }
+}
+$WADbSearch1->whereClause = str_replace("\\''", "''", $WADbSearch1->whereClause);
+$WADbSearch1whereClause = '';
+?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+?>
+<?php
+$currentPage = $_SERVER["PHP_SELF"];?>
+<?php
+//WA DataAssist Sort (Copyright 2007, WebAssist.com)
+//Recordset: rsMindfulness;
+$WADA_Sort_1 = new WADA_SortObject();
+$WADA_Sort_1->DefaultSort = "";
+$WADA_Sort_1->ColumnList = "".((isset($_GET["sort"]))?$_GET["sort"]:"")  ."^mindfulkey^timestamp^teacherno^firstname^lastname^sms10mean^age^sexkey^edu_level^ethnicity";
+$WADA_Sort_1->SortOrderList = "Ascending^Ascending^Ascending^Ascending^Ascending^Ascending^Ascending^Ascending^Ascending^Ascending^Ascending";
+$WADA_Sort_1->ToggleOn = true;
+if ((((isset($_GET["sort"]))?$_GET["sort"]:"") != "")) {
+  $WADA_Sort_1->SetToClause = $WADA_Sort_1->getDefaultSetToClause();
+  if ($WADA_Sort_1->ToggleOn && isset($_SESSION["WADA_OrderClause_sms_stem_meanings_res"])) {
+    $WADA_Sort_1->ToggleClause = $_SESSION["WADA_OrderClause_sms_stem_meanings_res"];
+  }
+}
+else if (isset($_SESSION["WADA_OrderClause_sms_stem_meanings_res"])) {
+  $WADA_Sort_1->SetToClause = $_SESSION["WADA_OrderClause_sms_stem_meanings_res"];
+}
+$WADA_Sort_1->initialize();
+$_SESSION["WADA_OrderClause_sms_stem_meanings_res"] = $WADA_Sort_1->SetToClause;
+?>
+<?php
+$maxRows_rsMindfulness = 6;
+$pageNum_rsMindfulness = 0;
+if (isset($_GET['pageNum_rsMindfulness'])) {
+  $pageNum_rsMindfulness = $_GET['pageNum_rsMindfulness'];
+}
+$startRow_rsMindfulness = $pageNum_rsMindfulness * $maxRows_rsMindfulness;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulness = "SELECT mindfulness.mindfulkey, mindfulness.timestamp, mindfulness.userkey, mindfulness.teacherno, mindfulness.sexkey, mindfulness.instrument_id, mindfulness.age, mindfulness.edukey, mindfulness.ethnicitykey, mindfulness.sms10mean, {$_GET['prompt_name']}, {$_GET['prompt_code']}, registrants.userkey, registrants.firstname, registrants.lastname, demogs_edu.edu_level, demogs_ethnicity.ethnicity FROM mindfulness, registrants, demogs_edu, demogs_ethnicity WHERE mindfulness.sms10mean > 0 AND mindfulness.userkey = registrants.userkey AND registrants.edukey = demogs_edu.edukey AND registrants.ethnicity1key = demogs_ethnicity.ethnicitykey AND mindfulness.timestamp > '2010-07-07 01:01:01'";
+setQueryBuilderSource($query_rsMindfulness,$WADbSearch1,false);
+setQueryBuilderSource($query_rsMindfulness,$WADA_Sort_1,false);
+$query_limit_rsMindfulness = sprintf("%s LIMIT %d, %d", $query_rsMindfulness, $startRow_rsMindfulness, $maxRows_rsMindfulness);
+$rsMindfulness = mysql_query($query_limit_rsMindfulness, $Assessment) or die(mysql_error());
+$row_rsMindfulness = mysql_fetch_assoc($rsMindfulness);
+
+if (isset($_GET['totalRows_rsMindfulness'])) {
+  $totalRows_rsMindfulness = $_GET['totalRows_rsMindfulness'];
+} else {
+  $all_rsMindfulness = mysql_query($query_rsMindfulness);
+  $totalRows_rsMindfulness = mysql_num_rows($all_rsMindfulness);
+}
+$totalPages_rsMindfulness = ceil($totalRows_rsMindfulness/$maxRows_rsMindfulness)-1;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsSex = "SELECT sexkey, sex FROM sex";
+$rsSex = mysql_query($query_rsSex, $Assessment) or die(mysql_error());
+$row_rsSex = mysql_fetch_assoc($rsSex);
+$totalRows_rsSex = mysql_num_rows($rsSex);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEthnicity = "SELECT demogs_ethnicity.ethnicitykey, demogs_ethnicity.ethnicity FROM demogs_ethnicity ORDER BY demogs_ethnicity.ethnicity";
+$rsEthnicity = mysql_query($query_rsEthnicity, $Assessment) or die(mysql_error());
+$row_rsEthnicity = mysql_fetch_assoc($rsEthnicity);
+$totalRows_rsEthnicity = mysql_num_rows($rsEthnicity);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEdu = "SELECT * FROM demogs_edu ORDER BY edu_level_order ASC";
+$rsEdu = mysql_query($query_rsEdu, $Assessment) or die(mysql_error());
+$row_rsEdu = mysql_fetch_assoc($rsEdu);
+$totalRows_rsEdu = mysql_num_rows($rsEdu);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsTeachers = "SELECT * FROM bulkcustomerinfo WHERE sms = 1 ORDER BY lastname ASC";
+$rsTeachers = mysql_query($query_rsTeachers, $Assessment) or die(mysql_error());
+$row_rsTeachers = mysql_fetch_assoc($rsTeachers);
+$totalRows_rsTeachers = mysql_num_rows($rsTeachers);
+
+$colname_rsStem = "-1";
+if (isset($_GET['mindfulname'])) {
+  $colname_rsStem = (get_magic_quotes_gpc()) ? $_GET['mindfulname'] : addslashes($_GET['mindfulname']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStem = sprintf("SELECT * FROM mindfulstems WHERE mindfulname = %s", GetSQLValueString($colname_rsStem, "text"));
+$rsStem = mysql_query($query_rsStem, $Assessment) or die(mysql_error());
+$row_rsStem = mysql_fetch_assoc($rsStem);
+$totalRows_rsStem = mysql_num_rows($rsStem);
+?>
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/mindfulnesswide.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>SMS: View stem descriptions</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<link href="../../../WA_DataAssist/styles/Refined_Pacifica.css" rel="stylesheet" type="text/css" />
+<link href="../../../WA_DataAssist/styles/Verdana.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+.WADAResultsNavigation {
+	padding-top: 5px;
+	padding-bottom: 10px;
+}
+.WADAResultsCount {
+	font-size: 11px;
+}
+.WADAResultsNavTop, .WADAResultsInsertButton {
+	clear: none;
+}
+.WADAResultsNavTop {
+	width: 60%;
+	float: left;
+}
+.WADAResultsInsertButton {
+	width: 30%;
+	float: right;
+	text-align: right;
+}
+.WADAResultsNavButtonCell, .WADAResultsInsertButton {
+	padding: 2px;
+}
+.WADAResultsTable {
+	font-size: 11px;
+	clear: both;
+	padding-top: 1px;
+	padding-bottom: 1px;
+}
+
+.WADAResultsTableHeader, .WADAResultsTableCell {
+	padding: 3px;
+	text-align: left;
+}
+
+.WADAResultsTableHeader {
+	padding-left: 8px;
+	padding-right: 8px;
+}
+
+.WADAResultsTableCell {
+	padding-left: 8px;
+	padding-right: 8px;
+}
+
+.WADAResultsTableCell {
+	border-left: 1px solid #BABDC2;
+}
+
+.WADAResultsEditButtons {
+	border-left: 1px solid #BABDC2;
+	border-right: 1px solid #BABDC2;
+}
+
+.WADAResultsRowDark {
+	background-color: #FFFADF;
+}
+</style>
+<style type="text/css">
+.WADAResultsTableHeader1 {	padding: 3px;
+	text-align: left;
+}
+.oneColFixCtrHdr #container #mainContent tr td {
+	padding-left: 2px;
+}
+</style>
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	font: 100% Verdana, Arial, Helvetica, sans-serif;
+	background: #666666;
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0;
+	text-align: center; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #000000;
+	background-color: #93B3C8;
+}
+.oneColFixCtrHdr #container {
+	width: 1200px;
+	margin: 0 auto; /* the auto margins (in conjunction with a width) center the page */
+	border: 1px solid #7799B8;
+	text-align: left; /* this overrides the text-align: center on the body element. */
+	background-image: url(/images/mindful/m-backgroundwide.gif);
+	background-repeat: repeat;
+	background-color: #CBE0E9;
+}
+.oneColFixCtrHdr #header {
+	background-color: #90B3C5;
+	background-image: url(/images/mindful/m-header_wide.gif);
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+	height: 104px;
+	background-repeat: no-repeat;
+}
+.oneColFixCtrHdr #menu {
+	background-color: #8AB3C4;
+	padding-top: 0;
+	padding-right: 40px;
+	padding-bottom: 0;
+	height: 20px;
+	background-image: url(../../../images/skin/SMSmenu.jpg);
+}
+.oneColFixCtrHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0;
+	vertical-align: text-bottom;
+}
+.oneColFixCtrHdr #mainContent {
+	padding-top: 30;
+	padding-right: 30px;
+	padding-bottom: 0;
+	padding-left: 30px;
+}
+.oneColFixCtrHdr #footer {
+	padding: 0 10px;
+}
+.oneColFixCtrHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+-->
+</style>
+<link href="/css/styles3.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssets/SpryMenuBarHorizontalmind.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="oneColFixCtrHdr">
+
+<div id="container">
+  <div id="header">
+    <h1>&nbsp;</h1>
+  <!-- end #header --></div>
+  <div id="menu">
+       <ul id="MenuBar1" class="MenuBarHorizontal">
+<li><a href="/landing.php">home</a></li>
+<li><a href="/mindfulness/SMS/m-articles.html">articles</a></li>
+        <li><a href="/mindfulness/SMS/m-intro.html">intro</a></li>
+        <li><a href="/mindfulness/SMS/m-survey10a.php">survey</a></li>
+        <li><a href="/mindfulness/SMS/m-suggestions.php">ideas</a></li>
+        <li><a href="/mindfulness/SMS/m-teacherinfo.php" class="MenuBarItemSubmenu">teachers</a>
+          <ul>
+            <li><a href="/bulkcustomers/bulkselectreport.php">view reports</a></li>
+            <li><a href="/mindfulness/SMJ/teacher_viewjournalentries.php">view SMS journal</a></li>
+            <li><a href="/bulkcustomers/bulkpolicies.php">policies &amp; schedules</a></li>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+        <li><a href="#" class="MenuBarItemSubmenu">research</a>
+          <ul>
+            <li><a href="/mindfulness/SMS/code/sms_stem_meanings.php">stem descriptions</a></li>
+          </ul>
+        </li>
+    </ul>
+    <!-- end #menu --></div>
+  <div id="mainContent">
+    <!-- InstanceBeginEditable name="Main" -->
+    <h1>VIEW STEM DESCRIPTIONS</h1>
+    <p><a href="sms_stem_meanings_res.php?prompt_name=prompt01&mindfulname=sms09examine&prompt_code=coded_prompt01">examine</a> | <a href="sms_stem_meanings_res.php?prompt_name=prompt02&mindfulname=sms09attention1&prompt_code=coded_prompt02">attention</a> | <a href="sms_stem_meanings_res.php?prompt_name=prompt03&mindfulname=sms09listen&prompt_code=coded_prompt03">listen</a> | <a href="sms_stem_meanings_res.php?prompt_name=prompt04&mindfulname=sms11ordinary&prompt_code=coded_prompt04">experiences</a> | <a href="sms_stem_meanings_res.php?prompt_name=prompt05&mindfulname=sms11angryconsider&prompt_code=coded_prompt05">anger consequences</a>    </p>
+    <h6>Search</h6>
+<form name="form1" action="sms_stem_meanings_res.php?prompt_name=<?php echo $_GET['prompt_name']; ?>&prompt_code=<?php echo $_GET['prompt_code']; ?>&mindfulname=<?php echo $_GET['mindfulname']; ?>" method="post">
+  <table border="0" cellpadding="2" cellspacing="0" class="tableindent">
+    <tr>
+      <td align="right"><label for="mindfulKey">Record</label></td>
+      <td><input name="mindfulKey" type="text" value="" size="11" /></td>
+      <td align="right"><label for="firstName">First name</label></td>
+      <td><input type="text" name="firstName" value="" /></td>
+      </tr>
+    <tr>
+      <td align="right"><label for="startDate">Date range</label></td>
+      <td><input name="startDate" type="text" value="" size="21" />
+        &nbsp;
+        <label for="endDate">To:</label>
+        <input name="endDate" type="text" value="" size="21" />
+        &nbsp;(yyyy-mm-dd) &nbsp;&nbsp;&nbsp;</td>
+      <td align="right"><label for="lastName">Last name</label></td>
+      <td><input type="text" name="lastName" value="" /></td>
+      </tr>
+    <tr>
+      <td align="right"><label for="teacherNo">Teacher</label></td>
+      <td><select name="teacherNo">
+        <option value="">-select one-</option>
+        <?php
+do {  
+?>
+        <option value="<?php echo $row_rsTeachers['bulkcustomerkey']?>"><?php echo $row_rsTeachers['firstname']?>&nbsp;<?php echo $row_rsTeachers['lastname']?></option>
+        <?php
+} while ($row_rsTeachers = mysql_fetch_assoc($rsTeachers));
+  $rows = mysql_num_rows($rsTeachers);
+  if($rows > 0) {
+      mysql_data_seek($rsTeachers, 0);
+	  $row_rsTeachers = mysql_fetch_assoc($rsTeachers);
+  }
+?>
+      </select></td>
+      <td align="right"><label for="stemDecription">Stem description</label></td>
+      <td><textarea name="stemDecription" cols="40" rows="2"></textarea></td>
+      </tr>
+    <tr>
+      <td align="center" colspan="4"><input type="submit" name="WADbSearch1" value="SEARCH OR REFRESH" /></td>
+    </tr>
+  </table>
+</form>
+<h6>Results for: <em><?php echo $row_rsStem['mindfulstem']; ?></em></h6>
+<p>From <?php echo ($startRow_rsMindfulness + 1) ?>&nbsp; to <?php echo min($startRow_rsMindfulness + $maxRows_rsMindfulness, $totalRows_rsMindfulness) ?> &nbsp;of <?php echo $totalRows_rsMindfulness ?> &nbsp;&nbsp;&nbsp;<a href="<?php printf("%s?pageNum_rsMindfulness=%d%s", $currentPage, 0, $queryString_rsMindfulness); ?>&amp;prompt_name=<?php echo $_GET['prompt_name']; ?>&amp;prompt_code=<?php echo $_GET['prompt_code']; ?>&amp;mindfulname=<?php echo $_GET['mindfulname']; ?>">First</a> | <a href="<?php printf("%s?pageNum_rsMindfulness=%d%s", $currentPage, max(0, $pageNum_rsMindfulness - 1), $queryString_rsMindfulness); ?>&amp;prompt_name=<?php echo $_GET['prompt_name']; ?>&amp;prompt_code=<?php echo $_GET['prompt_code']; ?>&amp;mindfulname=<?php echo $_GET['mindfulname']; ?>">Previous</a> | <a href="<?php printf("%s?pageNum_rsMindfulness=%d%s", $currentPage, min($totalPages_rsMindfulness, $pageNum_rsMindfulness + 1), $queryString_rsMindfulness); ?>&amp;prompt_name=<?php echo $_GET['prompt_name']; ?>&amp;prompt_code=<?php echo $_GET['prompt_code']; ?>&amp;mindfulname=<?php echo $_GET['mindfulname']; ?>">Next</a> | <a href="<?php printf("%s?pageNum_rsMindfulness=%d%s", $currentPage, $totalPages_rsMindfulness, $queryString_rsMindfulness); ?>&amp;prompt_name=<?php echo $_GET['prompt_name']; ?>&amp;prompt_code=<?php echo $_GET['prompt_code']; ?>&amp;mindfulname=<?php echo $_GET['mindfulname']; ?>">Last</a>    </p>
+<table class="tableindent">
+      <tr class="tablehead">
+        <td><a href="sms_stem_meanings_res.php?sort=mindfulkey&prompt_name=<?php echo $_GET['prompt_name']; ?>&prompt_code=<?php echo $_GET['prompt_code']; ?>&mindfulname=<?php echo $_GET['mindfulname']; ?>">Record</a></td>
+        <td><a href="sms_stem_meanings_res.php?sort=timestamp&prompt_name=<?php echo $_GET['prompt_name']; ?>&prompt_code=<?php echo $_GET['prompt_code']; ?>&mindfulname=<?php echo $_GET['mindfulname']; ?>">Date</a></td>
+        <td><a href="sms_stem_meanings_res.php?sort=teacherno&prompt_name=<?php echo $_GET['prompt_name']; ?>&prompt_code=<?php echo $_GET['prompt_code']; ?>&mindfulname=<?php echo $_GET['mindfulname']; ?>">Teacher</a></td>
+        <td><a href="sms_stem_meanings_res.php?sort=firstname&prompt_name=<?php echo $_GET['prompt_name']; ?>&prompt_code=<?php echo $_GET['prompt_code']; ?>&mindfulname=<?php echo $_GET['mindfulname']; ?>">First</a></td>
+        <td><a href="sms_stem_meanings_res.php?sort=lastname&prompt_name=<?php echo $_GET['prompt_name']; ?>&prompt_code=<?php echo $_GET['prompt_code']; ?>&mindfulname=<?php echo $_GET['mindfulname']; ?>">Last</a></td>
+        <td><a href="sms_stem_meanings_res.php?sort=sms10mean&prompt_name=<?php echo $_GET['prompt_name']; ?>&prompt_code=<?php echo $_GET['prompt_code']; ?>&mindfulname=<?php echo $_GET['mindfulname']; ?>">SMS</a></td>
+        <td><a href="sms_stem_meanings_res.php?sort=age&prompt_name=<?php echo $_GET['prompt_name']; ?>&prompt_code=<?php echo $_GET['prompt_code']; ?>&mindfulname=<?php echo $_GET['mindfulname']; ?>">Age</a></td>
+        <td><a href="sms_stem_meanings_res.php?sort=sexkey&prompt_name=<?php echo $_GET['prompt_name']; ?>&prompt_code=<?php echo $_GET['prompt_code']; ?>&mindfulname=<?php echo $_GET['mindfulname']; ?>">Sex</a></td>
+        <td><a href="sms_stem_meanings_res.php?sort=edu_level&prompt_name=<?php echo $_GET['prompt_name']; ?>&prompt_code=<?php echo $_GET['prompt_code']; ?>&mindfulname=<?php echo $_GET['mindfulname']; ?>">Edu</a></td>
+        <td><a href="sms_stem_meanings_res.php?sort=ethnicity&prompt_name=<?php echo $_GET['prompt_name']; ?>&prompt_code=<?php echo $_GET['prompt_code']; ?>&mindfulname=<?php echo $_GET['mindfulname']; ?>">Ethnicity</a></td>
+        <td width="350">Description</td>
+        <td>Coded</td>
+        <td>Code</td>
+        <td>Update</td>
+      </tr>
+      <?php do { ?>
+        <tr>
+          <td><?php echo $row_rsMindfulness['mindfulkey']; ?></td>
+          <td><span class="WADAResultsTableCell">
+            <input name="timestamp" type="text" id="timestamp" value="<?php echo $row_rsMindfulness['timestamp']; ?>" size="11" />
+          </span></td>
+          <td><?php echo $row_rsMindfulness['teacherno']; ?></td>
+          <td><?php echo $row_rsMindfulness['firstname']; ?></td>
+          <td><?php echo $row_rsMindfulness['lastname']; ?></td>
+          <td><?php echo $row_rsMindfulness['sms10mean']; ?></td>
+          <td><?php echo $row_rsMindfulness['age']; ?></td>
+          <td><?php echo $row_rsMindfulness['sexkey']; ?></td>
+          <td><?php echo $row_rsMindfulness['edu_level']; ?></td>
+          <td><?php echo $row_rsMindfulness['ethnicity']; ?></td>
+          <td width="350"><?php echo $row_rsMindfulness[$_GET["prompt_name"]]; ?></td>
+          <td><div align="center"><?php echo $row_rsMindfulness[$_GET["prompt_code"]]; ?></div></td>
+          <td><div align="center">
+          <a href="sms_stem_coded.php?surveykey=<?php echo $row_rsMindfulness['mindfulkey']; ?>&prompt_name=<?php echo $_GET['prompt_name']; ?>&prompt_code=<?php echo $_GET['prompt_code']; ?>&instrument_id=<?php echo $row_rsMindfulness['instrument_id']; ?>&mindfulname=<?php echo $row_rsStem['mindfulname']; ?>">code</a>
+          </div></td>
+          <td><div align="center">
+  <a href="sms_stem_coding_update.php?surveykey=<?php echo $row_rsMindfulness['mindfulkey']; ?>&prompt_name=<?php echo $_GET['prompt_name']; ?>&prompt_code=<?php echo $_GET['prompt_code']; ?>&instrument_id=<?php echo $row_rsMindfulness['instrument_id']; ?>&mindfulname=<?php echo $row_rsStem['mindfulname']; ?>">update</a>
+          </div></td>
+        </tr>
+        <?php } while ($row_rsMindfulness = mysql_fetch_assoc($rsMindfulness)); ?>
+    </table>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+    <!-- InstanceEndEditable -->
+	<!-- end #mainContent --></div>
+  <div id="footer">
+    <p align="center">©2010-2011 Sharon Solloway. All rights reserved.</p>
+  <!-- end #footer --></div>
+<!-- end #container --></div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsTeachers);
+
+mysql_free_result($rsStem);
+
+mysql_free_result($rsMindfulness);
+
+mysql_free_result($rsSex);
+
+mysql_free_result($rsEthnicity);
+
+mysql_free_result($rsEdu);
+?>

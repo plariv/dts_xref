@@ -1,0 +1,571 @@
+<?php 
+require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" );
+include_once ("../includes/general_custom_functions.php");
+
+if (!WA_Auth_RulePasses("Logged in as employee")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+$userkey = $_SESSION['log_userkey'];
+
+$currentPage = $_SERVER['PHP_SELF'];
+
+
+
+
+
+
+// OUTPUT JSON
+
+
+
+if (isset($_GET['ajax'])) {
+	$valid_tables = array(
+		"objective_types" => "SELECT objectivetypekey AS key, objective__type_name AS name FROM in_objective_types ",
+		"objectives" => "SELECT objectivekey AS key, objective_name AS name FROM in_objectives ",
+		"milestones" => "SELECT milestonekey AS key, milestone_name AS name FROM in_milestones ",
+		);
+	$valid_filter_cols = array("oversightcirclekeys", "objectivetypekey", "objectivekey", 
+		"domaincirclekey", "projectcirclekey");
+	$table = $_GET['ajax'];
+	$filter = "WHERE 1=1 ";
+	
+	
+	
+	if ($table == "") { 
+		$query = "SELECT ";
+	}
+	
+	
+	
+	
+	
+	exit();
+}
+
+
+
+
+
+
+
+$query_rsOverCirc = sprintf("SELECT * FROM in_top_circles WHERE top_circle_level = 3");
+$rsOverCirc = mysql_query($query_rsOverCirc, $Assessment) or die(mysql_error());
+$row_rsOverCirc = mysql_fetch_assoc($rsOverCirc);
+$totalRows_rsOverCirc = mysql_num_rows($rsOverCirc);
+
+$query_rsProjCircProj = sprintf("SELECT p.pcircleprojectkey, p.p_circle_project_name,
+p.oversightcirclekeys, pc.projectcirclekey, pc.project_circle_name
+FROM in_project_circle_projects p
+JOIN in_project_circles pc ON p.projectcirclekey = pc.projectcirclekey");
+$rsProjCircProj = mysql_query($query_rsProjCircProj, $Assessment) or die(mysql_error());
+$row_rsProjCircProj = mysql_fetch_assoc($rsProjCircProj);
+$totalRows_rsProjCircProj = mysql_num_rows($rsProjCircProj);
+
+$query_rsDomCircleAssmt = sprintf("SELECT dca.dcircleassesskey, dca.d_circle_assess_name, 
+dc.oversightcirclekeys, dc.domaincirclekey, dc.domain_circle_name
+FROM in_domain_circle_assessments dca 
+JOIN in_domain_circles dc ON dca.domaincirclekey = dc.domaincirclekey ");
+$rsDomCircleAssmt = mysql_query($query_rsDomCircleAssmt, $Assessment) or die(mysql_error());
+$row_rsDomCircleAssmt = mysql_fetch_assoc($rsDomCircleAssmt);
+$totalRows_rsDomCircleAssmt = mysql_num_rows($rsDomCircleAssmt);
+
+$query_rsMilestones = sprintf("SELECT 
+ot.oversightcirclekeys, ot.objectivetypekey, ot.objective_type_name,
+o.objectivekey, o.objective_name, 
+m.milestonekey, m.milestone_name
+FROM in_objective_type ot 
+LEFT JOIN in_objectives o ON o.objectivetypekey = ot.objectivetypekey 
+LEFT JOIN in_milestones m ON m.objectivekey = o.objectivekey ");
+$rsMilestones = mysql_query($query_rsMilestones, $Assessment) or die(mysql_error());
+$row_rsMilestones = mysql_fetch_assoc($rsMilestones);
+$totalRows_rsMilestones = mysql_num_rows($rsMilestones);
+
+$query_rsActivities = sprintf("SELECT * FROM in_activities ");
+$rsActivities = mysql_query($query_rsActivities, $Assessment) or die(mysql_error());
+$row_rsActivities = mysql_fetch_assoc($rsActivities);
+$totalRows_rsActivities = mysql_num_rows($rsActivities);
+
+
+
+
+
+
+?>
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title><?php echo $_SESSION['instrument_id']; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../jQuery/jquery-1.6.4.js"></script>
+
+<script type="text/javascript">
+
+
+
+var assessment_keys = new Array();
+var assessment_names = new Array();
+<?php 
+do { ?>
+	assessment_keys.push("<?php echo $row_rsDomCircleAssmt['dcircleassesskey']; ?>");
+	assessment_names.push("<?php echo $row_rsProjCircProj['p_circle_project_name']; ?>"); 
+	<?php
+} while ($row_rsProjCircProj = mysql_fetch_assoc($rsProjCircProj));
+
+if(mysql_num_rows($rsProjCircProj) > 0) {
+	mysql_data_seek($rsProjCircProj, 0);
+	$row_rsProjCircProj = mysql_fetch_assoc($rsProjCircProj); 
+} 
+?>
+
+
+
+
+$(document).ready(function() {
+	
+	// 		Defining each of the arrays whose keys & text will populate the pulldown menus.
+	
+	var project_names = {
+		<?php 
+		do {
+			$key = $row_rsProjCircProj['pcircleprojectkey'];
+			$name = $row_rsProjCircProj['p_circle_project_name'];
+			// the Javascript array element looks like: 
+			//  1014 : 'This project menu name', 
+			echo $key ?> : '<?php echo $name ?>', 
+			<?php
+		} while ($row_rsProjCircProj = mysql_fetch_assoc($rsProjCircProj));
+		if(mysql_num_rows($rsProjCircProj) > 0) {
+			mysql_data_seek($rsProjCircProj, 0);
+			$row_rsProjCircProj = mysql_fetch_assoc($rsProjCircProj); 
+		} 
+		?>
+	};
+	
+	var project_oc = {
+		<?php 
+		do {
+			$key = $row_rsProjCircProj['pcircleprojectkey'];
+			$circles = $row_rsProjCircProj['oversightcirclekeys'];
+			// the Javascript array element looks like: 
+			//  1014 : 'This project menu name', 
+			echo $key ?> : '<?php echo $circles ?>', 
+			<?php
+		} while ($row_rsProjCircProj = mysql_fetch_assoc($rsProjCircProj));
+		if(mysql_num_rows($rsProjCircProj) > 0) {
+			mysql_data_seek($rsProjCircProj, 0);
+			$row_rsProjCircProj = mysql_fetch_assoc($rsProjCircProj); 
+		} 
+		?>
+	};
+	
+	var assessment_names = {
+		<?php 
+		do {
+			$key = $row_rsDomCircleAssmt['dcircleassesskey'];
+			$name = $row_rsDomCircleAssmt['d_circle_assess_name'];
+			// the Javascript array element looks like: 
+			//  1014 : 'This project menu name', 
+			echo $key ?> : '<?php echo $name ?>', 
+			<?php
+		} while ($row_rsDomCircleAssmt = mysql_fetch_assoc($rsDomCircleAssmt));
+		if(mysql_num_rows($rsDomCircleAssmt) > 0) {
+			mysql_data_seek($rsDomCircleAssmt, 0);
+			$row_rsDomCircleAssmt = mysql_fetch_assoc($rsDomCircleAssmt); 
+		} 
+		?>
+	};
+	
+	var assessment_oc = {
+		<?php 
+		do {
+			$key = $row_rsDomCircleAssmt['dcircleassesskey'];
+			$circles = $row_rsDomCircleAssmt['oversightcirclekeys'];
+			// the Javascript array element looks like: 
+			//  1014 : 'This project menu name', 
+			echo $key ?> : '<?php echo $circles ?>', 
+			<?php
+		} while ($row_rsDomCircleAssmt = mysql_fetch_assoc($rsDomCircleAssmt));
+		if(mysql_num_rows($rsDomCircleAssmt) > 0) {
+			mysql_data_seek($rsDomCircleAssmt, 0);
+			$row_rsDomCircleAssmt = mysql_fetch_assoc($rsDomCircleAssmt); 
+		} 
+		?>
+	};
+	
+	var milestone_names = {
+		<?php 
+		do {
+			$key = $row_rsMilestones['milestonekey'];
+			$name = $row_rsMilestones['milestone_name'];
+			// the Javascript array element looks like: 
+			//  1014 : 'This project menu name', 
+			echo $key ?> : '<?php echo $name ?>', 
+			<?php
+		} while ($row_rsMilestones = mysql_fetch_assoc($rsMilestones));
+		if(mysql_num_rows($rsMilestones) > 0) {
+			mysql_data_seek($rsMilestones, 0);
+			$row_rsMilestones = mysql_fetch_assoc($rsMilestones); 
+		} 
+		?>
+	};
+	
+	var milestone_oc = {
+		<?php 
+		do {
+			$key = $row_rsDomCircleAssmt['milestonekey'];
+			$circles = $row_rsDomCircleAssmt['oversightcirclekeys'];
+			// the Javascript array element looks like: 
+			//  1014 : 'This project menu name', 
+			echo $key ?> : '<?php echo $circles ?>', 
+			<?php
+		} while ($row_rsDomCircleAssmt = mysql_fetch_assoc($rsDomCircleAssmt));
+		if(mysql_num_rows($rsDomCircleAssmt) > 0) {
+			mysql_data_seek($rsDomCircleAssmt, 0);
+			$row_rsDomCircleAssmt = mysql_fetch_assoc($rsDomCircleAssmt); 
+		} 
+		?>
+	};
+	
+	// **** I also have to specify the "parent" key for each pulldown. 
+	
+	
+	
+	
+	// **** IF oversight circle hasn't been selected
+	// $('.dependsOnOversight').hide();
+	
+	$('#oversight').change(function() {
+		// code here happens when the oversight circle value is changed.
+		var oc = $('#oversight option:selected').val();
+		// alert('The selected circle was: '+oc);
+		
+		var project = $('#projectkey');
+		
+		// use .each to run the same command for each menu
+		$('.dependsOnOversight').each(function() { 
+			// alert('Hiding menu items which contain '+oc);
+			// disable options in a list
+			// $('.dependsOnOversight option').attr('disabled','disabled');
+			// $('.dependsOnOversight option').hide();
+		});
+		
+		// REMOVE an option tag by commenting it out, then leaving the comment blank. 
+		// (I don't know how to actually wrap the comment, or how to fully erase it.)
+		$('.dependsOnOversight option').wrap(function() {
+			return '<!-- -->';
+		});
+		
+		// add all menu items to the project table
+		$.each(projectkey, function(val, text) {
+			$('#projectkey').append( new Option(text,val) );
+		});
+		
+		
+		// Use a line like this to add options to the select list.
+		// $('#FavoriteColor').append("<option value='1'>" + myText + "</option>");
+		
+		
+	});
+	
+	
+	
+});
+
+
+
+</script>
+
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>Velit esse cillum </h1>
+    <p>dolore quis nostrud exercitation consectetur adipisicing elit. Ut enm ad minim veniam, eu fugiat nulla pariatur. Sunt in culpa ullamco laboris nisi qui officia eserunt. Exceptur sint occaect in reprehenderit in voluptate quis nostrud exercitation.</p>
+    <p>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Eu fugiat nulla pariatur. Qui officia deserunt duis aute irure dolor lorem ipsum dolo sit amet. Ullamco laboris nisi consecetur adipisicing elit, ut labore et dolore magna aliqua. In reprehenderit in voluptate ut enim ad minim veniam, eu fugiat nulla pariatour.</p>
+    <form id="form1" name="form1" method="post" action="">
+      <table width="700" border="0">
+        <tr>
+          <td>Choose an oversight circle</td>
+          <td>
+            <select name="oversightcirclekey" id="oversight">
+              <option>- select one -</option>
+              <?php
+              do { ?>
+              <option value="<?php echo $row_rsOverCirc['topcirclekey']?>" <?php 
+                if (!(strcmp($row_rsOverCirc['topcirclekey'], $preset['oversight']))) {
+                  echo "selected=\"selected\""; 
+                } ?>><?php 
+                echo $row_rsOverCirc['top_circle_name']; ?></option><?php
+              } while ($row_rsOverCirc = mysql_fetch_assoc($rsOverCirc));
+              if(mysql_num_rows($rsOverCirc) > 0) {
+                  mysql_data_seek($rsOverCirc, 0);
+                $row_rsOverCirc = mysql_fetch_assoc($rsOverCirc);
+              } ?>
+          	</select>
+          </td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>Choose a project</td>
+          <td>
+          	<select name="projectkey" class="dependsOnOversight" id="projectkey">
+              <option label="all">- select one -</option>
+              <?php
+              do { ?>
+              <option value="<?php echo $row_rsProjCircProj['pcircleprojectkey']; ?>" 
+								label="<?php echo $row_rsProjCircProj['oversightcirclekeys']; ?>" 
+								<?php 
+                if (!(strcmp($row_rsProjCircProj['pcircleprojectkey'], $preset['project']))) {
+                  echo "selected=\"selected\""; 
+                } ?>><?php 
+								echo $row_rsProjCircProj['project_circle_name']." » ".
+										$row_rsProjCircProj['p_circle_project_name']; ?></option><?php
+              } while ($row_rsProjCircProj = mysql_fetch_assoc($rsProjCircProj));
+              if(mysql_num_rows($rsProjCircProj) > 0) {
+                  mysql_data_seek($rsProjCircProj, 0);
+                $row_rsProjCircProj = mysql_fetch_assoc($rsProjCircProj);
+              } ?>
+          	</select>
+          </td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>Choose an assessment</td>
+          <td>
+          	<select name="assessmentkey" class="dependsOnOversight" id="assessmentkey">
+              <option label="all">- select one -</option>
+              <?php
+              do { ?>
+              <option value="<?php echo $row_rsDomCircleAssmt['dcircleassesskey']; ?>" 
+								label="<?php echo $row_rsProjCircProj['oversightcirclekeys']; ?>" <?php 
+                if (!(strcmp($row_rsDomCircleAssmt['dcircleassesskey'], $preset['project']))) {
+                  echo "selected=\"selected\""; 
+                } ?>><?php 
+                echo $query_rsDomCircleAssmt['domain_circle_name']." » ".
+									$row_rsDomCircleAssmt['d_circle_assess_name']; ?></option><?php
+              } while ($row_rsDomCircleAssmt = mysql_fetch_assoc($rsDomCircleAssmt));
+              if(mysql_num_rows($rsDomCircleAssmt) > 0) {
+                  mysql_data_seek($rsDomCircleAssmt, 0);
+                $row_rsDomCircleAssmt = mysql_fetch_assoc($rsDomCircleAssmt);
+              } ?>
+          	</select>
+          </td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>Choose a milestone</td>
+          <td>
+          	<select name="milestonekey" class="dependsOnOversight" id="milestonekey">
+              <option label="all">- select one -</option>
+              <?php
+              do { ?>
+              <option value="<?php echo $row_rsMilestones['milestonekey']?>" 
+								label="<?php echo $row_rsProjCircProj['oversightcirclekeys']; ?>" 
+								<?php 
+                if (!(strcmp($row_rsMilestones['milestonekey'], $preset['milestonekey']))) {
+                  echo "selected=\"selected\""; 
+                } ?>><?php 
+                echo $row_rsMilestones['objective_type_name']." » ".
+											$row_rsMilestones['objective_name']." » ".
+											$row_rsMilestones['milestone_name']; ?></option><?php
+              } while ($row_rsMilestones = mysql_fetch_assoc($rsMilestones));
+              if(mysql_num_rows($rsMilestones) > 0) {
+                  mysql_data_seek($rsMilestones, 0);
+                $row_rsMilestones = mysql_fetch_assoc($rsMilestones);
+              } ?>
+          	</select>
+          </td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>Choose an activity</td>
+          <td>
+          	<select name="activitykey" id="activitykey">
+              <option>- select one -</option>
+              <?php
+              do { ?>
+              <option value="<?php echo $row_rsActivities['activitykey']?>" <?php 
+                if (!(strcmp($row_rsActivities['activitykey'], $preset['activitykey']))) {
+                  echo "selected=\"selected\""; 
+                } ?>><?php 
+                echo $row_rsActivities['activity_name']; ?></option><?php
+              } while ($row_rsActivities = mysql_fetch_assoc($rsActivities));
+              if(mysql_num_rows($rsActivities) > 0) {
+                  mysql_data_seek($rsActivities, 0);
+                $row_rsActivities = mysql_fetch_assoc($rsActivities);
+              } ?>
+          	</select>
+          </td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>Enter a task name</td>
+          <td colspan="2"><label for="textfield"></label>
+          <input type="text" name="textfield" id="textfield" /></td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>Enter a description (optional)</td>
+          <td colspan="3"><label for="textarea"></label>
+          <textarea name="textarea" id="textarea" cols="45" rows="5"></textarea></td>
+        </tr>
+        <tr>
+          <td>Priority</td>
+          <td><select name="select10" id="select10">
+            <option>-  -</option>
+          </select></td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>Date due</td>
+          <td><select name="select11" id="select11">
+            <option>-  -</option>
+          </select></td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>Est. hours to complete</td>
+          <td><label for="textfield2"></label>
+          <input name="textfield2" type="text" id="textfield2" size="4" /></td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>Assigned to </td>
+          <td><select name="select12" id="select12">
+            <option>- select one -</option>
+          </select></td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>Deliver to </td>
+          <td><select name="select13" id="select13">
+            <option>- select one -</option>
+          </select></td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td><input type="submit" name="SUBMIT" id="SUBMIT" value="SUBMIT" /></td>
+        </tr>
+      </table>
+    </form>
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrants);
+?>

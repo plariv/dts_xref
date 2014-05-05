@@ -1,0 +1,109 @@
+<?php
+  ob_start();
+?>
+
+
+<?php   // SetSessionVar.php
+// Sessiom start & error reporting requred for session variables code
+if (!isset($_SESSION)) {
+  session_start();
+}
+error_reporting(E_ALL); 
+?>
+
+
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php  require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsRecordKey = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRecordKey = (get_magic_quotes_gpc()) ? $_SESSION['log_userkey'] : addslashes($_SESSION['log_userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecordKey = sprintf("SELECT lakey, resellerkey, completed, userkey, instrument_id FROM la_data WHERE userkey = %s AND completed = 0 AND instrument_id = '{$_SESSION['instrument_id']}'", GetSQLValueString($colname_rsRecordKey, "int"));
+$rsRecordKey = mysql_query($query_rsRecordKey, $Assessment) or die(mysql_error());
+$row_rsRecordKey = mysql_fetch_assoc($rsRecordKey);
+$totalRows_rsRecordKey = mysql_num_rows($rsRecordKey);
+
+
+	$updateSQL = sprintf("UPDATE la_data SET instrument_id=%s WHERE lakey=%s",
+                       GetSQLValueString($row_rsRecordKey['lakey'], "int"),
+                       GetSQLValueString($row_rsRecordKey['instrument_id'], "text"));
+
+ mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+  
+  // SPM 2011 02 01
+  // Switch statement to replace single $updateGoTo
+  //
+ 
+  switch ($_SESSION['instrument_id']) {
+    case "LIMA":
+         $updateGoTo = "assess_lima01_scales.php?lakey={$row_rsRecordKey['lakey']}";
+         break;
+    case "LDMA":
+         $updateGoTo = "assess_personal1.php?lakey={$row_rsRecordKey['lakey']}";  
+         break;
+    case "LERA":
+         $updateGoTo = "assess_personal1.php?lakey={$row_rsRecordKey['lakey']}";  
+         break;
+    case "LRJA":
+         $updateGoTo = "assess_personal1.php?lakey={$row_rsRecordKey['lakey']}";  
+         break;
+    case "LLRA":
+         $updateGoTo = "assess_personal1.php?lakey={$row_rsRecordKey['lakey']}";  
+         break;
+    case "LSUA":
+         $updateGoTo = "assess_personal1.php?lakey={$row_rsRecordKey['lakey']}";  
+         break;
+    default:
+        echo "Unrecognized Instrument ID";	// this would need to be an alert or error message to be useful. 
+		                                    // Just here for demo	 
+    } // End Switch
+
+  if (isset($_SERVER['QUERY_STRING'])) {
+      $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+      $updateGoTo .= $_SERVER['QUERY_STRING'];
+      }  // End If
+	
+  header(sprintf("Location: %s", $updateGoTo));
+
+
+
+mysql_free_result($rsRecordKey);
+?>

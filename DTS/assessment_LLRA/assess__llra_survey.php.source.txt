@@ -1,0 +1,1934 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+
+// Start trigger
+$formValidation = new tNG_FormValidation();
+$formValidation->addField("showemo", true, "numeric", "", "", "", "");
+$formValidation->addField("persistent", true, "numeric", "", "", "", "");
+$formValidation->addField("selfreflective", true, "numeric", "", "", "", "");
+$formValidation->addField("ruthless", true, "numeric", "", "", "", "");
+$formValidation->addField("selfsacrificing", true, "numeric", "", "", "", "");
+$formValidation->addField("extreme", true, "numeric", "", "", "", "");
+$formValidation->addField("stayscourse", true, "numeric", "", "", "", "");
+$formValidation->addField("looksfuture", true, "numeric", "", "", "", "");
+$formValidation->addField("wellliked", true, "numeric", "", "", "", "");
+$formValidation->addField("sharespower", true, "numeric", "", "", "", "");
+$formValidation->addField("flexible", true, "numeric", "", "", "", "");
+$formValidation->addField("orator", true, "numeric", "", "", "", "");
+$formValidation->addField("inspiring", true, "numeric", "", "", "", "");
+$formValidation->addField("patient", true, "numeric", "", "", "", "");
+$formValidation->addField("perspectives", true, "numeric", "", "", "", "");
+$formValidation->addField("ambitious", true, "numeric", "", "", "", "");
+$formValidation->addField("emostrong", true, "numeric", "", "", "", "");
+$formValidation->addField("ambiguity", true, "numeric", "", "", "", "");
+$formValidation->addField("compassionate", true, "numeric", "", "", "", "");
+$formValidation->addField("confident", true, "numeric", "", "", "", "");
+$formValidation->addField("disagreement", true, "numeric", "", "", "", "");
+$formValidation->addField("dominant", true, "numeric", "", "", "", "");
+$formValidation->addField("samebeliefs", true, "numeric", "", "", "", "");
+$formValidation->addField("educated", true, "numeric", "", "", "", "");
+$formValidation->addField("empathetic", true, "numeric", "", "", "", "");
+$formValidation->addField("expert", true, "numeric", "", "", "", "");
+$formValidation->addField("honest", true, "numeric", "", "", "", "");
+$formValidation->addField("hidevulnerability", true, "numeric", "", "", "", "");
+$formValidation->addField("spiritual", true, "numeric", "", "", "", "");
+$formValidation->addField("intelligent", true, "numeric", "", "", "", "");
+$formValidation->addField("fit", true, "numeric", "", "", "", "");
+$formValidation->addField("organized", true, "numeric", "", "", "", "");
+$formValidation->addField("religious", true, "numeric", "", "", "", "");
+$formValidation->addField("competent", true, "numeric", "", "", "", "");
+$formValidation->addField("advice", true, "numeric", "", "", "", "");
+$formValidation->addField("authoritarian", true, "numeric", "", "", "", "");
+$formValidation->addField("otherperspect", true, "numeric", "", "", "", "");
+$formValidation->addField("controlsall", true, "numeric", "", "", "", "");
+$formValidation->addField("showsvulner", true, "numeric", "", "", "", "");
+$formValidation->addField("input", true, "numeric", "", "", "", "");
+$formValidation->addField("sharepower", true, "numeric", "", "", "", "");
+$formValidation->addField("groupvalues", true, "numeric", "", "", "", "");
+$formValidation->addField("neverlies", true, "numeric", "", "", "", "");
+$formValidation->addField("incommand", true, "numeric", "", "", "", "");
+$formValidation->addField("collaborates", true, "numeric", "", "", "", "");
+$formValidation->addField("admitmistakes", true, "numeric", "", "", "", "");
+$formValidation->addField("masculine", true, "numeric", "", "", "", "");
+$formValidation->addField("valuesdivers", true, "numeric", "", "", "", "");
+$formValidation->addField("acknowledge", true, "numeric", "", "", "", "");
+$formValidation->addField("aggressive", true, "numeric", "", "", "", "");
+$formValidation->addField("idealistic", true, "numeric", "", "", "", "");
+$formValidation->addField("attractive", true, "numeric", "", "", "", "");
+$formValidation->addField("admitlimitations", true, "numeric", "", "", "", "");
+$formValidation->addField("charismatic", true, "numeric", "", "", "", "");
+$formValidation->addField("downtoearth", true, "numeric", "", "", "", "");
+$formValidation->addField("followers", true, "numeric", "", "", "", "");
+$formValidation->addField("creative", true, "numeric", "", "", "", "");
+$formValidation->addField("invincible", true, "numeric", "", "", "", "");
+$formValidation->addField("smart", true, "numeric", "", "", "", "");
+$formValidation->addField("nomistakes", true, "numeric", "", "", "", "");
+$formValidation->addField("emocontrol", true, "numeric", "", "", "", "");
+$formValidation->addField("ruthlesspursue", true, "numeric", "", "", "", "");
+$formValidation->addField("higherpower", true, "numeric", "", "", "", "");
+$formValidation->addField("servant", true, "numeric", "", "", "", "");
+$formValidation->addField("reassuring", true, "numeric", "", "", "", "");
+$formValidation->addField("standsby", true, "numeric", "", "", "", "");
+$formValidation->addField("tall", true, "numeric", "", "", "", "");
+$formValidation->addField("opendoor", true, "numeric", "", "", "", "");
+$formValidation->addField("unpopular", true, "numeric", "", "", "", "");
+$formValidation->addField("steel", true, "numeric", "", "", "", "");
+$formValidation->addField("international", true, "numeric", "", "", "", "");
+$formValidation->addField("feelsafe", true, "numeric", "", "", "", "");
+$formValidation->addField("higheducated", true, "numeric", "", "", "", "");
+$tNGs->prepareValidation($formValidation);
+// End trigger
+
+//start Trigger_Sendemail trigger
+//remove this line if you want to edit the code by hand
+function Trigger_Sendemail(&$tNG) {
+  $emailObj = new tNG_email($tNG);
+  $emailObj->setFrom("{rsEmailAddresses2.email}");
+  $emailObj->setTo("{rsBulkcustomer.email}");
+  $emailObj->setCC("{rsEmailAddresses.email}");
+  $emailObj->setBCC("");
+  $emailObj->setSubject("{rsRegistrants.firstname} {rsRegistrants.lastname}'s LLRA");
+  //WriteContent method
+  $emailObj->setContent("{rsRegistrants.firstname} {rsRegistrants.lastname}'s LLRA has been completed. We will notify you when it has been scored and finalized.");
+  $emailObj->setEncoding("ISO-8859-1");
+  $emailObj->setFormat("HTML/Text");
+  $emailObj->setImportance("Normal");
+  return $emailObj->Execute();
+}
+//end Trigger_Sendemail trigger
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRatings3 = "SELECT * FROM Ratings3";
+$rsRatings3 = mysql_query($query_rsRatings3, $Assessment) or die(mysql_error());
+$row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+$totalRows_rsRatings3 = mysql_num_rows($rsRatings3);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+$colname_rsBulkcustomer = "-1";
+if (isset($_GET['llrakey'])) {
+  $colname_rsBulkcustomer = $_GET['llrakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsBulkcustomer = sprintf("SELECT BulkCustomerInfo.bulkcustomerkey, BulkCustomerInfo.email, BulkCustomerInfo.firstname, BulkCustomerInfo.lastname, LLRA.llrakey, LLRA.bulkcustomerkey FROM BulkCustomerInfo, LLRA WHERE BulkCustomerInfo.bulkcustomerkey = LLRA.bulkcustomerkey AND  LLRA.llrakey = %s", GetSQLValueString($colname_rsBulkcustomer, "int"));
+$rsBulkcustomer = mysql_query($query_rsBulkcustomer, $Assessment) or die(mysql_error());
+$row_rsBulkcustomer = mysql_fetch_assoc($rsBulkcustomer);
+$totalRows_rsBulkcustomer = mysql_num_rows($rsBulkcustomer);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEmailAddresses = "SELECT * FROM emailaddresses WHERE emailkey = 9";
+$rsEmailAddresses = mysql_query($query_rsEmailAddresses, $Assessment) or die(mysql_error());
+$row_rsEmailAddresses = mysql_fetch_assoc($rsEmailAddresses);
+$totalRows_rsEmailAddresses = mysql_num_rows($rsEmailAddresses);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEmailAddresses2 = "SELECT * FROM emailaddresses WHERE emailkey = 4";
+$rsEmailAddresses2 = mysql_query($query_rsEmailAddresses2, $Assessment) or die(mysql_error());
+$row_rsEmailAddresses2 = mysql_fetch_assoc($rsEmailAddresses2);
+$totalRows_rsEmailAddresses2 = mysql_num_rows($rsEmailAddresses2);
+
+$query_rsRatings3 = "SELECT * FROM Ratings3 ORDER BY ratings3key DESC";
+$rsRatings3 = mysql_query($query_rsRatings3, $Assessment) or die(mysql_error());
+$row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+$totalRows_rsRatings3 = mysql_num_rows($rsRatings3);
+
+// Make an update transaction instance
+$upd_LLRA = new tNG_update($conn_Assessment);
+$tNGs->addTransaction($upd_LLRA);
+// Register triggers
+$upd_LLRA->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Update1");
+$upd_LLRA->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$upd_LLRA->registerTrigger("END", "Trigger_Default_Redirect", 99, "../checkout/checkout2.php");
+$upd_LLRA->registerTrigger("AFTER", "Trigger_Sendemail", 98);
+// Add columns
+$upd_LLRA->setTable("LLRA");
+$upd_LLRA->addColumn("showemo", "NUMERIC_TYPE", "POST", "showemo");
+$upd_LLRA->addColumn("completed", "NUMERIC_TYPE", "VALUE", "1");
+$upd_LLRA->addColumn("persistent", "NUMERIC_TYPE", "POST", "persistent");
+$upd_LLRA->addColumn("selfreflective", "NUMERIC_TYPE", "POST", "selfreflective");
+$upd_LLRA->addColumn("ruthless", "NUMERIC_TYPE", "POST", "ruthless");
+$upd_LLRA->addColumn("selfsacrificing", "NUMERIC_TYPE", "POST", "selfsacrificing");
+$upd_LLRA->addColumn("extreme", "NUMERIC_TYPE", "POST", "extreme");
+$upd_LLRA->addColumn("stayscourse", "NUMERIC_TYPE", "POST", "stayscourse");
+$upd_LLRA->addColumn("looksfuture", "NUMERIC_TYPE", "POST", "looksfuture");
+$upd_LLRA->addColumn("wellliked", "NUMERIC_TYPE", "POST", "wellliked");
+$upd_LLRA->addColumn("sharespower", "NUMERIC_TYPE", "POST", "sharespower");
+$upd_LLRA->addColumn("flexible", "NUMERIC_TYPE", "POST", "flexible");
+$upd_LLRA->addColumn("orator", "NUMERIC_TYPE", "POST", "orator");
+$upd_LLRA->addColumn("inspiring", "NUMERIC_TYPE", "POST", "inspiring");
+$upd_LLRA->addColumn("patient", "NUMERIC_TYPE", "POST", "patient");
+$upd_LLRA->addColumn("perspectives", "NUMERIC_TYPE", "POST", "perspectives");
+$upd_LLRA->addColumn("ambitious", "NUMERIC_TYPE", "POST", "ambitious");
+$upd_LLRA->addColumn("emostrong", "NUMERIC_TYPE", "POST", "emostrong");
+$upd_LLRA->addColumn("ambiguity", "NUMERIC_TYPE", "POST", "ambiguity");
+$upd_LLRA->addColumn("compassionate", "NUMERIC_TYPE", "POST", "compassionate");
+$upd_LLRA->addColumn("confident", "NUMERIC_TYPE", "POST", "confident");
+$upd_LLRA->addColumn("disagreement", "NUMERIC_TYPE", "POST", "disagreement");
+$upd_LLRA->addColumn("dominant", "NUMERIC_TYPE", "POST", "dominant");
+$upd_LLRA->addColumn("samebeliefs", "NUMERIC_TYPE", "POST", "samebeliefs");
+$upd_LLRA->addColumn("educated", "NUMERIC_TYPE", "POST", "educated");
+$upd_LLRA->addColumn("empathetic", "NUMERIC_TYPE", "POST", "empathetic");
+$upd_LLRA->addColumn("expert", "NUMERIC_TYPE", "POST", "expert");
+$upd_LLRA->addColumn("honest", "NUMERIC_TYPE", "POST", "honest");
+$upd_LLRA->addColumn("hidevulnerability", "NUMERIC_TYPE", "POST", "hidevulnerability");
+$upd_LLRA->addColumn("spiritual", "NUMERIC_TYPE", "POST", "spiritual");
+$upd_LLRA->addColumn("intelligent", "NUMERIC_TYPE", "POST", "intelligent");
+$upd_LLRA->addColumn("fit", "NUMERIC_TYPE", "POST", "fit");
+$upd_LLRA->addColumn("organized", "NUMERIC_TYPE", "POST", "organized");
+$upd_LLRA->addColumn("religious", "NUMERIC_TYPE", "POST", "religious");
+$upd_LLRA->addColumn("competent", "NUMERIC_TYPE", "POST", "competent");
+$upd_LLRA->addColumn("advice", "NUMERIC_TYPE", "POST", "advice");
+$upd_LLRA->addColumn("authoritarian", "NUMERIC_TYPE", "POST", "authoritarian");
+$upd_LLRA->addColumn("otherperspect", "NUMERIC_TYPE", "POST", "otherperspect");
+$upd_LLRA->addColumn("controlsall", "NUMERIC_TYPE", "POST", "controlsall");
+$upd_LLRA->addColumn("showsvulner", "NUMERIC_TYPE", "POST", "showsvulner");
+$upd_LLRA->addColumn("input", "NUMERIC_TYPE", "POST", "input");
+$upd_LLRA->addColumn("sharepower", "NUMERIC_TYPE", "POST", "sharepower");
+$upd_LLRA->addColumn("groupvalues", "NUMERIC_TYPE", "POST", "groupvalues");
+$upd_LLRA->addColumn("neverlies", "NUMERIC_TYPE", "POST", "neverlies");
+$upd_LLRA->addColumn("incommand", "NUMERIC_TYPE", "POST", "incommand");
+$upd_LLRA->addColumn("collaborates", "NUMERIC_TYPE", "POST", "collaborates");
+$upd_LLRA->addColumn("admitmistakes", "NUMERIC_TYPE", "POST", "admitmistakes");
+$upd_LLRA->addColumn("masculine", "NUMERIC_TYPE", "POST", "masculine");
+$upd_LLRA->addColumn("valuesdivers", "NUMERIC_TYPE", "POST", "valuesdivers");
+$upd_LLRA->addColumn("acknowledge", "NUMERIC_TYPE", "POST", "acknowledge");
+$upd_LLRA->addColumn("aggressive", "NUMERIC_TYPE", "POST", "aggressive");
+$upd_LLRA->addColumn("idealistic", "NUMERIC_TYPE", "POST", "idealistic");
+$upd_LLRA->addColumn("attractive", "NUMERIC_TYPE", "POST", "attractive");
+$upd_LLRA->addColumn("admitlimitations", "NUMERIC_TYPE", "POST", "admitlimitations");
+$upd_LLRA->addColumn("charismatic", "NUMERIC_TYPE", "POST", "charismatic");
+$upd_LLRA->addColumn("downtoearth", "NUMERIC_TYPE", "POST", "downtoearth");
+$upd_LLRA->addColumn("followers", "NUMERIC_TYPE", "POST", "followers");
+$upd_LLRA->addColumn("creative", "NUMERIC_TYPE", "POST", "creative");
+$upd_LLRA->addColumn("invincible", "NUMERIC_TYPE", "POST", "invincible");
+$upd_LLRA->addColumn("smart", "NUMERIC_TYPE", "POST", "smart");
+$upd_LLRA->addColumn("nomistakes", "NUMERIC_TYPE", "POST", "nomistakes");
+$upd_LLRA->addColumn("emocontrol", "NUMERIC_TYPE", "POST", "emocontrol");
+$upd_LLRA->addColumn("ruthlesspursue", "NUMERIC_TYPE", "POST", "ruthlesspursue");
+$upd_LLRA->addColumn("higherpower", "NUMERIC_TYPE", "POST", "higherpower");
+$upd_LLRA->addColumn("servant", "NUMERIC_TYPE", "POST", "servant");
+$upd_LLRA->addColumn("reassuring", "NUMERIC_TYPE", "POST", "reassuring");
+$upd_LLRA->addColumn("standsby", "NUMERIC_TYPE", "POST", "standsby");
+$upd_LLRA->addColumn("tall", "NUMERIC_TYPE", "POST", "tall");
+$upd_LLRA->addColumn("opendoor", "NUMERIC_TYPE", "POST", "opendoor");
+$upd_LLRA->addColumn("unpopular", "NUMERIC_TYPE", "POST", "unpopular");
+$upd_LLRA->addColumn("steel", "NUMERIC_TYPE", "POST", "steel");
+$upd_LLRA->addColumn("international", "NUMERIC_TYPE", "POST", "international");
+$upd_LLRA->addColumn("feelsafe", "NUMERIC_TYPE", "POST", "feelsafe");
+$upd_LLRA->addColumn("higheducated", "NUMERIC_TYPE", "POST", "higheducated");
+$upd_LLRA->addColumn("itdepends", "NUMERIC_TYPE", "POST", "itdepends");
+$upd_LLRA->addColumn("comments", "STRING_TYPE", "POST", "comments");
+$upd_LLRA->setPrimaryKey("llrakey", "NUMERIC_TYPE", "GET", "llrakey");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsLLRA = $tNGs->getRecordset("LLRA");
+$row_rsLLRA = mysql_fetch_assoc($rsLLRA);
+$totalRows_rsLLRA = mysql_num_rows($rsLLRA);
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatellra2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LLRA survey section</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+.style11 {color: #A52D1D}
+-->
+</style>
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<?php echo $tNGs->displayValidationRules();?>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LLRAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+      <!-- end #menu1 -->
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+        <td valign="top"><h1>SURVEY SECTION (page 9 of 9)</h1>
+          <h2><strong>Instructions</strong></h2>
+          <p><strong>You're almost finished!</strong> This last part of the assessment o<span class="pspaced">ffers you an opportunity to tell us more about your leadership preferences. Please rate the importance of each quality to good </span>leadership at the top (CEO, president, prime minister, etc.).</p>
+          <p><span class="pspaced"><strong>Note:</strong> If you return to this page after hitting the &quot;submit&quot; button, please check to make sure you have entered responses for all of the required (<span class="red">*</span>) items.</span></p>
+          <p>&nbsp;
+            <?php
+	echo $tNGs->getErrorMsg();
+?>
+
+          <form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+            <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+              <tr>
+                <td class="KT_th"><label for="showemo">shows his/her emotion</label></td>
+                <td><select name="showemo" id="showemo">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['showemo']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['showemo']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "showemo"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="persistent">is persistent</label></td>
+                <td><select name="persistent" id="persistent">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['persistent']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['persistent']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "persistent"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="selfreflective">is self-reflective</label></td>
+                <td><select name="selfreflective" id="selfreflective">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['selfreflective']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['selfreflective']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "selfreflective"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="ruthless">is ruthless</label></td>
+                <td><select name="ruthless" id="ruthless">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['ruthless']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['ruthless']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "ruthless"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="selfsacrificing">is self sacrificing</label></td>
+                <td><select name="selfsacrificing" id="selfsacrificing">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['selfsacrificing']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['selfsacrificing']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "selfsacrificing"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="extreme">is willing to use extreme tactics to achieve 
+                important objectives</label></td>
+                <td><select name="extreme" id="extreme">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['extreme']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['extreme']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "extreme"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="stayscourse">stays the course</label></td>
+                <td><select name="stayscourse" id="stayscourse">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['stayscourse']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['stayscourse']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "stayscourse"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="looksfuture">looks into the future</label></td>
+                <td><select name="looksfuture" id="looksfuture">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['looksfuture']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['looksfuture']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "looksfuture"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="wellliked">is well liked</label></td>
+                <td><select name="wellliked" id="wellliked">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['wellliked']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['wellliked']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "wellliked"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="sharespower">shares power with others</label></td>
+                <td><select name="sharespower" id="sharespower">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['sharespower']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['sharespower']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "sharespower"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="flexible">is flexible</label></td>
+                <td><select name="flexible" id="flexible">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['flexible']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['flexible']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "flexible"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="orator">is a good speaker</label></td>
+                <td><select name="orator" id="orator">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['orator']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['orator']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "orator"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="inspiring">is inspiring</label></td>
+                <td><select name="inspiring" id="inspiring">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['inspiring']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['inspiring']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "inspiring"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="patient">is patient</label></td>
+                <td><select name="patient" id="patient">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['patient']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['patient']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "patient"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="perspectives">values diverse perspectives</label></td>
+                <td><select name="perspectives" id="perspectives">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['perspectives']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['perspectives']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "perspectives"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="ambitious">is ambitious</label></td>
+                <td><select name="ambitious" id="ambitious">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['ambitious']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['ambitious']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "ambitious"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="emostrong">is emotionally strong</label></td>
+                <td><select name="emostrong" id="emostrong">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['emostrong']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['emostrong']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "emostrong"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="ambiguity">is comfortable with ambiguity</label></td>
+                <td><select name="ambiguity" id="ambiguity">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['ambiguity']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['ambiguity']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "ambiguity"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="compassionate">is compassionate</label></td>
+                <td><select name="compassionate" id="compassionate">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['compassionate']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['compassionate']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "compassionate"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="confident">is confident</label></td>
+                <td><select name="confident" id="confident">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['confident']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['confident']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "confident"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="disagreement">encourages disagreement</label></td>
+                <td><select name="disagreement" id="disagreement">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['disagreement']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['disagreement']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "disagreement"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="dominant">is dominant</label></td>
+                <td><select name="dominant" id="dominant">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['dominant']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['dominant']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "dominant"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="samebeliefs">has the same beliefs today that he or she 
+                had ten years ago</label></td>
+                <td><select name="samebeliefs" id="samebeliefs">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['samebeliefs']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['samebeliefs']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "samebeliefs"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="educated">is educated</label></td>
+                <td><select name="educated" id="educated">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['educated']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['educated']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "educated"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="empathetic">is empathetic</label></td>
+                <td><select name="empathetic" id="empathetic">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['empathetic']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['empathetic']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "empathetic"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="expert">is an expert in the field in which he or she 
+                leads</label></td>
+                <td><select name="expert" id="expert">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['expert']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['expert']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "expert"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="honest">is honest</label></td>
+                <td><select name="honest" id="honest">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['honest']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['honest']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "honest"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="hidevulnerability">hides vulnerability</label></td>
+                <td><select name="hidevulnerability" id="hidevulnerability">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['hidevulnerability']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['hidevulnerability']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "hidevulnerability"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="spiritual">is spiritual</label></td>
+                <td><select name="spiritual" id="spiritual">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['spiritual']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['spiritual']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "spiritual"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="intelligent">is intelligent</label></td>
+                <td><select name="intelligent" id="intelligent">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['intelligent']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['intelligent']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "intelligent"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="fit">is fit</label></td>
+                <td><select name="fit" id="fit">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['fit']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['fit']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "fit"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="organized">is organized</label></td>
+                <td><select name="organized" id="organized">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['organized']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['organized']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "organized"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="religious">is religious</label></td>
+                <td><select name="religious" id="religious">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['religious']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['religious']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "religious"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="competent">is competent</label></td>
+                <td><select name="competent" id="competent">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['competent']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['competent']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "competent"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="advice">seeks the advice of others before 
+                making major decisions</label></td>
+                <td><select name="advice" id="advice">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['advice']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['advice']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "advice"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="authoritarian">is an authoritarian</label></td>
+                <td><select name="authoritarian" id="authoritarian">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['authoritarian']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['authoritarian']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "authoritarian"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="otherperspect">considers the perspectives of others</label></td>
+                <td><select name="otherperspect" id="otherperspect">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['otherperspect']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['otherperspect']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "otherperspect"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="controlsall">controls everything</label></td>
+                <td><select name="controlsall" id="controlsall">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['controlsall']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['controlsall']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "controlsall"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="showsvulner">shows his/her vulnerability</label></td>
+                <td><select name="showsvulner" id="showsvulner">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['showsvulner']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['showsvulner']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "showsvulner"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="input">encourages input from others</label></td>
+                <td><select name="input" id="input">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['input']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['input']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "input"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="sharepower">shares power</label></td>
+                <td><select name="sharepower" id="sharepower">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['sharepower']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['sharepower']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "sharepower"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="groupvalues">upholds group values</label></td>
+                <td><select name="groupvalues" id="groupvalues">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['groupvalues']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['groupvalues']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "groupvalues"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="neverlies">does not lie</label></td>
+                <td><select name="neverlies" id="neverlies">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['neverlies']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['neverlies']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "neverlies"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="incommand">is in command</label></td>
+                <td><select name="incommand" id="incommand">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['incommand']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['incommand']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "incommand"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="collaborates">collaborates well with others</label></td>
+                <td><select name="collaborates" id="collaborates">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['collaborates']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['collaborates']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "collaborates"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="admitmistakes">is able to admit his/her mistakes</label></td>
+                <td><select name="admitmistakes" id="admitmistakes">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['admitmistakes']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['admitmistakes']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "admitmistakes"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="masculine">is masculine</label></td>
+                <td><select name="masculine" id="masculine">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['masculine']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['masculine']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "masculine"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="valuesdivers">values diversity</label></td>
+                <td><select name="valuesdivers" id="valuesdivers">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['valuesdivers']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['valuesdivers']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "valuesdivers"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="acknowledge">collaborates with others to make important 
+                decisions</label></td>
+                <td><select name="acknowledge" id="acknowledge">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['acknowledge']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['acknowledge']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "acknowledge"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="aggressive">is aggressive</label></td>
+                <td><select name="aggressive" id="aggressive">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['aggressive']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['aggressive']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "aggressive"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="idealistic">is idealistic</label></td>
+                <td><select name="idealistic" id="idealistic">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['idealistic']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['idealistic']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "idealistic"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="attractive">is attractive</label></td>
+                <td><select name="attractive" id="attractive">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['attractive']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['attractive']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "attractive"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="admitlimitations">is able to admit his/her limitations</label></td>
+                <td><select name="admitlimitations" id="admitlimitations">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['admitlimitations']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['admitlimitations']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "admitlimitations"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="charismatic">is charismatic</label></td>
+                <td><select name="charismatic" id="charismatic">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['charismatic']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['charismatic']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "charismatic"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="downtoearth">is down to earth</label></td>
+                <td><select name="downtoearth" id="downtoearth">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['downtoearth']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['downtoearth']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "downtoearth"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="followers">thinks only of the well-being of his/her  
+                followers</label></td>
+                <td><select name="followers" id="followers">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['followers']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['followers']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "followers"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="creative">is creative</label></td>
+                <td><select name="creative" id="creative">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['creative']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['creative']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "creative"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="invincible">is invincible</label></td>
+                <td><select name="invincible" id="invincible">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['invincible']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['invincible']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "invincible"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="smart">is smart</label></td>
+                <td><select name="smart" id="smart">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['smart']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['smart']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "smart"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="nomistakes">does not make mistakes</label></td>
+                <td><select name="nomistakes" id="nomistakes">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['nomistakes']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['nomistakes']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "nomistakes"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="emocontrol">has emotional control</label></td>
+                <td><select name="emocontrol" id="emocontrol">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['emocontrol']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['emocontrol']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "emocontrol"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="ruthlesspursue">ruthlessly pursues his/her goals</label></td>
+                <td><select name="ruthlesspursue" id="ruthlesspursue">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['ruthlesspursue']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['ruthlesspursue']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "ruthlesspursue"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="higherpower">believes in a higher power</label></td>
+                <td><select name="higherpower" id="higherpower">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['higherpower']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['higherpower']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "higherpower"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="servant">is a servant to his/her followers</label></td>
+                <td><select name="servant" id="servant">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['servant']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['servant']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "servant"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="reassuring">is reassuring</label></td>
+                <td><select name="reassuring" id="reassuring">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['reassuring']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['reassuring']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "reassuring"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="standsby">always stands by his/her beliefs</label></td>
+                <td><select name="standsby" id="standsby">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['standsby']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['standsby']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "standsby"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="tall">is tall</label></td>
+                <td><select name="tall" id="tall">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['tall']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['tall']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "tall"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="opendoor">has an &quot;open door&quot; policy</label></td>
+                <td><select name="opendoor" id="opendoor">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['opendoor']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['opendoor']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "opendoor"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="unpopular">is willing to make unpopular decisions</label></td>
+                <td><select name="unpopular" id="unpopular">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['unpopular']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['unpopular']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "unpopular"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="steel">has nerves of steel</label></td>
+                <td><select name="steel" id="steel">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['steel']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['steel']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "steel"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="international">takes a broad perspective</label></td>
+                <td><select name="international" id="international">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['international']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['international']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "international"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="feelsafe">makes his/her followers feel safe</label></td>
+                <td><select name="feelsafe" id="feelsafe">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['feelsafe']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['feelsafe']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "feelsafe"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="higheducated">is highly educated</label></td>
+                <td><select name="higheducated" id="higheducated">
+                  <option value="" <?php if (!(strcmp("", $row_rsLLRA['higheducated']))) {echo "selected=\"selected\"";} ?>><?php echo NXT_getResource("Select one..."); ?></option>
+                  <?php
+do {  
+?>
+                  <option value="<?php echo $row_rsRatings3['ratings3key']?>"<?php if (!(strcmp($row_rsRatings3['ratings3key'], $row_rsLLRA['higheducated']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsRatings3['ratings3']?></option>
+                  <?php
+} while ($row_rsRatings3 = mysql_fetch_assoc($rsRatings3));
+  $rows = mysql_num_rows($rsRatings3);
+  if($rows > 0) {
+      mysql_data_seek($rsRatings3, 0);
+	  $row_rsRatings3 = mysql_fetch_assoc($rsRatings3);
+  }
+?>
+                  </select>
+                <?php echo $tNGs->displayFieldError("LLRA", "higheducated"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="itdepends">I frequently found myself thinking, &quot;it  
+                  depends&quot;, which made it difficult to  
+                provide one rating.</label></td>
+                <td valign="middle"><input name="itdepends" type="checkbox" id="itdepends" value="1" <?php if (!(strcmp($row_rsLLRA['itdepends'],1))) {echo "checked=\"checked\"";} ?> /></td>
+              </tr>
+              <tr>
+                <td valign="top" class="KT_th"><label for="comments">Comments</label></td>
+                <td><textarea name="comments" cols="60" rows="5" id="comments"><?php echo KT_escapeAttribute($row_rsLLRA['comments']); ?></textarea>
+                <?php echo $tNGs->displayFieldHint("comments");?> <?php echo $tNGs->displayFieldError("LLRA", "comments"); ?> </td>
+              </tr>
+              <tr class="KT_buttons">
+                <td colspan="2"><input type="submit" name="KT_Update1" id="KT_Update1" value="Submit" />                </td>
+              </tr>
+            </table>
+          </form>
+          <p>&nbsp;</p>
+          </p></td>
+        <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRatings3);
+
+mysql_free_result($rsRegistrants);
+
+mysql_free_result($rsBulkcustomer);
+
+mysql_free_result($rsEmailAddresses);
+
+mysql_free_result($rsEmailAddresses2);
+?>

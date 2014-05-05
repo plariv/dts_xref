@@ -1,0 +1,99 @@
+
+<a class='fltrt close'>close</a>
+<h2>HTML cheatsheet</h2>
+
+<h3>Common tags</h3>
+<table>
+	<tr class='tablehead_knockout'>
+		<th>Tag</th>
+		<th>Name</th>
+		<th>Description</th>
+		<th>Example</th>
+	</tr>
+	<tr>
+		<td>&lt;p&gt;</td>
+		<td>Paragraph</td>
+		<td>Breaks text into paragraphs. By default, all text should be wrapped in a paragraph tag.</td>
+		<td><xmp><p>Some text text text text</p></xmp></td>
+	</tr>
+	<tr>
+		<td>&lt;em&gt;</td>
+		<td>Italics</td>
+		<td><em>Italicizes</em> text. </td>
+	</tr>
+	<tr>
+		<td>&lt;strong&gt;</td>
+		<td>Emphasis</td>
+		<td>Makes text slightly <strong>bolder</strong> than normal.</td>
+	</tr>
+	<tr>
+		<td>&lt;br /&gt;</td>
+		<td>Line break</td>
+		<td>Moves text to the next line, without closing any tags or starting a new paragraph. This is similar to the result of pressing SHIFT + ENTER, in many programs. Note that the tag is self-contained (has the closing slash).</td>
+		<td><xmp><p>Sometimes you want to move to a new line 
+			<br />without starting a whole new paragraph.</p></xmp></td>
+	</tr>
+
+</table>
+
+<h3>Classes</h3>
+<table>
+	<tr class='tablehead_knockout'>
+		<th>Class</th>
+		<th>Description</th>
+		<th>Example</th>
+	</tr>
+	<tr>
+		<td><span class='red'>red</span></td>
+		<td>Makes the text red. Often used with &lt;span&gt; tag, so that you don't select a whole paragraph or div.</td>
+		<td><xmp><span class='red'>You have an error.</span> Please refresh the page.</xmp></td>
+	</tr>
+</table>
+
+<h3>Example code</h3>
+<p>The code you see below contains examples of most of the HTML tags you'll use, and their context.</p>
+<!-- XMP LITERAL DISPLAY: Everything indented below is displayed literally on the page, rather than interpreted as HTML. Be sure to add your own line indents as I've done; XMP text won't wrap by itself. -->
+<xmp class='literal' style='background-color: #ddd'>
+<h2>Heading for the text</h2>
+<h3>H3 makes a smaller heading, whereas H1 is the highest-level heading.</h3>
+<p>Paragraph with normal content normal normal normal.</p>
+<div class='box'>
+	Some text may be <em>italicized phrases</em>, and others may be 
+	<strong>emphasized</strong>. Text inside a "box" div does not need <p> tags.
+	You can add an image like so: 
+	<img src="https://dts.lectica.org/_assets/_images/logos/banner_ldpa.png" /> 
+</div>
+<p>A paragraph may be followed by a bulleted or numbered list sometimes. 
+	Use &lt;ul&gt; to make an unordered (bulleted), or &lt;ol&gt; 
+	to make an ordered, list.</p>
+<ul>
+	<li>Thing 1</li>
+	<li>Thing 2</li>
+	<li><em>Very important</em> thing 3</li>
+</ul>
+</xmp><!-- END LITERAL -->
+
+<h3>Example result</h3>
+<p>The above code generates the HTML you see in the section below.</p>
+<div class='preview' style='background-color: #ddd'>
+</div>
+
+<h3>Coding tips</h3>
+<ul>
+	<li>Use ENTER to add ample vertical space to your copy. It doesn't change the appearance, but it often makes the code easier to read.</li>
+
+</ul>
+
+
+<!-- listener to close this div -->
+
+<script type='text/javascript'>
+	
+	// listener to close the cheatsheet
+	$('.close').click(function(){
+		$(this).parent().fadeOut(200);
+	});
+
+	// copy the example text to a preview window so the user has an up-to-date copy of what the example creates
+	$('.preview').html($('.literal').text());
+</script>

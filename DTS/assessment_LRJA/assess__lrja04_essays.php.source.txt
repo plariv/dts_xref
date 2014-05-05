@@ -1,0 +1,442 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Load the KT_back class
+require_once('../includes/nxt/KT_back.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+
+// Start trigger
+$formValidation = new tNG_FormValidation();
+$formValidation->addField("user_name", true, "text", "", "", "", "");
+$formValidation->addField("ThinkOf", true, "text", "", "300", "5000", "Please make sure you have thoroughly explained your response.");
+$formValidation->addField("DifferentConclusions", true, "text", "", "300", "5000", "Please make sure you have thoroughly explained your response.");
+$formValidation->addField("IdealProcess", true, "text", "", "300", "5000", "Please make sure you have thoroughly explained your response.");
+$formValidation->addField("Certainty", true, "text", "", "300", "5000", "Please make sure you have thoroughly explained your response.");
+$formValidation->addField("Truth", true, "text", "", "300", "5000", "Please make sure you have thoroughly explained your response.");
+$formValidation->addField("IdentifyTruth", true, "text", "", "300", "5000", "Please write an essay at least 300 characters in length.");
+$formValidation->addField("AbsoluteTruth", true, "text", "", "300", "5000", "Please make sure you have thoroughly explained your response.");
+$tNGs->prepareValidation($formValidation);
+// End trigger
+
+// Make an insert transaction instance
+$ins_LRJA = new tNG_multipleInsert($conn_Assessment);
+$tNGs->addTransaction($ins_LRJA);
+// Register triggers
+$ins_LRJA->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Insert1");
+$ins_LRJA->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$ins_LRJA->registerTrigger("END", "Trigger_Default_Redirect", 99, "assess__lrja02_survey.php?userkey={GET.UserKey}&lrjakey={GET.lrjakey}");
+// Add columns
+$ins_LRJA->setTable("LRJA");
+$ins_LRJA->addColumn("user_name", "STRING_TYPE", "POST", "user_name");
+$ins_LRJA->addColumn("ThinkOf", "STRING_TYPE", "POST", "ThinkOf");
+$ins_LRJA->addColumn("DifferentConclusions", "STRING_TYPE", "POST", "DifferentConclusions");
+$ins_LRJA->addColumn("IdealProcess", "STRING_TYPE", "POST", "IdealProcess");
+$ins_LRJA->addColumn("Certainty", "STRING_TYPE", "POST", "Certainty");
+$ins_LRJA->addColumn("Truth", "STRING_TYPE", "POST", "Truth");
+$ins_LRJA->addColumn("IdentifyTruth", "STRING_TYPE", "POST", "IdentifyTruth");
+$ins_LRJA->addColumn("AbsoluteTruth", "STRING_TYPE", "POST", "AbsoluteTruth");
+$ins_LRJA->setPrimaryKey("lrjakey", "NUMERIC_TYPE");
+
+// Make an update transaction instance
+$upd_LRJA = new tNG_multipleUpdate($conn_Assessment);
+$tNGs->addTransaction($upd_LRJA);
+// Register triggers
+$upd_LRJA->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Update1");
+$upd_LRJA->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$upd_LRJA->registerTrigger("END", "Trigger_Default_Redirect", 99, "assess__lrja02_survey.php?lrjakey={GET.lrjakey}");
+// Add columns
+$upd_LRJA->setTable("LRJA");
+$upd_LRJA->addColumn("user_name", "STRING_TYPE", "CURRVAL", "user_name");
+$upd_LRJA->addColumn("ThinkOf", "STRING_TYPE", "POST", "ThinkOf");
+$upd_LRJA->addColumn("DifferentConclusions", "STRING_TYPE", "POST", "DifferentConclusions");
+$upd_LRJA->addColumn("IdealProcess", "STRING_TYPE", "POST", "IdealProcess");
+$upd_LRJA->addColumn("Certainty", "STRING_TYPE", "POST", "Certainty");
+$upd_LRJA->addColumn("Truth", "STRING_TYPE", "POST", "Truth");
+$upd_LRJA->addColumn("IdentifyTruth", "STRING_TYPE", "POST", "IdentifyTruth");
+$upd_LRJA->addColumn("AbsoluteTruth", "STRING_TYPE", "POST", "AbsoluteTruth");
+$upd_LRJA->setPrimaryKey("lrjakey", "NUMERIC_TYPE", "GET", "lrjakey");
+
+// Make an instance of the transaction object
+$del_LRJA = new tNG_multipleDelete($conn_Assessment);
+$tNGs->addTransaction($del_LRJA);
+// Register triggers
+$del_LRJA->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Delete1");
+$del_LRJA->registerTrigger("END", "Trigger_Default_Redirect", 99, "includes/nxt/back.php");
+// Add columns
+$del_LRJA->setTable("LRJA");
+$del_LRJA->setPrimaryKey("lrjakey", "NUMERIC_TYPE", "GET", "lrjakey");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsLRJA = $tNGs->getRecordset("LRJA");
+$row_rsLRJA = mysql_fetch_assoc($rsLRJA);
+$totalRows_rsLRJA = mysql_num_rows($rsLRJA);
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelrja2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Lectical Reflective Judgment Assessment</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<style type="text/css">
+<!--
+.style10 {color: #9E2E26}
+-->
+</style>
+<?php echo $tNGs->displayValidationRules();?><!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #A9BBA0;
+	padding-top: 4;
+	padding-right: 27;
+	padding-bottom: 0;
+	padding-left: 17;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #52561F;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LRJAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+        <td valign="top"><h1>ESSAY SECTION, PAGE 2 OF 3</h1>
+          <h3>Important information about the essay section of the LRJA</h3>
+          <p>The essay section of this assessment is designed to help us understand how you think about challenging problems. You will be asked to show us how you evaluate information and make decisions.</p>
+          <p><strong>Please answer the questions as completely as possible, thoroughly EXPLAINING all of your answers.</strong> Your explanations provide us with the information we need to determine the developmental level of your response. If you do not do a good job showing us how you think, we may not have enough information to provide an accurate score. In fact, if you do not carefully explain your answers, it is likely that your score will be lower than your true level of skill.</p>
+          <p>You don't need to worry  about writing too much, but if you write too little for us to score your performance properly, you will receive a prompt to provide more explanation.</p>
+          <p><strong>You must complete this assessment in a single sitting, without leaving your computer idle for more than ten minutes at a time.</strong> If you must leave your computer, save this page to your desktop or cut and paste the essays into a word processor. If you know in advance that you will not be able to complete the assessment in a single sitting,  copy this page for reference and write your answers in a word processing application (Word, Open Office, Notepad, Pages, etc.).  When you are finished, you can log in again, restart the assessment, fill in your personal information,  then paste your essays into the fields below. Before cutting and pasting, please save your word processor file in <span class="lrja"><strong>.txt</strong></span> format, close it, then reopen it. Otherwise, what we see on our end may be very difficult to read.</p>
+          <p></p>
+<h3>The next 7 questions involve the following dilemma:</h3>
+          <p>Psychologists disagree about the impact of violent television on children. One group argues that the evidence suggests that television violence causes children to engage in violent behavior. Another group argues that the evidence suggests that television violence prepares children for the realities of adult life, much like fairy tales did before the invention of television.</p>
+    <p>&nbsp;
+              <?php
+	echo $tNGs->getErrorMsg();
+?>
+          <div class="KT_tng">
+            <div class="KT_tngform">
+              <form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+                <?php $cnt1 = 0; ?>
+                <?php do { ?>
+                  <?php $cnt1++; ?>
+<?php 
+// Show IF Conditional region1 
+if (@$totalRows_rsLRJA > 1) {
+?>
+                    <h2><?php echo NXT_getResource("Record_FH"); ?> <?php echo $cnt1; ?></h2>
+  <?php } 
+// endif Conditional region1
+?>
+                  <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+                    <tr>
+                      <td class="KT_th"><label for="user_name_<?php echo $cnt1; ?>">Your user name</label></td>
+                      <td><input type="text" name="user_name_<?php echo $cnt1; ?>" id="user_name_<?php echo $cnt1; ?>" value="<?php echo KT_escapeAttribute($row_rsLRJA['user_name']); ?>" size="42" />
+                          <?php echo $tNGs->displayFieldHint("user_name");?> <?php echo $tNGs->displayFieldError("LRJA", "user_name", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="ThinkOf_<?php echo $cnt1; ?>">How is it possible that  
+experts can come to such  
+different conclusions?  
+                      </label></td>
+                      <td><textarea name="ThinkOf_<?php echo $cnt1; ?>" id="ThinkOf_<?php echo $cnt1; ?>" cols="70" rows="12"><?php echo KT_escapeAttribute($row_rsLRJA['ThinkOf']); ?></textarea>
+                          <?php echo $tNGs->displayFieldHint("ThinkOf");?> <?php echo $tNGs->displayFieldError("LRJA", "ThinkOf", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="DifferentConclusions_<?php echo $cnt1; ?>"></label>
+                        What is it about problems  
+                        like this one that makes  
+                        the truth so difficult 
+to find?</td>
+                      <td><textarea name="DifferentConclusions_<?php echo $cnt1; ?>" id="DifferentConclusions_<?php echo $cnt1; ?>" cols="70" rows="12"><?php echo KT_escapeAttribute($row_rsLRJA['DifferentConclusions']); ?></textarea>
+                          <?php echo $tNGs->displayFieldHint("DifferentConclusions");?> <?php echo $tNGs->displayFieldError("LRJA", "DifferentConclusions", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="IdealProcess_<?php echo $cnt1; ?>"></label>                        How would you go about  
+gathering the information 
+you would need to form an 
+opinion on
+                      a problem like  
+this one? What kind of 
+information sources would  
+you consider? Why?
+<p>&nbsp;</p></td>
+                      <td><textarea name="IdealProcess_<?php echo $cnt1; ?>" id="IdealProcess_<?php echo $cnt1; ?>" cols="70" rows="12"><?php echo KT_escapeAttribute($row_rsLRJA['IdealProcess']); ?></textarea>
+                          <?php echo $tNGs->displayFieldHint("IdealProcess");?> <?php echo $tNGs->displayFieldError("LRJA", "IdealProcess", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="Certainty_<?php echo $cnt1; ?>"></label>
+                        How would you go about  
+evaluating the quality of  
+information you obtain 
+from different sources? Why? 
+How do you know when  
+you have the &quot;right&quot;  
+information?</td>
+                      <td><textarea name="Certainty_<?php echo $cnt1; ?>" id="Certainty_<?php echo $cnt1; ?>" cols="70" rows="12"><?php echo KT_escapeAttribute($row_rsLRJA['Certainty']); ?></textarea>
+                          <?php echo $tNGs->displayFieldHint("Certainty");?> <?php echo $tNGs->displayFieldError("LRJA", "Certainty", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="Truth_<?php echo $cnt1; ?>"></label>
+                        Can you be certain that  
+your conclusions are  
+correct? Why or why not? </td>
+                      <td><textarea name="Truth_<?php echo $cnt1; ?>" id="Truth_<?php echo $cnt1; ?>" cols="70" rows="12"><?php echo KT_escapeAttribute($row_rsLRJA['Truth']); ?></textarea>
+                          <?php echo $tNGs->displayFieldHint("Truth");?> <?php echo $tNGs->displayFieldError("LRJA", "Truth", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="IdentifyTruth_<?php echo $cnt1; ?>">People often use terms  
+like reality, truth, or facts  
+when responding to this  
+dilemma. What do these  
+terms mean to you? 
+</label></td>
+                      <td><textarea name="IdentifyTruth_<?php echo $cnt1; ?>" id="IdentifyTruth_<?php echo $cnt1; ?>" cols="70" rows="12"><?php echo KT_escapeAttribute($row_rsLRJA['IdentifyTruth']); ?></textarea>
+                          <?php echo $tNGs->displayFieldHint("IdentifyTruth");?> <?php echo $tNGs->displayFieldError("LRJA", "IdentifyTruth", $cnt1); ?> </td>
+                    </tr>
+                    <tr>
+                      <td class="KT_th"><label for="AbsoluteTruth_<?php echo $cnt1; ?>"></label>
+                        Do you think there are  
+                        any absolute truths?  
+                        Why or why not? </td>
+                      <td><textarea name="AbsoluteTruth_<?php echo $cnt1; ?>" id="AbsoluteTruth_<?php echo $cnt1; ?>" cols="70" rows="12"><?php echo KT_escapeAttribute($row_rsLRJA['AbsoluteTruth']); ?></textarea>
+                          <?php echo $tNGs->displayFieldHint("AbsoluteTruth");?> <?php echo $tNGs->displayFieldError("LRJA", "AbsoluteTruth", $cnt1); ?> </td>
+                    </tr>
+                  </table>
+                <input type="hidden" name="kt_pk_LRJA_<?php echo $cnt1; ?>" class="id_field" value="<?php echo KT_escapeAttribute($row_rsLRJA['kt_pk_LRJA']); ?>" />
+                  <?php } while ($row_rsLRJA = mysql_fetch_assoc($rsLRJA)); ?>
+                <div class="KT_bottombuttons">
+                  <div>
+                    <?php 
+      // Show IF Conditional region1
+      if (@$_GET['lrjakey'] == "") {
+      ?>
+                      <input type="submit" name="KT_Insert1" id="KT_Insert1" value="<?php echo NXT_getResource("Insert_FB"); ?>" />
+                      <?php 
+      // else Conditional region1
+      } else { ?>
+                      <input type="submit" name="KT_Update1" value="<?php echo NXT_getResource("Update_FB"); ?>" />
+                      <input type="submit" name="KT_Delete1" value="<?php echo NXT_getResource("Delete_FB"); ?>" onclick="return confirm('<?php echo NXT_getResource("Are you sure?"); ?>');" />
+                      <?php }
+      // endif Conditional region1
+      ?>
+                    <input type="button" name="KT_Cancel1" value="<?php echo NXT_getResource("Cancel_FB"); ?>" onclick="return UNI_navigateCancel(event, 'includes/nxt/back.php')" />
+                  </div>
+                </div>
+              </form>
+            </div>
+            <br class="clearfixplain" />
+          </div>
+          <p>&nbsp;</p>
+          </p></td>
+        <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>

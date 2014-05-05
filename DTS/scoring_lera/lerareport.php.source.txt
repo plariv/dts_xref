@@ -1,0 +1,1316 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLERA = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERA = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERA = sprintf("SELECT lera.comments, lerascores.lerakey, lerascores.lasname, registrants.userkey, registrants.firstname, registrants.lastname, lera.userkey, lera.`date`, lera.testtime, lera.goodlife, lera.goodcitizen, lera.moralmean, lera.dilemma1, lera.dilemma2, lera.dilemma3, lerascores.goodlifelas, lerascores.goodcitizenlas, lerascores.moralmeanlas, lerascores.dilemma1las, lerascores.dilemma2las, lerascores.dilemma3las, lerascores.strength01, lerascores.strength02, lerascores.strength03, lerascores.growth01, lerascores.growth02, lerascores.recommend01, lerascores.recommend02, lera.personaldilemma, lerascores.lasnumber_1, lera.leradilemmakey, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total FROM lera, lerascores, registrants WHERE lera.lerakey = %s AND lerascores.lerakey = %s and lera.userkey = registrants.userkey", GetSQLValueString($colname_rsLERA, "int"),GetSQLValueString($colname_rsLERA, "int"));
+$rsLERA = mysql_query($query_rsLERA, $Assessment) or die(mysql_error());
+$row_rsLERA = mysql_fetch_assoc($rsLERA);
+$totalRows_rsLERA = mysql_num_rows($rsLERA);
+
+$colname_rsLasByAge = "-1";
+if (isset($_GET['lasname'])) {
+  $colname_rsLasByAge = $_GET['lasname'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLasByAge = sprintf("SELECT lasname, lasbyageart, lasbyageart2 FROM lasbyage WHERE lasname = %s", GetSQLValueString($colname_rsLasByAge, "text"));
+$rsLasByAge = mysql_query($query_rsLasByAge, $Assessment) or die(mysql_error());
+$row_rsLasByAge = mysql_fetch_assoc($rsLasByAge);
+$totalRows_rsLasByAge = mysql_num_rows($rsLasByAge);
+
+$colname_rsLERAgoodlife = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAgoodlife = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAgoodlife = sprintf("SELECT leraessaycodes.las, leraessaycodes.essay, leraessaycodes.`comment`, lerascores.lerakey, lerascores.goodlifelas, leraessaycodes.las FROM leraessaycodes, lerascores WHERE leraessaycodes.essay = 'good life' AND lerascores.lerakey = %s and lerascores.goodlifelas = leraessaycodes.las", GetSQLValueString($colname_rsLERAgoodlife, "int"));
+$rsLERAgoodlife = mysql_query($query_rsLERAgoodlife, $Assessment) or die(mysql_error());
+$row_rsLERAgoodlife = mysql_fetch_assoc($rsLERAgoodlife);
+$totalRows_rsLERAgoodlife = mysql_num_rows($rsLERAgoodlife);
+
+$colname_rsLERAlascomment = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAlascomment = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAlascomment = sprintf("SELECT lerascores.lerakey, lerascores.lasname, leralascomment.`comment`, leralascomment.las FROM lerascores, leralascomment WHERE lerakey = %s AND leralascomment.las = lerascores.lasname", GetSQLValueString($colname_rsLERAlascomment, "int"));
+$rsLERAlascomment = mysql_query($query_rsLERAlascomment, $Assessment) or die(mysql_error());
+$row_rsLERAlascomment = mysql_fetch_assoc($rsLERAlascomment);
+$totalRows_rsLERAlascomment = mysql_num_rows($rsLERAlascomment);
+
+$colname_rsLERAcitizen = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAcitizen = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAcitizen = sprintf("SELECT leraessaycodes.las, leraessaycodes.essay, leraessaycodes.`comment`, lerascores.lerakey, lerascores.goodcitizenlas, leraessaycodes.las FROM leraessaycodes, lerascores WHERE leraessaycodes.essay = 'good citizen' AND lerascores.lerakey = %s and lerascores.goodcitizenlas = leraessaycodes.las", GetSQLValueString($colname_rsLERAcitizen, "int"));
+$rsLERAcitizen = mysql_query($query_rsLERAcitizen, $Assessment) or die(mysql_error());
+$row_rsLERAcitizen = mysql_fetch_assoc($rsLERAcitizen);
+$totalRows_rsLERAcitizen = mysql_num_rows($rsLERAcitizen);
+
+$colname_rsLERAmoral = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAmoral = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAmoral = sprintf("SELECT leraessaycodes.las, leraessaycodes.essay, leraessaycodes.`comment`, lerascores.lerakey,  lerascores.moralmeanlas, leraessaycodes.las FROM leraessaycodes, lerascores WHERE leraessaycodes.essay = 'moral meaning' AND lerascores.lerakey = %s and lerascores.moralmeanlas = leraessaycodes.las", GetSQLValueString($colname_rsLERAmoral, "int"));
+$rsLERAmoral = mysql_query($query_rsLERAmoral, $Assessment) or die(mysql_error());
+$row_rsLERAmoral = mysql_fetch_assoc($rsLERAmoral);
+$totalRows_rsLERAmoral = mysql_num_rows($rsLERAmoral);
+
+$colname_rsLERAvaluesourcegrow = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAvaluesourcegrow = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAvaluesourcegrow = sprintf("SELECT leragrowthareas.las, leragrowthareas.growtharea, leragrowthareas.`comment`, lerascores.lerakey, lerascores.lasname, leragrowthareas.las FROM leragrowthareas, lerascores WHERE leragrowthareas.growtharea = 'source of values' AND lerascores.lerakey = %s and lerascores.lasname = leragrowthareas.las", GetSQLValueString($colname_rsLERAvaluesourcegrow, "int"));
+$rsLERAvaluesourcegrow = mysql_query($query_rsLERAvaluesourcegrow, $Assessment) or die(mysql_error());
+$row_rsLERAvaluesourcegrow = mysql_fetch_assoc($rsLERAvaluesourcegrow);
+$totalRows_rsLERAvaluesourcegrow = mysql_num_rows($rsLERAvaluesourcegrow);
+
+$colname_rsLERAgoodrightgrow = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAgoodrightgrow = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAgoodrightgrow = sprintf("SELECT leragrowthareas.las, leragrowthareas.growtharea, leragrowthareas.`comment`, lerascores.lerakey, lerascores.lasname, leragrowthareas.las FROM leragrowthareas, lerascores WHERE leragrowthareas.growtharea = 'good AND right' and lerascores.lerakey = %s and lerascores.lasname = leragrowthareas.las", GetSQLValueString($colname_rsLERAgoodrightgrow, "int"));
+$rsLERAgoodrightgrow = mysql_query($query_rsLERAgoodrightgrow, $Assessment) or die(mysql_error());
+$row_rsLERAgoodrightgrow = mysql_fetch_assoc($rsLERAgoodrightgrow);
+$totalRows_rsLERAgoodrightgrow = mysql_num_rows($rsLERAgoodrightgrow);
+
+$colname_rsLERArelativismgrow = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERArelativismgrow = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERArelativismgrow = sprintf("SELECT leragrowthareas.las, leragrowthareas.growtharea, leragrowthareas.`comment`, lerascores.lerakey, lerascores.lasname, leragrowthareas.las FROM leragrowthareas, lerascores WHERE leragrowthareas.growtharea = 'relativism' AND lerascores.lerakey = %s and lerascores.lasname = leragrowthareas.las", GetSQLValueString($colname_rsLERArelativismgrow, "int"));
+$rsLERArelativismgrow = mysql_query($query_rsLERArelativismgrow, $Assessment) or die(mysql_error());
+$row_rsLERArelativismgrow = mysql_fetch_assoc($rsLERArelativismgrow);
+$totalRows_rsLERArelativismgrow = mysql_num_rows($rsLERArelativismgrow);
+
+$colname_rsLERAspiritualitygrow = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAspiritualitygrow = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAspiritualitygrow = sprintf("SELECT leragrowthareas.las, leragrowthareas.growtharea, leragrowthareas.`comment`, lerascores.lerakey, lerascores.lasname, leragrowthareas.las FROM leragrowthareas, lerascores WHERE leragrowthareas.growtharea = 'spirituality' AND lerascores.lerakey = %s and lerascores.lasname = leragrowthareas.las", GetSQLValueString($colname_rsLERAspiritualitygrow, "int"));
+$rsLERAspiritualitygrow = mysql_query($query_rsLERAspiritualitygrow, $Assessment) or die(mysql_error());
+$row_rsLERAspiritualitygrow = mysql_fetch_assoc($rsLERAspiritualitygrow);
+$totalRows_rsLERAspiritualitygrow = mysql_num_rows($rsLERAspiritualitygrow);
+
+$colname_rsLERAperspectivegrow = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAperspectivegrow = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAperspectivegrow = sprintf("SELECT leragrowthareas.las, leragrowthareas.growtharea, leragrowthareas.`comment`, lerascores.lerakey, lerascores.lasname, leragrowthareas.las FROM leragrowthareas, lerascores WHERE leragrowthareas.growtharea = 'perspective' AND lerascores.lerakey = %s and lerascores.lasname = leragrowthareas.las", GetSQLValueString($colname_rsLERAperspectivegrow, "int"));
+$rsLERAperspectivegrow = mysql_query($query_rsLERAperspectivegrow, $Assessment) or die(mysql_error());
+$row_rsLERAperspectivegrow = mysql_fetch_assoc($rsLERAperspectivegrow);
+$totalRows_rsLERAperspectivegrow = mysql_num_rows($rsLERAperspectivegrow);
+
+$colname_rsLERAvaluessourcestrength = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAvaluessourcestrength = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAvaluessourcestrength = sprintf("SELECT lerastrengths.las, lerastrengths.strength, lerastrengths.`comment`, lerascores.lerakey, lerascores.lasname, lerastrengths.las FROM lerastrengths, lerascores WHERE lerastrengths.strength = 'source of values' AND lerascores.lerakey = %s and lerascores.lasname = lerastrengths.las", GetSQLValueString($colname_rsLERAvaluessourcestrength, "int"));
+$rsLERAvaluessourcestrength = mysql_query($query_rsLERAvaluessourcestrength, $Assessment) or die(mysql_error());
+$row_rsLERAvaluessourcestrength = mysql_fetch_assoc($rsLERAvaluessourcestrength);
+$totalRows_rsLERAvaluessourcestrength = mysql_num_rows($rsLERAvaluessourcestrength);
+
+$colname_rsLERAgoodrightstrength = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAgoodrightstrength = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAgoodrightstrength = sprintf("SELECT lerastrengths.las, lerastrengths.strength, lerastrengths.`comment`, lerascores.lerakey, lerascores.lasname, lerastrengths.las FROM lerastrengths, lerascores WHERE lerastrengths.strength = 'good AND right' and lerascores.lerakey = %s and lerascores.lasname = lerastrengths.las", GetSQLValueString($colname_rsLERAgoodrightstrength, "int"));
+$rsLERAgoodrightstrength = mysql_query($query_rsLERAgoodrightstrength, $Assessment) or die(mysql_error());
+$row_rsLERAgoodrightstrength = mysql_fetch_assoc($rsLERAgoodrightstrength);
+$totalRows_rsLERAgoodrightstrength = mysql_num_rows($rsLERAgoodrightstrength);
+
+$colname_rsLERArelativismstrength = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERArelativismstrength = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERArelativismstrength = sprintf("SELECT lerastrengths.las, lerastrengths.strength, lerastrengths.`comment`, lerascores.lerakey, lerascores.lasname, lerastrengths.las FROM lerastrengths, lerascores WHERE lerastrengths.strength = 'relativism' AND lerascores.lerakey = %s and lerascores.lasname = lerastrengths.las", GetSQLValueString($colname_rsLERArelativismstrength, "int"));
+$rsLERArelativismstrength = mysql_query($query_rsLERArelativismstrength, $Assessment) or die(mysql_error());
+$row_rsLERArelativismstrength = mysql_fetch_assoc($rsLERArelativismstrength);
+$totalRows_rsLERArelativismstrength = mysql_num_rows($rsLERArelativismstrength);
+
+$colname_rsLERAspiritualitystrength = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAspiritualitystrength = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAspiritualitystrength = sprintf("SELECT lerastrengths.las, lerastrengths.strength, lerastrengths.`comment`, lerascores.lerakey, lerascores.lasname, lerastrengths.las FROM lerastrengths, lerascores WHERE lerastrengths.strength = 'spirituality' AND lerascores.lerakey = %s and lerascores.lasname = lerastrengths.las", GetSQLValueString($colname_rsLERAspiritualitystrength, "int"));
+$rsLERAspiritualitystrength = mysql_query($query_rsLERAspiritualitystrength, $Assessment) or die(mysql_error());
+$row_rsLERAspiritualitystrength = mysql_fetch_assoc($rsLERAspiritualitystrength);
+$totalRows_rsLERAspiritualitystrength = mysql_num_rows($rsLERAspiritualitystrength);
+
+$colname_rsLERAperspectivestrength = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAperspectivestrength = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAperspectivestrength = sprintf("SELECT lerastrengths.las, lerastrengths.strength, lerastrengths.`comment`, lerascores.lerakey, lerascores.lasname, lerastrengths.las FROM lerastrengths, lerascores WHERE lerastrengths.strength = 'perspective' AND lerascores.lerakey = %s and lerascores.lasname = lerastrengths.las", GetSQLValueString($colname_rsLERAperspectivestrength, "int"));
+$rsLERAperspectivestrength = mysql_query($query_rsLERAperspectivestrength, $Assessment) or die(mysql_error());
+$row_rsLERAperspectivestrength = mysql_fetch_assoc($rsLERAperspectivestrength);
+$totalRows_rsLERAperspectivestrength = mysql_num_rows($rsLERAperspectivestrength);
+
+$colname_rsLERAresource1 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAresource1 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAresource1 = sprintf("SELECT leraresources.las, leraresources.resource, leraresources.resourcename, lerascores.lerakey, lerascores.lasname, leraresources.las FROM leraresources, lerascores WHERE leraresources.resourcename = 'resource 1' AND lerascores.lerakey = %s and lerascores.lasname = leraresources.las", GetSQLValueString($colname_rsLERAresource1, "int"));
+$rsLERAresource1 = mysql_query($query_rsLERAresource1, $Assessment) or die(mysql_error());
+$row_rsLERAresource1 = mysql_fetch_assoc($rsLERAresource1);
+$totalRows_rsLERAresource1 = mysql_num_rows($rsLERAresource1);
+
+$colname_rsLERAresource2 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAresource2 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAresource2 = sprintf("SELECT leraresources.las, leraresources.resource, leraresources.resourcename, lerascores.lerakey, lerascores.lasname, leraresources.las FROM leraresources, lerascores WHERE leraresources.resourcename = 'resource 2' AND lerascores.lerakey = %s and lerascores.lasname = leraresources.las", GetSQLValueString($colname_rsLERAresource2, "int"));
+$rsLERAresource2 = mysql_query($query_rsLERAresource2, $Assessment) or die(mysql_error());
+$row_rsLERAresource2 = mysql_fetch_assoc($rsLERAresource2);
+$totalRows_rsLERAresource2 = mysql_num_rows($rsLERAresource2);
+
+$colname_rsLERAresource3 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAresource3 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAresource3 = sprintf("SELECT leraresources.las, leraresources.resource, leraresources.resourcename, lerascores.lerakey, lerascores.lasname, leraresources.las FROM leraresources, lerascores WHERE leraresources.resourcename = 'resource 3' AND lerascores.lerakey = %s and lerascores.lasname = leraresources.las", GetSQLValueString($colname_rsLERAresource3, "int"));
+$rsLERAresource3 = mysql_query($query_rsLERAresource3, $Assessment) or die(mysql_error());
+$row_rsLERAresource3 = mysql_fetch_assoc($rsLERAresource3);
+$totalRows_rsLERAresource3 = mysql_num_rows($rsLERAresource3);
+
+$colname_rsLERAresource4 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAresource4 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAresource4 = sprintf("SELECT leraresources.las, leraresources.resource, leraresources.resourcename, lerascores.lerakey, lerascores.lasname, leraresources.las FROM leraresources, lerascores WHERE leraresources.resourcename = 'resource 4' AND lerascores.lerakey = %s and lerascores.lasname = leraresources.las", GetSQLValueString($colname_rsLERAresource4, "int"));
+$rsLERAresource4 = mysql_query($query_rsLERAresource4, $Assessment) or die(mysql_error());
+$row_rsLERAresource4 = mysql_fetch_assoc($rsLERAresource4);
+$totalRows_rsLERAresource4 = mysql_num_rows($rsLERAresource4);
+
+$colname_rsLERAresource5 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAresource5 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAresource5 = sprintf("SELECT leraresources.las, leraresources.resource, leraresources.resourcename, lerascores.lerakey, lerascores.lasname, leraresources.las FROM leraresources, lerascores WHERE leraresources.resourcename = 'resource 5' AND lerascores.lerakey = %s and lerascores.lasname = leraresources.las", GetSQLValueString($colname_rsLERAresource5, "int"));
+$rsLERAresource5 = mysql_query($query_rsLERAresource5, $Assessment) or die(mysql_error());
+$row_rsLERAresource5 = mysql_fetch_assoc($rsLERAresource5);
+$totalRows_rsLERAresource5 = mysql_num_rows($rsLERAresource5);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProbe1 = "SELECT * FROM leraprobes WHERE leraprobeskey = 1";
+$rsProbe1 = mysql_query($query_rsProbe1, $Assessment) or die(mysql_error());
+$row_rsProbe1 = mysql_fetch_assoc($rsProbe1);
+$totalRows_rsProbe1 = mysql_num_rows($rsProbe1);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProbe2 = "SELECT * FROM leraprobes WHERE leraprobeskey = 2";
+$rsProbe2 = mysql_query($query_rsProbe2, $Assessment) or die(mysql_error());
+$row_rsProbe2 = mysql_fetch_assoc($rsProbe2);
+$totalRows_rsProbe2 = mysql_num_rows($rsProbe2);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProbe3 = "SELECT * FROM leraprobes WHERE leraprobeskey = 3";
+$rsProbe3 = mysql_query($query_rsProbe3, $Assessment) or die(mysql_error());
+$row_rsProbe3 = mysql_fetch_assoc($rsProbe3);
+$totalRows_rsProbe3 = mysql_num_rows($rsProbe3);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProbe4 = "SELECT * FROM leraprobes WHERE leraprobeskey = 4";
+$rsProbe4 = mysql_query($query_rsProbe4, $Assessment) or die(mysql_error());
+$row_rsProbe4 = mysql_fetch_assoc($rsProbe4);
+$totalRows_rsProbe4 = mysql_num_rows($rsProbe4);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProbe5 = "SELECT * FROM leraprobes WHERE leraprobeskey = 5";
+$rsProbe5 = mysql_query($query_rsProbe5, $Assessment) or die(mysql_error());
+$row_rsProbe5 = mysql_fetch_assoc($rsProbe5);
+$totalRows_rsProbe5 = mysql_num_rows($rsProbe5);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProbe6 = "SELECT * FROM leraprobes WHERE leraprobeskey = 6";
+$rsProbe6 = mysql_query($query_rsProbe6, $Assessment) or die(mysql_error());
+$row_rsProbe6 = mysql_fetch_assoc($rsProbe6);
+$totalRows_rsProbe6 = mysql_num_rows($rsProbe6);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsProbe7 = "SELECT * FROM leraprobes WHERE leraprobeskey = 7";
+$rsProbe7 = mysql_query($query_rsProbe7, $Assessment) or die(mysql_error());
+$row_rsProbe7 = mysql_fetch_assoc($rsProbe7);
+$totalRows_rsProbe7 = mysql_num_rows($rsProbe7);
+
+$colname_rsScoreComment = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsScoreComment = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsScoreComment = sprintf("SELECT lerascores.lerakey, lerascores.lasnumber_1, lasnumber.lasnumber, lasnumber.lasexplanation FROM lerascores, lasnumber WHERE lerascores.lerakey = %s AND lasnumber.lasnumber = lerascores.lasnumber_1", GetSQLValueString($colname_rsScoreComment, "int"));
+$rsScoreComment = mysql_query($query_rsScoreComment, $Assessment) or die(mysql_error());
+$row_rsScoreComment = mysql_fetch_assoc($rsScoreComment);
+$totalRows_rsScoreComment = mysql_num_rows($rsScoreComment);
+
+$colname_rsDilemma = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsDilemma = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDilemma = sprintf("SELECT leradilemma.leradilemma, leradilemma.leradilemmakey, lera.leradilemmakey, lera.lerakey FROM leradilemma, lera WHERE leradilemma.leradilemmakey = lera.leradilemmakey AND lera.lerakey = %s", GetSQLValueString($colname_rsDilemma, "int"));
+$rsDilemma = mysql_query($query_rsDilemma, $Assessment) or die(mysql_error());
+$row_rsDilemma = mysql_fetch_assoc($rsDilemma);
+$totalRows_rsDilemma = mysql_num_rows($rsDilemma);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+$colname_rsMoralEmotionsGood_1 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsGood_1 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_1 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.happiness_1  FROM leramoralemotions, lerascores WHERE lerascores.happiness_1 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 1", GetSQLValueString($colname_rsMoralEmotionsGood_1, "int"));
+$rsMoralEmotionsGood_1 = mysql_query($query_rsMoralEmotionsGood_1, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_1 = mysql_fetch_assoc($rsMoralEmotionsGood_1);
+$totalRows_rsMoralEmotionsGood_1 = mysql_num_rows($rsMoralEmotionsGood_1);
+
+$colname_rsMoralEmotionsGood_2 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsGood_2 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_2 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.pride_self_2 FROM leramoralemotions, lerascores WHERE lerascores.pride_self_2 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 2", GetSQLValueString($colname_rsMoralEmotionsGood_2, "int"));
+$rsMoralEmotionsGood_2 = mysql_query($query_rsMoralEmotionsGood_2, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_2 = mysql_fetch_assoc($rsMoralEmotionsGood_2);
+$totalRows_rsMoralEmotionsGood_2 = mysql_num_rows($rsMoralEmotionsGood_2);
+
+$colname_rsMoralEmotionsGood_4 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsGood_4 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_4 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.sadness_general_4 FROM leramoralemotions, lerascores WHERE lerascores.sadness_general_4 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 4", GetSQLValueString($colname_rsMoralEmotionsGood_4, "int"));
+$rsMoralEmotionsGood_4 = mysql_query($query_rsMoralEmotionsGood_4, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_4 = mysql_fetch_assoc($rsMoralEmotionsGood_4);
+$totalRows_rsMoralEmotionsGood_4 = mysql_num_rows($rsMoralEmotionsGood_4);
+
+$colname_rsMoralEmotionsGood_5 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsGood_5 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_5 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.fear_forself_5 FROM leramoralemotions, lerascores WHERE lerascores.fear_forself_5 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 5", GetSQLValueString($colname_rsMoralEmotionsGood_5, "int"));
+$rsMoralEmotionsGood_5 = mysql_query($query_rsMoralEmotionsGood_5, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_5 = mysql_fetch_assoc($rsMoralEmotionsGood_5);
+$totalRows_rsMoralEmotionsGood_5 = mysql_num_rows($rsMoralEmotionsGood_5);
+
+$colname_rsMoralEmotionsGood_14 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsGood_14 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_14 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.mudita_14 FROM leramoralemotions, lerascores WHERE lerascores.mudita_14 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 14", GetSQLValueString($colname_rsMoralEmotionsGood_14, "int"));
+$rsMoralEmotionsGood_14 = mysql_query($query_rsMoralEmotionsGood_14, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_14 = mysql_fetch_assoc($rsMoralEmotionsGood_14);
+$totalRows_rsMoralEmotionsGood_14 = mysql_num_rows($rsMoralEmotionsGood_14);
+
+$colname_rsMoralEmotionsGood_16 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsGood_16 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_16 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.daad_16 FROM leramoralemotions, lerascores WHERE lerascores.daad_16 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 16", GetSQLValueString($colname_rsMoralEmotionsGood_16, "int"));
+$rsMoralEmotionsGood_16 = mysql_query($query_rsMoralEmotionsGood_16, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_16 = mysql_fetch_assoc($rsMoralEmotionsGood_16);
+$totalRows_rsMoralEmotionsGood_16 = mysql_num_rows($rsMoralEmotionsGood_16);
+
+$colname_rsMoralEmotionsGood_18 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsGood_18 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_18 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.pride_forother_18 FROM leramoralemotions, lerascores WHERE lerascores.pride_forother_18 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 18", GetSQLValueString($colname_rsMoralEmotionsGood_18, "int"));
+$rsMoralEmotionsGood_18 = mysql_query($query_rsMoralEmotionsGood_18, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_18 = mysql_fetch_assoc($rsMoralEmotionsGood_18);
+$totalRows_rsMoralEmotionsGood_18 = mysql_num_rows($rsMoralEmotionsGood_18);
+
+$colname_rsMoralEmotionsGood_28 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsGood_28 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsGood_28 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.hope_28 FROM leramoralemotions, lerascores WHERE lerascores.hope_28 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 28", GetSQLValueString($colname_rsMoralEmotionsGood_28, "int"));
+$rsMoralEmotionsGood_28 = mysql_query($query_rsMoralEmotionsGood_28, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsGood_28 = mysql_fetch_assoc($rsMoralEmotionsGood_28);
+$totalRows_rsMoralEmotionsGood_28 = mysql_num_rows($rsMoralEmotionsGood_28);
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralBoilerplate1 = "SELECT * FROM leramoralboilerplate WHERE moralboilerplatekey = 1";
+$rsMoralBoilerplate1 = mysql_query($query_rsMoralBoilerplate1, $Assessment) or die(mysql_error());
+$row_rsMoralBoilerplate1 = mysql_fetch_assoc($rsMoralBoilerplate1);
+$totalRows_rsMoralBoilerplate1 = mysql_num_rows($rsMoralBoilerplate1);
+
+$colname_rsMoralBoilerplate2 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralBoilerplate2 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralBoilerplate2 = sprintf("SELECT lerascores.lerakey, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total, leramoralboilerplate.moralboilerplatekey, leramoralboilerplate.moralboilerplate FROM leramoralboilerplate, lerascores WHERE moralboilerplatekey = 2 AND lerascores.lerakey = %s and lerascores.goodlife_total > 0", GetSQLValueString($colname_rsMoralBoilerplate2, "int"));
+$rsMoralBoilerplate2 = mysql_query($query_rsMoralBoilerplate2, $Assessment) or die(mysql_error());
+$row_rsMoralBoilerplate2 = mysql_fetch_assoc($rsMoralBoilerplate2);
+$totalRows_rsMoralBoilerplate2 = mysql_num_rows($rsMoralBoilerplate2);
+
+$colname_rsMoralBoilerplate3 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralBoilerplate3 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralBoilerplate3 = sprintf("SELECT lerascores.lerakey, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total, leramoralboilerplate.moralboilerplatekey, leramoralboilerplate.moralboilerplate FROM leramoralboilerplate, lerascores WHERE moralboilerplatekey = 3 AND lerascores.lerakey = %s and lerascores.goodlife_total > 0", GetSQLValueString($colname_rsMoralBoilerplate3, "int"));
+$rsMoralBoilerplate3 = mysql_query($query_rsMoralBoilerplate3, $Assessment) or die(mysql_error());
+$row_rsMoralBoilerplate3 = mysql_fetch_assoc($rsMoralBoilerplate3);
+$totalRows_rsMoralBoilerplate3 = mysql_num_rows($rsMoralBoilerplate3);
+
+$colname_rsMoralBoilerplate4 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralBoilerplate4 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralBoilerplate4 = sprintf("SELECT lerascores.lerakey, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total, leramoralboilerplate.moralboilerplatekey, leramoralboilerplate.moralboilerplate FROM leramoralboilerplate, lerascores WHERE moralboilerplatekey = 4 AND lerascores.lerakey = %s and lerascores.positive_total > 0", GetSQLValueString($colname_rsMoralBoilerplate4, "int"));
+$rsMoralBoilerplate4 = mysql_query($query_rsMoralBoilerplate4, $Assessment) or die(mysql_error());
+$row_rsMoralBoilerplate4 = mysql_fetch_assoc($rsMoralBoilerplate4);
+$totalRows_rsMoralBoilerplate4 = mysql_num_rows($rsMoralBoilerplate4);
+
+$colname_rsMoralEmotionsDev_3 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsDev_3 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_3 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.elevation_3 FROM leramoralemotions, lerascores WHERE lerascores.elevation_3 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 3", GetSQLValueString($colname_rsMoralEmotionsDev_3, "int"));
+$rsMoralEmotionsDev_3 = mysql_query($query_rsMoralEmotionsDev_3, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_3 = mysql_fetch_assoc($rsMoralEmotionsDev_3);
+$totalRows_rsMoralEmotionsDev_3 = mysql_num_rows($rsMoralEmotionsDev_3);
+
+$colname_rsMoralBoilerplate5 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralBoilerplate5 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralBoilerplate5 = sprintf("SELECT lerascores.lerakey, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total, leramoralboilerplate.moralboilerplatekey, leramoralboilerplate.moralboilerplate FROM leramoralboilerplate, lerascores WHERE moralboilerplatekey = 5 AND lerascores.lerakey = %s and lerascores.positive_total > 0", GetSQLValueString($colname_rsMoralBoilerplate5, "int"));
+$rsMoralBoilerplate5 = mysql_query($query_rsMoralBoilerplate5, $Assessment) or die(mysql_error());
+$row_rsMoralBoilerplate5 = mysql_fetch_assoc($rsMoralBoilerplate5);
+$totalRows_rsMoralBoilerplate5 = mysql_num_rows($rsMoralBoilerplate5);
+
+$colname_rsMoralBoilerplate6 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralBoilerplate6 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralBoilerplate6 = sprintf("SELECT lerascores.lerakey, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total, leramoralboilerplate.moralboilerplatekey, leramoralboilerplate.moralboilerplate FROM leramoralboilerplate, lerascores WHERE moralboilerplatekey = 6 AND lerascores.lerakey = %s and lerascores.pos_neg_total > 0", GetSQLValueString($colname_rsMoralBoilerplate6, "int"));
+$rsMoralBoilerplate6 = mysql_query($query_rsMoralBoilerplate6, $Assessment) or die(mysql_error());
+$row_rsMoralBoilerplate6 = mysql_fetch_assoc($rsMoralBoilerplate6);
+$totalRows_rsMoralBoilerplate6 = mysql_num_rows($rsMoralBoilerplate6);
+
+$colname_rsMoralBoilerplate7 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralBoilerplate7 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralBoilerplate7 = sprintf("SELECT lerascores.lerakey, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total, leramoralboilerplate.moralboilerplatekey, leramoralboilerplate.moralboilerplate FROM leramoralboilerplate, lerascores WHERE moralboilerplatekey = 7 AND lerascores.lerakey = %s and lerascores.pos_neg_total > 0", GetSQLValueString($colname_rsMoralBoilerplate7, "int"));
+$rsMoralBoilerplate7 = mysql_query($query_rsMoralBoilerplate7, $Assessment) or die(mysql_error());
+$row_rsMoralBoilerplate7 = mysql_fetch_assoc($rsMoralBoilerplate7);
+$totalRows_rsMoralBoilerplate7 = mysql_num_rows($rsMoralBoilerplate7);
+
+$colname_rsMoralBoilerplate8 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralBoilerplate8 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralBoilerplate8 = sprintf("SELECT lerascores.lerakey, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total, leramoralboilerplate.moralboilerplatekey, leramoralboilerplate.moralboilerplate FROM leramoralboilerplate, lerascores WHERE moralboilerplatekey = 8 AND lerascores.lerakey = %s and lerascores.negative_total > 0", GetSQLValueString($colname_rsMoralBoilerplate8, "int"));
+$rsMoralBoilerplate8 = mysql_query($query_rsMoralBoilerplate8, $Assessment) or die(mysql_error());
+$row_rsMoralBoilerplate8 = mysql_fetch_assoc($rsMoralBoilerplate8);
+$totalRows_rsMoralBoilerplate8 = mysql_num_rows($rsMoralBoilerplate8);
+
+$colname_rsMoralBoilerplate9 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralBoilerplate9 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralBoilerplate9 = sprintf("SELECT lerascores.lerakey, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total, leramoralboilerplate.moralboilerplatekey, leramoralboilerplate.moralboilerplate FROM leramoralboilerplate, lerascores WHERE moralboilerplatekey = 9 AND lerascores.lerakey = %s and lerascores.negative_total > 0", GetSQLValueString($colname_rsMoralBoilerplate9, "int"));
+$rsMoralBoilerplate9 = mysql_query($query_rsMoralBoilerplate9, $Assessment) or die(mysql_error());
+$row_rsMoralBoilerplate9 = mysql_fetch_assoc($rsMoralBoilerplate9);
+$totalRows_rsMoralBoilerplate9 = mysql_num_rows($rsMoralBoilerplate9);
+
+$colname_rsMoralEmotionsDev_13 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsDev_13 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_13 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.embarrassment_self_13 FROM leramoralemotions, lerascores WHERE lerascores.embarrassment_self_13 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 13", GetSQLValueString($colname_rsMoralEmotionsDev_13, "int"));
+$rsMoralEmotionsDev_13 = mysql_query($query_rsMoralEmotionsDev_13, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_13 = mysql_fetch_assoc($rsMoralEmotionsDev_13);
+$totalRows_rsMoralEmotionsDev_13 = mysql_num_rows($rsMoralEmotionsDev_13);
+
+$colname_rsMoralEmotionsDev_17 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsDev_17 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_17 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.compassion_17 FROM leramoralemotions, lerascores WHERE lerascores.compassion_17 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 17", GetSQLValueString($colname_rsMoralEmotionsDev_17, "int"));
+$rsMoralEmotionsDev_17 = mysql_query($query_rsMoralEmotionsDev_17, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_17 = mysql_fetch_assoc($rsMoralEmotionsDev_17);
+$totalRows_rsMoralEmotionsDev_17 = mysql_num_rows($rsMoralEmotionsDev_17);
+
+$colname_rsMoralEmotionsDev_15 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsDev_15 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_15 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.sympathy_15 FROM leramoralemotions, lerascores WHERE lerascores.sympathy_15 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 15", GetSQLValueString($colname_rsMoralEmotionsDev_15, "int"));
+$rsMoralEmotionsDev_15 = mysql_query($query_rsMoralEmotionsDev_15, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_15 = mysql_fetch_assoc($rsMoralEmotionsDev_15);
+$totalRows_rsMoralEmotionsDev_15 = mysql_num_rows($rsMoralEmotionsDev_15);
+
+$colname_rsMoralEmotionsDev_19 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsDev_19 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_19 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.fear_forother_19 FROM leramoralemotions, lerascores WHERE lerascores.fear_forother_19 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 19", GetSQLValueString($colname_rsMoralEmotionsDev_19, "int"));
+$rsMoralEmotionsDev_19 = mysql_query($query_rsMoralEmotionsDev_19, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_19 = mysql_fetch_assoc($rsMoralEmotionsDev_19);
+$totalRows_rsMoralEmotionsDev_19 = mysql_num_rows($rsMoralEmotionsDev_19);
+
+$colname_rsMoralEmotionsDev_8 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsDev_8 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_8 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.disgust_specific_8 FROM leramoralemotions, lerascores WHERE lerascores.disgust_specific_8 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 8", GetSQLValueString($colname_rsMoralEmotionsDev_8, "int"));
+$rsMoralEmotionsDev_8 = mysql_query($query_rsMoralEmotionsDev_8, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_8 = mysql_fetch_assoc($rsMoralEmotionsDev_8);
+$totalRows_rsMoralEmotionsDev_8 = mysql_num_rows($rsMoralEmotionsDev_8);
+
+$colname_rsMoralEmotionsDev_9 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsDev_9 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_9 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.guilt_specific_9 FROM leramoralemotions, lerascores WHERE lerascores.guilt_specific_9 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 9", GetSQLValueString($colname_rsMoralEmotionsDev_9, "int"));
+$rsMoralEmotionsDev_9 = mysql_query($query_rsMoralEmotionsDev_9, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_9 = mysql_fetch_assoc($rsMoralEmotionsDev_9);
+$totalRows_rsMoralEmotionsDev_9 = mysql_num_rows($rsMoralEmotionsDev_9);
+
+$colname_rsMoralEmotionsDev_11 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsDev_11 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_11 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.shame_specific_11 FROM leramoralemotions, lerascores WHERE lerascores.shame_specific_11 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 11", GetSQLValueString($colname_rsMoralEmotionsDev_11, "int"));
+$rsMoralEmotionsDev_11 = mysql_query($query_rsMoralEmotionsDev_11, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_11 = mysql_fetch_assoc($rsMoralEmotionsDev_11);
+$totalRows_rsMoralEmotionsDev_11 = mysql_num_rows($rsMoralEmotionsDev_11);
+
+$colname_rsMoralEmotionsDev_20 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsDev_20 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_20 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.anger_forother_20 FROM leramoralemotions, lerascores WHERE lerascores.anger_forother_20 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 20", GetSQLValueString($colname_rsMoralEmotionsDev_20, "int"));
+$rsMoralEmotionsDev_20 = mysql_query($query_rsMoralEmotionsDev_20, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_20 = mysql_fetch_assoc($rsMoralEmotionsDev_20);
+$totalRows_rsMoralEmotionsDev_20 = mysql_num_rows($rsMoralEmotionsDev_20);
+
+$colname_rsMoralEmotionsDev_21 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsDev_21 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_21 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.indignation_forother_21 FROM leramoralemotions, lerascores WHERE lerascores.indignation_forother_21 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 21", GetSQLValueString($colname_rsMoralEmotionsDev_21, "int"));
+$rsMoralEmotionsDev_21 = mysql_query($query_rsMoralEmotionsDev_21, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_21 = mysql_fetch_assoc($rsMoralEmotionsDev_21);
+$totalRows_rsMoralEmotionsDev_21 = mysql_num_rows($rsMoralEmotionsDev_21);
+
+$colname_rsMoralEmotionsDev_25 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsDev_25 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsDev_25 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.anger_atself_25 FROM leramoralemotions, lerascores WHERE lerascores.anger_atself_25 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 25", GetSQLValueString($colname_rsMoralEmotionsDev_25, "int"));
+$rsMoralEmotionsDev_25 = mysql_query($query_rsMoralEmotionsDev_25, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsDev_25 = mysql_fetch_assoc($rsMoralEmotionsDev_25);
+$totalRows_rsMoralEmotionsDev_25 = mysql_num_rows($rsMoralEmotionsDev_25);
+
+$colname_rsMoralEmotionsStall_29 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsStall_29 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsStall_29 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.contempt_29 FROM leramoralemotions, lerascores WHERE lerascores.contempt_29 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 29", GetSQLValueString($colname_rsMoralEmotionsStall_29, "int"));
+$rsMoralEmotionsStall_29 = mysql_query($query_rsMoralEmotionsStall_29, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsStall_29 = mysql_fetch_assoc($rsMoralEmotionsStall_29);
+$totalRows_rsMoralEmotionsStall_29 = mysql_num_rows($rsMoralEmotionsStall_29);
+
+$colname_rsMoralEmotionsStall_30 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsStall_30 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsStall_30 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.schadenfreude_30 FROM leramoralemotions, lerascores WHERE lerascores.schadenfreude_30 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 30", GetSQLValueString($colname_rsMoralEmotionsStall_30, "int"));
+$rsMoralEmotionsStall_30 = mysql_query($query_rsMoralEmotionsStall_30, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsStall_30 = mysql_fetch_assoc($rsMoralEmotionsStall_30);
+$totalRows_rsMoralEmotionsStall_30 = mysql_num_rows($rsMoralEmotionsStall_30);
+
+$colname_rsMoralEmotionsStall_12 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsStall_12 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsStall_12 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.shame_general_12 FROM leramoralemotions, lerascores WHERE lerascores.shame_general_12 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 12", GetSQLValueString($colname_rsMoralEmotionsStall_12, "int"));
+$rsMoralEmotionsStall_12 = mysql_query($query_rsMoralEmotionsStall_12, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsStall_12 = mysql_fetch_assoc($rsMoralEmotionsStall_12);
+$totalRows_rsMoralEmotionsStall_12 = mysql_num_rows($rsMoralEmotionsStall_12);
+
+$colname_rsMoralEmotionsStall_26 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsStall_26 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsStall_26 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.guilt_general_26 FROM leramoralemotions, lerascores WHERE lerascores.guilt_general_26 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 26", GetSQLValueString($colname_rsMoralEmotionsStall_26, "int"));
+$rsMoralEmotionsStall_26 = mysql_query($query_rsMoralEmotionsStall_26, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsStall_26 = mysql_fetch_assoc($rsMoralEmotionsStall_26);
+$totalRows_rsMoralEmotionsStall_26 = mysql_num_rows($rsMoralEmotionsStall_26);
+
+$colname_rsMoralEmotionsStall_27 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsStall_27 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsStall_27 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.disgust_general_27 FROM leramoralemotions, lerascores WHERE lerascores.disgust_general_27 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 27", GetSQLValueString($colname_rsMoralEmotionsStall_27, "int"));
+$rsMoralEmotionsStall_27 = mysql_query($query_rsMoralEmotionsStall_27, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsStall_27 = mysql_fetch_assoc($rsMoralEmotionsStall_27);
+$totalRows_rsMoralEmotionsStall_27 = mysql_num_rows($rsMoralEmotionsStall_27);
+
+$colname_rsMoralEmotionsBoth_24 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsBoth_24 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsBoth_24 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.disgust_atother_24 FROM leramoralemotions, lerascores WHERE lerascores.disgust_atother_24 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 24", GetSQLValueString($colname_rsMoralEmotionsBoth_24, "int"));
+$rsMoralEmotionsBoth_24 = mysql_query($query_rsMoralEmotionsBoth_24, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsBoth_24 = mysql_fetch_assoc($rsMoralEmotionsBoth_24);
+$totalRows_rsMoralEmotionsBoth_24 = mysql_num_rows($rsMoralEmotionsBoth_24);
+
+$colname_rsMoralEmotionsBoth_6 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsBoth_6 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsBoth_6 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.indignation_atother_6 FROM leramoralemotions, lerascores WHERE lerascores.indignation_atother_6 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 6", GetSQLValueString($colname_rsMoralEmotionsBoth_6, "int"));
+$rsMoralEmotionsBoth_6 = mysql_query($query_rsMoralEmotionsBoth_6, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsBoth_6 = mysql_fetch_assoc($rsMoralEmotionsBoth_6);
+$totalRows_rsMoralEmotionsBoth_6 = mysql_num_rows($rsMoralEmotionsBoth_6);
+
+$colname_rsMoralEmotionsBoth_7 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsBoth_7 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsBoth_7 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.anger_atother_7 FROM leramoralemotions, lerascores WHERE lerascores.anger_atother_7 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 7", GetSQLValueString($colname_rsMoralEmotionsBoth_7, "int"));
+$rsMoralEmotionsBoth_7 = mysql_query($query_rsMoralEmotionsBoth_7, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsBoth_7 = mysql_fetch_assoc($rsMoralEmotionsBoth_7);
+$totalRows_rsMoralEmotionsBoth_7 = mysql_num_rows($rsMoralEmotionsBoth_7);
+
+$colname_rsMoralEmotionsBoth_22 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsBoth_22 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsBoth_22 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.shame_forother_22 FROM leramoralemotions, lerascores WHERE lerascores.shame_forother_22 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 22", GetSQLValueString($colname_rsMoralEmotionsBoth_22, "int"));
+$rsMoralEmotionsBoth_22 = mysql_query($query_rsMoralEmotionsBoth_22, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsBoth_22 = mysql_fetch_assoc($rsMoralEmotionsBoth_22);
+$totalRows_rsMoralEmotionsBoth_22 = mysql_num_rows($rsMoralEmotionsBoth_22);
+
+$colname_rsMoralEmotionsBoth_23 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsBoth_23 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsBoth_23 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.embarrassment_forother_23 FROM leramoralemotions, lerascores WHERE lerascores.embarrassment_forother_23 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 23", GetSQLValueString($colname_rsMoralEmotionsBoth_23, "int"));
+$rsMoralEmotionsBoth_23 = mysql_query($query_rsMoralEmotionsBoth_23, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsBoth_23 = mysql_fetch_assoc($rsMoralEmotionsBoth_23);
+$totalRows_rsMoralEmotionsBoth_23 = mysql_num_rows($rsMoralEmotionsBoth_23);
+
+$colname_rsMoralEmotionsBoth_10 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralEmotionsBoth_10 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralEmotionsBoth_10 = sprintf("SELECT leramoralemotions.moralemotionkey, leramoralemotions.emotionmotivate, lerascores.lerakey, lerascores.sadness_specific_10 FROM leramoralemotions, lerascores WHERE lerascores.sadness_specific_10 = 1 AND lerascores.lerakey = %s and leramoralemotions.moralemotionkey = 10", GetSQLValueString($colname_rsMoralEmotionsBoth_10, "int"));
+$rsMoralEmotionsBoth_10 = mysql_query($query_rsMoralEmotionsBoth_10, $Assessment) or die(mysql_error());
+$row_rsMoralEmotionsBoth_10 = mysql_fetch_assoc($rsMoralEmotionsBoth_10);
+$totalRows_rsMoralEmotionsBoth_10 = mysql_num_rows($rsMoralEmotionsBoth_10);
+
+$colname_rsLERAemotioncount1 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAemotioncount1 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAemotioncount1 = sprintf("SELECT lerascores.lerakey, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total FROM lerascores WHERE lerascores.goodlife_total > 0 AND lerascores.lerakey = %s", GetSQLValueString($colname_rsLERAemotioncount1, "int"));
+$rsLERAemotioncount1 = mysql_query($query_rsLERAemotioncount1, $Assessment) or die(mysql_error());
+$row_rsLERAemotioncount1 = mysql_fetch_assoc($rsLERAemotioncount1);
+$totalRows_rsLERAemotioncount1 = mysql_num_rows($rsLERAemotioncount1);
+
+$colname_rsLERAemotioncount2 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAemotioncount2 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAemotioncount2 = sprintf("SELECT lerascores.lerakey, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total FROM lerascores WHERE lerascores.positive_total > 0 AND lerascores.lerakey = %s", GetSQLValueString($colname_rsLERAemotioncount2, "int"));
+$rsLERAemotioncount2 = mysql_query($query_rsLERAemotioncount2, $Assessment) or die(mysql_error());
+$row_rsLERAemotioncount2 = mysql_fetch_assoc($rsLERAemotioncount2);
+$totalRows_rsLERAemotioncount2 = mysql_num_rows($rsLERAemotioncount2);
+
+$colname_rsLERAemotioncount3 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAemotioncount3 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAemotioncount3 = sprintf("SELECT lerascores.lerakey, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total FROM lerascores WHERE lerascores.pos_neg_total > 0 AND lerascores.lerakey = %s", GetSQLValueString($colname_rsLERAemotioncount3, "int"));
+$rsLERAemotioncount3 = mysql_query($query_rsLERAemotioncount3, $Assessment) or die(mysql_error());
+$row_rsLERAemotioncount3 = mysql_fetch_assoc($rsLERAemotioncount3);
+$totalRows_rsLERAemotioncount3 = mysql_num_rows($rsLERAemotioncount3);
+
+$colname_rsLERAemotioncount4 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsLERAemotioncount4 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERAemotioncount4 = sprintf("SELECT lerascores.lerakey, lerascores.goodlife_total, lerascores.positive_total, lerascores.pos_neg_total, lerascores.negative_total FROM lerascores WHERE lerascores.negative_total > 0 AND lerascores.lerakey = %s", GetSQLValueString($colname_rsLERAemotioncount4, "int"));
+$rsLERAemotioncount4 = mysql_query($query_rsLERAemotioncount4, $Assessment) or die(mysql_error());
+$row_rsLERAemotioncount4 = mysql_fetch_assoc($rsLERAemotioncount4);
+$totalRows_rsLERAemotioncount4 = mysql_num_rows($rsLERAemotioncount4);
+
+$colname_rsMoralBoilerplateNotCoded = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsMoralBoilerplateNotCoded = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMoralBoilerplateNotCoded = sprintf("SELECT lerascores.lerakey, lerascores.coded, leramoralboilerplate.moralboilerplatekey, leramoralboilerplate.moralboilerplate FROM leramoralboilerplate, lerascores WHERE leramoralboilerplate.moralboilerplatekey = 10 AND lerascores.lerakey = %s and lerascores.coded < 1", GetSQLValueString($colname_rsMoralBoilerplateNotCoded, "int"));
+$rsMoralBoilerplateNotCoded = mysql_query($query_rsMoralBoilerplateNotCoded, $Assessment) or die(mysql_error());
+$row_rsMoralBoilerplateNotCoded = mysql_fetch_assoc($rsMoralBoilerplateNotCoded);
+$totalRows_rsMoralBoilerplateNotCoded = mysql_num_rows($rsMoralBoilerplateNotCoded);
+
+$colname_rsStrengthsPersonal_1 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsStrengthsPersonal_1 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrengthsPersonal_1 = sprintf("SELECT lerascores.lerakey, lerascores.strength1, lerastrength.strengthkey, lerastrength.position1phrasing  FROM lerascores, lerastrength WHERE lerascores.lerakey = %s AND lerastrength.strengthkey = lerascores.strength1", GetSQLValueString($colname_rsStrengthsPersonal_1, "int"));
+$rsStrengthsPersonal_1 = mysql_query($query_rsStrengthsPersonal_1, $Assessment) or die(mysql_error());
+$row_rsStrengthsPersonal_1 = mysql_fetch_assoc($rsStrengthsPersonal_1);
+$totalRows_rsStrengthsPersonal_1 = mysql_num_rows($rsStrengthsPersonal_1);
+
+$colname_rsStrengthsPersonal_2 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsStrengthsPersonal_2 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrengthsPersonal_2 = sprintf("SELECT lerascores.lerakey, lerascores.strength2, lerastrength.strengthkey, lerastrength.position2phrasing FROM lerascores, lerastrength WHERE lerascores.lerakey = %s AND lerastrength.strengthkey = lerascores.strength2", GetSQLValueString($colname_rsStrengthsPersonal_2, "int"));
+$rsStrengthsPersonal_2 = mysql_query($query_rsStrengthsPersonal_2, $Assessment) or die(mysql_error());
+$row_rsStrengthsPersonal_2 = mysql_fetch_assoc($rsStrengthsPersonal_2);
+$totalRows_rsStrengthsPersonal_2 = mysql_num_rows($rsStrengthsPersonal_2);
+
+$colname_rsStrengthsPersonal_3 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsStrengthsPersonal_3 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsStrengthsPersonal_3 = sprintf("SELECT lerascores.lerakey, lerascores.strength3, lerastrength.strengthkey, lerastrength.position3phrasing FROM lerascores, lerastrength WHERE lerascores.lerakey = %s AND lerastrength.strengthkey = lerascores.strength3", GetSQLValueString($colname_rsStrengthsPersonal_3, "int"));
+$rsStrengthsPersonal_3 = mysql_query($query_rsStrengthsPersonal_3, $Assessment) or die(mysql_error());
+$row_rsStrengthsPersonal_3 = mysql_fetch_assoc($rsStrengthsPersonal_3);
+$totalRows_rsStrengthsPersonal_3 = mysql_num_rows($rsStrengthsPersonal_3);
+
+$colname_rsGrowthPersonal_1 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsGrowthPersonal_1 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowthPersonal_1 = sprintf("SELECT lerascores.lerakey, leracaveat.caveatkey, leracaveat.position1phrasing, lerascores.caveat1  FROM lerascores, leracaveat  WHERE lerascores.lerakey = %s AND leracaveat.caveatkey = lerascores.caveat1", GetSQLValueString($colname_rsGrowthPersonal_1, "int"));
+$rsGrowthPersonal_1 = mysql_query($query_rsGrowthPersonal_1, $Assessment) or die(mysql_error());
+$row_rsGrowthPersonal_1 = mysql_fetch_assoc($rsGrowthPersonal_1);
+$totalRows_rsGrowthPersonal_1 = mysql_num_rows($rsGrowthPersonal_1);
+
+$colname_rsRecommendStrength = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsRecommendStrength = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecommendStrength = sprintf("SELECT lerascores.lerakey, lerarecommendstrength.recommendstrength, lerarecommendstrength.recommendstrengthkey FROM lerascores, lerarecommendstrength WHERE lerascores.lerakey = %s AND lerarecommendstrength.recommendstrengthkey = lerascores.recommendstrength", GetSQLValueString($colname_rsRecommendStrength, "int"));
+$rsRecommendStrength = mysql_query($query_rsRecommendStrength, $Assessment) or die(mysql_error());
+$row_rsRecommendStrength = mysql_fetch_assoc($rsRecommendStrength);
+$totalRows_rsRecommendStrength = mysql_num_rows($rsRecommendStrength);
+
+$colname_rsRecommendGrowth = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsRecommendGrowth = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRecommendGrowth = sprintf("SELECT lerascores.lerakey, lerarecommendgrowth.recommendgrowth, lerarecommendgrowth.recommendgrowthkey FROM lerascores, lerarecommendgrowth WHERE lerascores.lerakey = %s AND lerarecommendgrowth.recommendgrowthkey = lerascores.recommendgrowth", GetSQLValueString($colname_rsRecommendGrowth, "int"));
+$rsRecommendGrowth = mysql_query($query_rsRecommendGrowth, $Assessment) or die(mysql_error());
+$row_rsRecommendGrowth = mysql_fetch_assoc($rsRecommendGrowth);
+$totalRows_rsRecommendGrowth = mysql_num_rows($rsRecommendGrowth);
+
+$colname_rsGrowthPersonal_2 = "-1";
+if (isset($_GET['lerakey'])) {
+  $colname_rsGrowthPersonal_2 = $_GET['lerakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGrowthPersonal_2 = sprintf("SELECT lerascores.lerakey, leracaveat.caveatkey, leracaveat.position2phrasing, lerascores.caveat2 FROM lerascores, leracaveat WHERE lerascores.lerakey = %s AND leracaveat.caveatkey = lerascores.caveat2", GetSQLValueString($colname_rsGrowthPersonal_2, "int"));
+$rsGrowthPersonal_2 = mysql_query($query_rsGrowthPersonal_2, $Assessment) or die(mysql_error());
+$row_rsGrowthPersonal_2 = mysql_fetch_assoc($rsGrowthPersonal_2);
+$totalRows_rsGrowthPersonal_2 = mysql_num_rows($rsGrowthPersonal_2);
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelera2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LERA report</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryTabbedPanels.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LERAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+      <!-- end #menu1 -->
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+      <h1>Report for <?php echo $row_rsLERA['firstname']; ?> <?php echo $row_rsLERA['lastname']; ?></h1>
+    <p><strong>Date of assessment</strong> <?php echo $row_rsLERA['date']; ?></p>
+    <p>&nbsp;</p>
+    <div id="TabbedPanels2" class="TabbedPanels">
+      <ul class="TabbedPanelsTabGroup">
+        <li class="TabbedPanelsTab">Results</li>
+        <li class="TabbedPanelsTab">Personal comments</li>
+        <li class="TabbedPanelsTab">Strengths</li>
+        <li class="TabbedPanelsTab">Areas for growth</li>
+        <li class="TabbedPanelsTab">Suggestions</li>
+        <li class="TabbedPanelsTab">Comparison</li>
+        <li class="TabbedPanelsTab">Your essays</li>
+      </ul>
+      <div class="TabbedPanelsContentGroup">
+        <div class="TabbedPanelsContent">
+          <p><?php echo $row_rsScoreComment['lasexplanation']; ?></p>
+          <h2>Your ethical reasoning </h2>
+          <p><span><?php echo $row_rsLERAlascomment['comment']; ?></span></p>
+          <p>Your performance indicates that you are likely to think of the<strong> good life</strong> <span><?php echo $row_rsLERAgoodlife['comment']; ?></span></p>
+          <p>You are likley to think of a<strong> good citizen</strong> <?php echo $row_rsLERAcitizen['comment']; ?></p>
+          <p>Being<strong> moral  </strong>is likely to mean <?php echo $row_rsLERAmoral['comment']; ?></p>
+          <p>&nbsp;</p>
+          <h2>&nbsp;</h2>
+</div>
+        <div class="TabbedPanelsContent">
+          <h2>Personal c<span>omments</span></h2>
+          <h3>Moral emotions</h3>
+          <p><?php echo $row_rsMoralBoilerplate1['moralboilerplate']; ?></p>
+          <p><?php echo $row_rsMoralBoilerplate2['moralboilerplate']; ?><?php echo $row_rsLERAemotioncount1['goodlife_total']; ?><?php echo $row_rsMoralBoilerplate3['moralboilerplate']; ?><?php echo $row_rsMoralEmotionsGood_28['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsGood_1['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsGood_14['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsGood_16['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsGood_18['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsGood_2['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsGood_5['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsGood_4['emotionmotivate']; ?></p>
+          <p><?php echo $row_rsMoralBoilerplate4['moralboilerplate']; ?><?php echo $row_rsLERAemotioncount2['positive_total']; ?><?php echo $row_rsMoralBoilerplate5['moralboilerplate']; ?><?php echo $row_rsMoralEmotionsDev_3['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsDev_13['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsDev_17['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsDev_15['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsDev_19['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsDev_8['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsDev_9['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsDev_11['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsDev_20['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsDev_21['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsDev_25['emotionmotivate']; ?></p>
+          <p><?php echo $row_rsMoralBoilerplate6['moralboilerplate']; ?><?php echo $row_rsLERAemotioncount3['pos_neg_total']; ?><?php echo $row_rsMoralBoilerplate7['moralboilerplate']; ?><?php echo $row_rsMoralEmotionsBoth_6['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsBoth_7['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsBoth_10['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsBoth_22['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsBoth_23['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsBoth_24['emotionmotivate']; ?></p>
+          <p><?php echo $row_rsMoralBoilerplate8['moralboilerplate']; ?><?php echo $row_rsLERAemotioncount4['negative_total']; ?><?php echo $row_rsMoralBoilerplate9['moralboilerplate']; ?><?php echo $row_rsMoralEmotionsStall_12['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsStall_26['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsStall_27['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsStall_29['emotionmotivate']; ?><?php echo $row_rsMoralEmotionsStall_30['emotionmotivate']; ?><?php echo $row_rsMoralBoilerplateNotCoded['moralboilerplate']; ?></p>
+          <h3>Strengths</h3>
+          <p><?php echo $row_rsStrengthsPersonal_1['position1phrasing']; ?> <?php echo $row_rsStrengthsPersonal_2['position2phrasing']; ?> <?php echo $row_rsStrengthsPersonal_3['position3phrasing']; ?> <?php echo $row_rsLERA['strength01']; ?> <?php echo $row_rsLERA['strength02']; ?> <?php echo $row_rsLERA['strength03']; ?></p>
+          <h3>Areas for growth</h3>
+          <p><?php echo $row_rsGrowthPersonal_1['position1phrasing']; ?> <?php echo $row_rsGrowthPersonal_2['position2phrasing']; ?> <?php echo $row_rsLERA['growth01']; ?> <?php echo $row_rsLERA['growth02']; ?></p>
+          <h3>Personal recommendations</h3>
+          <p><?php echo $row_rsLERA['recommend01']; ?> <?php echo $row_rsLERA['recommend02']; ?> <?php echo $row_rsRecommendStrength['recommendstrength']; ?> <?php echo $row_rsRecommendGrowth['recommendgrowth']; ?></p>
+          <p>&nbsp;</p>
+        </div>
+        <div class="TabbedPanelsContent">
+          <h2>Areas of strength</h2>
+          <p><?php echo $row_rsLERAvaluessourcestrength['comment']; ?></p>
+          <p><?php echo $row_rsLERAgoodrightstrength['comment']; ?></p>
+          <p><?php echo $row_rsLERArelativismstrength['comment']; ?></p>
+          <p><?php echo $row_rsLERAspiritualitystrength['comment']; ?></p>
+          <p><?php echo $row_rsLERAperspectivestrength['comment']; ?></p>
+          <p>&nbsp;</p>
+          <p class="boxLERA">Note: We did not base your score on the particular conceptual content of your performance. We base our scores on what cognitive developmental researchers call the &quot;hierarchical&quot; (level of hierarchical integration) and &quot;horizontal&quot; (degree of elaboration within a level) complexity of  performances. The first two digits in your score denote the hierarchical integration; the third digit denotes the degree of elaboration. To read a short description of our scoring system, the Lectical Assessment System (LAS), <a href="../PDF/LAAS.pdf">click here</a>.</p>
+          <p>&nbsp;</p>
+          <p></p>
+        </div>
+        <div class="TabbedPanelsContent">
+          <h2 align="left">Possible areas for perso<span>nal growth</span></h2>
+          <p><?php echo $row_rsLERAvaluesourcegrow['comment']; ?></p>
+          <p><?php echo $row_rsLERAgoodrightgrow['comment']; ?></p>
+          <p><?php echo $row_rsLERArelativismgrow['comment']; ?></p>
+          <p><?php echo $row_rsLERAspiritualitygrow['comment']; ?></p>
+          <p><?php echo $row_rsLERAperspectivegrow['comment']; ?></p>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+        </div>
+        <div class="TabbedPanelsContent">
+          <h2>Suggestions</h2>
+          <p>As Malcolm Gladwell argues in the book, <em>Outliers</em>, it t<span>akes about 10,000 hours of constant study (10 years) to become an expert in any complex field—no matter how talented you are. We would add that no matter how much of an expert you become—on yourself, in your area of professional expertise, or in the interpersonal sphere—there is always room for growth. </span></p>
+          <p>Our learning suggestions are targeted one to two phases beyond your current phase of performance. The resources in this list should make you stretch just enough to challenge your current thinking. If a resource is too easy, you should probably move on. If it is too difficult, start with something a little less challenging.</p>
+          <p>You may notice that we suggest readings representing a wide range of perspectives. We do not endorse any particular perspective except the developmental perspective—which tells us that development is more likely to occur in individuals who seek to understand a wide range of perspectives. You are likely to disagree strongly with some of the worldviews and opinions expressed in  our offerings. That's fine. We suggest only that you make a special effort to understand these views more fully.</p>
+          <p>As you work with the resources suggested on this page, keep in mind that deep learning requires practice. You are far more likely to incorporate new knowledge into your skill repertoire if you take every opportunity to (1) put it to work, and (2) reflect upon outcomes. Putting knowledge to work means applying it in real-world contexts. Try out new skills in low-stakes contexts first, then gradually begin to apply them in higher-stakes contexts until you've mastered them. Reflecting on outcomes means evaluating  the results of  your efforts. This works best if you keep a record—such as a journal—and share your experiences with other members of your family, circle of friends, or community of practice.</p>
+          <h3>Resources for individuals performing in phase <?php echo $row_rsLERA['lasname']; ?></h3>
+          <p><img src="../images/moralconflict.jpg" alt="moral conflict" width="175" height="102" hspace="6" align="right" class="imageright" /><span><?php echo $row_rsLERAresource1['resource']; ?></span></p>
+          <p><?php echo $row_rsLERAresource2['resource']; ?></p>
+          <p><?php echo $row_rsLERAresource3['resource']; ?></p>
+          <p><?php echo $row_rsLERAresource4['resource']; ?></p>
+          <p><?php echo $row_rsLERAresource5['resource']; ?></p>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+          <p class="boxLERA">You may find it useful to revisit your report from time to time. As we update our knowledge about learning at each phase, we add to our learning suggestions. This means that, from time to time, you may discover new resources here, even if you don't take another assessment. </p>
+          <p>&nbsp;</p>
+          <p></p>
+        </div>
+        <div class="TabbedPanelsContent">
+          <h2>Approximate distribution of skill levels in the adult population</h2>
+          <p>The figure below shows the approximate distribution of American adults' skill levels—in areas of expertise. There is no single source for the numbers that inform this figure. They are informed by the research literature, our own data, and consultations with other developmentalists. We are least clear about the ends of the distribution—especially the top end—but despite this we feel confident that the general picture is accurate. Most American adults perform in level 10 or the first phase of level 11. A much smaller percentage performs above phase 11:1.</p>
+          <p>The figure shows a symmetrical bell curve, in which the average score adults receive in an area of expertise is  in the middle of the curve. Most people (68% of them, or 34% + 34%)  perform within one segment of the average score. Each of the second segments (to the right and left of the two middle segments) represent 14% of the population, and each of the segments on the far right and left represent 2% of the adult population. Percentages are shown on the horizontal axis. The location of your score (phase <?php echo $row_rsLERA['lasname']; ?>) is indicated by a vertical line with translucent bars on each side. Those bars represent the range in which your &quot;true&quot; score is most likely to fall. </p>
+          <p>&nbsp;</p>
+          <p><img src="<?php echo $row_rsLasByAge['lasbyageart2']; ?>" alt="Graph of level versus management levels" width="687" height="244" hspace="0" align="baseline" /></p>
+        </div>
+        <div class="TabbedPanelsContent">
+          <h2>Your essays</h2>
+          <p><em><?php echo $row_rsProbe1['leraprobe']; ?></em></p>
+          <p><?php echo $row_rsLERA['goodlife']; ?></p>
+          <p><em><?php echo $row_rsProbe2['leraprobe']; ?></em></p>
+          <p><?php echo $row_rsLERA['goodcitizen']; ?></p>
+          <p><em><?php echo $row_rsProbe3['leraprobe']; ?></em></p>
+          <p><?php echo $row_rsLERA['moralmean']; ?></p>
+          <h3>Dilemma</h3>
+          <p><?php echo $row_rsDilemma['leradilemma']; ?></p>
+          <p><em><?php echo $row_rsProbe4['leraprobe']; ?></em></p>
+          <p><?php echo $row_rsLERA['personaldilemma']; ?></p>
+          <p><em><?php echo $row_rsProbe5['leraprobe']; ?></em></p>
+          <p><?php echo $row_rsLERA['dilemma1']; ?></p>
+          <p><em><?php echo $row_rsProbe6['leraprobe']; ?></em></p>
+          <p><?php echo $row_rsLERA['dilemma2']; ?></p>
+          <p><em><?php echo $row_rsProbe7['leraprobe']; ?></em></p>
+          <p><?php echo $row_rsLERA['dilemma3']; ?></p>
+        </div>
+      </div>
+    </div>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+    <p>&nbsp;</p>
+      <script type="text/javascript">
+<!--
+var TabbedPanels2 = new Spry.Widget.TabbedPanels("TabbedPanels2");
+//-->
+    </script>
+      <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLERA);
+
+mysql_free_result($rsLasByAge);
+
+mysql_free_result($rsLERAgoodlife);
+
+mysql_free_result($rsLERAlascomment);
+
+mysql_free_result($rsLERAcitizen);
+
+mysql_free_result($rsLERAmoral);
+
+mysql_free_result($rsLERAvaluesourcegrow);
+
+mysql_free_result($rsLERAgoodrightgrow);
+
+mysql_free_result($rsLERArelativismgrow);
+
+mysql_free_result($rsLERAspiritualitygrow);
+
+mysql_free_result($rsLERAperspectivegrow);
+
+mysql_free_result($rsLERAvaluessourcestrength);
+
+mysql_free_result($rsLERAgoodrightstrength);
+
+mysql_free_result($rsLERArelativismstrength);
+
+mysql_free_result($rsLERAspiritualitystrength);
+
+mysql_free_result($rsLERAperspectivestrength);
+
+mysql_free_result($rsLERAresource1);
+
+mysql_free_result($rsLERAresource2);
+
+mysql_free_result($rsLERAresource3);
+
+mysql_free_result($rsLERAresource4);
+
+mysql_free_result($rsLERAresource5);
+
+mysql_free_result($rsProbe1);
+
+mysql_free_result($rsProbe2);
+
+mysql_free_result($rsProbe3);
+
+mysql_free_result($rsProbe4);
+
+mysql_free_result($rsProbe5);
+
+mysql_free_result($rsProbe6);
+
+mysql_free_result($rsProbe7);
+
+mysql_free_result($rsScoreComment);
+
+mysql_free_result($rsDilemma);
+
+mysql_free_result($rsRegistrants);
+
+mysql_free_result($rsMoralEmotionsGood_1);
+
+mysql_free_result($rsMoralEmotionsGood_2);
+
+mysql_free_result($rsMoralEmotionsGood_4);
+
+mysql_free_result($rsMoralEmotionsGood_5);
+
+mysql_free_result($rsMoralEmotionsGood_14);
+
+mysql_free_result($rsMoralEmotionsGood_16);
+
+mysql_free_result($rsMoralEmotionsGood_18);
+
+mysql_free_result($rsMoralEmotionsGood_28);
+
+mysql_free_result($rsMoralBoilerplate1);
+
+mysql_free_result($rsMoralBoilerplate4);
+
+mysql_free_result($rsMoralEmotionsDev_3);
+
+mysql_free_result($rsMoralBoilerplate5);
+
+mysql_free_result($rsMoralBoilerplate6);
+
+mysql_free_result($rsMoralBoilerplate7);
+
+mysql_free_result($rsMoralBoilerplate8);
+
+mysql_free_result($rsMoralBoilerplate9);
+
+mysql_free_result($rsMoralEmotionsDev_13);
+
+mysql_free_result($rsMoralEmotionsDev_17);
+
+mysql_free_result($rsMoralEmotionsDev_15);
+
+mysql_free_result($rsMoralEmotionsDev_19);
+
+mysql_free_result($rsMoralEmotionsDev_8);
+
+mysql_free_result($rsMoralEmotionsDev_9);
+
+mysql_free_result($rsMoralEmotionsDev_11);
+
+mysql_free_result($rsMoralEmotionsDev_20);
+
+mysql_free_result($rsMoralEmotionsDev_21);
+
+mysql_free_result($rsMoralEmotionsDev_25);
+
+mysql_free_result($rsMoralEmotionsStall_29);
+
+mysql_free_result($rsMoralEmotionsStall_30);
+
+mysql_free_result($rsMoralEmotionsStall_12);
+
+mysql_free_result($rsMoralEmotionsStall_26);
+
+mysql_free_result($rsMoralEmotionsStall_27);
+
+mysql_free_result($rsMoralEmotionsBoth_24);
+
+mysql_free_result($rsMoralEmotionsBoth_6);
+
+mysql_free_result($rsMoralEmotionsBoth_7);
+
+mysql_free_result($rsMoralEmotionsBoth_22);
+
+mysql_free_result($rsMoralEmotionsBoth_23);
+
+mysql_free_result($rsMoralEmotionsBoth_10);
+
+mysql_free_result($rsLERAemotioncount1);
+
+mysql_free_result($rsLERAemotioncount4);
+
+mysql_free_result($rsMoralBoilerplateNotCoded);
+
+mysql_free_result($rsStrengthsPersonal_1);
+
+mysql_free_result($rsStrengthsPersonal_2);
+
+mysql_free_result($rsStrengthsPersonal_3);
+
+mysql_free_result($rsGrowthPersonal_1);
+
+mysql_free_result($rsRecommendStrength);
+
+mysql_free_result($rsRecommendGrowth);
+
+mysql_free_result($rsGrowthPersonal_2);
+
+mysql_free_result($rsLERAemotioncount2);
+
+mysql_free_result($rsLERAemotioncount3);
+
+mysql_free_result($rsMoralBoilerplate3);
+
+mysql_free_result($rsMoralBoilerplate2);
+?>

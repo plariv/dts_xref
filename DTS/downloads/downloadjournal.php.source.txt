@@ -1,0 +1,93 @@
+<?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsJournal = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsJournal = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+//$query_rsJournal = sprintf("SELECT Registrants.userkey, Registrants.firstname, Registrants.lastname, Journal.journalkey, Journal.teacherkey, Journal.`date`, Journal.teachercomment, Journal.journalentry_1, Journal.journalentry_2, Journal.noticing_1, Journal.insights_1, Journal.wellbeing_1, Journal.connected_1, Journal.compassion_1, Journal.noticing_2, Journal.insights_2, Journal.wellbeing_2, Journal.connected_2, Journal.compassion_2, Journal.`time` FROM Registrants, Journal WHERE Journal.teacherkey = %s AND Registrants.userkey = Journal.userkey ORDER BY Journal.`date` DESC", GetSQLValueString($colname_rsJournal, "int"));
+
+$query_rsJournal = sprintf("SELECT r.userkey, r.firstname, r.lastname, j.journalkey, j.teacherkey, j.`date`, j.teachercomment, j.journalentry_1, j.journalentry_2, j.`time`, j.noticing_body, j.noticing_emotions, j.noticing_thoughts, 
+j.insights_actions, j.insights_actions_beliefs, j.insights_actions_values, j.insights_actions_learned, 
+j.insights_emotions, j.insights_emotions_beliefs, j.insights_emotions_values, j.insights_emotions_learned, 
+j.insights_thoughts, j.insights_thoughts_beliefs, j.insights_thoughts_values, j.insights_thoughts_learned, 
+j.insights_relationships, j.insights_relationships_beliefs, j.insights_relationships_values, j.insights_relationships_learned, 
+j.wellbeing, j.connected_others, j.connected_deity, j.connected_nature, j.connected_world, j.compassion_self, j.compassion_others, j.compassion_beings
+FROM Registrants r
+JOIN Journal j ON r.userkey = j.userkey 
+WHERE j.teacherkey = %s ORDER BY j.`date` DESC", 
+		GetSQLValueString($colname_rsJournal, "int"));
+$rsJournal = mysql_query($query_rsJournal, $Assessment) or die(mysql_error());
+$row_rsJournal = mysql_fetch_assoc($rsJournal);
+$totalRows_rsJournal = mysql_num_rows($rsJournal);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+<p>
+  <?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=Journal.txt\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+  journalkey**date**first name**last name**entry_1**entry_2**teacher commment
+  <br />
+<?php do { ?>
+<?php echo $row_rsJournal['journalkey']; ?>**<?php echo $row_rsJournal['time']; ?>**<?php echo $row_rsJournal['firstname']; ?>**<?php echo $row_rsJournal['lastname']; ?>*<?php echo $row_rsJournal['journalentry_1']; ?>**<?php echo $row_rsJournal['journalentry_2']; ?>**<?php echo $row_rsJournal['teachercomment']; ?>,,,
+<?php } while ($row_rsJournal = mysql_fetch_assoc($rsJournal)); ?>
+</p>
+<?
+exit();
+?>
+
+</body>
+</html>
+<?php
+mysql_free_result($rsJournal);
+?>

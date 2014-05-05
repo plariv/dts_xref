@@ -1,0 +1,595 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_insert"])) && ($_POST["MM_insert"] == "form1")) {
+  $insertSQL = sprintf("INSERT INTO LDMA (ldmakey, interviewdate, userkey, user_name, projectkey, completed, bulkcustomerkey, testtime, age, edulevel, occupation, country, sex, `language`, ldmadilemmakey, perspectives1, perspectives2, response1, response2, process, comments) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                       GetSQLValueString($_POST['ldmakey'], "int"),
+                       GetSQLValueString($_POST['interviewdate'], "date"),
+                       GetSQLValueString($_POST['user_name'], "int"),
+                       GetSQLValueString($_POST['user_name'], "int"),
+                       GetSQLValueString($_POST['projectkey'], "int"),
+                       GetSQLValueString($_POST['completed'], "int"),
+                       GetSQLValueString($_POST['bulkcustomerkey'], "int"),
+                       GetSQLValueString($_POST['testtime'], "text"),
+                       GetSQLValueString($_POST['age'], "int"),
+                       GetSQLValueString($_POST['edulevel'], "int"),
+                       GetSQLValueString($_POST['occupation'], "text"),
+                       GetSQLValueString($_POST['country'], "text"),
+                       GetSQLValueString($_POST['sex'], "int"),
+                       GetSQLValueString($_POST['language'], "int"),
+                       GetSQLValueString($_POST['ldmadilemmakey'], "int"),
+                       GetSQLValueString($_POST['perspectives1'], "text"),
+                       GetSQLValueString($_POST['perspectives2'], "text"),
+                       GetSQLValueString($_POST['response1'], "text"),
+                       GetSQLValueString($_POST['response2'], "text"),
+                       GetSQLValueString($_POST['process'], "text"),
+                       GetSQLValueString($_POST['comments'], "text"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($insertSQL, $Assessment) or die(mysql_error());
+
+  $insertGoTo = "assess__ldma01_Stanhope.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $insertGoTo .= (strpos($insertGoTo, '?')) ? "&" : "?";
+    $insertGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $insertGoTo));
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEdu = "SELECT * FROM EduAttainment ORDER BY edukey ASC";
+$rsEdu = mysql_query($query_rsEdu, $Assessment) or die(mysql_error());
+$row_rsEdu = mysql_fetch_assoc($rsEdu);
+$totalRows_rsEdu = mysql_num_rows($rsEdu);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEdu = "SELECT * FROM EduAttainment ORDER BY EduLevelKey ASC";
+$rsEdu = mysql_query($query_rsEdu, $Assessment) or die(mysql_error());
+$row_rsEdu = mysql_fetch_assoc($rsEdu);
+$totalRows_rsEdu = mysql_num_rows($rsEdu);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsSex = "SELECT * FROM Sex";
+$rsSex = mysql_query($query_rsSex, $Assessment) or die(mysql_error());
+$row_rsSex = mysql_fetch_assoc($rsSex);
+$totalRows_rsSex = mysql_num_rows($rsSex);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEmailAddress01 = "SELECT * FROM emailaddresses WHERE emailkey = 4";
+$rsEmailAddress01 = mysql_query($query_rsEmailAddress01, $Assessment) or die(mysql_error());
+$row_rsEmailAddress01 = mysql_fetch_assoc($rsEmailAddress01);
+$totalRows_rsEmailAddress01 = mysql_num_rows($rsEmailAddress01);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEmailAddress02 = "SELECT * FROM emailaddresses WHERE emailkey = 7";
+$rsEmailAddress02 = mysql_query($query_rsEmailAddress02, $Assessment) or die(mysql_error());
+$row_rsEmailAddress02 = mysql_fetch_assoc($rsEmailAddress02);
+$totalRows_rsEmailAddress02 = mysql_num_rows($rsEmailAddress02);
+
+//Linecraft PHP Form mail v.1.2.0
+if(isset($_POST["MM_insert"])){
+	$mail_form="form1";
+	$exception_fields=array("user_name","age","edulevel","occupation","sex","perspectives1","perspectives2","response1","response2","process","comments","email4","projectkey","bulkcustomerkey","country","language","testtime","completed","ldmakey","MM_insert","ldmadilemmakey","interviewdate");
+	$to=$row_rsEmailAddress02['email'];
+	$from=$_POST['email4'];
+	$cc="";
+	$bcc="";
+	$host="";
+	$user_name="";
+	$password="";
+	$subject="Stanhope LDMA";
+	$message_header="A new LDMA is ready for scoring";
+	$message_footer="";
+	$message_body="";
+	$format_html="\r\nContent-type: text/plain; charset=utf-8";
+	$html="";
+	$success_page="";
+	$error_page="";
+	$o_t="";
+	$c_t="";
+	$br="\n";
+	//If HTML
+	if($html=="1"){
+		$o_t="<b>";
+		$c_t="</b>";
+		$br="<br>";
+		$format_html="\r\nContent-type: text/html; charset=utf-8";
+	}
+	foreach($_POST as $fieldName => $value){
+		if(!in_array($fieldName,$exception_fields)){
+			$fieldName=str_replace("_"," ",$fieldName);
+			$message_body=$message_body.$o_t.$fieldName.$c_t.": ".$value.$br;
+		}
+	}
+	$message=$message_header.$br.$message_body.$br.$message_footer;
+	@include_once "../assessmentLDMA/Mail.php";
+	@include_once("../assessmentLDMA/Mail/mime.php");
+	if(!class_exists('Mail') || !class_exists('Mail_mime')){
+		$headers="From:".$from.$format_html;
+		$headers.=($cc!="")?("\r\nCc: " . $cc):"";
+		$headers.=($bcc!="")?("\r\nBcc: " . $bcc):"";
+		if(mail($to, stripslashes($subject), stripslashes($message),$headers)){
+			if($success_page!=""){
+				header("Location:".$success_page);
+			}
+		}else{
+			if($error_page!=""){
+				header("Location:".$error_page);
+			}
+		}
+	}else{
+		if($cc!=""){$to.=", ".$cc;}
+		if($bcc!=""){$to.=", ".$bcc;}
+		if($host!="" && $user_name!="" && $password!=""){
+			$contructor = Mail::factory('smtp',array ('host' => $host,'auth' => true,'user_name' => $user_name,'password' => $password));
+		}else{
+			$contructor = Mail::factory('mail');
+		}
+		$headers = array ('From' => $from,'To' => $to,'Subject' => $subject);
+		if($cc!=""){$headers['Cc']=$cc;}
+		if($html=="1"){
+			$mime = new Mail_mime("\n");
+			$mime->setHTMLBody($message);
+			$message = $mime->get();
+			$headers = $mime->headers($headers);
+		}
+		$mail = $contructor->send($to, $headers, $message);
+
+		if (PEAR::isError($mail)){
+			if($error_page!=""){
+				header("Location:".$error_page);
+			}
+		}else{
+			if($success_page!=""){
+				header("Location:".$success_page);
+			}			
+		}
+	}
+}
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateldma2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LDMA essays</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<script src="../DTSassets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../DTSassets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../DTSassets/SpryValidationTextarea.js" type="text/javascript"></script>
+<style type="text/css">
+<!--
+.style11 {
+	color: #990000
+}
+-->
+</style>
+<link href="../DTSassets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../DTSassets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../DTSassets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #FFF9F3;
+	background-image: url(/images/skin/LDMAcontainer2.jpg);
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LDMAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 3;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 0px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+	background-image: url(/images/skin/LDMAmenu4.jpg);
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/LDMAfooter2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #menu1 div {
+	color: #FFE1D0;
+}
+.twoColFixRtHdr #container #menu1 #MenuBar2 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+        <td valign="top"><h1>ENTER INTERVIEW DATA
+  
+          </h1>
+          <p><span class="star">*</span>Means the field cannot be blank.</p>
+          <form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+            <table>
+              <tr valign="baseline">
+                <td>Case number (use your existing case number, but put it at the end of a 6 digit number that begins with 21: e.g., 210001)<span class="star">*</span></td>
+                <td><span id="sprytextfield1">
+                <input type="text" name="user_name" value="" size="6" />
+                <span class="textfieldRequiredMsg">A value is required.</span><span class="textfieldInvalidFormatMsg">Invalid format.</span><span class="textfieldMinCharsMsg">Minimum number of characters not met.</span><span class="textfieldMinValueMsg">The entered value is less than the minimum required.</span><span class="textfieldMaxCharsMsg">Exceeded maximum number of characters.</span></span></td>
+              </tr>
+              <tr valign="baseline">
+                <td valign="top">Interview date (mm/dd/yyyy)<span class="star">*</span></td>
+                <td><span id="sprytextfield2">
+                <input name="interviewdate" type="text" value="" size="10" />
+                <span class="textfieldRequiredMsg">A value is required.</span><span class="textfieldInvalidFormatMsg">Invalid format.</span></span></td>
+              </tr>
+
+              <tr valign="baseline">
+                <td>Respondent age<span class="star">*</span></td>
+                <td><span id="sprytextfield4">
+                <input type="text" name="age" value="" size="4" />
+                <span class="textfieldRequiredMsg">A value is required.</span><span class="textfieldInvalidFormatMsg">Invalid format.</span></span></td>
+              </tr>
+              <tr valign="baseline">
+                <td>Educational level<span class="star">*</span></td>
+                <td><span id="spryselect2">
+                  <select name="edulevel">
+                    <option value="">-select one-</option>
+                    <?php
+do {  
+?>
+                    <option value="<?php echo $row_rsEdu['edukey']?>"><?php echo $row_rsEdu['EduLevel']?></option>
+                    <?php
+} while ($row_rsEdu = mysql_fetch_assoc($rsEdu));
+  $rows = mysql_num_rows($rsEdu);
+  if($rows > 0) {
+      mysql_data_seek($rsEdu, 0);
+	  $row_rsEdu = mysql_fetch_assoc($rsEdu);
+  }
+?>
+                  </select>
+                <span class="selectRequiredMsg">Please select an item.</span></span></td>
+              </tr>
+              <tr valign="baseline">
+                <td>Occupation<span class="star">*</span></td>
+                <td><span id="sprytextfield3">
+                <input name="occupation" type="text" value="" size="40" />
+                <span class="textfieldRequiredMsg">A value is required.</span></span></td>
+              </tr>
+              <tr valign="baseline">
+                <td>Sex<span class="star">*</span></td>
+                <td><span id="spryselect4">
+                  <select name="sex">
+                    <option value="">-select one-</option>
+                    <?php
+do {  
+?>
+                    <option value="<?php echo $row_rsSex['sexkey']?>"><?php echo $row_rsSex['sex']?></option>
+                    <?php
+} while ($row_rsSex = mysql_fetch_assoc($rsSex));
+  $rows = mysql_num_rows($rsSex);
+  if($rows > 0) {
+      mysql_data_seek($rsSex, 0);
+	  $row_rsSex = mysql_fetch_assoc($rsSex);
+  }
+?>
+                  </select>
+                <span class="selectRequiredMsg">Please select an item.</span></span></td>
+              </tr>
+              <tr valign="baseline">
+                <td>Probe 1<span class="star">*</span></td>
+                <td><span id="sprytextarea1">
+                  <textarea name="perspectives1" cols="70" rows="30"></textarea>
+                <span class="textareaRequiredMsg">A value is required.</span></span></td>
+              </tr>
+              <tr valign="baseline">
+                <td>Probe 2<span class="star">*</span></td>
+                <td><span id="sprytextarea2">
+                  <textarea name="perspectives2" cols="70" rows="30"></textarea>
+                <span class="textareaRequiredMsg">A value is required.</span></span></td>
+              </tr>
+              <tr valign="baseline">
+                <td>Probe 3<span class="star">*</span></td>
+                <td><span id="sprytextarea3">
+                  <textarea name="response1" cols="70" rows="30"></textarea>
+                <span class="textareaRequiredMsg">A value is required.</span></span></td>
+              </tr>
+              <tr valign="baseline">
+                <td>Probe 4<span class="star">*</span></td>
+                <td><span id="sprytextarea4">
+                  <textarea name="response2" cols="70" rows="30"></textarea>
+</span><span id="spryselect5"><span class="selectRequiredMsg">Please select an item.</span></span></td>
+              </tr>
+              <tr valign="baseline">
+                <td>Probe 5<span class="star">*</span></td>
+                <td><span id="sprytextarea5">
+                  <textarea name="process" cols="70" rows="30"></textarea>
+                <span class="textareaRequiredMsg">A value is required.</span></span></td>
+              </tr>
+              <tr valign="baseline">
+                <td>Additional text</td>
+                <td><span id="sprytextarea6">
+                  <textarea name="comments" cols="70" rows="10"></textarea>
+</span></td>
+              </tr>
+              <tr valign="baseline">
+                <td>&nbsp;</td>
+                <td><div align="right">
+                  <input type="submit" value="Insert record" />
+                </div></td>
+              </tr>
+            </table>
+            <input type="hidden" name="email4" value="<?php echo $row_rsEmailAddress01['email']; ?>" />
+            <input type="hidden" name="ldmakey" value="" />
+            <input type="hidden" name="projectkey" value="6014" />
+            <input type="hidden" name="bulkcustomerkey" value="<?php echo $_SESSION['log_userkey']; ?>" />
+            <input type="hidden" name="country" value="Australia" />
+            <input type="hidden" name="language" value="1" />
+            <input type="hidden" name="testtime" value="1" />
+            <input type="hidden" name="completed" value="1" />
+            <input type="hidden" name="MM_insert" value="form1" />
+            <input type="hidden" name="ldmadilemmakey" value="15" />
+          </form>
+          <p>&nbsp;</p>
+  <p>
+    </p>
+        </td>
+  <script type="text/javascript">
+<!--
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "integer", {validateOn:["blur", "change"], minChars:6, minValue:200000, maxChars:6});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "date", {validateOn:["blur", "change"], format:"mm/dd/yyyy", useCharacterMasking:true});
+var sprytextfield4 = new Spry.Widget.ValidationTextField("sprytextfield4", "integer");
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"]});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"]});
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {validateOn:["blur", "change"]});
+var sprytextarea2 = new Spry.Widget.ValidationTextarea("sprytextarea2", {validateOn:["blur", "change"]});
+var sprytextarea3 = new Spry.Widget.ValidationTextarea("sprytextarea3", {validateOn:["blur", "change"]});
+var sprytextarea4 = new Spry.Widget.ValidationTextarea("sprytextarea4", {validateOn:["blur", "change"]});
+var sprytextarea5 = new Spry.Widget.ValidationTextarea("sprytextarea5", {validateOn:["blur", "change"]});
+var sprytextarea6 = new Spry.Widget.ValidationTextarea("sprytextarea6", {validateOn:["blur", "change"], isRequired:false});
+var sprytextfield3 = new Spry.Widget.ValidationTextField("sprytextfield3", "none", {validateOn:["blur", "change"]});
+//-->
+  </script>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsEdu);
+
+mysql_free_result($rsSex);
+
+mysql_free_result($rsRegistrants);
+
+mysql_free_result($rsEmailAddress01);
+
+mysql_free_result($rsEmailAddress02);
+?>

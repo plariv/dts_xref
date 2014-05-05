@@ -1,0 +1,442 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as employee")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE Engagement_data SET completed=%s, like_school=%s, challenge=%s, engagement=%s, motivation=%s, real_world=%s, explore_interests=%s, senior_project=%s, other_interests=%s, eager_learn=%s, continue_learning=%s, succeed_school=%s, intelligence=%s, learning1=%s, projects=%s, learning2=%s, learning3=%s, teachers=%s, friends=%s, comments=%s WHERE engagekey=%s",
+                       GetSQLValueString($_POST['completed'], "int"),
+                       GetSQLValueString($_POST['like_school'], "text"),
+                       GetSQLValueString($_POST['challenge'], "text"),
+                       GetSQLValueString($_POST['engagement'], "text"),
+                       GetSQLValueString($_POST['motivation'], "text"),
+                       GetSQLValueString($_POST['real_world'], "text"),
+                       GetSQLValueString($_POST['explore_interests'], "text"),
+                       GetSQLValueString($_POST['senior_project'], "text"),
+                       GetSQLValueString($_POST['other_interests'], "text"),
+                       GetSQLValueString($_POST['eager_learn'], "text"),
+                       GetSQLValueString($_POST['continue_learning'], "text"),
+                       GetSQLValueString($_POST['succeed_school'], "text"),
+                       GetSQLValueString($_POST['intelligence'], "text"),
+                       GetSQLValueString($_POST['learning1'], "text"),
+                       GetSQLValueString($_POST['projects'], "text"),
+                       GetSQLValueString($_POST['learning2'], "text"),
+                       GetSQLValueString($_POST['learning3'], "text"),
+                       GetSQLValueString($_POST['teachers'], "text"),
+                       GetSQLValueString($_POST['friends'], "text"),
+                       GetSQLValueString($_POST['comments'], "text"),
+                       GetSQLValueString($_POST['engagekey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "engagement_assess1.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));
+}
+
+$colname_rsEngagement = "-1";
+if (isset($_GET['engagekey'])) {
+  $colname_rsEngagement = $_GET['engagekey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEngagement = sprintf("SELECT engagekey, completed, like_school, challenge, engagement, motivation, real_world, explore_interests, senior_project, other_interests, eager_learn, continue_learning, succeed_school, intelligence, learning1, projects, learning2, learning3, teachers, friends, comments FROM Engagement_data WHERE engagekey = %s", GetSQLValueString($colname_rsEngagement, "int"));
+$rsEngagement = mysql_query($query_rsEngagement, $Assessment) or die(mysql_error());
+$row_rsEngagement = mysql_fetch_assoc($rsEngagement);
+$totalRows_rsEngagement = mysql_num_rows($rsEngagement);
+?>
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatescore2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Engagement probes</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #929292;
+	background-image: url(/images/skin/background.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #EAEAEA;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/header2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 00px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container .indent46 a:link {
+	color: #929292;
+}
+.twoColFixRtHdr #container .indent46 a:visited {
+	color: #929292;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:hover {
+	color: #474A47;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="../" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="../" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+  </ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"><!-- InstanceBeginEditable name="main" -->
+    <h1>ENGAGEMENT  (page 3 of 3)</h1>
+    <p><a href="engagement_probes.php">View interview probes</a></p>
+    <form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+      <table>
+    <tr>
+      <td>Like school</td>
+      <td><textarea name="like_school" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['like_school'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Challenge</td>
+      <td><textarea name="challenge" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['challenge'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Engagement</td>
+      <td><textarea name="engagement" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['engagement'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Motivation</td>
+      <td><textarea name="motivation" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['motivation'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Real world</td>
+      <td><textarea name="real_world" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['real_world'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Explore interests</td>
+      <td><textarea name="explore_interests" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['explore_interests'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Senior project</td>
+      <td><textarea name="senior_project" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['senior_project'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Other interests</td>
+      <td><textarea name="other_interests" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['other_interests'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Eager learn</td>
+      <td><textarea name="eager_learn" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['eager_learn'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Continue learning</td>
+      <td><textarea name="continue_learning" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['continue_learning'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Succeed school</td>
+      <td><textarea name="succeed_school" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['succeed_school'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+      <td><textarea name="intelligence" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['intelligence'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Learning 1</td>
+      <td><textarea name="learning1" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['learning1'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Projects</td>
+      <td><textarea name="projects" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['projects'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Learning 2</td>
+      <td><textarea name="learning2" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['learning2'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Learning 3</td>
+      <td><textarea name="learning3" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['learning3'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Teachers</td>
+      <td><textarea name="teachers" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['teachers'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Friends</td>
+      <td><textarea name="friends" class="textarea240_500"><?php echo htmlentities($row_rsEngagement['friends'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td>Comments</td>
+      <td><textarea name="comments" class="textarea140_500"><?php echo htmlentities($row_rsEngagement['comments'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+    </tr>
+    <tr>
+      <td nowrap="nowrap" align="right">&nbsp;</td>
+      <td><div align="right">
+        <p>
+          <input type="submit" value="SUBMIT" />
+        </p>
+</div></td>
+    </tr>
+  </table>
+  <input type="hidden" name="engagekey" value="<?php echo $row_rsEngagement['engagekey']; ?>" />
+  <input type="hidden" name="completed" value="1" />
+  <input type="hidden" name="MM_update" value="form1" />
+  <input type="hidden" name="engagekey" value="<?php echo $row_rsEngagement['engagekey']; ?>" />
+</form>
+<p>&nbsp;</p>    
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsEngagement);
+
+mysql_free_result($rsRegistrant);
+?>

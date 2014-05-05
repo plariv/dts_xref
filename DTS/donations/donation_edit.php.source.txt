@@ -1,0 +1,254 @@
+<? 
+include_once '../includes/dts_functions.php';	
+
+if (!WA_Auth_RulePasses("Logged in as senior")) { 
+	WA_Auth_RestrictAccess("../security/logIn.php"); } 
+
+if (!isset($_GET['donationkey'])) { header("Location: donations_list.php"); exit(); }
+$donationkey = $_GET['donationkey'];
+
+
+
+// update details on this donation entry
+if (isset($_POST['update'])) { 
+	
+	$sql = prepsql("UPDATE donations d
+		SET firstname = ?, lastname = ?, email = ?, zip_code = ?, userkey = ?,
+      notes = ?, amount = ?, date_pledged = ?, will_pay_on_date = ?, is_received = ?, date_received = ?
+		WHERE d.key = ? ",
+      $_POST['firstname'],
+      $_POST['lastname'],
+      $_POST['email'],
+      $_POST['zip_code'],
+      $_POST['userkey'],
+      $_POST['notes'],
+      $_POST['amount'],
+      $_POST['date_pledged'],
+      $_POST['will_pay_on_date'],
+      (isset($_POST['is_received']) == true ? 1 : 0),
+      $_POST['date_received'],
+      $donationkey);
+	$result = $mysqli->query($sql) or die("ERROR updating this donation entry.".$mysqli->error);
+
+	header("Location: donations_list.php"); exit();
+}
+
+
+
+// fetch list of donation entries
+$sql = prepsql("SELECT * FROM donations d WHERE d.key = ? ", 
+  $donationkey);
+$rsDonation = $mysqli->query($sql) or die("ERROR fetching info on this donation.");
+$donation = $rsDonation->fetch_assoc();
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: Edit donation entry</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+
+<script src="../includes/jquery.js"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<script src="../includes/jquery.dotimeout.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+<script src="../includes/jquery.highlight.js" type="text/javascript"></script>
+<link href="../includes/js_res/jquery.ui.smoothness.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+	
+	$('.date').datepicker({ 
+		dateFormat: 'yy-mm-dd', 
+		numberOfMonths: 1,
+		showOtherMonths: true,
+		selectOtherMonths: true,
+    changeMonth: true,
+    changeYear: true
+	});
+
+  $('#firstname').focus();
+
+  $('#is_received').click(function(){ $('#date_received').val("<? echo date('Y-m-d'); ?>"); });
+
+});
+
+</script>
+
+
+<style type="text/css">
+
+	a { color: #008A8C; cursor: pointer; }
+  table { max-width: 850px; }
+	td { font-size: 14px; }
+
+</style>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1>Edit donation</h1>
+  
+  <table>
+  <form action='?donationkey=<? echo $donationkey; ?>' method='post'>
+
+    <tr>
+      <td>First name</td>
+      <td><input type='text' id='firstname' name='firstname' value='<? echo $donation['firstname']; ?>' size="12" /></td>
+    </tr>
+    <tr>
+      <td>Last name</td>
+      <td><input type='text' id='lastname' name='lastname' value='<? echo $donation['lastname']; ?>' size="12" /></td>
+    </tr>
+    <tr>
+      <td>Email</td>
+      <td><input type='text' id='email' name='email' value='<? echo $donation['email']; ?>' size="12" /></td>
+    </tr>
+    <tr>
+      <td>Zip code</td>
+      <td><input type='text' id='zip_code' name='zip_code' value='<? echo $donation['zip_code']; ?>' size="5" /></td>
+    </tr>
+    <tr>
+      <td>Userkey</td>
+      <td><input type='text' id='userkey' name='userkey' value='<? echo $donation['userkey']; ?>' size="10" /></td>
+    </tr>
+
+    <tr>
+      <td>Amount</td>
+      <td>
+        <input type='text' name='amount' value='<? echo $donation['amount']; ?>' />
+      </td>
+    </tr>
+
+  	<tr>
+  		<td>Date pledged</td>
+  		<td>
+        <input type='text' class='date' name='date_pledged' 
+  			value='<? echo $donation['date_pledged']; ?>' />
+      </td>
+  	</tr>
+    <tr>
+      <td>Will pay on date</td>
+      <td>
+        <input type='text' class='date' name='will_pay_on_date' 
+        value='<? echo $donation['will_pay_on_date']; ?>' />
+      </td>
+    </tr>
+    
+    <tr>
+      <td>Received?</td>
+      <td>
+        <input type='checkbox' id='is_received' name='is_received' value='1'
+          <? if ($donation['is_received'] == 1) { echo "checked='checked'"; } ?> />
+      </td>
+    </tr>
+  	<tr>
+  		<td>Date received</td>
+  		<td>
+        <input type='text' id='date_received' class='date' name='date_received' 
+  			value='<? echo $donation['date_received']; ?>' />
+      </td>
+  	</tr>
+
+    <tr>
+      <td>Notes</td>
+      <td>
+        <textarea name='notes'><? echo $donation['notes']; ?></textarea>
+      </td>
+    </tr>
+
+  	<tr>
+  		<td></td>
+  		<td>
+        <input type='submit' name='update' value='Update' />
+  		</td>
+  </form>
+  </table>
+  
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

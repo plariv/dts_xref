@@ -1,0 +1,75 @@
+<?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLRJA = "-1";
+if (isset($_GET['user_name'])) {
+  $colname_rsLRJA = $_GET['user_name'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJA = sprintf("SELECT LRJAscores.lrjakey, LRJAscores.coderusername, LRJAscores.essay1las, LRJAscores.essay2las, LRJAscores.essay3las, LRJAscores.essay4las, LRJAscores.essay5las, LRJAscores.essay6las, LRJAscores.essay7las, LRJAscores.lasname, LRJAscores_trainees.coderusername2, LRJAscores_trainees.essay1las2, LRJAscores_trainees.essay2las2, LRJAscores_trainees.essay3las2, LRJAscores_trainees.essay4las2, LRJAscores_trainees.essay5las2, LRJAscores_trainees.essay6las2, LRJAscores_trainees.essay7las2, LRJAscores_trainees.lasname2 FROM LRJAscores LEFT JOIN LRJAscores_trainees ON LRJAscores.lrjakey = LRJAscores_trainees.lrjakey WHERE LRJAscores_trainees.coderusername2 = %s", GetSQLValueString($colname_rsLRJA, "text"));
+$rsLRJA = mysql_query($query_rsLRJA, $Assessment) or die(mysql_error());
+$row_rsLRJA = mysql_fetch_assoc($rsLRJA);
+$totalRows_rsLRJA = mysql_num_rows($rsLRJA);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+<p>
+<?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=tr-lrjadownload.csv\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+</p>
+<p>
+<?php do { ?>
+<?php echo $row_rsLRJA['lrjakey']; ?>,<?php echo $row_rsLRJA['coderusername']; ?>,<?php echo $row_rsLRJA['essay1las']; ?>,<?php echo $row_rsLRJA['essay2las']; ?>,<?php echo $row_rsLRJA['essay3las']; ?>,<?php echo $row_rsLRJA['essay4las']; ?>,<?php echo $row_rsLRJA['essay5las']; ?>,<?php echo $row_rsLRJA['essay6las']; ?>,<?php echo $row_rsLRJA['essay7las']; ?>,<?php echo $row_rsLRJA['lasname']; ?>,<?php echo $row_rsLRJA['coderusername2']; ?>,<?php echo $row_rsLRJA['essay1las2']; ?>,<?php echo $row_rsLRJA['essay2las2']; ?>,<?php echo $row_rsLRJA['essay3las2']; ?>,<?php echo $row_rsLRJA['essay4las2']; ?>,<?php echo $row_rsLRJA['essay5las2']; ?>,<?php echo $row_rsLRJA['essay6las2']; ?>,<?php echo $row_rsLRJA['essay7las2']; ?>,<?php echo $row_rsLRJA['lasname2']; ?>,<br />
+<?php } while ($row_rsLRJA = mysql_fetch_assoc($rsLRJA)); ?>
+</p>
+<?
+exit();
+?>
+</body>
+</html>
+<?php
+mysql_free_result($rsLRJA);
+?>

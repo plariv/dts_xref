@@ -1,0 +1,1366 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Load the KT_back class
+require_once('../includes/nxt/KT_back.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+// Start trigger
+$formValidation = new tNG_FormValidation();
+$tNGs->prepareValidation($formValidation);
+// End trigger
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGLCcodes = "SELECT * FROM GlobalConsciousness_codes WHERE glccodeskey = 1";
+$rsGLCcodes = mysql_query($query_rsGLCcodes, $Assessment) or die(mysql_error());
+$row_rsGLCcodes = mysql_fetch_assoc($rsGLCcodes);
+$totalRows_rsGLCcodes = mysql_num_rows($rsGLCcodes);
+
+$colname_rsEssays = "-1";
+if (isset($_GET['glckey'])) {
+  $colname_rsEssays = $_GET['glckey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEssays = sprintf("SELECT glckey, other_countries, global_issues, favorite_units, important, other_cultures, class_discussion, class_project, international_friends, trips, motto, service_learning, personal_connection, global_citizen, impact, life_choices, different_world, current_issues, other FROM GlobalConsciousness_data WHERE glckey = %s", GetSQLValueString($colname_rsEssays, "int"));
+$rsEssays = mysql_query($query_rsEssays, $Assessment) or die(mysql_error());
+$row_rsEssays = mysql_fetch_assoc($rsEssays);
+$totalRows_rsEssays = mysql_num_rows($rsEssays);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRating = "SELECT * FROM Rating_implicitexplicit ORDER BY explicitimplicitkey ASC";
+$rsRating = mysql_query($query_rsRating, $Assessment) or die(mysql_error());
+$row_rsRating = mysql_fetch_assoc($rsRating);
+$totalRows_rsRating = mysql_num_rows($rsRating);
+
+// Make an insert transaction instance
+$ins_GlobalConsciousness_codes = new tNG_multipleInsert($conn_Assessment);
+$tNGs->addTransaction($ins_GlobalConsciousness_codes);
+// Register triggers
+$ins_GlobalConsciousness_codes->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Insert1");
+$ins_GlobalConsciousness_codes->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$ins_GlobalConsciousness_codes->registerTrigger("END", "Trigger_Default_Redirect", 99, "glc_coding5.php?glckey={GET.glckey}&glccodeskey={glccodeskey}");
+// Add columns
+$ins_GlobalConsciousness_codes->setTable("GlobalConsciousness_codes");
+$ins_GlobalConsciousness_codes->addColumn("glckey", "NUMERIC_TYPE", "POST", "glckey", "{GET.glckey}");
+$ins_GlobalConsciousness_codes->addColumn("code_91", "NUMERIC_TYPE", "POST", "code_91");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_91", "STRING_TYPE", "POST", "exemplar_91");
+$ins_GlobalConsciousness_codes->addColumn("code_92", "NUMERIC_TYPE", "POST", "code_92");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_92", "STRING_TYPE", "POST", "exemplar_92");
+$ins_GlobalConsciousness_codes->addColumn("code_93", "NUMERIC_TYPE", "POST", "code_93");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_93", "STRING_TYPE", "POST", "exemplar_93");
+$ins_GlobalConsciousness_codes->addColumn("code_94", "NUMERIC_TYPE", "POST", "code_94");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_94", "STRING_TYPE", "POST", "exemplar_94");
+$ins_GlobalConsciousness_codes->addColumn("code_95", "NUMERIC_TYPE", "POST", "code_95");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_95", "STRING_TYPE", "POST", "exemplar_95");
+$ins_GlobalConsciousness_codes->addColumn("code_96", "NUMERIC_TYPE", "POST", "code_96");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_96", "STRING_TYPE", "POST", "exemplar_96");
+$ins_GlobalConsciousness_codes->addColumn("code_97", "NUMERIC_TYPE", "POST", "code_97");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_97", "STRING_TYPE", "POST", "exemplar_97");
+$ins_GlobalConsciousness_codes->addColumn("code_98", "NUMERIC_TYPE", "POST", "code_98");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_98", "STRING_TYPE", "POST", "exemplar_98");
+$ins_GlobalConsciousness_codes->addColumn("code_99", "NUMERIC_TYPE", "POST", "code_99");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_99", "STRING_TYPE", "POST", "exemplar_99");
+$ins_GlobalConsciousness_codes->addColumn("code_100", "NUMERIC_TYPE", "POST", "code_100");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_100", "STRING_TYPE", "POST", "exemplar_100");
+$ins_GlobalConsciousness_codes->addColumn("code_101", "NUMERIC_TYPE", "POST", "code_101");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_101", "STRING_TYPE", "POST", "exemplar_101");
+$ins_GlobalConsciousness_codes->addColumn("code_102", "NUMERIC_TYPE", "POST", "code_102");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_102", "STRING_TYPE", "POST", "exemplar_102");
+$ins_GlobalConsciousness_codes->addColumn("code_103", "NUMERIC_TYPE", "POST", "code_103");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_103", "STRING_TYPE", "POST", "exemplar_103");
+$ins_GlobalConsciousness_codes->addColumn("code_104", "NUMERIC_TYPE", "POST", "code_104");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_104", "STRING_TYPE", "POST", "exemplar_104");
+$ins_GlobalConsciousness_codes->addColumn("code_105", "NUMERIC_TYPE", "POST", "code_105");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_105", "STRING_TYPE", "POST", "exemplar_105");
+$ins_GlobalConsciousness_codes->addColumn("code_106", "NUMERIC_TYPE", "POST", "code_106");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_106", "STRING_TYPE", "POST", "exemplar_106");
+$ins_GlobalConsciousness_codes->addColumn("code_107", "NUMERIC_TYPE", "POST", "code_107");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_107", "STRING_TYPE", "POST", "exemplar_107");
+$ins_GlobalConsciousness_codes->addColumn("code_108", "NUMERIC_TYPE", "POST", "code_108");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_108", "STRING_TYPE", "POST", "exemplar_108");
+$ins_GlobalConsciousness_codes->addColumn("code_109", "NUMERIC_TYPE", "POST", "code_109");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_109", "STRING_TYPE", "POST", "exemplar_109");
+$ins_GlobalConsciousness_codes->addColumn("code_110", "NUMERIC_TYPE", "POST", "code_110");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_110", "STRING_TYPE", "POST", "exemplar_110");
+$ins_GlobalConsciousness_codes->addColumn("code_111", "NUMERIC_TYPE", "POST", "code_111");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_111", "STRING_TYPE", "POST", "exemplar_111");
+$ins_GlobalConsciousness_codes->addColumn("code_112", "NUMERIC_TYPE", "POST", "code_112");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_112", "STRING_TYPE", "POST", "exemplar_112");
+$ins_GlobalConsciousness_codes->addColumn("code_113", "NUMERIC_TYPE", "POST", "code_113");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_113", "STRING_TYPE", "POST", "exemplar_113");
+$ins_GlobalConsciousness_codes->addColumn("code_114", "NUMERIC_TYPE", "POST", "code_114");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_114", "STRING_TYPE", "POST", "exemplar_114");
+$ins_GlobalConsciousness_codes->addColumn("code_115", "NUMERIC_TYPE", "POST", "code_115");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_115", "STRING_TYPE", "POST", "exemplar_115");
+$ins_GlobalConsciousness_codes->addColumn("code_116", "NUMERIC_TYPE", "POST", "code_116");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_116", "STRING_TYPE", "POST", "exemplar_116");
+$ins_GlobalConsciousness_codes->addColumn("code_117", "NUMERIC_TYPE", "POST", "code_117");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_117", "STRING_TYPE", "POST", "exemplar_117");
+$ins_GlobalConsciousness_codes->addColumn("code_118", "NUMERIC_TYPE", "POST", "code_118");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_118", "STRING_TYPE", "POST", "exemplar_118");
+$ins_GlobalConsciousness_codes->addColumn("code_119", "NUMERIC_TYPE", "POST", "code_119");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_119", "STRING_TYPE", "POST", "exemplar_119");
+$ins_GlobalConsciousness_codes->addColumn("code_120", "NUMERIC_TYPE", "POST", "code_120");
+$ins_GlobalConsciousness_codes->addColumn("exemplar_120", "STRING_TYPE", "POST", "exemplar_120");
+$ins_GlobalConsciousness_codes->setPrimaryKey("glccodeskey", "NUMERIC_TYPE");
+
+// Make an update transaction instance
+$upd_GlobalConsciousness_codes = new tNG_multipleUpdate($conn_Assessment);
+$tNGs->addTransaction($upd_GlobalConsciousness_codes);
+// Register triggers
+$upd_GlobalConsciousness_codes->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Update1");
+$upd_GlobalConsciousness_codes->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$upd_GlobalConsciousness_codes->registerTrigger("END", "Trigger_Default_Redirect", 99, "glc_coding5.php?glckey={GET.glckey}&glccodeskey={glccodeskey}");
+// Add columns
+$upd_GlobalConsciousness_codes->setTable("GlobalConsciousness_codes");
+$upd_GlobalConsciousness_codes->addColumn("glckey", "NUMERIC_TYPE", "POST", "glckey");
+$upd_GlobalConsciousness_codes->addColumn("code_91", "NUMERIC_TYPE", "POST", "code_91");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_91", "STRING_TYPE", "POST", "exemplar_91");
+$upd_GlobalConsciousness_codes->addColumn("code_92", "NUMERIC_TYPE", "POST", "code_92");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_92", "STRING_TYPE", "POST", "exemplar_92");
+$upd_GlobalConsciousness_codes->addColumn("code_93", "NUMERIC_TYPE", "POST", "code_93");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_93", "STRING_TYPE", "POST", "exemplar_93");
+$upd_GlobalConsciousness_codes->addColumn("code_94", "NUMERIC_TYPE", "POST", "code_94");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_94", "STRING_TYPE", "POST", "exemplar_94");
+$upd_GlobalConsciousness_codes->addColumn("code_95", "NUMERIC_TYPE", "POST", "code_95");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_95", "STRING_TYPE", "POST", "exemplar_95");
+$upd_GlobalConsciousness_codes->addColumn("code_96", "NUMERIC_TYPE", "POST", "code_96");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_96", "STRING_TYPE", "POST", "exemplar_96");
+$upd_GlobalConsciousness_codes->addColumn("code_97", "NUMERIC_TYPE", "POST", "code_97");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_97", "STRING_TYPE", "POST", "exemplar_97");
+$upd_GlobalConsciousness_codes->addColumn("code_98", "NUMERIC_TYPE", "POST", "code_98");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_98", "STRING_TYPE", "POST", "exemplar_98");
+$upd_GlobalConsciousness_codes->addColumn("code_99", "NUMERIC_TYPE", "POST", "code_99");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_99", "STRING_TYPE", "POST", "exemplar_99");
+$upd_GlobalConsciousness_codes->addColumn("code_100", "NUMERIC_TYPE", "POST", "code_100");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_100", "STRING_TYPE", "POST", "exemplar_100");
+$upd_GlobalConsciousness_codes->addColumn("code_101", "NUMERIC_TYPE", "POST", "code_101");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_101", "STRING_TYPE", "POST", "exemplar_101");
+$upd_GlobalConsciousness_codes->addColumn("code_102", "NUMERIC_TYPE", "POST", "code_102");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_102", "STRING_TYPE", "POST", "exemplar_102");
+$upd_GlobalConsciousness_codes->addColumn("code_103", "NUMERIC_TYPE", "POST", "code_103");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_103", "STRING_TYPE", "POST", "exemplar_103");
+$upd_GlobalConsciousness_codes->addColumn("code_104", "NUMERIC_TYPE", "POST", "code_104");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_104", "STRING_TYPE", "POST", "exemplar_104");
+$upd_GlobalConsciousness_codes->addColumn("code_105", "NUMERIC_TYPE", "POST", "code_105");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_105", "STRING_TYPE", "POST", "exemplar_105");
+$upd_GlobalConsciousness_codes->addColumn("code_106", "NUMERIC_TYPE", "POST", "code_106");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_106", "STRING_TYPE", "POST", "exemplar_106");
+$upd_GlobalConsciousness_codes->addColumn("code_107", "NUMERIC_TYPE", "POST", "code_107");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_107", "STRING_TYPE", "POST", "exemplar_107");
+$upd_GlobalConsciousness_codes->addColumn("code_108", "NUMERIC_TYPE", "POST", "code_108");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_108", "STRING_TYPE", "POST", "exemplar_108");
+$upd_GlobalConsciousness_codes->addColumn("code_109", "NUMERIC_TYPE", "POST", "code_109");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_109", "STRING_TYPE", "POST", "exemplar_109");
+$upd_GlobalConsciousness_codes->addColumn("code_110", "NUMERIC_TYPE", "POST", "code_110");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_110", "STRING_TYPE", "POST", "exemplar_110");
+$upd_GlobalConsciousness_codes->addColumn("code_111", "NUMERIC_TYPE", "POST", "code_111");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_111", "STRING_TYPE", "POST", "exemplar_111");
+$upd_GlobalConsciousness_codes->addColumn("code_112", "NUMERIC_TYPE", "POST", "code_112");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_112", "STRING_TYPE", "POST", "exemplar_112");
+$upd_GlobalConsciousness_codes->addColumn("code_113", "NUMERIC_TYPE", "POST", "code_113");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_113", "STRING_TYPE", "POST", "exemplar_113");
+$upd_GlobalConsciousness_codes->addColumn("code_114", "NUMERIC_TYPE", "POST", "code_114");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_114", "STRING_TYPE", "POST", "exemplar_114");
+$upd_GlobalConsciousness_codes->addColumn("code_115", "NUMERIC_TYPE", "POST", "code_115");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_115", "STRING_TYPE", "POST", "exemplar_115");
+$upd_GlobalConsciousness_codes->addColumn("code_116", "NUMERIC_TYPE", "POST", "code_116");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_116", "STRING_TYPE", "POST", "exemplar_116");
+$upd_GlobalConsciousness_codes->addColumn("code_117", "NUMERIC_TYPE", "POST", "code_117");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_117", "STRING_TYPE", "POST", "exemplar_117");
+$upd_GlobalConsciousness_codes->addColumn("code_118", "NUMERIC_TYPE", "POST", "code_118");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_118", "STRING_TYPE", "POST", "exemplar_118");
+$upd_GlobalConsciousness_codes->addColumn("code_119", "NUMERIC_TYPE", "POST", "code_119");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_119", "STRING_TYPE", "POST", "exemplar_119");
+$upd_GlobalConsciousness_codes->addColumn("code_120", "NUMERIC_TYPE", "POST", "code_120");
+$upd_GlobalConsciousness_codes->addColumn("exemplar_120", "STRING_TYPE", "POST", "exemplar_120");
+$upd_GlobalConsciousness_codes->setPrimaryKey("glccodeskey", "NUMERIC_TYPE", "GET", "glccodeskey");
+
+// Make an instance of the transaction object
+$del_GlobalConsciousness_codes = new tNG_multipleDelete($conn_Assessment);
+$tNGs->addTransaction($del_GlobalConsciousness_codes);
+// Register triggers
+$del_GlobalConsciousness_codes->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Delete1");
+$del_GlobalConsciousness_codes->registerTrigger("END", "Trigger_Default_Redirect", 99, "../includes/nxt/back.php");
+// Add columns
+$del_GlobalConsciousness_codes->setTable("GlobalConsciousness_codes");
+$del_GlobalConsciousness_codes->setPrimaryKey("glccodeskey", "NUMERIC_TYPE", "GET", "glccodeskey");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsGlobalConsciousness_codes = $tNGs->getRecordset("GlobalConsciousness_codes");
+$row_rsGlobalConsciousness_codes = mysql_fetch_assoc($rsGlobalConsciousness_codes);
+$totalRows_rsGlobalConsciousness_codes = mysql_num_rows($rsGlobalConsciousness_codes);
+?>
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatescore1.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Global consciousness coding</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<script src="../SpryAssetsAssessments/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="../SpryAssetsAssessments/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+      <script src="../includes/nxt/scripts/form.js" type="text/javascript"></script>
+      <script src="../includes/nxt/scripts/form.js.php" type="text/javascript"></script>
+      <script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+    <script type="text/javascript">
+$NXT_FORM_SETTINGS = {
+  duplicate_buttons: true,
+  show_as_grid: true,
+  merge_down_value: true
+}
+      </script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #929292;
+	background-image: url(/images/skin/background.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 1300px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #EAEAEA;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/headerWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footerWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.logintext {
+	line-height: 20px;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="/" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="../" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <p><?php echo $tNGs->displayValidationRules();?></p>
+<h1>GLOBAL CONSCIOUSNESS CODING (page 5 of 8)</h1>
+    <p><a href="../scoring/chooseassessment.php">choose assessment</a> | <a href="../scoring/choosecommunity.php">community</a> | <a href="../scoring/chooseengagement.php">engagement</a></p>
+      <?php
+	echo $tNGs->getErrorMsg();
+?>
+    <div class="KT_tng">
+      <div class="KT_tngform">
+        <form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+          <?php $cnt1 = 0; ?>
+          <?php do { ?>
+            <?php $cnt1++; ?>
+            <?php 
+// Show IF Conditional region1 
+if (@$totalRows_rsGlobalConsciousness_codes > 1) {
+?>
+              <h3><?php echo NXT_getResource("Record_FH"); ?> <?php echo $cnt1; ?></h3>
+              <?php } 
+// endif Conditional region1
+?>
+            <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+              <tr>
+                <td colspan="4" class="KT_th"><strong>Cultures</strong></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_91_<?php echo $cnt1; ?>"><?php echo $row_rsGLCcodes['exemplar_91']; ?></label></td>
+                <td><span id="spryselect1">
+                  <select name="code_91_<?php echo $cnt1; ?>" id="code_91_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_91']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_91", $cnt1); ?></td>
+                <td><textarea name="exemplar_91_<?php echo $cnt1; ?>" id="exemplar_91_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_91']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_91");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_91", $cnt1); ?></td>
+                <td width="464" rowspan="30"><div id="CollapsiblePanel1" class="CollapsiblePanel">
+                  <div class="CollapsiblePanelTab">Other countries</div>
+                  <div class="CollapsiblePanelContent"> <?php echo $row_rsEssays['other_countries']; ?>                  </div>
+                </div>
+                  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Global issues</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['global_issues']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Favorite units</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['favorite_units']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel4" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Important</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['important']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel5" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Other cultures</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['other_cultures']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel6" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Class discussion</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['class_discussion']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel7" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Class project</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['class_project']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel8" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">International friend</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['international_friends']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel9" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Trips</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['trips']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel10" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Motto</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['motto']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel11" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Service learning</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['service_learning']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel12" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Personal connection</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['personal_connection']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel13" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Global citizen</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['global_citizen']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel14" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Impact</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['impact']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel15" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Life choices</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['life_choices']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel16" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Different world</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['different_world']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel17" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Current issues</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['current_issues']; ?></div>
+                  </div>
+                  <div id="CollapsiblePanel18" class="CollapsiblePanel">
+                    <div class="CollapsiblePanelTab">Other</div>
+                    <div class="CollapsiblePanelContent"><?php echo $row_rsEssays['other']; ?></div>
+                  </div>
+                  <p>&nbsp;</p>
+                <p>&nbsp;</p>
+                <p>&nbsp;</p></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_92_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_92']; ?></td>
+                <td><span id="spryselect2">
+                  <select name="code_92_<?php echo $cnt1; ?>" id="code_92_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_92']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_92", $cnt1); ?></td>
+                <td><textarea name="exemplar_92_<?php echo $cnt1; ?>" id="exemplar_92_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_92']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_92");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_92", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_93_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_93']; ?></td>
+                <td><span id="spryselect3">
+                  <select name="code_93_<?php echo $cnt1; ?>" id="code_93_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_93']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_93", $cnt1); ?></td>
+                <td><textarea name="exemplar_93_<?php echo $cnt1; ?>" id="exemplar_93_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_93']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_93");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_93", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_94_<?php echo $cnt1; ?>"><?php echo $row_rsGLCcodes['exemplar_94']; ?></label></td>
+                <td><span id="spryselect4">
+                  <select name="code_94_<?php echo $cnt1; ?>" id="code_94_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_94']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_94", $cnt1); ?></td>
+                <td><textarea name="exemplar_94_<?php echo $cnt1; ?>" id="exemplar_94_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_94']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_94");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_94", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_95_<?php echo $cnt1; ?>"><?php echo $row_rsGLCcodes['exemplar_95']; ?></label></td>
+                <td><span id="spryselect5">
+                  <select name="code_95_<?php echo $cnt1; ?>" id="code_95_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_95']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_95", $cnt1); ?></td>
+                <td><textarea name="exemplar_95_<?php echo $cnt1; ?>" id="exemplar_95_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_95']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_95");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_95", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_96_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_96']; ?></td>
+                <td><span id="spryselect6">
+                  <select name="code_96_<?php echo $cnt1; ?>" id="code_96_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_96']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_96", $cnt1); ?></td>
+                <td><textarea name="exemplar_96_<?php echo $cnt1; ?>" id="exemplar_96_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_96']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_96");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_96", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_97_<?php echo $cnt1; ?>"><?php echo $row_rsGLCcodes['exemplar_97']; ?></label></td>
+                <td><span id="spryselect7">
+                  <select name="code_97_<?php echo $cnt1; ?>" id="code_97_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_97']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_97", $cnt1); ?></td>
+                <td><textarea name="exemplar_97_<?php echo $cnt1; ?>" id="exemplar_97_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_97']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_97");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_97", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_98_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_98']; ?></td>
+                <td><span id="spryselect8">
+                  <select name="code_98_<?php echo $cnt1; ?>" id="code_98_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_98']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_98", $cnt1); ?></td>
+                <td><textarea name="exemplar_98_<?php echo $cnt1; ?>" id="exemplar_98_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_98']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_98");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_98", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_99_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_99']; ?></td>
+                <td><span id="spryselect9">
+                  <select name="code_99_<?php echo $cnt1; ?>" id="code_99_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_99']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_99", $cnt1); ?></td>
+                <td><textarea name="exemplar_99_<?php echo $cnt1; ?>" id="exemplar_99_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_99']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_99");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_99", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_100_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_100']; ?></td>
+                <td><span id="spryselect10">
+                  <select name="code_100_<?php echo $cnt1; ?>" id="code_100_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_100']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_100", $cnt1); ?></td>
+                <td><textarea name="exemplar_100_<?php echo $cnt1; ?>" id="exemplar_100_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_100']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_100");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_100", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_101_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_101']; ?></td>
+                <td><span id="spryselect11">
+                  <select name="code_101_<?php echo $cnt1; ?>" id="code_101_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_101']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_101", $cnt1); ?></td>
+                <td><textarea name="exemplar_101_<?php echo $cnt1; ?>" id="exemplar_101_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_101']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_101");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_101", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_102_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_102']; ?></td>
+                <td><span id="spryselect12">
+                  <select name="code_102_<?php echo $cnt1; ?>" id="code_102_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_102']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_102", $cnt1); ?></td>
+                <td><textarea name="exemplar_102_<?php echo $cnt1; ?>" id="exemplar_102_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_102']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_102");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_102", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_103_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_103']; ?></td>
+                <td><span id="spryselect13">
+                  <select name="code_103_<?php echo $cnt1; ?>" id="code_103_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_103']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_103", $cnt1); ?></td>
+                <td><textarea name="exemplar_103_<?php echo $cnt1; ?>" id="exemplar_103_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_103']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_103");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_103", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_104_<?php echo $cnt1; ?>"><?php echo $row_rsGLCcodes['exemplar_104']; ?></label></td>
+                <td><span id="spryselect14">
+                  <select name="code_104_<?php echo $cnt1; ?>" id="code_104_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_104']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_104", $cnt1); ?></td>
+                <td><textarea name="exemplar_104_<?php echo $cnt1; ?>" id="exemplar_104_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_104']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_104");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_104", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_105_<?php echo $cnt1; ?>"><?php echo $row_rsGLCcodes['exemplar_105']; ?></label></td>
+                <td><span id="spryselect15">
+                  <select name="code_105_<?php echo $cnt1; ?>" id="code_105_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_105']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_105", $cnt1); ?></td>
+                <td><textarea name="exemplar_105_<?php echo $cnt1; ?>" id="exemplar_105_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_105']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_105");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_105", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_106_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_106']; ?></td>
+                <td><span id="spryselect16">
+                  <select name="code_106_<?php echo $cnt1; ?>" id="code_106_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_106']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_106", $cnt1); ?></td>
+                <td><textarea name="exemplar_106_<?php echo $cnt1; ?>" id="exemplar_106_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_106']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_106");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_106", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_107_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_107']; ?></td>
+                <td><span id="spryselect17">
+                  <select name="code_107_<?php echo $cnt1; ?>" id="code_107_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_107']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_107", $cnt1); ?></td>
+                <td><textarea name="exemplar_107_<?php echo $cnt1; ?>" id="exemplar_107_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_107']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_107");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_107", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_108_<?php echo $cnt1; ?>"><?php echo $row_rsGLCcodes['exemplar_108']; ?></label></td>
+                <td><span id="spryselect18">
+                  <select name="code_108_<?php echo $cnt1; ?>" id="code_108_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_108']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_108", $cnt1); ?></td>
+                <td><textarea name="exemplar_108_<?php echo $cnt1; ?>" id="exemplar_108_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_108']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_108");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_108", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_109_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_109']; ?></td>
+                <td><span id="spryselect19">
+                  <select name="code_109_<?php echo $cnt1; ?>" id="code_109_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_109']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_109", $cnt1); ?></td>
+                <td><textarea name="exemplar_109_<?php echo $cnt1; ?>" id="exemplar_109_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_109']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_109");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_109", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_110_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_110']; ?></td>
+                <td><span id="spryselect20">
+                  <select name="code_110_<?php echo $cnt1; ?>" id="code_110_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_110']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_110", $cnt1); ?></td>
+                <td><textarea name="exemplar_110_<?php echo $cnt1; ?>" id="exemplar_110_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_110']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_110");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_110", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_111_<?php echo $cnt1; ?>"><?php echo $row_rsGLCcodes['exemplar_111']; ?></label></td>
+                <td><span id="spryselect21">
+                  <select name="code_111_<?php echo $cnt1; ?>" id="code_111_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_111']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_111", $cnt1); ?></td>
+                <td><textarea name="exemplar_111_<?php echo $cnt1; ?>" id="exemplar_111_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_111']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_111");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_111", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_112_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_112']; ?></td>
+                <td><span id="spryselect22">
+                  <select name="code_112_<?php echo $cnt1; ?>" id="code_112_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_112']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_112", $cnt1); ?></td>
+                <td><textarea name="exemplar_112_<?php echo $cnt1; ?>" id="exemplar_112_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_112']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_112");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_112", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_113_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_113']; ?></td>
+                <td><span id="spryselect23">
+                  <select name="code_113_<?php echo $cnt1; ?>" id="code_113_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_113']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_113", $cnt1); ?></td>
+                <td><textarea name="exemplar_113_<?php echo $cnt1; ?>" id="exemplar_113_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_113']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_113");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_113", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_114_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_114']; ?></td>
+                <td><span id="spryselect24">
+                  <select name="code_114_<?php echo $cnt1; ?>" id="code_114_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_114']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_114", $cnt1); ?></td>
+                <td><textarea name="exemplar_114_<?php echo $cnt1; ?>" id="exemplar_114_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_114']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_114");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_114", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_115_<?php echo $cnt1; ?>"><?php echo $row_rsGLCcodes['exemplar_115']; ?></label></td>
+                <td><span id="spryselect25">
+                  <select name="code_115_<?php echo $cnt1; ?>" id="code_115_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_115']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_115", $cnt1); ?></td>
+                <td><textarea name="exemplar_115_<?php echo $cnt1; ?>" id="exemplar_115_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_115']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_115");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_115", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_116_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_116']; ?></td>
+                <td><span id="spryselect26">
+                  <select name="code_116_<?php echo $cnt1; ?>" id="code_116_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_116']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_116", $cnt1); ?></td>
+                <td><textarea name="exemplar_116_<?php echo $cnt1; ?>" id="exemplar_116_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_116']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_116");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_116", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_117_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_117']; ?></td>
+                <td><span id="spryselect27">
+                  <select name="code_117_<?php echo $cnt1; ?>" id="code_117_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_117']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_117", $cnt1); ?></td>
+                <td><textarea name="exemplar_117_<?php echo $cnt1; ?>" id="exemplar_117_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_117']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_117");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_117", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_118_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_118']; ?></td>
+                <td><span id="spryselect28">
+                  <select name="code_118_<?php echo $cnt1; ?>" id="code_118_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_118']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_118", $cnt1); ?></td>
+                <td><textarea name="exemplar_118_<?php echo $cnt1; ?>" id="exemplar_118_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_118']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_118");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_118", $cnt1); ?></td>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_119_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_119']; ?></td>
+                <td><span id="spryselect29">
+                  <select name="code_119_<?php echo $cnt1; ?>" id="code_119_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_119']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_119", $cnt1); ?></td>
+                <td><textarea name="exemplar_119_<?php echo $cnt1; ?>" id="exemplar_119_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_119']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_119");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_119", $cnt1); ?></td>
+              </tr>
+              <tr>
+              </tr>
+              <tr>
+                <td width="150" class="KT_th"><label for="exemplar_120_<?php echo $cnt1; ?>"></label>
+                <?php echo $row_rsGLCcodes['exemplar_120']; ?></td>
+                <td><span id="spryselect30">
+                  <select name="code_120_<?php echo $cnt1; ?>" id="code_120_<?php echo $cnt1; ?>">
+                    <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                    <?php 
+do {  
+?>
+                    <option value="<?php echo $row_rsRating['explicitimplicitkey']?>"<?php if (!(strcmp($row_rsRating['explicitimplicitkey'], $row_rsGlobalConsciousness_codes['code_120']))) {echo "SELECTED";} ?>><?php echo $row_rsRating['explicitimplicit']?></option>
+                    <?php
+} while ($row_rsRating = mysql_fetch_assoc($rsRating));
+  $rows = mysql_num_rows($rsRating);
+  if($rows > 0) {
+      mysql_data_seek($rsRating, 0);
+	  $row_rsRating = mysql_fetch_assoc($rsRating);
+  }
+?>
+                  </select>
+</span><?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "code_120", $cnt1); ?></td>
+                <td><textarea name="exemplar_120_<?php echo $cnt1; ?>" id="exemplar_120_<?php echo $cnt1; ?>" cols="50" rows="5"><?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['exemplar_120']); ?></textarea>
+                  <?php echo $tNGs->displayFieldHint("exemplar_120");?> <?php echo $tNGs->displayFieldError("GlobalConsciousness_codes", "exemplar_120", $cnt1); ?></td>
+                <td>&nbsp;</td>
+              </tr>
+            </table>
+            <input type="hidden" name="kt_pk_GlobalConsciousness_codes_<?php echo $cnt1; ?>" class="id_field" value="<?php echo KT_escapeAttribute($row_rsGlobalConsciousness_codes['kt_pk_GlobalConsciousness_codes']); ?>" />
+            <input name="glckey" type="hidden" id="glckey" value="<?php echo $row_rsGlobalConsciousness_codes['glckey']; ?>" />
+            <?php } while ($row_rsGlobalConsciousness_codes = mysql_fetch_assoc($rsGlobalConsciousness_codes)); ?>
+          <div class="KT_bottombuttons">
+            <div>
+              <?php 
+      // Show IF Conditional region1
+      if (@$_GET['glccodeskey'] == "") {
+      ?>
+                <input type="submit" name="KT_Insert1" id="KT_Insert1" value="<?php echo NXT_getResource("Insert_FB"); ?>" />
+                <?php 
+      // else Conditional region1
+      } else { ?>
+                <input type="submit" name="KT_Update1" value="<?php echo NXT_getResource("Update_FB"); ?>" />
+                <input type="submit" name="KT_Delete1" value="<?php echo NXT_getResource("Delete_FB"); ?>" onClick="return confirm('<?php echo NXT_getResource("Are you sure?"); ?>');" />
+                <?php }
+      // endif Conditional region1
+      ?>
+              <input type="button" name="KT_Cancel1" value="<?php echo NXT_getResource("Cancel_FB"); ?>" onClick="return UNI_navigateCancel(event, '../includes/nxt/back.php')" />
+            </div>
+          </div>
+        </form>
+      </div>
+      <br class="clearfixplain" />
+    </div>
+    <p>&nbsp;</p>
+    </p>
+<p>&nbsp;</p>
+  <script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel4 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel4");
+var CollapsiblePanel5 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel5");
+var CollapsiblePanel6 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel6");
+var CollapsiblePanel7 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel7");
+var CollapsiblePanel8 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel8");
+var CollapsiblePanel9 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel9");
+var CollapsiblePanel10 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel10");
+var CollapsiblePanel11 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel11");
+var CollapsiblePanel12 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel12");
+var CollapsiblePanel13 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel13");
+var CollapsiblePanel14 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel14");
+var CollapsiblePanel15 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel15");
+var CollapsiblePanel16 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel16");
+var CollapsiblePanel17 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel17");
+var CollapsiblePanel18 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel18");
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"], isRequired:false});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"], isRequired:false});
+var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {validateOn:["blur", "change"], isRequired:false});
+var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {validateOn:["blur", "change"], isRequired:false});
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {validateOn:["blur", "change"], isRequired:false});
+var spryselect6 = new Spry.Widget.ValidationSelect("spryselect6", {validateOn:["blur", "change"], isRequired:false});
+var spryselect7 = new Spry.Widget.ValidationSelect("spryselect7", {validateOn:["blur", "change"], isRequired:false});
+var spryselect8 = new Spry.Widget.ValidationSelect("spryselect8", {validateOn:["blur", "change"], isRequired:false});
+var spryselect9 = new Spry.Widget.ValidationSelect("spryselect9", {validateOn:["blur", "change"], isRequired:false});
+var spryselect10 = new Spry.Widget.ValidationSelect("spryselect10", {validateOn:["blur", "change"], isRequired:false});
+var spryselect11 = new Spry.Widget.ValidationSelect("spryselect11", {validateOn:["blur", "change"], isRequired:false});
+var spryselect12 = new Spry.Widget.ValidationSelect("spryselect12", {validateOn:["blur", "change"], isRequired:false});
+var spryselect13 = new Spry.Widget.ValidationSelect("spryselect13", {validateOn:["blur", "change"], isRequired:false});
+var spryselect14 = new Spry.Widget.ValidationSelect("spryselect14", {validateOn:["blur", "change"], isRequired:false});
+var spryselect15 = new Spry.Widget.ValidationSelect("spryselect15", {validateOn:["blur", "change"], isRequired:false});
+var spryselect16 = new Spry.Widget.ValidationSelect("spryselect16", {validateOn:["blur", "change"], isRequired:false});
+var spryselect17 = new Spry.Widget.ValidationSelect("spryselect17", {validateOn:["blur", "change"], isRequired:false});
+var spryselect18 = new Spry.Widget.ValidationSelect("spryselect18", {validateOn:["blur", "change"], isRequired:false});
+var spryselect19 = new Spry.Widget.ValidationSelect("spryselect19", {validateOn:["blur", "change"], isRequired:false});
+var spryselect20 = new Spry.Widget.ValidationSelect("spryselect20", {validateOn:["blur", "change"], isRequired:false});
+var spryselect21 = new Spry.Widget.ValidationSelect("spryselect21", {validateOn:["blur", "change"], isRequired:false});
+var spryselect22 = new Spry.Widget.ValidationSelect("spryselect22", {validateOn:["blur", "change"], isRequired:false});
+var spryselect23 = new Spry.Widget.ValidationSelect("spryselect23", {validateOn:["blur", "change"], isRequired:false});
+var spryselect24 = new Spry.Widget.ValidationSelect("spryselect24", {validateOn:["blur", "change"], isRequired:false});
+var spryselect25 = new Spry.Widget.ValidationSelect("spryselect25", {validateOn:["blur", "change"], isRequired:false});
+var spryselect26 = new Spry.Widget.ValidationSelect("spryselect26", {validateOn:["blur", "change"], isRequired:false});
+var spryselect27 = new Spry.Widget.ValidationSelect("spryselect27", {validateOn:["blur", "change"], isRequired:false});
+var spryselect28 = new Spry.Widget.ValidationSelect("spryselect28", {validateOn:["blur", "change"], isRequired:false});
+var spryselect29 = new Spry.Widget.ValidationSelect("spryselect29", {validateOn:["blur", "change"], isRequired:false});
+var spryselect30 = new Spry.Widget.ValidationSelect("spryselect30", {validateOn:["blur", "change"], isRequired:false});
+//-->
+  </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsGLCcodes);
+
+mysql_free_result($rsEssays);
+
+mysql_free_result($rsRating);
+
+mysql_free_result($rsRegistrant);
+?>

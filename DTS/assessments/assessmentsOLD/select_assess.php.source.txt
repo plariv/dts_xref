@@ -1,0 +1,548 @@
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+?>
+<?php
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$maxRows_rsLIMA = 10;
+$pageNum_rsLIMA = 0;
+if (isset($_GET['pageNum_rsLIMA'])) {
+  $pageNum_rsLIMA = $_GET['pageNum_rsLIMA'];
+}
+$startRow_rsLIMA = $pageNum_rsLIMA * $maxRows_rsLIMA;
+
+$colname_rsLIMA = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLIMA = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLIMA = sprintf("SELECT limakey, resellerkey, completed, userkey FROM LIMA WHERE userkey = %s AND completed = 0", GetSQLValueString($colname_rsLIMA, "int"));
+$query_limit_rsLIMA = sprintf("%s LIMIT %d, %d", $query_rsLIMA, $startRow_rsLIMA, $maxRows_rsLIMA);
+$rsLIMA = mysql_query($query_limit_rsLIMA, $Assessment) or die(mysql_error());
+$row_rsLIMA = mysql_fetch_assoc($rsLIMA);
+
+if (isset($_GET['totalRows_rsLIMA'])) {
+  $totalRows_rsLIMA = $_GET['totalRows_rsLIMA'];
+} else {
+  $all_rsLIMA = mysql_query($query_rsLIMA);
+  $totalRows_rsLIMA = mysql_num_rows($all_rsLIMA);
+}
+$totalPages_rsLIMA = ceil($totalRows_rsLIMA/$maxRows_rsLIMA)-1;
+
+$colname_rsUser = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsUser = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsUser = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsUser, "int"));
+$rsUser = mysql_query($query_rsUser, $Assessment) or die(mysql_error());
+$row_rsUser = mysql_fetch_assoc($rsUser);
+$totalRows_rsUser = mysql_num_rows($rsUser);
+
+$colname_rsLDMA = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLDMA = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMA = sprintf("SELECT ldmakey, userkey, completed, bulkcustomerkey FROM LDMA WHERE userkey = %s AND completed < 1", GetSQLValueString($colname_rsLDMA, "int"));
+$rsLDMA = mysql_query($query_rsLDMA, $Assessment) or die(mysql_error());
+$row_rsLDMA = mysql_fetch_assoc($rsLDMA);
+$totalRows_rsLDMA = mysql_num_rows($rsLDMA);
+
+$colname_rsLERA = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLERA = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLERA = sprintf("SELECT lerakey, userkey, completed, bulkcustomerkey FROM LERA WHERE userkey = %s AND completed < 1", GetSQLValueString($colname_rsLERA, "int"));
+$rsLERA = mysql_query($query_rsLERA, $Assessment) or die(mysql_error());
+$row_rsLERA = mysql_fetch_assoc($rsLERA);
+$totalRows_rsLERA = mysql_num_rows($rsLERA);
+
+$colname_rsLLRA = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLLRA = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLLRA = sprintf("SELECT llrakey, userkey, completed, bulkcustomerkey FROM LLRA WHERE userkey = %s AND completed < 1", GetSQLValueString($colname_rsLLRA, "int"));
+$rsLLRA = mysql_query($query_rsLLRA, $Assessment) or die(mysql_error());
+$row_rsLLRA = mysql_fetch_assoc($rsLLRA);
+$totalRows_rsLLRA = mysql_num_rows($rsLLRA);
+
+$colname_rsLRJA = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLRJA = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJA = sprintf("SELECT lrjakey, userkey, completed, bulkcustomerkey FROM LRJA WHERE userkey = %s AND completed < 1", GetSQLValueString($colname_rsLRJA, "int"));
+$rsLRJA = mysql_query($query_rsLRJA, $Assessment) or die(mysql_error());
+$row_rsLRJA = mysql_fetch_assoc($rsLRJA);
+$totalRows_rsLRJA = mysql_num_rows($rsLRJA);
+
+$colname_rsLSUA = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLSUA = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUA = sprintf("SELECT lsuakey, userkey, completed, bulkcustomerkey FROM LSUA WHERE userkey = %s AND completed < 1", GetSQLValueString($colname_rsLSUA, "int"));
+$rsLSUA = mysql_query($query_rsLSUA, $Assessment) or die(mysql_error());
+$row_rsLSUA = mysql_fetch_assoc($rsLSUA);
+$totalRows_rsLSUA = mysql_num_rows($rsLSUA);
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template2php.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Select an assessment or report</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<style type="text/css">
+<!--
+-->
+</style>
+<script src="../../SpryAssetsAssess/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="../../SpryAssetsAssess/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #9D9F9C;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #474A47;
+	background-color: #F6F6F6;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/DTSheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 26px;
+	background-image: url(/images/skin/menu.png);
+	color: #E2E2E2;
+	margin-top: 0px;
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	height: 19px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer1.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a {
+	color: #EAEAEA;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu1 a:active {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 a:visited {
+	color: #EAEAEA;
+}
+.twoColFixRtHdr #container #menu1 a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu1 p {
+	margin-top: 0px;
+	line-height: 18px;
+	color: #EAEAEA;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div id="menu1">
+  <p><a href="/landing.php">home</a>&nbsp;&nbsp;&nbsp;<a href="/security/registration.php">register</a>&nbsp;&nbsp;&nbsp;<a href="/security/logIn.php">log in</a>&nbsp;&nbsp;&nbsp;<a href="/contactus.php">contact us</a>&nbsp;&nbsp;&nbsp;<a href="/security/logout.php">log out</a>&nbsp;&nbsp;
+  <!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->
+  <span class="logintext">
+  <?php if (isset($_SESSION['log_firstname'])) {  ?>
+  You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></span></p>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <td width="105" valign="middle"><h1>ASSESSMENTS</h1>
+      <p><strong>Important:</strong> If you would like to take a lectical assessment and have not been sent to this page by a teacher, mentor, employer, researcher, or clinician, please <a href="../../contactus.php">contact us</a>.          </p>
+<p>&nbsp;</p>
+          <div id="CollapsiblePanel1" class="CollapsiblePanel">
+            <div class="CollapsiblePanelTab"> <img src="../../images/skin/menu_arrow.gif" alt="arrow" /> LECTICAL ASSESSMENTS AND REPORTS</div>
+            <div class="CollapsiblePanelContent">
+              <h3>Learn more, select an assessment, or view a report</h3>
+              <p>To learn more about an assessment, select &quot;about.&quot; To take an assesment, select &quot;assessment.&quot; To complete an assessment you have already started, click on the assessment number. (There won't be a number if you haven't started an assessment.) To view a report, select &quot;report.&quot;</p>
+              <h3>Lectagraphs</h3>
+              <p><a href="../../customers/lectagraph1.php">Click here</a> to view graphic summaries of your Lectical Assessment results. (This is a new feature. If you encounter any bugs, please let us know.)</p>
+              <h3>Single subject assessments
+              </h3>
+              <table class="tableindent">
+                <tr>
+                  <td  class="tablehead">&nbsp;</td>
+                  <td  class="tablehead">&nbsp;</td>
+                  <td  class="tablehead">LEARN</td>
+                  <td  class="tablehead">START AN ASSESSMENT</td>
+                  <td  class="tablehead">CONTINUE AN ASSESSMENT</td>
+                  <td  class="tablehead">VIEW REPORT</td>
+                </tr>
+                <tr class="ldmabackground">
+                  <td class="ldmabackground"><img src="../../images/logos/LDMA.gif" alt="lrja" width="72" height="29" align="absmiddle" class="imagetop4" /></td>
+                  <td class="trindent">Lectical Workplace Decision Making Assessment</td>
+                  <td class="ldmabackground"><div align="center"><a href="../../about/assessldma.php">ABOUT</a></div></td>
+                  <td class="ldmabackground"><div align="center"><a href="../../assessment_LDMA/assess__ldma01_personal.php">START</a></div></td>
+                  <td class="ldmabackground"><div align="center"><a href="../../assessment_LDMA/assess__ldma01_essays.php?ldmakey=<?php echo $row_rsLDMA['ldmakey']; ?>&amp;bulkcustomerkey=<?php echo $row_rsLDMA['bulkcustomerkey']; ?>">
+                  <?php if ($totalRows_rsLDMA > 0) { // Show if recordset not empty ?>
+                    LDMA NUMBER <strong><?php echo $row_rsLDMA['ldmakey']; ?></strong>
+  <?php } // Show if recordset not empty ?>
+                  </a></div></td>
+                  <td class="ldmabackground"><div align="center"><a href="../../customers/selectldma.php">REPORT</a></div></td>
+                </tr>
+                <tr class="llrabackground">
+                  <td class="llrabackground"><img src="../../images/logos/LLRA.gif" alt="llra" width="72" height="29" align="absmiddle" class="imagetop4" /></td>
+                  <td class="trindent">Lectical Leadership Reasoning Assessment</td>
+                  <td class="llrabackground"><div align="center"><a href="../../about/assessllra.php">ABOUT</a></div></td>
+                  <td class="llrabackground"><div align="center"><a href="../../assessment_LLRA/assess__llra_personal.php">START</a></div></td>
+                  <td class="llrabackground"><div align="center"><a href="../../assessment_LLRA/assess__llra_essays1.php?llrakey=<?php echo $row_rsLLRA['llrakey']; ?>&amp;bulkcustomerkey=<?php echo $row_rsLLRA['bulkcustomerkey']; ?>">
+                  <?php if ($totalRows_rsLLRA > 0) { // Show if recordset not empty ?>
+                    LLRA NUMBER <strong><?php echo $row_rsLLRA['llrakey']; ?></strong>
+  <?php } // Show if recordset not empty ?>
+                  </a></div></td>
+                  <td class="llrabackground"><div align="center"><a href="../../customers/selectllra.php">REPORT</a></div></td>
+                </tr>
+                <tr class="lerabackground">
+                  <td class="lerabackground"><img src="../../images/logos/LERA.gif" alt="lera" width="72" height="29" align="absmiddle" class="imagetop4" /></td>
+                  <td class="trindent">Lectical Ethical Reasoning Assessment</td>
+                  <td class="lerabackground"><div align="center"><a href="../../about/assesslera.php">ABOUT</a></div></td>
+                  <td class="lerabackground"><div align="center"><a href="../../assessment_LERA/assess__lera01_personal.php">START</a></div></td>
+                  <td class="lerabackground"><div align="center"><a href="../../assessment_LERA/assess__lera01_essays1.php?lerakey=<?php echo $row_rsLERA['lerakey']; ?>&amp;bulkcustomerkey=<?php echo $row_rsLERA['bulkcustomerkey']; ?>">
+                  <?php if ($totalRows_rsLERA > 0) { // Show if recordset not empty ?>
+                    LERA NUMBER <strong><?php echo $row_rsLERA['lerakey']; ?></strong>
+  <?php } // Show if recordset not empty ?>
+                  </a></div></td>
+                  <td class="lerabackground"><div align="center"><a href="../../customers/selectlera.php">REPORT</a></div></td>
+                </tr>
+                <tr class="lrjabackground">
+                  <td class="lrjabackground"><img src="../../images/logos/LRJA.gif" alt="lrja" width="72" height="29" align="absmiddle" class="imagetop4" /></td>
+                  <td class="trindent">Lectical Reflective Judgment Assessment</td>
+                  <td><div align="center"><a href="../../about/assesslrja.php">ABOUT</a></div></td>
+                  <td><div align="center"><a href="../../assessment_LRJA/assess__lrja01_personal.php">START</a></div></td>
+                  <td><div align="center"><a href="../../assessment_LRJA/assess__lrja01_essays1.php?lrjakey=<?php echo $row_rsLRJA['lrjakey']; ?>&amp;bulkcustomerkey=<?php echo $row_rsLRJA['bulkcustomerkey']; ?>">
+                  <?php if ($totalRows_rsLRJA > 0) { // Show if recordset not empty ?>
+                    LRJA NUMBER <strong><?php echo $row_rsLRJA['lrjakey']; ?></strong>
+  <?php } // Show if recordset not empty ?>
+                  </a></div></td>
+                  <td><div align="center"><a href="../../customers/selectlrja.php">REPORT</a></div></td>
+                </tr>
+                <tr class="lsuabackground">
+                  <td><img src="../../images/logos/LSUA.gif" alt="lsua" width="72" height="29" align="absmiddle" class="imagetop4" /></td>
+                  <td class="trindent">Lectical Self Understanding Assessment</td>
+                  <td><div align="center"><a href="../../about/assesslsua.php">ABOUT</a></div></td>
+                  <td><div align="center"><a href="../../assessment_LSUA/assess__lsua01_personal.php">START</a></div></td>
+                  <td><div align="center"><a href="../../assessment_LSUA/assess__lsua01_essays.php?lsuakey=<?php echo $row_rsLSUA['lsuakey']; ?>&amp;bulkcustomerkey=<?php echo $row_rsLSUA['bulkcustomerkey']; ?>">
+                  <?php if ($totalRows_rsLSUA > 0) { // Show if recordset not empty ?>
+                    LSUA NUMBER <strong><?php echo $row_rsLSUA['lsuakey']; ?></strong>
+  <?php } // Show if recordset not empty ?>
+                  </a></div></td>
+                  <td><div align="center"><a href="../../customers/selectlsua.php">REPORT</a></div></td>
+                </tr>
+              </table>
+              <h3>Research assessments<br />
+              </h3>
+              <table class="tableindent">
+                <tr>
+                  <td  class="tablehead">&nbsp;</td>
+                  <td  class="tablehead">&nbsp;</td>
+                  <td  class="tablehead">LEARN</td>
+                  <td  class="tablehead">START ASSESSMENT</td>
+                  <td  class="tablehead">COMPLETE ASSESSMENT</td>
+                  <td  class="tablehead">VIEW REPORT</td>
+                </tr>
+                <tr class="lmbebackground">
+                  <td><img src="../../images/logos/LMBE.jpg" alt="LMBE" width="72" height="29" class="imagetop4" /></td>
+                  <td class="trindent">Lectical Mind, Brain, and Education Assessment<span class="red">*</span></td>
+                  <td><div align="center"></div></td>
+                  <td><div align="center"><a href="../../lmbe/lmbe_intro.php">START</a></div></td>
+                  <td>&nbsp;</td>
+                  <td><div align="center"><a href="../../lmbe/indiv_selectlmbe.php">REPORT</a></div></td>
+                </tr>
+                <tr class="limabackground">
+                  <td><img src="../../images/logos/LIMA.gif" alt="lima" width="72" height="29" align="absmiddle" class="imagetop4" /></td>
+                  <td class="trindent">Lectical Integral Model Assessment<span class="red">**</span></td>
+                  <td><div align="center"><a href="../../about/assesslima.php">ABOUT</a></div></td>
+                  <td><div align="center"><a href="../../assessment_LIMA/lima01_intro.php">START</a></div></td>
+                  <td><div align="center"><a href="../../assessment_LIMA/lima01_scales.php?resellerkey=<?php echo $row_rsLIMA['resellerkey']; ?>&amp;limakey=<?php echo $row_rsLIMA['limakey']; ?>">
+                  <?php if ($totalRows_rsLIMA > 0) { // Show if recordset not empty ?>
+                    LIMA NUMBER <strong><?php echo $row_rsLIMA['limakey']; ?></strong>
+  <?php } // Show if recordset not empty ?>
+                  </a></div></td>
+                  <td><div align="center"><a href="../../customers/selectlima.php">REPORT</a></div></td>
+                </tr>
+                <tr>
+                  <td colspan="6"><span class="red">*</span><span class="psmall">The LMBE is  available only to individuals who are taking a participating course in Mind, Brain, and Educaiton. Do not take this assessment unless you have  been directed to do so.</span></td>
+                </tr>
+                <tr>
+                  <td colspan="6"><span class="red">**</span><span class="psmall">The LIMA is  available only to individuals who are part of the iTeach research project. Do not take this assessment unless you have  been directed to do so.</span></td>
+                </tr>
+              </table>
+              <h3>Multidimensional (three subject) assessments<br />
+              </h3>
+              <table class="tableindent">
+                <tr class="lmsabackground">
+                  <td><img src="../../images/logos/LMSA.gif" alt="lmsa" width="72" height="29" align="absmiddle" class="imagetop4" /></td>
+                  <td class="trindent">Lectical Multidimensional Self Assessment</td>
+                  <td><div align="center" class="red">***</div></td>
+                  <td><div align="left"></div></td>
+                  <td><div align="center"><a href="../../customers/selectldma.php">REPORT</a></div></td>
+                </tr>
+                <tr class="lmlabackground">
+                  <td><img src="../../images/logos/LMLA.gif" alt="lmla" width="72" height="29" align="absmiddle" class="imagetop4" /></td>
+                  <td class="trindent">Lectical Multidimensional Leadership Assessment</td>
+                  <td><div align="center" class="red">***</div></td>
+                  <td><div align="left"></div></td>
+                  <td><div align="center"><a href="../../customers/selectlmla.php">REPORT</a></div></td>
+                </tr>
+                <tr>
+                  <td colspan="5"><span class="red">***</span><span class="psmall">The LMSA and LMLA are no longer offered. We suggest that you use the single subject assessments that were included in the LMSA (LRJA, LSUA, LERA) and LMLA (LLRA, LRJA, LDMA).</span></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+          <div id="CollapsiblePanel2" class="CollapsiblePanel">
+            <div class="CollapsiblePanelTab"> <img src="../../images/skin/menu_arrow.gif" alt="arrow" /> FREE SURVEYS</div>
+            <div class="CollapsiblePanelContent">
+              <p>These surveys and tests are hosted by DTS to further our research and the research  of our colleagues. They are  at various stages of evaluation for their reliability and validity. These are NOT developmental assessments.</p>
+              <p>All of these surveys and tests can easily be integrated into classroom lessons. For example, the SMS is used by dozens of teachers of mindfulness practice. Students explore the meaning of their results in classroom discussions and in the <a href="../../about/aboutjournaling.php">student journal</a>, which can be commented by teachers.</p>
+              <h3>Solloway Mindfulness Survey (<a href="../../mindfulness/SMS/m-survey10a.php?userkey=<?php echo $_SESSION['log_userkey']; ?>">SMS</a>)</h3>
+              <p><a href="../../mindfulness/SMS/m-survey10a.php">take the SMS</a> | <a href="../../mindfulness/SMJ/journalentry_1.php">make a journal entry</a> | <a href="../../mindfulness/SMS/indiv_selectsms.php">view results</a></p>
+              <p>If you have recently begun a mindfulness practice or are teaching a mindfulness practice, the SMS can help you measure progress in the growth of intentional attention. The SMS has been extensively evaluated. Its reliability is consistently above .91—the 2010 version has a reliability of .93—and does a good job measuring change in students' experience of intentional attention. The report includes a score, feedback, and suggestions for growth. Teachers can use the SMS in their classrooms. To find out how, go to the <a href="http://devtestservice.org/mindfulness/m-teacherinfo.php">teacher info</a> tab under SMS in the main menu. (As of the spring of 2010, we will be microbilling—$5-10 per survey—researchers for the SMS. It will continue to be free to individuals and teachers. <a href="../../contactus.php">Contact us</a> for more information.)</p>
+              <h3>DTS Optimism Survey (<a href="../../optimism/optimism1.php">DOS</a>)</h3>
+              <p><a href="../../optimism/optimism1.php">take the DOS</a></p>
+              <p>How optimistic are you? This survey examines your level of optimism—as you see it. It takes 15-20 minutes to check out your level of optimism and learn something about what your scores might mean.</p>
+              <h3>DTS Character Survey (<a href="../../character/character1.php">DCS</a><a href="../../optimism/optimism1.php"></a>)</h3>
+              <p><a href="../../character/character1.php">take the DCS</a></p>
+              <p>What kind of a person  are you? This survey examines aspects of your character—as you see it. It takes 15-20 minutes to check out aspects of your character and learn something about what your scores might mean.</p>
+              <h3></h3>
+            </div>
+          </div>
+          <div id="CollapsiblePanel3" class="CollapsiblePanel">
+            <div class="CollapsiblePanelTab"> <img src="../../images/skin/menu_arrow.gif" alt="arrow" /> RESEARCH INSTRUMENTS</div>
+            <div class="CollapsiblePanelContent">
+              <p>These surveys and tests are hosted by DTS to further our research and the research  of our colleagues. They are  all undergoing  evaluation of their reliability and validity or  being used in research. These are NOT lectical (developmental) assessments.</p>
+              <p>All of these surveys and tests can easily be integrated into classroom lessons.  Students can explore the meaning of their results in classroom discussions and in the <a href="../../about/aboutjournaling.php">student journal</a>, which can be viewed and commented by teachers. </p>
+              <h3>Workplace <strong>Creative Potential Survey</strong> (<a href="../../creativity/c-survey.php">CPS_W</a>)</h3>
+              <p>If you are interested in expanding your creative potential, this survey may provide you with some of the information you need to get there. Includes a score and suggestions for growth.</p>
+              <h3>Sort Task Challenge (<a href="../../sorttask/sorttasklead.php">STC</a>)              </h3>
+              <p>Contribute to cognitive developmental research. Take 10 minutes to complete our online puzzler, the STC and we'll tell you how well people's intuitions fit with what scientists know about cognitive development. This  is not a lectical assessment, but it will help us make better lectical assessments.</p>
+              <h3>National Testing Survey (<a href="http://testingsurvey.us">NTS</a>)</h3>
+              <p>See how your views of testing align with those of other Americans by participating in the National Testing Survey. Teachers can use the NTS in the classroom. To find out how, go to the <a href="http://testingsurvey.us/lesson.php">Lesson plan</a>.            </p>
+            </div>
+          </div>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p></p>
+<p>&nbsp;</p>
+  </td>
+    <script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+//-->
+    </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsUser);
+
+mysql_free_result($rsLIMA);
+
+mysql_free_result($rsLDMA);
+
+mysql_free_result($rsLERA);
+
+mysql_free_result($rsLLRA);
+
+mysql_free_result($rsLRJA);
+
+mysql_free_result($rsLSUA);
+
+mysql_free_result($rsRegistrants);
+
+?>

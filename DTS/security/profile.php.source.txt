@@ -1,0 +1,454 @@
+<?php
+if (!isset($_SESSION)) {
+  session_start();
+}
+
+require_once('../Connections/Assessment.php'); 
+include_once('../includes/general_custom_functions.php');
+
+
+
+
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "WAATKUpdateForm")) {
+	
+	// If the user's password and verify-password fields don't match, don't allow them to submit.
+	if ($_POST['password'] <> $_POST['password2']) {
+		header("Location: profile.php?message=diffpw");
+		exit();
+	}
+	
+  $updateSQL = sprintf("UPDATE registrants SET user_name=%s, email=%s, password=%s, reset=0, `state`=%s, province=%s, country=%s, zip=%s, privacy = %s, legal = %s WHERE userkey=%s",
+                       SQLstr($_POST['user_name'], "text"),
+                       SQLstr($_POST['email'], "text"),
+                       SQLstr($_POST['password'], "text"),
+                       SQLstr($_POST['state'], "text"),
+                       SQLstr($_POST['province'], "text"),
+                       SQLstr($_POST['country'], "text"),
+                       SQLstr($_POST['zip'], "text"),
+                       SQLstr($_POST['privacy'], "int"),
+                       SQLstr($_POST['legal'], "int"),
+                       SQLstr($_POST['userkey'], "text"));
+
+  // Only make changes to the profile if it's not the demo accounts
+	if ($_SESSION['log_userkey'] <> 888 AND $_SESSION['log_userkey'] <> 999) {
+	
+		mysql_select_db($database_Assessment, $Assessment);
+		$Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+		
+	}
+
+  $updateGoTo = "../landing.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));
+	exit();
+}
+
+
+
+
+
+
+$Paramuserkey_WAATKregistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $Paramuserkey_WAATKregistrants = (get_magic_quotes_gpc()) ? $_SESSION['log_userkey'] : addslashes($_SESSION['log_userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_WAATKregistrants = sprintf("SELECT * FROM registrants WHERE userkey = %s", $Paramuserkey_WAATKregistrants);
+$WAATKregistrants = mysql_query($query_WAATKregistrants, $Assessment) or die(mysql_error());
+$row_WAATKregistrants = mysql_fetch_assoc($WAATKregistrants);
+$totalRows_WAATKregistrants = mysql_num_rows($WAATKregistrants);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsState = "SELECT * FROM states ORDER BY `state` ASC";
+$rsState = mysql_query($query_rsState, $Assessment) or die(mysql_error());
+$row_rsState = mysql_fetch_assoc($rsState);
+$totalRows_rsState = mysql_num_rows($rsState);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsCountry = "SELECT * FROM countries";
+$rsCountry = mysql_query($query_rsCountry, $Assessment) or die(mysql_error());
+$row_rsCountry = mysql_fetch_assoc($rsCountry);
+$totalRows_rsCountry = mysql_num_rows($rsCountry);
+
+
+$query_rsUsePrivacy = "SELECT * FROM legal";
+$rsUsePrivacy = mysql_query($query_rsUsePrivacy, $Assessment) or die(mysql_error());
+$row_rsUsePrivacy = mysql_fetch_assoc($rsUsePrivacy);
+$totalRows_rsUsePrivacy = mysql_num_rows($rsUsePrivacy);
+
+
+
+
+/**** If there's an obvious place to redirect the user, redirect them.
+	As I'm writing this, I'm realizing there aren't that many obvious cases yet!
+
+*/
+
+if (isset($_GET['redirect']) AND $_GET['redirect'] == "yes") {
+	$redirectTo = "";
+	if ($row_WAATKregistrants['user_level'] >= 20) {
+		$redirectTo = "https://www.devtestservice.org/employees/employee_landing_page.php";
+	}
+	
+	
+	
+	header(sprintf("Location: %s", $redirectTo));
+}
+
+
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='http://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Profile</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<link href="../WA_SecurityAssist/styles/Refined_Pacifica.css" rel="stylesheet" type="text/css" />
+<link href="../WA_SecurityAssist/styles/Verdana.css" rel="stylesheet" type="text/css" />
+
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationCheckbox.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationCheckbox.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+td input {
+	font-size: 100%;
+	}
+</style>
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("../_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+    <div id="UpdateContainer">
+      <?php if ($totalRows_WAATKregistrants > 0) { // Show if recordset not empty ?>
+      <form action="<?php echo $editFormAction; ?>" method="post" name="WAATKUpdateForm" id="WAATKUpdateForm">
+        <h1>UPDATE YOUR PROFILE</h1>
+        <p><strong>Welcome, </strong><?php echo $_SESSION['log_firstname']; ?>. Please update your profile before navigating to your desired destination.</p>
+      
+			<?php if (is_numeric($row_WAATKregistrants['password'])) { ?>
+      <div class="box">
+        <span class="red">If you have received a temporary password, please change your password now (if you have not already done so).</span>
+      </div><?php } ?>
+      
+      <?php if (isset($_GET['message']) AND $_GET['message'] == "resetpw") { ?>
+      <div class="box">
+        <strong>You are logging in for the first time or have recently reset your password</strong>. In order to ensure the privacy of your account, you must choose a new password for your DTS account. Keep this password in a safe place and do not share it with anyone.
+      </div>
+      <?php } ?>
+      
+      <?php if (isset($_GET['message']) AND $_GET['message'] == "diffpw") { ?>
+      <div class="box">
+        <span class="red"><strong>Your passwords do not match</strong></span>. Please re-enter your password.
+      </div>
+      <?php } ?>
+      
+        <table class="WAATKDataTable" width="90%" cellpadding="0" cellspacing="0" border="0" align="center">
+          <tr>
+            <td style='font-size:110%; text-align:right; width:30%'>User name</td>
+            <td><span id="sprytextfield1">
+              <input type="text" class="WAATKTextField" name="user_name" id="user_name" value="<?php echo(str_replace('"', '&quot;', $row_WAATKregistrants['user_name'])); ?>" size="13" />
+              <span class="textfieldRequiredMsg">A value is required.</span></span></td>
+          </tr>
+          <tr>
+            <td style='font-size:110%; text-align:right'>Password</td>
+            <?php // Make the password blank if the user needs to be forced to choose a new one.
+						// only display current password if the user is not being asked to reset theirs,
+						// and if the passwords weren't a mismatch last time.
+						if (isset($_GET['message']) AND ($_GET['message'] == "resetpw" OR 
+										$_GET['message'] == "diffpw")) { $row_WAATKregistrants['password'] = ""; }
+						
+						?>
+            
+            <td><span id="sprytextfield2">
+              <input type="password" class="WAATKTextField" name="password" id="password" 
+              value="<?php echo(str_replace('"', '&quot;', $row_WAATKregistrants['password'])); ?>" 
+              size="13" />
+              <span class="textfieldRequiredMsg"><br />
+							Your password may not be blank. Please enter a password.</span></span></td>
+          </tr>
+          <tr>
+            <td style='font-size:110%; text-align:right'>Verify password</td>
+            <td><span id="sprytextfield3">
+              <input type="password" class="WAATKTextField" name="password2" id="password2" 
+              value="<?php echo(str_replace('"', '&quot;', $row_WAATKregistrants['password'])); ?>" 
+              size="13" />
+              <span class="textfieldRequiredMsg"><br />
+							Your password may not be blank. Please enter a password.</span></span></td>
+          </tr>
+          <tr>
+            <td style='font-size:110%; text-align:right'>Email</td>
+            <td><span id="sprytextfield11">
+            <input type="text" class="WAATKTextField" name="email" id="email" value="<?php echo(str_replace('"', '&quot;', $row_WAATKregistrants['email'])); ?>" size="34" />
+            <span class="textfieldRequiredMsg">A value is required.</span></span></td>
+          </tr>
+          <tr>
+            <td style='font-size:110%; text-align:right'>State</td>
+            <td><span id="spryselect1">
+              <select name="state" id="state" style='font-size:90%'>
+                <option value="" <?php if (!(strcmp("", $row_WAATKregistrants['state']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+                <option value="n-a" <?php if (!(strcmp("n-a", $row_WAATKregistrants['state']))) {echo "selected=\"selected\"";} ?>> n/a </option>
+                
+                <?php
+do {  
+?>
+                <option value="<?php echo $row_rsState['abbreviation']?>"<?php if (!(strcmp($row_rsState['abbreviation'], $row_WAATKregistrants['state']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsState['state']?></option>
+                <?php
+} while ($row_rsState = mysql_fetch_assoc($rsState));
+  $rows = mysql_num_rows($rsState);
+  if($rows > 0) {
+      mysql_data_seek($rsState, 0);
+	  $row_rsState = mysql_fetch_assoc($rsState);
+  }
+?>
+              </select>
+</span></td>
+          </tr>
+          <tr>
+            <td style='font-size:110%; text-align:right'>Province</td>
+            <td><span id="sprytextfield8">
+              <input type="text" class="WAATKTextField" name="province" id="province" value="<?php echo(str_replace('"', '&quot;', $row_WAATKregistrants['province'])); ?>" size="34" />
+</span></td>
+          </tr>
+          <tr>
+            <td style='font-size:110%; text-align:right'>Country</td>
+            <td><span id="spryselect2">
+              <select name="country" id="country" style='font-size:90%'>
+                <option value="" <?php if (!(strcmp("", $row_WAATKregistrants['country']))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+                <option value="United States of America" <?php if (!(strcmp("United States of America", $row_WAATKregistrants['country']))) {echo "selected=\"selected\"";} ?>>United States of America</option>
+                <?php
+								do {  
+								?>
+								<option value="<?php echo $row_rsCountry['name']?>"<?php if (!(strcmp($row_rsCountry['name'], $row_WAATKregistrants['country']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsCountry['name']?></option>
+                <?php
+								} while ($row_rsCountry = mysql_fetch_assoc($rsCountry));
+									$rows = mysql_num_rows($rsCountry);
+									if($rows > 0) {
+											mysql_data_seek($rsCountry, 0);
+										$row_rsCountry = mysql_fetch_assoc($rsCountry);
+									}
+								?>
+              </select>
+              <span class="selectRequiredMsg">Please select an item.</span></span></td>
+          </tr>
+          <tr>
+            <td style='font-size:110%; text-align:right'>Zip or postal code</td>
+            <td><span id="sprytextfield9">
+              <input type="text" class="WAATKTextField" name="zip" id="zip" value="<?php echo(str_replace('"', '&quot;', $row_WAATKregistrants['zip'])); ?>" size="13" />
+              <span class="textfieldRequiredMsg">A value is required.</span></span></td>
+          </tr>
+          
+          <?php if ($row_WAATKregistrants['privacy'] == 0 OR $row_WAATKregistrants['legal'] == 0) { ?>
+          <tr>
+            <td colspan="2" class="WAATK"><div id="CollapsiblePanel13" class="CollapsiblePanel">
+              <div class="CollapsiblePanelTab" style='font-size:110%'>
+                <div>CLICK HERE TO VIEW PRIVACY STATEMENT</div>
+              </div>
+              <div class="CollapsiblePanelContent">
+                <div align="left" style='font-size:90%; color:#999'><?php echo $row_rsUsePrivacy['privacy']; ?></div>
+              </div>
+            </div></td>
+          </tr>
+          <tr>
+            <td class="WAATK">I have read and agree to the conditions of the DTS privacy policy.</td>
+            <td class="WAATK"><span id="sprycheckbox1">
+              <input type="checkbox" name="privacy" id="privacy" value = "1" /><br />
+            <span class="checkboxRequiredMsg">You must agree to our privacy policy to continue.</span></span>              <label for="privacy"></label></td>
+          </tr>
+          <tr>
+            <td colspan="2" class="WAATK"><div id="CollapsiblePanel12" class="CollapsiblePanel">
+              <div class="CollapsiblePanelTab" style='font-size:110%'>
+                <div>CLICK HERE TO VIEW LEGAL STATEMENT</div>
+              </div>
+              <div class="CollapsiblePanelContent">
+                <div align="left" style='font-size:90%; color:#999'><?php echo $row_rsUsePrivacy['usepolicy']; ?></div>
+              </div>
+            </div>            </td>
+          </tr>
+          <tr>
+            <td class="WAATK">I have read and agree to the DTS legal policy.</td>
+            <td class="WAATK"><span id="sprycheckbox2">
+              <input type="checkbox" name="legal" id="legal" value = "1" /><br />
+          	<span class="checkboxRequiredMsg">You must agree to our legal policy to continue.</span></span>
+          </tr>
+          <?php } else { ?>
+          	<tr><td>
+            	<input type='hidden' name='privacy' value='1' />
+            	<input type='hidden' name='legal' value='1' />
+            </td></tr>
+          <?php } ?>
+          
+        </table>
+        <div class="WAATKButtonRow">
+          <input type="hidden" name="userkey" id="userkey" value="<?php echo $_SESSION['log_userkey']; ?>" />
+          <input type="Submit" name="Update" id="Update" value="UPDATE" style='font-size:110%;' />
+          <input type="hidden" name="MM_update" value="WAATKUpdateForm" />
+        </div>
+      </form>
+    <?php } // Show if recordset not empty ?>
+    <?php if ($totalRows_WAATKregistrants == 0) { // Show if recordset empty ?>
+      <div><p>No record found.</p>
+      </div>
+    <?php } // Show if recordset empty ?>
+</div>
+      <p>&nbsp; </p>
+      <p>&nbsp; </p>
+    <script type="text/javascript">
+			<?php if ($row_WAATKregistrants['privacy'] == 0 OR $row_WAATKregistrants['legal'] == 0) { ?>
+			var CollapsiblePanel12 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel12");
+			var CollapsiblePanel13 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel13");
+			var sprycheckbox1 = new Spry.Widget.ValidationCheckbox("sprycheckbox1");
+			var sprycheckbox2 = new Spry.Widget.ValidationCheckbox("sprycheckbox2");
+			<?php } ?>
+			
+			var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "none", {validateOn:["blur", "change"]});
+			var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {validateOn:["blur", "change"]});
+			var sprytextfield3 = new Spry.Widget.ValidationTextField("sprytextfield3", "none", {validateOn:["blur", "change"]});
+			var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"], isRequired:false});
+			var sprytextfield8 = new Spry.Widget.ValidationTextField("sprytextfield8", "none", {validateOn:["blur", "change"], isRequired:false});
+			var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2");
+			var sprytextfield9 = new Spry.Widget.ValidationTextField("sprytextfield9", "none", {validateOn:["blur", "change"]});
+			var sprytextfield11 = new Spry.Widget.ValidationTextField("sprytextfield11");
+    </script>
+  <!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("../_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("../_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("../_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+  <!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" --><!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("../_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($WAATKregistrants);
+?>

@@ -1,0 +1,72 @@
+<?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsJournal = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsJournal = (get_magic_quotes_gpc()) ? $_SESSION['log_userkey'] : addslashes($_SESSION['log_userkey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsJournal = sprintf("SELECT Registrants.userkey, Registrants.firstname, Registrants.lastname, journal_lectical.journalkey, journal_lectical.teacherkey, journal_lectical.`date`, journal_lectical.comment, journal_lectical.journalentrytopic, journal_lectical.journaldescribe, journal_lectical.journalconsider, journal_lectical.journalperspectives, journal_lectical.journalresources, journal_lectical.journalreflections, journal_lectical.journalreview FROM Registrants, journal_lectical WHERE journal_lectical.teacherkey = %s AND registrants.userkey = journal_lectical.userkey ORDER BY journal_lectical.`date` DESC", GetSQLValueString($colname_rsJournal, "int"));
+$rsJournal = mysql_query($query_rsJournal, $Assessment) or die(mysql_error());
+$row_rsJournal = mysql_fetch_assoc($rsJournal);
+$totalRows_rsJournal = mysql_num_rows($rsJournal);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Untitled Document</title>
+</head>
+
+<?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=journal_lectical1.txt\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+journalkey**date**firstname**lastname**topic**describe**consider**perspectives**resources**reflections**review**comment****
+<?php do { ?>
+<?php echo $row_rsJournal['journalkey']; ?>**<?php echo $row_rsJournal['date']; ?>**<?php echo $row_rsJournal['firstname']; ?>**<?php echo $row_rsJournal['lastname']; ?>**<?php echo $row_rsJournal['journalentrytopic']; ?>**<?php echo $row_rsJournal['journaldescribe']; ?>**<?php echo $row_rsJournal['journalconsider']; ?>**<?php echo $row_rsJournal['journalperspectives']; ?>**<?php echo $row_rsJournal['journalresources']; ?>**<?php echo $row_rsJournal['journalreflections']; ?>**<?php echo $row_rsJournal['journalreview']; ?>**<?php echo $row_rsJournal['comment']; ?>****
+<?php } while ($row_rsJournal = mysql_fetch_assoc($rsJournal)); ?>
+
+<?php
+mysql_free_result($rsJournal);
+?>

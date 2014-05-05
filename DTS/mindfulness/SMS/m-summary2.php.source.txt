@@ -1,0 +1,77 @@
+<?php
+ob_start();
+?>
+<?php require_once('../../Connections/Assessment.php'); ?>
+<?php require_once( "../../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsMindfulness = "SELECT Mindfulness.mindfulkey, Mindfulness.sexkey, Mindfulness.age, Mindfulness.edukey, Mindfulness.ethnicitykey, Mindfulness.timekey, Mindfulness.sms08sum, Mindfulness.`timestamp`, Sex.sex, Sex.sexkey, EduAttainment.EduLevel, EduAttainment.edukey, Ethnicity.Ethnicity, Ethnicity.ethnicitykey, `Time`.timekey, `Time`.`time`, Registrants.user_name, Registrants.userkey, Mindfulness.userkey, Registrants.firstname, Registrants.lastname FROM Mindfulness , Sex, EduAttainment, Ethnicity, `Time`, Registrants WHERE Sex.sexkey = Mindfulness.sexkey AND Mindfulness.edukey = EduAttainment.edukey AND Mindfulness.ethnicitykey = Ethnicity.ethnicitykey AND Mindfulness.timekey = `Time`.timekey AND Mindfulness.userkey = Registrants.userkey";
+$rsMindfulness = mysql_query($query_rsMindfulness, $Assessment) or die(mysql_error());
+$row_rsMindfulness = mysql_fetch_assoc($rsMindfulness);
+$totalRows_rsMindfulness = mysql_num_rows($rsMindfulness);
+$query_rsMindfulness = "SELECT Mindfulness.mindfulkey, Mindfulness.sexkey, Mindfulness.age, Mindfulness.edukey, Mindfulness.ethnicitykey, Mindfulness.timekey, Mindfulness.sms08sum, Mindfulness.`timestamp`, Sex.sex, Sex.sexkey, EduAttainment.EduLevel, EduAttainment.edukey, Ethnicity.Ethnicity, Ethnicity.ethnicitykey, `Time`.timekey, `Time`.`time`, Registrants.user_name, Registrants.userkey, Mindfulness.userkey, Registrants.firstname, Registrants.lastname FROM Mindfulness , Sex, EduAttainment, Ethnicity, `Time`, Registrants WHERE Sex.sexkey = Mindfulness.sexkey AND Mindfulness.edukey = EduAttainment.edukey AND Mindfulness.ethnicitykey = Ethnicity.ethnicitykey AND Mindfulness.timekey = `Time`.timekey AND Mindfulness.userkey = Registrants.userkey";
+$rsMindfulness = mysql_query($query_rsMindfulness, $Assessment) or die(mysql_error());
+$row_rsMindfulness = mysql_fetch_assoc($rsMindfulness);
+$totalRows_rsMindfulness = mysql_num_rows($rsMindfulness);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Untitled Document</title>
+</head>
+
+<body>
+<?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=sms.csv\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+<?php do { ?>
+<?php echo $row_rsMindfulness['mindfulkey']; ?>,<?php echo $row_rsMindfulness['user_name']; ?>,<?php echo $row_rsMindfulness['firstname']; ?>,<?php echo $row_rsMindfulness['lastname']; ?>,<?php echo $row_rsMindfulness['time']; ?>,<?php echo $row_rsMindfulness['sms08sum']; ?>, <?php echo $row_rsMindfulness['age']; ?>,<?php echo $row_rsMindfulness['sex']; ?>,<?php echo $row_rsMindfulness['EduLevel']; ?>,<?php echo $row_rsMindfulness['Ethnicity']; ?>,
+<?php } while ($row_rsMindfulness = mysql_fetch_assoc($rsMindfulness)); ?>
+  <?
+exit();
+?>
+</body>
+</html>
+<?php
+mysql_free_result($rsMindfulness);
+?>

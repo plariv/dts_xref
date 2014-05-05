@@ -1,0 +1,537 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$editFormAction = $_SERVER['php_self'];
+if (isset($_SERVER['query_string'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['query_string']);
+}
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+  $updateSQL = sprintf("UPDATE ldmascores SET essay1las_3=%s, essay2las_3=%s, essay3las_3=%s, essay4las_3=%s, essay5las_3=%s WHERE ldmakey=%s",
+                       GetSQLValueString($_POST['essay1las_3'], "double"),
+                       GetSQLValueString($_POST['essay2las_3'], "double"),
+                       GetSQLValueString($_POST['essay3las_3'], "double"),
+                       GetSQLValueString($_POST['essay4las_3'], "double"),
+                       GetSQLValueString($_POST['essay5las_3'], "double"),
+                       GetSQLValueString($_POST['ldmakey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+
+  $updateGoTo = "ldmascorer3_c.php";
+  if (isset($_SERVER['query_string'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['query_string'];
+  }
+  header(sprintf("location: %s", $updateGoTo));
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rslasnumber = "SELECT lasnumber, lasname FROM lasnumber WHERE lasnumber > 9.9 ORDER BY lasnumber asc";
+$rslasnumber = mysql_query($query_rslasnumber, $Assessment) or die(mysql_error());
+$row_rslasnumber = mysql_fetch_assoc($rslasnumber);
+$totalRows_rslasnumber = mysql_num_rows($rslasnumber);
+
+$colname_rsLDMA = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsLDMA = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMA = sprintf("SELECT ldmakey, perspectives1, perspectives2, response1, response2, process, comments FROM ldma WHERE ldmakey = %s", GetSQLValueString($colname_rsLDMA, "int"));
+$rsLDMA = mysql_query($query_rsLDMA, $Assessment) or die(mysql_error());
+$row_rsLDMA = mysql_fetch_assoc($rsLDMA);
+$totalRows_rsLDMA = mysql_num_rows($rsLDMA);
+
+$colname_rsEnglish = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsEnglish = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsEnglish = sprintf("SELECT englishquality.englishquality,  ldma.englishquality, ldma.ldmakey, englishquality.englishqualitykey FROM englishquality, ldma WHERE ldma.englishquality = englishquality.englishqualitykey AND ldma.ldmakey = %s", GetSQLValueString($colname_rsEnglish, "int"));
+$rsEnglish = mysql_query($query_rsEnglish, $Assessment) or die(mysql_error());
+$row_rsEnglish = mysql_fetch_assoc($rsEnglish);
+$totalRows_rsEnglish = mysql_num_rows($rsEnglish);
+
+$colname_rsDilemma = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsDilemma = (get_magic_quotes_gpc()) ? $_GET['ldmakey'] : addslashes($_GET['ldmakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsDilemma = sprintf("SELECT ldma.ldmakey, ldma.ldmadilemmakey, ldmadilemma.ldmadilemmakey, ldmadilemma.ldmadilemma FROM ldma, ldmadilemma WHERE ldma.ldmakey = %s AND ldmadilemma.ldmadilemmakey = ldma.ldmadilemmakey", GetSQLValueString($colname_rsDilemma, "int"));
+$rsDilemma = mysql_query($query_rsDilemma, $Assessment) or die(mysql_error());
+$row_rsDilemma = mysql_fetch_assoc($rsDilemma);
+$totalRows_rsDilemma = mysql_num_rows($rsDilemma);
+
+$colname_rsLDMAscores = "-1";
+if (isset($_GET['ldmakey'])) {
+  $colname_rsLDMAscores = $_GET['ldmakey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLDMAscores = sprintf("SELECT ldmakey, essay1las_3, essay2las_3, essay3las_3, essay4las_3, essay5las_3 FROM ldmascores WHERE ldmakey = %s", GetSQLValueString($colname_rsLDMAscores, "int"));
+$rsLDMAscores = mysql_query($query_rsLDMAscores, $Assessment) or die(mysql_error());
+$row_rsLDMAscores = mysql_fetch_assoc($rsLDMAscores);
+$totalRows_rsLDMAscores = mysql_num_rows($rsLDMAscores);
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateldmascore2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LDMA scoring</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #DD7567;
+	background-image: url(/images/skin/LDMAbackground.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #FFF9F3;
+	background-image: url(/images/skin/LDMAcontainer2.jpg);
+} 
+.twoColFixRtHdr #header {
+	background-image: url(../images/skin/LDMAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #E38F59;
+	background-image: url(/images/skin/LDMAmenu2.jpg);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #E38F59;
+	background-image: url(/images/skin/LDMAmenu2.jpg);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 3;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 0px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+	background-image: url(/images/skin/LDMAmenu4.jpg);
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/LDMAfooter2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container .indent46 a:link {
+	color: #929292;
+}
+.twoColFixRtHdr #container .indent46 a:visited {
+	color: #929292;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:hover {
+	color: #474A47;
+}
+.twoColFixRtHdr #container #menu1 #MenuBar2 li a {
+	color: #FFE1D0;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFD8C7;
+}
+.twoColFixRtHdr #container #menu1 #MenuBar2 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="/" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="/" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <a href="/scoring/chooseassessment.php">choose assessment</a> | <a href="/scoring/chooseldma.php">choose ldma</a> | <a href="/scoring/bulkcustomerselect.php">sortable</a> | <a href="/scoring_ldma/ldmascoring_update1.php">rescore contested</a> | <a href="/scoring_ldma/ldmascorer2_a.php">second score</a> | <a href="/scoring_ldma/ldma_perspectives1.php">perspective</a> | <a href="/scoring_ldma/ldma_strengths1.php">strength</a> | <a href="/scoring_ldma/ldma_caveats1.php">weakness</a> | <a href="/scoring_ldma/ldma_recommend1.php">recommendation</a></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+<script src="../includes/nxt/scripts/form.js" type="text/javascript"></script>
+      <script src="../includes/nxt/scripts/form.js.php" type="text/javascript"></script>
+<script type="text/javascript">
+$NXT_FORM_SETTINGS = {
+  duplicate_buttons: true,
+  show_as_grid: true,
+  merge_down_value: true
+}
+      </script>
+      <td valign="top"><h1>SECOND SCORER SCORE ASSESSMENT&nbsp;<?php echo $_GET['ldmakey']; ?></h1>
+          <p><span class="ldma"><strong>Important:</strong></span> All essays must be scored to calculate an accurate score. Select <em class="ldma">unscorable</em> only when the entire response cannot be scored.</p>
+          <p><strong><br />
+          Self-reported English quality:</strong> <?php echo $row_rsEnglish['englishquality']; ?></p>
+<p class="pspaced"><strong>Respondent comment:</strong> <?php echo $row_rsLDMA['comments']; ?></p>
+          <p class="pspaced"><strong>Dilemma:</strong> <?php echo $row_rsDilemma['ldmadilemma']; ?></p>
+        <form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+          <table>
+            <tr valign="baseline">
+              <td>Essay 1</td>
+              <td><select name="essay1las_3">
+                <option value="" <?php if (!(strcmp("", htmlentities($row_rsLDMAscores['essay1las_3'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+                <?php
+do {  
+?>
+                <option value="<?php echo $row_rslasnumber['lasnumber']?>"<?php if (!(strcmp($row_rslasnumber['lasnumber'], htmlentities($row_rsLDMAscores['essay1las_3'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rslasnumber['lasnumber']?> = <?php echo $row_rslasnumber['lasname']?></option>
+                <?php
+} while ($row_rslasnumber = mysql_fetch_assoc($rslasnumber));
+  $rows = mysql_num_rows($rslasnumber);
+  if($rows > 0) {
+      mysql_data_seek($rslasnumber, 0);
+	  $row_rslasnumber = mysql_fetch_assoc($rslasnumber);
+  }
+?>
+              </select></td>
+              <td><textarea name="essay1" class="textarea240_500" id="essay1"><?php echo $row_rsLDMA['perspectives1']; ?></textarea></td>
+            </tr>
+            <tr> </tr>
+            <tr valign="baseline">
+              <td>Essay 2</td>
+              <td><select name="essay2las_3">
+                <option value="" <?php if (!(strcmp("", htmlentities($row_rsLDMAscores['essay2las_3'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+                <?php
+do {  
+?>
+                <option value="<?php echo $row_rslasnumber['lasnumber']?>"<?php if (!(strcmp($row_rslasnumber['lasnumber'], htmlentities($row_rsLDMAscores['essay2las_3'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rslasnumber['lasnumber']?> = <?php echo $row_rslasnumber['lasname']?></option>
+                <?php
+} while ($row_rslasnumber = mysql_fetch_assoc($rslasnumber));
+  $rows = mysql_num_rows($rslasnumber);
+  if($rows > 0) {
+      mysql_data_seek($rslasnumber, 0);
+	  $row_rslasnumber = mysql_fetch_assoc($rslasnumber);
+  }
+?>
+              </select></td>
+              <td><textarea name="essay2" class="textarea240_500" id="essay2"><?php echo $row_rsLDMA['perspectives2']; ?></textarea></td>
+            </tr>
+            <tr> </tr>
+            <tr valign="baseline">
+              <td>Essay 3</td>
+              <td><select name="essay3las_3">
+                <option value="" <?php if (!(strcmp("", htmlentities($row_rsLDMAscores['essay3las_3'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+                <?php
+do {  
+?>
+                <option value="<?php echo $row_rslasnumber['lasnumber']?>"<?php if (!(strcmp($row_rslasnumber['lasnumber'], htmlentities($row_rsLDMAscores['essay3las_3'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rslasnumber['lasnumber']?> = <?php echo $row_rslasnumber['lasname']?></option>
+                <?php
+} while ($row_rslasnumber = mysql_fetch_assoc($rslasnumber));
+  $rows = mysql_num_rows($rslasnumber);
+  if($rows > 0) {
+      mysql_data_seek($rslasnumber, 0);
+	  $row_rslasnumber = mysql_fetch_assoc($rslasnumber);
+  }
+?>
+              </select></td>
+              <td><textarea name="essay3" class="textarea240_500" id="essay3"><?php echo $row_rsLDMA['response1']; ?></textarea></td>
+            </tr>
+            <tr> </tr>
+            <tr valign="baseline">
+              <td>Essay 4</td>
+              <td><select name="essay4las_3">
+                <option value="" <?php if (!(strcmp("", htmlentities($row_rsLDMAscores['essay4las_3'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+                <?php
+do {  
+?>
+                <option value="<?php echo $row_rslasnumber['lasnumber']?>"<?php if (!(strcmp($row_rslasnumber['lasnumber'], htmlentities($row_rsLDMAscores['essay4las_3'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rslasnumber['lasnumber']?> = <?php echo $row_rslasnumber['lasname']?></option>
+                <?php
+} while ($row_rslasnumber = mysql_fetch_assoc($rslasnumber));
+  $rows = mysql_num_rows($rslasnumber);
+  if($rows > 0) {
+      mysql_data_seek($rslasnumber, 0);
+	  $row_rslasnumber = mysql_fetch_assoc($rslasnumber);
+  }
+?>
+              </select></td>
+              <td><textarea name="essay5" class="textarea240_500" id="essay5"><?php echo $row_rsLDMA['response2']; ?></textarea></td>
+            </tr>
+            <tr> </tr>
+            <tr valign="baseline">
+              <td>Essay 5</td>
+              <td><select name="essay5las_3">
+                <option value="" <?php if (!(strcmp("", htmlentities($row_rsLDMAscores['essay5las_3'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>>-select one-</option>
+                <?php
+do {  
+?>
+                <option value="<?php echo $row_rslasnumber['lasnumber']?>"<?php if (!(strcmp($row_rslasnumber['lasnumber'], htmlentities($row_rsLDMAscores['essay5las_3'], ENT_COMPAT, 'UTF-8')))) {echo "selected=\"selected\"";} ?>><?php echo $row_rslasnumber['lasnumber']?> = <?php echo $row_rslasnumber['lasname']?></option>
+                <?php
+} while ($row_rslasnumber = mysql_fetch_assoc($rslasnumber));
+  $rows = mysql_num_rows($rslasnumber);
+  if($rows > 0) {
+      mysql_data_seek($rslasnumber, 0);
+	  $row_rslasnumber = mysql_fetch_assoc($rslasnumber);
+  }
+?>
+              </select></td>
+              <td><textarea name="essay4" class="textarea240_500" id="essay4"><?php echo $row_rsLDMA['process']; ?></textarea></td>
+            </tr>
+            <tr> </tr>
+            <tr valign="baseline">
+              <td>&nbsp;</td>
+              <td>&nbsp;</td>
+              <td><div align="right">
+                <input type="submit" value="SUMBIT" />
+              </div></td>
+            </tr>
+          </table>
+          <input type="hidden" name="ldmakey" value="<?php echo $_GET['ldmakey']; ?>" />
+          <input type="hidden" name="MM_update" value="form1" />
+          <input type="hidden" name="ldmakey" value="<?php echo $row_rsLDMAscores['ldmakey']; ?>" />
+        </form>
+        <p class="pspaced">&nbsp;</p>
+          <br class="clearfixplain" />
+       
+<p>&nbsp;</p></td>
+      <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rslasnumber);
+
+mysql_free_result($rsLDMA);
+
+mysql_free_result($rsEnglish);
+
+mysql_free_result($rsDilemma);
+
+mysql_free_result($rsLDMAscores);
+?>

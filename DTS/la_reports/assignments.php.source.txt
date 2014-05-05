@@ -1,0 +1,914 @@
+<?php 
+include_once '../includes/dts_functions.php';	
+
+
+if (!WA_Auth_RulePasses("Logged in as teacher")) {
+	WA_Auth_RestrictAccess("../security/logIn.php");
+} 
+$userkey = $_SESSION['log_userkey'];
+
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id']) OR $_SESSION['instrument_id'] == "") {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_base = str_replace("_JOURNAL", "", $instrument_id);
+
+$filter_instrument_id = " AND (d.instrument_id = ".
+		SQLstr($instrument_id, "text").
+		" OR d.instrument_id = ".
+		SQLstr($instrument_id."_JOURNAL", "text").") ";
+
+$mode = "create";
+// $mode changes to EDIT if a specific assignment is being updated.
+
+$currentPage = $_SERVER['PHP_SELF'];
+
+
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+if ((isset($_POST["MM_insert"])) && ($_POST["MM_insert"] == "form1")) {
+	
+	// If there is an assignment key posted, then write an UPDATE command.
+	// The query is written so that it will refuse to update unless the logged-in bulkcustomer is the owner of that assignment.
+	
+	// Calculate the end date of the assignment, based on the release date.
+	$date_release_timestamp = strtotime($_POST['date_release']);
+	$date_end = date('Y-m-d', strtotime('-14 days', $date_release_timestamp));
+	if (isset($_POST['date_end'])) { $date_end = $_POST['date_end']; } 
+	
+	$insertSQL = "";
+	$updateSQL = "";
+	
+	// check that a group was set. If not, refuse to add.
+	if ($_POST['assign_group'] == "" AND $_POST['set_group'] == "") { 
+		header("Location: ".$currentPage."?message=nogroup");
+		exit();
+	}
+	
+	// Detect if the dilemma conditions table should be used for this assignment; mark accordingly
+	if ($_POST['assign_dilemmakey'] == "use_dilemma_conditions") { 
+		$_POST['use_dilemma_conditions'] = 1;
+		$_POST['assign_dilemmakey'] = NULL;
+	} else {
+		$_POST['use_dilemma_conditions'] = 0;
+	}
+	
+	// EDIT this assignment (if a key was specified)
+	if (isset($_POST['assignmentkey'])) {
+		
+		$assignmentkey = $_POST['assignmentkey'];
+		$updateSQL = sprintf("UPDATE la_assignments SET instrument_id = %s, test_time = %s,
+				assign_dilemmakey = %s, use_dilemma_conditions = %s, assign_message = %s, assign_group = %s, 
+				hidden_coders = %s, date_start = %s, date_end = %s, date_release = %s 
+			WHERE assignmentkey = %s AND bulkcustomerkey = %s ",
+			  SQLstr($_POST['instrument_id'], 'text'),
+			  SQLstr($_POST['test_time'], 'int'),
+			  SQLstr($_POST['assign_dilemmakey'], 'int'),
+			  SQLstr($_POST['use_dilemma_conditions'], 'int'),
+			  SQLstr($_POST['assign_message'], 'text'),
+			  SQLstr($_POST['assign_group'] <> "" ? $_POST['assign_group'] : $_POST['set_group'], 'text'),
+			 SQLstr(isset($_POST['hidden_coders']) ? $_POST['hidden_coders'] : 0, 'int'),
+			  SQLstr($_POST['date_start'], 'date'),
+			  SQLstr($date_end, 'date'), 
+			  SQLstr($_POST['date_release'], 'date'),
+			  SQLstr($assignmentkey, 'int'), 
+			  SQLstr($_POST['bulkcustomerkey'], 'int'));
+		// echo str_replace("\n", "<br>", $updateSQL); die();
+  	$Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+			 
+	} else { // Or, create a NEW assignment (if no assignmentkey was specified)
+		
+		$insertSQL = sprintf("INSERT INTO la_assignments 
+			(assignmentkey, instrument_id, test_time, bulkcustomerkey, 
+			 assign_dilemmakey, use_dilemma_conditions, assign_message, 
+			 assign_group, hidden_coders, date_start, date_end, date_release) 
+			VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+			 SQLstr($_POST['assignmentkey'], 'int'),
+			 SQLstr($_POST['instrument_id'], 'text'),
+			 SQLstr($_POST['test_time'], 'int'),
+			 SQLstr($_POST['bulkcustomerkey'], 'int'),
+			 SQLstr($_POST['assign_dilemmakey'], 'int'),
+			 SQLstr($_POST['use_dilemma_conditions'], 'int'),
+			 SQLstr($_POST['assign_message'], 'text'),
+			 SQLstr($_POST['assign_group'] <> "" ? $_POST['assign_group'] : $_POST['set_group'], 'text'),
+			 SQLstr(isset($_POST['hidden_coders']) ? $_POST['hidden_coders'] : 0, 'int'),
+			 SQLstr($_POST['date_start'], 'date'),
+			 SQLstr($date_end, 'date'), 
+			 SQLstr($_POST['date_release'], 'date'));
+			 
+  	$Result1 = mysql_query($insertSQL, $Assessment) or die(mysql_error());
+		$assignmentkey = mysql_insert_id(); 
+	}
+	
+	// If a new group was created, register it in the groups table.
+	
+	if (isset($_POST['set_group'])) {
+		// find out if this group exists
+		$rsGroup = mysql_query("SELECT * FROM groups WHERE `group` = ".SQLstr($_POST['set_group'], "text"));
+		$totalRows_rsGroup = mysql_num_rows($rsGroup);
+		if ($totalRows_rsGroup == 0) { 
+			$result = mysql_query("INSERT INTO groups (clientkey, `group`) 
+				VALUES (".SQLstr($userkey, "int").", ".SQLstr($_POST['set_group'], "text").")");
+		}
+	}
+	
+	// Save a record of this action in activity_bc table.
+	$insertActivityBc = sprintf( "INSERT INTO activity_bc ( userkey, action, query )
+	VALUES ( %s, 'created assignment', %s ) ",
+			SQLstr($userkey, "int"),
+			SQLstr($insertSQL.$updateSQL, "text"));
+	$Result3 = mysql_query($insertActivityBc, $Assessment) or die(mysql_error());
+	
+	
+	$updateGoTo = "assignments.php?message=success";
+	// if (isset($assignmentkey)) { $updateGoTo .= "&assignmentkey=".$assignmentkey; } 
+	header(sprintf("Location: %s", $updateGoTo));
+	exit();
+}
+
+
+
+
+
+
+
+// Prepare the dilemma filter
+
+$dilemma_filter = "";
+if (isset($_POST['dilemma_filter_sector']) AND $_POST['dilemma_filter_sector'] <> "") {
+	$dilemma_filter .= " AND dilemma_sector = ".
+		SQLstr($_POST['dilemma_filter_sector'], "text");
+}
+if (isset($_POST['dilemma_filter_name']) AND $_POST['dilemma_filter_name'] <> "") {
+	$dilemma_filter .= " AND dilemma_name = ".
+		SQLstr($_POST['dilemma_filter_name'], "text");
+}
+if (isset($_POST['dilemma_filter_manlevel']) AND $_POST['dilemma_filter_manlevel'] <> "") {
+	$dilemma_filter .= " AND man_level_low <= ".
+		SQLstr($_POST['dilemma_filter_manlevel'], "int").
+		" AND man_level_high >= ".
+		SQLstr($_POST['dilemma_filter_manlevel'], "int");
+}
+
+
+
+
+
+// Fetch information on the logged-in bulkcustomer
+
+$query_rsBulkCustomerInfo = sprintf("SELECT bulkcustomerinfo.bulkcustomerkey, bulkcustomerinfo.username4students, registrants.firstname, registrants.lastname, registrants.user_level, registrants.email FROM bulkcustomerinfo, registrants WHERE bulkcustomerinfo.bulkcustomerkey = %s AND bulkcustomerinfo.bulkcustomerkey = registrants.userkey",
+		SQLstr($userkey, "int"));
+$rsBulkCustomerInfo = mysql_query($query_rsBulkCustomerInfo, $Assessment) or die(mysql_error());
+$row_rsBulkCustomerInfo = mysql_fetch_assoc($rsBulkCustomerInfo);
+$totalRows_rsBulkCustomerInfo = mysql_num_rows($rsBulkCustomerInfo);
+
+
+// All dilemmas
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLaDilemmas = sprintf("SELECT * FROM la_dilemmas WHERE instrument_id = %s ".$dilemma_filter, 
+		SQLstr($instrument_id_base, "text"));
+// echo $query_rsLaDilemmas;
+$rsLaDilemmas = mysql_query($query_rsLaDilemmas, $Assessment) or die(mysql_error());
+$row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas);
+$totalRows_rsLaDilemmas = mysql_num_rows($rsLaDilemmas);
+
+
+// Filters to search the dilemmas
+
+$rsLaDilFilterSector = mysql_query("SELECT * FROM la_dilemmas WHERE instrument_id = '{$instrument_id}' GROUP BY dilemma_sector", $Assessment) or die(mysql_error());
+$row_rsLaDilFilterSector = mysql_fetch_assoc($rsLaDilFilterSector);
+
+$rsLaDilFilterName = mysql_query("SELECT * FROM la_dilemmas WHERE instrument_id = '{$instrument_id}' GROUP BY dilemma_name", $Assessment) or die(mysql_error());
+$row_rsLaDilFilterName = mysql_fetch_assoc($rsLaDilFilterName);
+
+$rsLaDilFilterManMin = mysql_query("SELECT * FROM la_dilemmas WHERE instrument_id = '{$instrument_id}' GROUP BY man_level_low", $Assessment) or die(mysql_error());
+$row_rsLaDilFilterManMin = mysql_fetch_assoc($rsLaDilFilterManMin);
+
+$rsLaDilFilterManMax = mysql_query("SELECT * FROM la_dilemmas WHERE instrument_id = '{$instrument_id}' GROUP BY man_level_high", $Assessment) or die(mysql_error());
+$row_rsLaDilFilterManMax = mysql_fetch_assoc($rsLaDilFilterManMax);
+
+$query_rsDemogsManLevelGeneral = "SELECT * FROM demogs_man_level_general";
+$rsDemogsManLevelGeneral = mysql_query($query_rsDemogsManLevelGeneral, $Assessment) or die(mysql_error());
+$row_rsDemogsManLevelGeneral = mysql_fetch_assoc($rsDemogsManLevelGeneral);
+$totalRows_rsDemogsManLevelGeneral = mysql_num_rows($rsDemogsManLevelGeneral);
+
+
+// Fetch all groups associated with this bulk customer
+
+$query_rsFilterGroup = sprintf("SELECT g.groupkey, g.group, COUNT(r.userkey) AS numpeople 
+	FROM groups g
+		LEFT JOIN registrants r ON r.group = g.group
+	WHERE g.clientkey = %s AND (NOW() < g.date_end OR g.date_end IS NULL)
+	GROUP BY g.groupkey ", 
+		SQLstr($userkey, "int"));
+$rsFilterGroup = mysql_query($query_rsFilterGroup) or die("rsFilterGroup: ".mysql_error());
+$row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup);
+$totalRows_rsFilterGroup = mysql_num_rows($rsFilterGroup);
+
+
+
+
+// Any previously created assignments?
+// **** I'll restrict this to just show assignments that aren't too old.
+
+$query_rsAssignments = sprintf("SELECT a.*, d.dilemma_name
+	FROM la_assignments a 
+		LEFT JOIN la_dilemmas d ON a.assign_dilemmakey = d.dilemmakey 
+	WHERE a.bulkcustomerkey = %s AND a.hidden_client <> 1
+		AND a.date_end > (NOW() - INTERVAL 2 MONTH)
+	ORDER BY a.date_start, a.instrument_id, a.assign_group ASC", 
+		SQLstr($userkey, "int"),
+		SQLstr(date('Y-m-d'), "date"));
+$rsAssignments = mysql_query($query_rsAssignments) or die("rsAssignments: ".mysql_error());
+
+
+
+// If assignmentkey is set, then query for that assignmentkey rather than just for all active.
+$assignmentkey = null;
+if (isset($_GET['assignmentkey']) AND $_GET['assignmentkey'] <> 0) {
+	$mode = "edit";
+	$assignmentkey = $_GET['assignmentkey'];
+}
+
+// Look up details for this assignment (prevent errors)
+$query_rsThisAssignment = sprintf("SELECT a.*, COUNT(sa.studentassignmentkey) AS num_assigned
+FROM la_assignments a
+LEFT JOIN la_dilemmas d ON a.assign_dilemmakey = d.dilemmakey 
+LEFT JOIN students_assignments sa ON a.assignmentkey = sa.assignmentkey
+WHERE a.bulkcustomerkey = %s AND a.assignmentkey = %s", 
+	SQLstr($userkey, "int"),
+	SQLstr($assignmentkey, "int"));
+$rsThisAssignment = mysql_query($query_rsThisAssignment) or die("rsThisAssignment: ".mysql_error());
+$row_rsThisAssignment = mysql_fetch_assoc($rsThisAssignment);
+$totalRows_rsThisAssignment = mysql_num_rows($rsThisAssignment);
+
+if ($row_rsThisAssignment['instrument_id'] <> "") { 
+	// If you're editing an assignment, change the current instrument_id to reflect that.
+	if (!strpos(" ".$row_rsThisAssignment['instrument_id'], $_SESSION['instrument_id'])) {
+		$_SESSION['instrument_id'] = str_replace("_JOURNAL", "", $row_rsThisAssignment['instrument_id']);
+		$instrument_id = $_SESSION['instrument_id'];
+	}
+}
+
+
+
+
+
+
+
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Assign a dilemma for the <?php echo $_SESSION['instrument_id']; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+
+<script src="../includes/date.js"></script>
+<script src="../includes/jquery.js"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<link href="../includes/js_res/jquery.ui.smoothness.css" rel="stylesheet" type="text/css" />
+
+<script src="../SpryAssets/SpryTabbedPanels.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextarea.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationRadio.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextarea.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryTabbedPanelsVertical.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+	
+	<?php if ($instrument_id <> "SMA" AND $instrument_id <> "SMJ" AND $instrument_id <> "SMS") { ?>
+	$('#date_release').blur(function(){
+		var previous = '<?php echo $row_rsThisAssignment['date_release']; ?>';
+		var release = $('#date_release').val();
+		if (Date.parse(release) < Date.parse(previous)) {
+			$('#date_release').val(''+previous);
+		}
+	});
+	<?php } // ?>
+	
+	$('.date').datepicker({ 
+		dateFormat: 'yy-mm-dd', 
+		numberOfMonths: 1,
+		showOtherMonths: true,
+		selectOtherMonths: true
+	});
+	
+});
+
+
+</script>
+
+
+<style type="text/css">
+.twoColFixRtHdr #container #mainContent #CollapsiblePanel1 .CollapsiblePanelContent #TabbedPanels1 .TabbedPanelsTabGroup .TabbedPanelsTab {
+	padding-top: 0px;
+	padding-bottom: 0px;
+
+}
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible table {
+	margin-top: 0px;
+	margin-left: 10px;
+}
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible table tr td h3 {
+	margin-top: 0px;
+}
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible table tr td #CollapsiblePanel1 {
+	margin-right: 0px;
+	margin-left: 0px;
+}
+
+
+.twoColFixRtHdr #container #mainContent #TabbedPanels1 .TabbedPanelsContentGroup .TabbedPanelsContent.TabbedPanelsContentVisible table tr td .CollapsiblePanel {
+	margin-top: 30px;
+	margin-bottom: 20px;
+	margin-right: 0px;
+	margin-left: 0px;
+}
+.twoColFixRtHdr #container #mainContent #CollapsiblePanel1 .CollapsiblePanelContent #form2 .box #CollapsiblePanel4 {
+	margin-right: 0px;
+	margin-left: 0px;
+}
+.box p {
+	padding: 0px;
+	margin: 0px;
+}
+
+.faded { color: gray; }
+
+
+</style>
+<link href="../SpryAssets/SpryValidationRadio.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+  <?php include 'bc_links.php'; ?>
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1><?php if ($mode == "create") { ?>CREATE AN<?php } else { echo "EDIT YOUR"; } ?> ASSIGNMENT</h1>
+
+	<?php $message = "";
+	if (isset($_GET['message'])) { $message = $_GET['message']; }
+	if ($message == "success") { ?>
+  	<div class="box">
+    <p><strong>Your assignment was saved successfully</strong>.</p>
+    <p>You can now create another assignment below.</p>
+    </div>
+  	<?php 
+	}
+	if ($message == "nogroup") { ?>
+  	<div class="box"><span class="red"><strong>Your assignment could not be saved</strong> because you failed to enter a group. Please specify a group and try again.</span>
+    </div>
+  	<?php 
+	} ?>
+
+<div id="CollapsiblePanel2" class="CollapsiblePanel">
+  <div class="CollapsiblePanelTab">ABOUT MAKING ASSIGNMENTS </div>
+  <div class="CollapsiblePanelContent">
+    <p>If you are working with groups of clients or students, you can use this page to make assignments. You can also use it to assign a particular dilemma to a group of clients. After you have made an assignment, you will be able to send an email with details to everyone in the assignment group. (If you want to learn more about making assignments, <a href="../contactus.php">contact us</a>.) </p>
+    <p>When you create an assignment, you will be asked to specify the date on which you plan to release assessment results to test takers. There are a few guidelines to follow. </p>
+    <ol>
+      <li>Because we require 2 weeks (10 business days) to score and comment assessments, release dates must be no less than 2 weeks from assignment due dates. </li>
+      <li>We can handle only 50 assessments per customer per week. You will need to take the 50 assessment per week limitation into consideration when you schedule assignments and release dates. For example, you should not assign more than 100 assessments to any one release date period. </li>
+      <li>All assignments involving 10-14 test takers must be made a minimum of 3 weeks in advance of your intended release date. If more than 20 individuals are included in the same assignment, contact us. We may need to make special arrangements to accommodate them. </li>
+      <li>If you will be averaging more than 15 assessments per week, we require that you routinely schedule assignments at least one month in advance. This will allow us to plan for scoring and commenting.</li>
+      </ol>
+    <h3>Assignment work flow</h3>
+    <p>There is a bit of a learning curve when it comes to setting up and monitoring assignments, but we're certain that once you have mastered the process, you will appreciate the time saved and the efficiency with which assessment results can be delivered.</p>
+    <ol>
+      <li>Following the instructions on this page, set up a new assignment. Be sure to specify a group for the assignment. The saved assignment will  show up in the calendar on the <a href="report_individual.php">individual reports</a> page, and in pull down menus on the <a href="bc_manage_accounts.php">manage accounts</a> page.</li>
+      <li>Make sure all test takers who will receive the assignment are registered on the site. Either register them yourself on the <a href="bc_add_accounts.php">add accounts</a> page (recommended), or have them register themselves (without taking a assessment).</li>
+      <li>On the <a href="bc_manage_accounts.php">manage accounts</a> page, assign test-takers to groups.  (<a href="../contactus.php">Contact us</a> for ideas about creating group names for your clientele.)</li>
+      <li>On the <a href="bc_manage_accounts.php">manage accounts</a> page, assign test takers to the assignment group.</li>
+      <li>On the <a href="bc_manage_accounts.php">manage accounts</a> page, select the appropriate group of test takers, and make the assignment. </li>
+      <li>On the start date for an assignment,   <a href="email_test_takers.php?mode=assignment">send assignment information</a> to test takers. Don't confuse the <em>start date</em>, <em>due date</em>, and <em>release date</em>! The start date should be 1-2 weeks before the due date, and the due date will be two weeks before the release date.</li>
+      <li>Monitor assignments and view results on the <a href="bc_manage_accounts.php">manage accounts</a> page, and on the <a href="report_individual.php">individual reports</a> page in the calendar view under &quot;deadlines&quot;.</li>
+      <li>Use  <a href="bc_manage_accounts.php">manage accounts</a> to re-assign assignments or add new test takers to assignments.</li>
+    </ol>
+    </div>
+  </div>
+  
+  
+  
+  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+  	<? if (mysql_num_rows($rsAssignments) > 0) { ?>
+    <div class="CollapsiblePanelTab">EDIT EXISTING ASSIGNMENTS</div>
+    <div class="CollapsiblePanelContent">
+ 
+    <table>
+    	<tr class='tablehead_knockout'>
+      	<th>ID #</th>
+      	<th>Instrument</th>
+      	<th>Group</th>
+      	<th>Dilemma</th>
+      	<th>Starts</th>
+      	<th>Ends</th>
+      	<th>Released</th>
+      	<th></th>
+      </tr>
+			<? while ($row = mysql_fetch_assoc($rsAssignments)) { ?>
+			<tr class='list_row <? if ($row['date_release'] < date('Y-m-d')) { echo " faded"; } ?>'>
+				<td><? echo $row['assignmentkey']; ?></td>
+				<td><? echo str_replace("_", " ", $row['instrument_id']); ?></td>
+				<td><? echo ($row['assign_group'] <> "" ? 
+					$row['assign_group'] : "all test takers"); ?></td>
+				<td><? 
+					if ($row['dilemma_name'] <> '') { echo $row['dilemma_name']; } 
+					else if ($row['use_dilemma_conditions'] == 1) { echo "blind randomized"; } 
+					else if ($totalRows_rsLaDilemmas > 0) { echo "any dilemma"; }
+					else { echo ""; } ?>
+        </td>
+        <td><? echo date('M jS', strtotime($row['date_start'])); ?></td>
+        <td><? echo date('M jS', strtotime($row['date_end'])); ?></td>
+        <td><? echo date('M jS', strtotime($row['date_release'])); ?>
+        	<? if (date('Y', strtotime($row['date_release'])) <> date('Y')) { 
+        		echo date('Y', strtotime($row['date_release'])); } ?></td> 
+        <td><a href="assignments.php?assignmentkey=<? echo $row['assignmentkey']; ?>">edit</a></td>
+      </tr> 
+			<? } ?>
+    </table>
+    
+    </div>
+    <?php } ?>
+  </div>
+
+			
+    
+    <?php // If there are no dilemmas available, before any filter is applied
+		if ($totalRows_rsLaDilemmas > 0 OR $dilemma_filter <> "") { ?>
+    
+    <div id="CollapsiblePanel1" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab"> CLICK HERE TO HIDE DILEMMAS</div>
+      <div class="CollapsiblePanelContent">
+        <form id="form2" name="form2" method="post" action="<?php echo $editFormAction; ?>">
+    <div class="box">
+    <p<?php if ($totalRows_rsLaDilemmas == 0) { echo " class=\"red\""; } ?>>
+    <strong>FILTER DILEMMAS: </strong>
+    <?php if ($dilemma_filter == "") { ?>
+      Use the filters in this box to limit the number of dilemmas shown. Then click on the tabs below to read through the dilemmas. Once you have settled on a dilemma, select it in the next section below.
+      <?php } else { ?>Showing all <?php echo $totalRows_rsLaDilemmas; ?> dilemma<?php echo ($totalRows_rsLaDilemmas > 1 ? "s" : ""); ?> where the instrument ID is <?php echo $instrument_id; ?> <?php echo str_replace("_", " ", $dilemma_filter); ?>.<br />
+<a href="<?php echo $editFormAction; ?>">reset filter and show all dilemmas</a> <?php } ?></p>
+    <table width="600" border="0">
+      <tr>
+        <td align="right">Work sector: </td>
+        <td><span id="spryselect2">
+        <select name="dilemma_filter_sector" class="pulldownwidth200" id="dilemma_filter_sector">
+          <option value="">-select one-</option>
+          <?php do { ?>
+          	<option value="<?php echo $row_rsLaDilFilterSector['dilemma_sector']?>">
+						<?php echo $row_rsLaDilFilterSector['dilemma_sector']?></option>
+          <?php } while ($row_rsLaDilFilterSector = mysql_fetch_assoc($rsLaDilFilterSector));
+						$rows = mysql_num_rows($rsLaDilFilterSector);
+						if($rows > 0) {
+								mysql_data_seek($rsLaDilFilterSector, 0);
+							$row_rsLaDilFilterSector = mysql_fetch_assoc($rsLaDilFilterSector);
+						} ?>
+        </select>
+</span></td>
+      </tr>
+      <tr>
+        <td align="right">Dilemma name: </td>
+        <td><span id="spryselect3">
+        <select name="dilemma_filter_name" class="pulldownwidth200" id="dilemma_filter_name">
+          <option value="">-select one-</option>
+          <?php do { ?>
+          	<option value="<?php echo $row_rsLaDilFilterName['dilemma_name']?>">
+						<?php echo $row_rsLaDilFilterName['dilemma_name']?></option>
+          <?php } while ($row_rsLaDilFilterName = mysql_fetch_assoc($rsLaDilFilterName));
+						$rows = mysql_num_rows($rsLaDilFilterName);
+						if($rows > 0) {
+								mysql_data_seek($rsLaDilFilterName, 0);
+							$row_rsLaDilFilterName = mysql_fetch_assoc($rsLaDilFilterName);
+						} ?>
+        </select>
+</span></td>
+      </tr>
+      <tr>
+        <td align="right">Management level: </td>
+        <td><span id="spryselect4">
+        <select name="dilemma_filter_manlevel" class="pulldownwidth200" id="dilemma_filter_manlevel">
+          <option value="">-select one-</option>
+          <?php 
+					do { ?>
+          	<option value="<?php echo $row_rsDemogsManLevelGeneral['man_level_number']; ?>">
+						<?php echo $row_rsDemogsManLevelGeneral['man_level_number']." - ".
+							$row_rsDemogsManLevelGeneral['man_level_general_name']; ?></option>
+          	<?php 
+					} while ($row_rsDemogsManLevelGeneral = mysql_fetch_assoc($rsDemogsManLevelGeneral)); 
+					$rows = mysql_num_rows($rsDemogsManLevelGeneral);
+					if ($rows > 0) 
+					{  
+						mysql_data_seek($rsDemogsManLevelGeneral, 0);
+						$row_rsDemogsManLevelGeneral = mysql_fetch_assoc($rsDemogsManLevelGeneral);
+					}
+					?>
+        </select>
+</span></td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td align="right"><input type="submit" name="SUBMIT-FILTER" id="SUBMIT-FILTER" value="APPLY FILTER" /></td>
+      </tr>
+    </table>
+    <div id="CollapsiblePanel4" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab">ABOUT OUR GENERAL MANAGEMENT LEVELS (click to view)</div>
+      <div class="CollapsiblePanelContent">
+        <?php do {
+						echo "<p>".$row_rsDemogsManLevelGeneral['man_level_bulkcust_describe']."</p>";
+					} while ($row_rsDemogsManLevelGeneral = mysql_fetch_assoc($rsDemogsManLevelGeneral)); 
+					$rows = mysql_num_rows($rsDemogsManLevelGeneral);
+					if ($rows > 0) 
+					{  
+						mysql_data_seek($rsDemogsManLevelGeneral, 0);
+						$row_rsDemogsManLevelGeneral = mysql_fetch_assoc($rsDemogsManLevelGeneral);
+					}
+					
+					?>
+      </div>
+    </div>
+    </div>
+    </form>
+      
+      
+      <div id="TabbedPanels1" class="VTabbedPanels">
+      <ul class="TabbedPanelsTabGroup">
+        <?php do {  ?>
+        <li class="TabbedPanelsTab"> D<?php echo $row_rsLaDilemmas['dilemmakey']; ?>: <?php echo $row_rsLaDilemmas['dilemma_name']; ?></li>
+        <?php } while ($row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas)); 
+							$rows = mysql_num_rows($rsLaDilemmas);
+							if ($rows > 0) {
+								mysql_data_seek($rsLaDilemmas, 0);
+								$row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas);  } ?>
+      </ul>
+      <div class="TabbedPanelsContentGroup">
+        <?php do {  ?>
+        <div class="TabbedPanelsContent">
+          <table width="450">
+            <tr>
+              <td><h3>Dilemma #<?php echo $row_rsLaDilemmas['dilemmakey']; ?>: <?php echo $row_rsLaDilemmas['dilemma_name']; ?> [<?php echo $row_rsLaDilemmas['dilemma_sector']; ?>]</h3>
+                <p><?php echo $row_rsLaDilemmas['dilemma']; ?></p></td>
+            </tr>
+          </table>
+        </div>
+        <?php } while ($row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas)); 
+							$rows = mysql_num_rows($rsLaDilemmas);
+							if ($rows > 0) {
+								mysql_data_seek($rsLaDilemmas, 0);
+								$row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas);  } ?>
+      </div>
+    </div>
+    <br class="clearfloat" />
+      
+      
+      <!--End of the CollapsiblePanel divs-->
+      </div>
+    </div>
+    
+    <?php } // END IF: if there are dilemmas for this instrument ID 
+		// (or if a filter is already applied) ?>
+		
+    
+    <form id="form1" name="form1" method="POST" action="<?php echo $editFormAction; ?>">
+      <table width="700" border="0">
+        <tr>
+        <td colspan="2"><div class="box_table">All assignments are created for particular groups of test takers (even if a &quot;group&quot; has only one member). You can use an existing group or create a new group. It is best to create group names that are very short and make sense to you. For example, if you are putting middle managers in two groups, you might want to name them MM-1 and MM-2. <a href="../contactus.php">Contact us</a> if you need help setting up groups.</div></td>
+        </tr>
+      <tr>
+        <td width="280">The assignment will apply to group </td>
+        <td><span id="spryselect5">
+        <select name="assign_group" id="assign_group">
+          <option value="" <?php if (!(strcmp("", $row_rsThisAssignment['assign_group']))) 
+									{ echo "selected=\"selected\""; } ?>> - select one - </option>
+          <?php 
+								// List groups available to me (based on the test takers already in our system) 
+								do {   
+      	if ($row_rsFilterGroup['group'] <> "") { ?>
+          <option value="<?php echo $row_rsFilterGroup['group']?>"<?php if (!(strcmp($row_rsFilterGroup['group'], $row_rsThisAssignment['assign_group']))) {echo "selected=\"selected\"";} ?>> <?php echo $row_rsFilterGroup['group']." &nbsp; (".$row_rsFilterGroup['numpeople']; ?>) </option>
+          <?php } } while ($row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup));
+						$rows = mysql_num_rows($rsFilterGroup);
+						if($rows > 0) {
+								mysql_data_seek($rsFilterGroup, 0);
+							$row_rsFilterGroup = mysql_fetch_assoc($rsFilterGroup);
+						} ?>
+        </select>
+</span> or put in a new group: <span id="sprytextfield14">
+        <input name="set_group" type="text" value="" size="5" />
+        </span></td>
+      </tr>
+      <tr>
+        <td>Test takers will be assigned to </td>
+        <td><span id="spryradio1">
+          <label>
+            <input type="radio" name="instrument_id" id="instrument_id_0" <?php 
+						if (!(strcmp($row_rsThisAssignment['instrument_id'], $instrument_id))) 
+						{echo "checked=\"checked\"";} ?> 
+            value="<?php echo $instrument_id; ?>" />
+            take the <?php echo $instrument_id; ?></label>
+          <br />
+          <?php if ($instrument_id <> "SMA" AND $instrument_id <> "SMJ" AND $instrument_id <> "SMS") { ?>
+          <label>
+            <input type="radio" name="instrument_id" id="instrument_id_1" <?php 
+						if (!(strcmp($row_rsThisAssignment['instrument_id'], $instrument_id."_JOURNAL"))) 
+						{echo "checked=\"checked\"";} ?> 
+            value="<?php echo $instrument_id; ?>_JOURNAL" />
+            write an <?php echo $instrument_id; ?> JOURNAL entry</label>
+          <?php } ?>
+          <span class="radioRequiredMsg">Please choose an instrument to assign</span></span></td>
+      </tr>
+      <tr>
+        <td>This is test time</td>
+        <td><input name="test_time" type="text" 
+        	value="<?php echo $row_rsThisAssignment['test_time']; ?>" size="5" /></td>
+      </tr>
+      <?php if ($instrument_id == "SMJ") { ?>
+      <tr>
+        <td>This entry won't be coded</td>
+        <td><input type="checkbox" name="hidden_coders" value="1" <?php 
+					if ($row_rsThisAssignment['hidden_coders'] == 1) { ?>checked="checked" <?php } ?> /></td>
+      </tr>
+      <?php } ?>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+      
+      <?php // If there are no dilemmas available, before any filter is applied
+			if ($totalRows_rsLaDilemmas > 0 OR $dilemma_filter <> "") { ?>
+      
+      <tr>
+        <td colspan="2"><div class="box_table">By default, test takers are asked to choose from a list of dilemmas when they take the <?php echo $instrument_id; ?>. If you wish, you can assign a dilemma by selecting one from the menu below. To read the available dilemmas, click on  "available dilemmas&quot; (above).</div></td>
+        </tr>
+      <tr>
+        <td>Test takers will be shown the dilemma</td>
+        <td><span id="spryselect1">
+          <select name="assign_dilemmakey" class="pulldown_width_250" id="assign_dilemmakey">
+            <option value="" <?php if ($row_rsThisAssignment['assign_dilemmakey'] == "") 
+									{ echo "selected=\"selected\""; } ?>>- test takers select a dilemma -</option>
+            <option value="use_dilemma_conditions" <?php 
+							if ($row_rsThisAssignment['use_dilemma_conditions'] == 1) 
+							{ echo "selected='selected'"; } ?> >- research conditions select a dilemma -</option>
+            <?php 
+						// List available dilemmas (within this filter) 
+						do {   ?>
+              <option value="<?php echo $row_rsLaDilemmas['dilemmakey']?>"<?php 
+              if ($row_rsThisAssignment['assign_dilemmakey'] == $row_rsLaDilemmas['dilemmakey']) 
+              { echo "selected='selected'"; } ?>><?php 
+              echo $row_rsLaDilemmas['dilemmakey'].": ".$row_rsLaDilemmas['dilemma_name']; 
+							?></option><?php 
+						} while ($row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas));
+						if (mysql_num_rows($rsLaDilemmas) > 0) {
+							mysql_data_seek($rsLaDilemmas, 0);
+							$row_rsLaDilemmas = mysql_fetch_assoc($rsLaDilemmas);
+						} ?>
+          </select></span><br />
+				
+        </td>
+      </tr>
+      
+      <?php } // END IF: if there are dilemmas for this instrument ID 
+			// (or if a filter is already applied) ?>
+      
+      <tr>
+        <td>Test takers will be shown the following message when they start the <?php echo $instrument_id; ?></td>
+        <td><span id="sprytextarea1">
+          <textarea name="assign_message" class="textarea080_450" id="assign_message"><?php 
+						echo str_replace("<br>", "\n", $row_rsThisAssignment['assign_message']); ?></textarea>
+        </span></td>
+      </tr>
+      <tr>
+        <td colspan="2">&nbsp;</td>
+        </tr>
+      <tr>
+        <td colspan="2"><div class="box_table">Choose the start  and release dates for the assignment. When setting up assignments, keep in mind that we cannot process more than 50 assessments per week for you. The assignment<em> due date</em> (the last day upon which test takers can take an assessment and be confident that they will receive their reports by the <em>release date</em>) will automatically be calculated as 10 business days before your specified release date. If you must release reports on a particular date, you should  plan to send out assignments 4 weeks prior to their release date (two weeks prior to their due date). After you have set up an assignment, you can change most settings at any time by returning to this page. 
+  However <strong>you will not be able to change the <em>release date</em> or  <em>due date</em></strong> without contacting us.</div></td>
+      </tr>
+      <tr>
+        <td>Start date</td>
+        <td><span id="sprytextfield1">
+        <input name="date_start" type="text" id="date_start" class="date" value="<?php 
+					if (isset($row_rsThisAssignment['date_start'])) 
+					{ echo $row_rsThisAssignment['date_start']; }
+					else { echo date('Y-m-d'); } 
+					?>" size="14" />
+        <span class="textfieldRequiredMsg">Please enter a start date.</span><span class="textfieldInvalidFormatMsg"><br />Format: YYYY-MM-DD</span></span></td>
+      </tr>
+      <tr>
+      	<?php if ($instrument_id == "SMS" OR $instrument_id == "SMA" OR $instrument_id == "SMJ") { ?>
+        	<td>Due date (test taker deadline)</td>
+          <td><input name="date_end" type="text" id="date_end" class="date" value="<?php 
+						if (isset($row_rsThisAssignment['date_end'])) 
+						{ echo $row_rsThisAssignment['date_end']; }
+						else { echo date('Y-m-d', strtotime('+2 weeks')); } 
+						?>" size="14" />
+          </td>
+        <?php } else { ?>
+          <td>Due date<span class="red" id="warn_too_early"></span></td>
+          <td><span class="red" id="date_end"></span></td>
+        <?php } ?>
+          <!-- This date_end field is ONLY for show - only to show the bulk customer what the end date will be. The end date is calculated in the PHP in the form update section. -->
+      </tr>
+      <tr>
+        <td>Release date (for reports) </td>
+        <td><span id="sprytextfield2">
+        <input name="date_release" type="text" id="date_release" class="date" size="14" value="<?php 
+					if (isset($row_rsThisAssignment['date_release'])) 
+					{ echo $row_rsThisAssignment['date_release']; }
+					else { echo date('Y-m-d', strtotime('+3 weeks')); } 
+					?>" />
+        <span class="textfieldRequiredMsg">Please enter an end date.</span><span class="textfieldInvalidFormatMsg"><br />Format: YYYY-MM-DD</span></span>
+        <?php 
+				if ($instrument_id <> "SMA" AND $instrument_id <> "SMJ" AND $instrument_id <> "SMS") { 
+					if ($row_rsThisAssignment['date_release'] <> "") { ?>
+        	<span class="red">You may set the release date later, but not earlier.</span>
+					<?php 
+					}
+				} ?>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2">&nbsp;</td>
+        </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td colspan="2"><div class="box_table"> <span class="ldma">Creating an assignment <strong>does not</strong> notify test takers.</span> To notify test takers, (1) save the assignment (below), then (2) go to <a href="bc_manage_accounts.php">manage accounts</a> and make certain the targeted test takers are assigned to the appropriate group. If they are not assigned to a group, create a group assignment. Then, (3) on the same page, assign members of the group to the assignment. Now you are ready to (4) <a href="email_test_takers.php?mode=assignment">send assignment information</a> to the targeted group of test takers. For a step-by-step workflow, read  &quot;assignment workflow&quot; under &quot;about making assignments&quot; at the top of this page.</div></td>
+        </tr>
+      <tr>
+        <td colspan="2" align="right"><input name="bulkcustomerkey" type="hidden" id="bulkcustomerkey" value="<?php echo $_SESSION['log_userkey']; ?>" />
+        	<?php if ($mode == "edit") { ?><input name="assignmentkey" type="hidden" value="<?php echo $row_rsThisAssignment['assignmentkey']; ?>" /><?php } ?>
+          <input type="submit" name="SUBMIT" id="SUBMIT" value="SAVE ASSIGNMENT" /></td>
+      </tr>
+    </table>
+    
+    <input type="hidden" name="MM_insert" value="form1" />
+    </form>
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+    
+    
+<script type="text/javascript">
+
+// CALCULATE END DATE
+
+var date_start = "";
+var date_end = "";
+var date_release = "";
+var t; // timeout handler
+
+function calc_date() 
+{
+	date_release = Date.parseExact(form1.elements["date_release"].value, 'yyyy-MM-dd');
+	date_start = Date.parseExact(form1.elements["date_start"].value, 'yyyy-MM-dd');
+	if (date_release != null) {
+		date_end = date_release.add(-14).days();
+		
+		// if the ending date is equal to or earlier than the starting date, give error message.
+		document.getElementById("warn_too_early").innerHTML="";
+		if (date_start != null) {
+			if (date_end.compareTo(date_start) < 1) {
+			document.getElementById("warn_too_early").innerHTML="<br />There is too little time between the starting date and the ending date for this assignment. Choose a later release date.";
+			}
+		}
+		
+	} else {
+		date_end = "(enter a release date)";
+	}
+	document.getElementById("date_end").innerHTML="&nbsp;" + date_end.toString('yyyy-MM-dd');
+	
+	t = setTimeout('calc_date()', 1000); // refresh the date again in 1 seconds.
+}
+
+t = setTimeout('calc_date()', 1000);
+
+</script>
+    
+    
+    
+<script type="text/javascript">
+<?php // If there are no dilemmas available, before any filter is applied
+	if ($totalRows_rsLaDilemmas > 0 OR $dilemma_filter <> "") { ?>
+
+	// Panels and filter menus in the dilemma reading box 
+ 	var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {isRequired:false, validateOn:["blur", "change"]});
+	var spryselect3 = new Spry.Widget.ValidationSelect("spryselect3", {isRequired:false, validateOn:["blur", "change"]});
+	var spryselect4 = new Spry.Widget.ValidationSelect("spryselect4", {isRequired:false, validateOn:["blur", "change"]});
+	var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", {contentIsOpen:true});
+	var CollapsiblePanel4 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel4");
+	var TabbedPanels1 = new Spry.Widget.TabbedPanels("TabbedPanels1");
+
+	// Dilemma selection menu
+	var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {isRequired:false, validateOn:["blur", "change"]});
+	
+<?php } // END IF: if there are dilemmas for this instrument ID 
+// (or if a filter is already applied) ?>
+
+var spryselect5 = new Spry.Widget.ValidationSelect("spryselect5", {isRequired:false, validateOn:["blur", "change"]});
+var spryradio1 = new Spry.Widget.ValidationRadio("spryradio1", {validateOn:["blur", "change"]});
+var sprytextarea1 = new Spry.Widget.ValidationTextarea("sprytextarea1", {isRequired:false, validateOn:["blur", "change"]});
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "date", {useCharacterMasking:true, validateOn:["blur"], format:"yyyy-mm-dd"});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "date", {useCharacterMasking:true, validateOn:["blur"], format:"yyyy-mm-dd"});
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+var sprytextfield14 = new Spry.Widget.ValidationTextField("sprytextfield14", "none", {isRequired:false, validateOn:["blur", "change"]});
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+</script>
+
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

@@ -1,0 +1,247 @@
+<?php 
+include_once '../includes/dts_functions.php';	
+$boilerplate = prepBoilerplate('accounts');
+
+if (!WA_Auth_RulePasses("Logged in to registrants")) {
+	WA_Auth_RestrictAccess("../security/logIn.php"); } 
+$userkey = $_SESSION['log_userkey'];
+
+// required scope: groupkey
+if (!isset($_GET['groupkey'])) { header("Location: groups_list.php"); exit(); }
+$groupkey = $_GET['groupkey'];
+
+
+
+// Look up this client
+$sql = sprintf("SELECT r.* FROM registrants r
+	WHERE r.userkey = %s",
+		SQLstr($userkey, 'int'));
+$rsClient = mysql_query($sql) or die("ERROR looking up this client!");
+$client = mysql_fetch_assoc($rsClient);
+
+// Look up this group
+$sql = sprintf("SELECT g.*
+	FROM groups g
+		LEFT JOIN registrants r ON g.group = r.group
+		LEFT JOIN la_assignments a ON g.group = a.assign_group
+	WHERE g.groupkey = %s AND g.clientkey = %s",
+		SQLstr($groupkey, 'int'),
+		SQLstr($userkey, 'int'));
+$rsGroup = mysql_query($sql) or die("ERROR fetching group information.");
+$group = mysql_fetch_assoc($rsGroup);
+
+// List of students in this group
+$sql = sprintf("SELECT r.userkey, r.firstname, r.lastname, r.email, r.last_login,
+		COUNT(DISTINCT d.lakey) AS num_assessments_taken
+	FROM groups g
+		LEFT JOIN registrants r ON g.group = r.group
+		LEFT JOIN la_data d ON r.userkey = d.userkey
+	WHERE g.groupkey = %s AND g.clientkey = %s
+	GROUP BY r.userkey
+	ORDER BY r.lastname ",
+		SQLstr($groupkey, 'int'),
+		SQLstr($userkey, 'int'));
+$rsStudents = mysql_query($sql) or die("ERROR fetching list of students in this group.");
+
+// List of assignments for this group
+$sql = sprintf("SELECT a.assignmentkey, a.title, a.instrument_id, 
+		a.date_start, a.date_end, a.date_release,
+		COUNT(DISTINCT sa.userkey) AS num_assigned,
+		COUNT(DISTINCT d.lakey) AS num_completed
+	FROM groups g
+		LEFT JOIN la_assignments a ON g.group = a.assign_group AND g.clientkey = a.bulkcustomerkey
+		LEFT JOIN students_assignments sa ON a.assignmentkey = sa.assignmentkey
+		LEFT JOIN la_data d ON a.assignmentkey = d.assignmentkey AND d.completed = 1
+	WHERE g.groupkey = %s AND g.clientkey = %s
+	GROUP BY a.assignmentkey
+	ORDER BY a.date_start ",
+		SQLstr($groupkey, 'int'),
+		SQLstr($userkey, 'int'));
+$rsAssignments = mysql_query($sql) or die("ERROR fetching list of assignments for this group.");
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="//fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: View group</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../includes/jquery.js"></script>
+<script src="../includes/jquery.ui.js" type="text/javascript"></script>
+<script src="../includes/jquery.dotimeout.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+<link href="../includes/js_res/jquery.ui.smoothness.css" rel="stylesheet" type="text/css" />
+
+<script type="text/javascript">
+$(document).ready(function(){
+
+	// panels
+	$('.collapse_tab').click(function(){
+		$(this).next('.collapse_content').toggle(200);
+	});
+
+});
+</script>
+
+<style type="text/css">
+	
+	.collapse_content { display: none; }
+
+</style>
+
+<link href="../SpryAssets/SpryValidationRadio.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+
+	<? include 'accounts_links.php'; ?>
+
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+
+  <h1>VIEW GROUP: <? echo $group['group']; ?></h1>
+
+  <p><a href='group_edit.php?groupkey=<? echo $groupkey; ?>'>edit</a></p>
+
+  <table>
+  	<tr>
+  		<td>Start date</td>
+  		<td><? echo $group['date_start']; ?></td>
+  	</tr>
+  	<tr>
+  		<td>End date</td>
+  		<td><? echo $group['date_end']; ?></td>
+  	</tr>
+  </table>
+
+  <h3>Test takers</h3>
+  <table class='minimalist-a'>
+  	<tr>
+  		<th>Name</th>
+  		<th></th>
+  		<th>Email</th>
+  		<th>Last logged in</th>
+  		<th># assessments taken</th>
+  	</tr>
+  	<? while ($student = mysql_fetch_assoc($rsStudents)) { ?>
+  		<tr>
+  			<td><? echo $student['firstname']; ?></td>
+  			<td><? echo $student['lastname']; ?></td>
+  			<td><? echo $student['email']; ?></td>
+  			<td><? echo $student['last_login']; ?></td>
+  			<td><? echo $student['num_assessments_taken']; ?></td>
+  		</tr>
+  	<? } ?>
+  </table>
+
+  <h3>Assignments</h3>
+  <p>This is a list of all assignments <em>intended</em> for this group. Note that it's possible to put students in an assignment even if they aren't in the correct group.</p>
+  <table class='minimalist-a'>
+  	<tr>
+  		<th>Title</th>
+  		<th>Instrument</th>
+  		<th>Starts</th>
+  		<th>Ends</th>
+  		<th>Released</th>
+  		<th># assigned</th>
+  		<th># completed</th>
+      <th></th>
+  	</tr>
+  	<? while ($a = mysql_fetch_assoc($rsAssignments)) { ?>
+  		<tr>
+  			<td><? echo $a['title']; ?></td>
+  			<td><? echo $a['instrument_id']; ?></td>
+  			<td><? echo $a['date_start']; ?></td>
+  			<td><? echo $a['date_end']; ?></td>
+  			<td><? echo $a['date_release']; ?></td>
+  			<td><? echo $a['num_assigned']; ?></td>
+  			<td><? echo $a['num_completed']; ?></td>
+        <td><a href='assignment_view.php?assignmentkey=<? echo $a['assignmentkey']; ?>'>view</a></td>
+  		</tr>
+  	<? } ?>
+  </table>
+
+  <p>&nbsp;</p>
+  
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

@@ -1,0 +1,78 @@
+<?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLSUAscores = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLSUAscores = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUAscores = sprintf("SELECT LSUA.lsuakey, LSUA.userkey, LSUA.projectkey, LSUA.`date`, LSUAscores.lsuascoringkey, LSUAscores.lsuakey, LSUA.finalized, LSUAscores.lasname, Registrants.userkey, Registrants.firstname, Registrants.lastname, LSUA.testtime, BulkCustomerInfo.bulkcustomerkey, BulkCustomerInfo.projectkey, LSUAscores.aspect1las_1, LSUAscores.aspect2las_1, LSUAscores.aspect3las_1, LSUAscores.aspect4las_1, LSUAscores.generalselflas_1, LSUAscores.idealselflas_1, LSUAscores.lasnumber_1 FROM LSUA, LSUAscores, Registrants, BulkCustomerInfo WHERE BulkCustomerInfo.bulkcustomerkey = %s AND LSUAscores.lsuakey = LSUA.lsuakey AND Registrants.userkey = LSUA.userkey AND  LSUA.finalized = 1 AND BulkCustomerInfo.projectkey = LSUA.projectkey ORDER BY LSUA.lsuakey DESC", GetSQLValueString($colname_rsLSUAscores, "int"));
+$rsLSUAscores = mysql_query($query_rsLSUAscores, $Assessment) or die(mysql_error());
+$row_rsLSUAscores = mysql_fetch_assoc($rsLSUAscores);
+$totalRows_rsLSUAscores = mysql_num_rows($rsLSUAscores);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>DTS: LSUA summary download</title>
+</head>
+
+<body>
+<?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=lsuasummaryIT.csv\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+lsuakey, firstname, lastname, testtime, date, aspect1las_1, aspect2las_1, aspect3las_1, aspect4las_1, generalselflas_1, idealselflas_1, lasnumber_1,
+<?php do { ?>
+<?php echo $row_rsLSUAscores['lsuakey']; ?>,<?php echo $row_rsLSUAscores['firstname']; ?>,<?php echo $row_rsLSUAscores['lastname']; ?>,<?php echo $row_rsLSUAscores['testtime']; ?>,<?php echo $row_rsLSUAscores['date']; ?>,<?php echo $row_rsLSUAscores['aspect1las_1']; ?>,<?php echo $row_rsLSUAscores['aspect2las_1']; ?>,<?php echo $row_rsLSUAscores['aspect3las_1']; ?>,<?php echo $row_rsLSUAscores['aspect4las_1']; ?>,<?php echo $row_rsLSUAscores['generalselflas_1']; ?>,<?php echo $row_rsLSUAscores['idealselflas_1']; ?>, <?php echo $row_rsLSUAscores['lasnumber_1']; ?>,
+<?php } while ($row_rsLSUAscores = mysql_fetch_assoc($rsLSUAscores)); ?>
+<?
+exit();
+?>
+</body>
+</html>
+<?php
+mysql_free_result($rsLSUAscores);
+?>

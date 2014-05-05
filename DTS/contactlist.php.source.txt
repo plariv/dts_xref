@@ -1,0 +1,470 @@
+<?php require_once('includes/dts_functions.php'); 
+$boilerplate = prepBoilerplate('register');
+
+if (isset($_GET['posts'])) { $_POST = unserialize($_GET['posts']); }
+
+if (isset($_POST["submit"])) {
+	
+	// confirm that you're not already on our list
+	$sql_checkEmail = sprintf("SELECT * FROM maillist WHERE email = %s ",
+			SQLstr($_POST['email'], 'text'));
+	$rsCheckEmail = mysql_query($sql_checkEmail) or die(mysql_error());
+	if (mysql_num_rows($rsCheckEmail) > 0) {
+		// only squawk if you're not also registering for something else
+		if (!isset($_POST['url'])) {
+			header("Location: contactlist_already.php"); exit(); 
+		}
+	} else { // ELSE, this person can be removed from the mailing list.
+	
+		// add you to the list
+		$insertSQL = sprintf("INSERT INTO maillist 
+			(firstname, lastname, email, 
+			 company_name, professionkey, other_profession, country, 
+			 privacy_accept, comments) 
+			VALUES (%s, %s, %s,   %s, %s, %s, %s,   %s, %s)",
+			 SQLstr($_POST['firstname'], "text"),
+			 SQLstr($_POST['lastname'], "text"),
+			 SQLstr($_POST['email'], "text"),
+			 SQLstr(isset($_POST['company_name']) ? $_POST['company_name'] : '', "text"),
+			 SQLstr($_POST['profession'], "int"),
+			 SQLstr($_POST['other_profession'], "text"),
+			 SQLstr($_POST['country'], "text"),
+			 SQLstr(isset($_POST['privacyaccept']) ? "true" : "", "defined","1","0"),
+			 SQLStr($_POST['comments'], 'text'));
+		$Result1 = mysql_query($insertSQL) or die(mysql_error());
+		
+		// send confirmation email to user (this email won't be sent if the user is already on the list)
+		$to = $_POST['email'];
+		$from = array('outreach@lectica.org' => 'Theo L. Dawson');
+		$cc = '';
+		$subject = "You've signed up for the Lectica newsletter!";
+		$body = $boilerplate['register_newsletter_email_confirm']; 
+		$body = str_replace('[NAME]', $_POST['firstname'], $body);
+		sendEmail($to, $from, $cc, $subject, $body);
+		
+		// send an alert email to us
+		$to = array('outreach@lectica.org' => 'Theo L. Dawson');
+		$from = array('outreach@lectica.org' => 'Theo L. Dawson');
+		$cc = '';
+		$subject = sprintf("Mail list: %s %s has joined the Lectica email list", $_POST['firstname'], $_POST['lastname']);
+		$body = sprintf("Name: %s %s \rEmail: %s \rProfession: %s\rCompany: %s \rCountry: %s \rComments: %s",
+				$_POST['firstname'], $_POST['lastname'],
+				$_POST['email'], 
+				lookup_profession($_POST['profession'], $_POST['other_profession']),
+				$_POST['company_name'], 
+				$_POST['country'],
+				$_POST['comments']);
+		sendEmail($to, $from, $cc, $subject, $body);
+		
+	} 
+	
+	// redirect to the thanks page (or a different page, if specified)
+	$url = "contactlist_thanks.php";
+	if (isset($_POST['url'])) { $url = $_POST['url']; }
+  header("Location: {$url}"); exit();
+}
+
+
+
+$rsCountries = mysql_query("SELECT * FROM demogs_countries ORDER BY name");
+
+$rsProfessions = mysql_query("SELECT * FROM demogs_professions ORDER BY profession");
+
+$rsPrivacy = mysql_query("SELECT privacy FROM legal");
+$row = mysql_fetch_assoc($rsPrivacy);
+$privacy = $row['privacy'];
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/template1index.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: Join our mailing list</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/jquery.tools.min.js" type="text/javascript"></script>
+
+<script src="SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+
+/* tooltip styling. by default the element to be styled is .tooltip  */
+.tooltip {
+	display:none;
+	font-size:90%;
+	font-weight: 400;
+	line-height:140%;
+	width: 150px;
+	background: #F1F7F6;
+	padding-right: 20px;
+	padding-left: 20px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	margin-left: 10px;
+	-moz-box-shadow: 2px 2px 5px #888;
+	-webkit-box-shadow: 2px 2px 5px #888;
+	box-shadow: 2px 2px 5px #888;
+	z-index: 999;
+}
+
+.hotspot {
+	cursor: pointer; cursor: hand	
+	height:100%; 
+	width:100%; 
+	position:relative;
+}
+
+.collapse_tab {
+	cursor: pointer;
+	position: relative;
+}
+.collapse_content {
+	display: none;
+	width: 100%;
+}
+.inner_container .column1 p {
+	font-size: 110%;
+	line-height: 160%;
+	font-weight: 400;
+	padding-right: 30px;
+}
+.inner_container .column1 h3 {
+	margin-top: 20px;
+	font-size: 180%;
+	color: #007376;
+}
+.inner_container .column1 h4 {
+	margin-top: 10px;
+	font-size: 120%;
+}
+.inner_container .column1 ul li {
+	font-size: 110%;
+	font-weight: 400;
+	padding-right: 30px;
+	line-height: 160%;
+	padding:top: 0px;
+}
+.inner_container .column1 ol li {
+	font-size: 110%;
+	font-weight: 400;
+	padding-right: 30px;
+	line-height: 160%;
+	padding:top: 0px;
+}
+.missing { 
+border: 1px solid red; 
+}
+
+#privacy_div {
+	height: 190px; 
+	max-width: 100%; 
+	padding: 5px; 
+	overflow: auto; 
+	background-color:#ededed;
+}
+ #submit.inner_container .column1 p a {
+	color: #373737;
+	text-decoration: underline;
+}
+.inner_container .column1 #form1 table tr td {
+	font-size: 110%;
+	font-weight: 400;
+	padding-top: 3px;
+	padding-bottom: 3px;
+}
+.inner_container .column1 #form1 table tr td p {
+	line-height: 140%;
+	font-weight: 400;
+}
+
+.inner_container .column1 #form1 table tr td select {
+	font-size: 100%;
+}
+.inner_container .column1 #form1 table tr td #submit {
+	font-size: 110%;
+}
+.inner_container .column1 #form1 table tr td textarea {
+	width: 100%;
+}
+.inner_container .column1 #form1 table tr td #privacy_div {
+	font-size: 80%;
+	line-height: 130%; 
+}
+</style>
+
+<script type='text/javascript'>
+
+$(document).ready(function(){
+	
+	$('.hotspot').tooltip({
+		position: 'bottom center', 
+		effect: 'fade', 
+		fadeInSpeed: 100,
+		fadeOutSpeed: 100,
+		delay:300,
+		layout: '<span/>',
+		events: {
+			def: 'mouseover, mouseleave'
+		}
+	}); 
+	
+	$('.collapse_tab').click(function(){
+		var content = $(this).parent().find('.collapse_content');
+		content.slideToggle(200);
+	});
+	
+	 // Validate confidence field on submit
+	$('#form1').submit(function(){
+		$('.missing').removeClass('missing');
+		// check for required elements
+		var required = $('.required').filter('[value=""]');
+		if (required.length > 0) {
+			required.addClass('missing').filter(':first').focus();
+			var name = required.attr('name');
+			name = name.replace('_', ' ');
+			alert("Required information is missing for "+name+".");
+			return false;
+		} 
+		if ($('#privacyaccept:checked').length == 0) {
+				$('#privacyaccept').parent().addClass('missing');
+			alert("Please review and accept our privacy policy.");
+			return false;
+		}
+	});
+	
+	// specify your own profession
+	$('#profession').change(function(){
+		if ($(this).val() == 1) { 
+			$('#other_profession').show(200).addClass('required').focus();
+		}
+	});
+
+});
+
+</script>
+<!-- InstanceEndEditable -->
+
+<style type="text/css">
+<!--
+body {
+	background: #FFF;
+	margin: 0;
+	padding: 0;
+	color: #474A47;
+	font-size: 100%;
+}
+-->
+</style>
+
+<!--[if lte IE 7]>
+<style>
+.content { margin-right: -1px; } /* this 1px negative margin can be placed on any of the columns in this layout with the same corrective effect. */
+ul.nav a { zoom: 1; }  /* the zoom property gives IE the hasLayout trigger it needs to correct extra whiltespace between the links */
+</style>
+<![endif]-->
+
+<link href="/_css/template1index.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<script src="/SpryAssetsTemplates1/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssetsTemplates1/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+<div class="container">
+	<div class="header1_container">
+		<div class="header1_column1"><!-- end .header1_column1 -->				        </div>
+		<div class="header1_column2">
+    			<p><?php include("_includes/navigation/header_1.html"); ?>
+		</div><!-- end .header1_column2 -->
+	</div>
+
+	<div class="header1a">
+  			<h3>
+				<?php include("_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+	</div><!-- end .header1a -->
+</div>
+ 
+
+	<div class="inner_container">
+		<div class="header2">
+		</div><!-- end .header2 -->
+		<br class="clearfloat" />
+
+<!-- COLUMN 1
+ -------------------------------------------------------------->
+	<div class="column1">
+		<!-- InstanceBeginEditable name="main" -->
+		<?php echo $boilerplate['register_newsletter']; ?>
+    
+    <form id="form1" method="post" action="">
+      <table width="90%">
+        <tr>
+          <td width="170" align="right">First name</td>
+          <td>
+            <input type="text" class='required' name="firstname" id="firstname" value="" size="30" />
+          </td>
+				</tr>
+        <tr>
+          <td width="170" align="right">Last name</td>
+          <td>
+            <input type="text" class='required' name="lastname" id="lastname" value="" size="30" />
+          </td>
+				</tr>
+        <tr>
+          <td width="170" align="right">Email</td>
+          <td>
+            <input type="text" class='required' name="email" id="email" value="" size="30" />
+         	</td>
+				</tr>
+        <tr>
+          <td width="170" align="right">Company (if applicable)</td>
+          <td>
+          <input type="text" name="company_name" value="" size="30" /></td>
+				</tr>
+        <tr>
+          <td width="170" align="right">Profession</td>
+          <td>
+            <select name="profession" class="width-250 required" id="profession">
+            <option value="">-select one-</option>
+              <?php while ($row = mysql_fetch_assoc($rsProfessions)) {  ?>
+              <option value="<?php echo $row['professionkey']?>">
+								<?php echo $row['profession']?></option>
+              <?php } ?>
+            </select>
+          </td>
+				</tr>
+        <tr>
+          <td width="170" align="right"></td>
+          <td>
+          	<input style='display: none' type="text" name="other_profession" id='other_profession' size="30" />
+          </td>
+        </tr>
+        <tr>
+          <td width="170" align="right">Country</td>
+          <td>
+            <select name="country" id="country" class='width-250 required'>
+              <option value="">-select one-</option>
+              <option value="United States">United States</option>
+              <?php while ($row = mysql_fetch_assoc($rsCountries)) {  ?>
+              	<option value="<?php echo $row['name']?>"><?php echo $row['name']?></option>
+              <?php } ?>
+            </select>
+          </td>
+				</tr>
+        <tr>
+          <td width="170" align='right'>Message</td>
+          <td><textarea name="comments"></textarea></td>
+        </tr>
+        <tr>
+          <td width="170" align='right'></td>
+          <td colspan="1"><div id='privacy_div'>
+            <?php echo $privacy; ?></div></td>
+        </tr>
+        <tr>
+          <td width="170"></td>
+          <td>
+          	<input type="checkbox" class='required' name="privacyaccept" id="privacyaccept" value="1" />
+          	I accept the privacy policy.</td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td><span class="teal">To help ensure that you receive our emails, 
+       	  please add &quot;@lectica.org&quot; to your address book before submitting.</span></td>
+        </tr>
+        <tr>
+          <td width="170">&nbsp;</td>
+          <td align="right">
+            <input type="submit" name="submit" id="submit" value="SUBMIT" />
+          </td>
+        </tr>
+      </table>
+  </form>
+<p>&nbsp;</p>
+
+
+<!-- InstanceEndEditable -->
+    </div>
+	<div class="column2">
+	</div>
+
+<!-- SIDEBAR 1
+ -------------------------------------------------------------->
+	<div class="sidebar1">
+	  <div id="CollapsiblePanel1" class="CollapsiblePanel">
+			<div class="CollapsiblePanelTab">ABOUT US</div>
+				<div class="CollapsiblePanelContent">
+					<p><a href="http://www.lectica.org/visitors/about.php">
+				  <?php include("_includes/navigation/about_us.html"); ?>
+		  </div>
+	  </div>
+	  <div id="CollapsiblePanel3" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ABOUT LECTICAL<sup>®</sup> ASSESSMENTS</div>
+      		<div class="CollapsiblePanelContent">
+				<?php include("_includes/navigation/about_lectical_assessments.html"); ?>
+      		</div>
+    	</div>
+    
+   	  <div id="CollapsiblePanel2" class="CollapsiblePanel">
+      		<div class="CollapsiblePanelTab">ADMIN</div>
+      			<div class="CollapsiblePanelContent">
+					<?php include("_includes/navigation/admin.html"); ?>
+      			</div>
+    		</div>
+    		<p>&nbsp;</p>
+   		<!-- InstanceBeginEditable name="sidebar2" -->
+  <div align="center"><br />
+  </div>
+  <!-- InstanceEndEditable -->
+		<!-- InstanceBeginEditable name="sidebar3" -->
+		<!-- InstanceEndEditable -->
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+        <p>&nbsp;</p>
+	</div>
+	</div>
+ 
+
+
+<!-- FOOTER
+ -------------------------------------------------------------->
+	<div class="footer3_container">
+  		<div class="footer3_column1">
+			<?php include("_includes/navigation/copyright.html"); ?>
+    	</div>
+	</div>
+ </div>
+
+
+<script type="text/javascript">
+<!--
+var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1", { contentIsOpen: true });
+var CollapsiblePanel3 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel3");
+var CollapsiblePanel2 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel2");
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+

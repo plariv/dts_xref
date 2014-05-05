@@ -1,0 +1,665 @@
+<?php
+//PHP version of Tom-Muck.com Dynamic Search SQL
+//for rsLSUA2
+$tfmsqlstr = "";
+if (isset($_POST["search"]) || isset($_GET["search"])){
+  $tfm_searchField = (isset($_POST["search"]))?$_POST["search"]:$_GET["search"];
+  if($tfm_searchField != "") {
+    $tfm_andor = "and";
+    $tfm_exact = "false";
+    $bellChar = chr(7);
+    //if any words option
+    if (isset($_POST["anyallexact"]) || isset($_GET["anyallexact"])){
+	  $tfm_temp = (isset($_POST["anyallexact"]))?$_POST["anyallexact"]:$_GET["anyallexact"];
+     if($tfm_temp == "any") $tfm_andor = "or";
+     }
+
+    //if exact phrase option
+    if (isset($_POST["anyallexact"]) || isset($_GET["anyallexact"])){
+	  $tfm_temp = (isset($_POST["anyallexact"]))?$_POST["anyallexact"]:$_GET["anyallexact"];
+     if($tfm_temp == "exact") $tfm_exact = "true";
+     }
+    $tfmsqlstr = " WHERE ((";
+    $tfm_databaseFields = explode(",","LSUA.lsuakey,lasname,username4clients,LSUA.userkey,lasnumber_1,lastname");    
+    if ((strstr($tfm_searchField,'"')) || ($tfm_exact == "true")){ 
+       $tfm_searchField = str_replace('"','',$tfm_searchField); 
+       $tfm_andor = "or";
+    }else 
+    if (stristr($tfm_searchField," or ")){ 
+      $tfm_searchField = preg_replace('/\s+or\s+/i',$bellChar,$tfm_searchField);
+      $tfm_andor = "or";
+    }else  
+    if (strstr($tfm_searchField,',') || strstr($tfm_searchField,' ') || stristr(strtolower($tfm_searchField),' and ')) { 
+      $tfm_searchField = preg_replace("/\s+and\s+/i",$bellChar,$tfm_searchField);
+      $tfm_searchField = str_replace(",",$bellChar,$tfm_searchField);
+      $tfm_searchField = str_replace(" ",$bellChar,$tfm_searchField);
+    }
+    $splitField = explode($bellChar,$tfm_searchField);
+    for ($i = 0; $i < sizeof($splitField) ;$i++){
+      for ($j = 0; $j < sizeof($tfm_databaseFields); $j++){
+        $tfmsqlstr = $tfmsqlstr."(".$tfm_databaseFields[$j]." LIKE '%".str_replace("'","''",$splitField[$i])."%')"; 
+        if ($j < sizeof($tfm_databaseFields)-1) $tfmsqlstr = $tfmsqlstr." OR "; 
+      }
+      if ($i < sizeof($splitField) -1) $tfmsqlstr = $tfmsqlstr.") ".$tfm_andor." (";
+    }
+    $tfmsqlstr = $tfmsqlstr."))";
+  }else{
+    $tfmsqlstr = " WHERE 1=1 ";
+  }
+}else{
+  $tfmsqlstr = " WHERE 1=1 ";
+}
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+$maxRows_rsLSUA = 10;
+$pageNum_rsLSUA = 0;
+if (isset($_GET['pagenum_rslsua'])) {
+  $pageNum_rsLSUA = $_GET['pagenum_rslsua'];
+}
+$startRow_rsLSUA = $pageNum_rsLSUA * $maxRows_rsLSUA;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUA = "SELECT lsua.lsuakey, lsua.scored, lsua.completed, lsua.`date`, lsua.username4clients, lsua.userkey, registrants.userkey, registrants.firstname, registrants.lastname, bulkcustomerinfo.username4students, bulkcustomerinfo.bulkcustomerkey FROM lsua, registrants, bulkcustomerinfo WHERE lsua.scored = 0 AND lsua.completed > 0 and lsua.userkey = registrants.userkey and bulkcustomerinfo.bulkcustomerkey = lsua.bulkcustomerkey ORDER BY `date` desc";
+$query_limit_rsLSUA = sprintf("%s limit %d, %d", $query_rsLSUA, $startRow_rsLSUA, $maxRows_rsLSUA);
+$rsLSUA = mysql_query($query_limit_rsLSUA, $Assessment) or die(mysql_error());
+$row_rsLSUA = mysql_fetch_assoc($rsLSUA);
+
+if (isset($_GET['totalrows_rslsua'])) {
+  $totalRows_rsLSUA = $_GET['totalrows_rslsua'];
+} else {
+  $all_rsLSUA = mysql_query($query_rsLSUA);
+  $totalRows_rsLSUA = mysql_num_rows($all_rsLSUA);
+}
+$totalPages_rsLSUA = ceil($totalRows_rsLSUA/$maxRows_rsLSUA)-1;
+
+//TOMLR Special List Recordset
+$maxRows_rsLSUA2 = 10;
+$pageNum_rsLSUA2 = 0;
+if (isset($_GET['pagenum_rslsua2'])) {
+  $pageNum_rsLSUA2 = $_GET['pagenum_rslsua2'];
+}
+$startRow_rsLSUA2 = $pageNum_rsLSUA2 * $maxRows_rsLSUA2;
+
+// Defining List Recordset variable
+$tfmsqlstr_rsLSUA2 = " WHERE 1=1 ";
+if (isset($tfmsqlstr)) {
+  $tfmsqlstr_rsLSUA2 = $tfmsqlstr;
+}
+mysql_select_db($database_Assessment, $Assessment);
+
+$query_rsLSUA2 = "SELECT LSUA.lsuakey, LSUA.`date`, LSUA.scored, LSUAscores.lasname, LSUA.manlevel, LSUA.username4clients, LSUAscores.lsuascoringkey, LSUA.finalized, LSUA.completed, LSUA.userkey, LSUA.confidence, LSUAscores.lasnumber_1, LSUAscores.confidencekey, LSUAscores.lasnumber_2, LSUAscores.coded, Registrants.userkey, Registrants.firstname, Registrants.lastname FROM LSUA, LSUAscores, Registrants {$tfmsqlstr_rsLSUA2}  AND LSUA.lsuakey=LSUAscores.lsuakey AND LSUA.scored>0 AND Registrants.userkey = LSUA.userkey ORDER BY LSUA.lsuakey DESC";
+$query_limit_rsLSUA2 = sprintf("%s limit %d, %d", $query_rsLSUA2, $startRow_rsLSUA2, $maxRows_rsLSUA2);
+$rsLSUA2 = mysql_query($query_limit_rsLSUA2, $Assessment) or die(mysql_error());
+$row_rsLSUA2 = mysql_fetch_assoc($rsLSUA2);
+
+if (isset($_GET['totalrows_rslsua2'])) {
+  $totalRows_rsLSUA2 = $_GET['totalrows_rslsua2'];
+} else {
+  $all_rsLSUA2 = mysql_query($query_rsLSUA2);
+  $totalRows_rsLSUA2 = mysql_num_rows($all_rsLSUA2);
+}
+$totalPages_rsLSUA2 = ceil($totalRows_rsLSUA2/$maxRows_rsLSUA2)-1;
+//End TOMLR Special List Recordset
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLSUA3 = "SELECT lsua.lsuakey, lsua.scored, lsua.completed, lsua.`date`, lsua.username4clients, lsua.userkey, registrants.userkey, registrants.firstname, registrants.lastname, bulkcustomerinfo.username4students, bulkcustomerinfo.bulkcustomerkey FROM lsua, registrants, bulkcustomerinfo WHERE lsua.scored = 0 AND lsua.completed < 1 and lsua.userkey = registrants.userkey and bulkcustomerinfo.bulkcustomerkey = lsua.bulkcustomerkey ORDER BY `date` desc";
+$rsLSUA3 = mysql_query($query_rsLSUA3, $Assessment) or die(mysql_error());
+$row_rsLSUA3 = mysql_fetch_assoc($rsLSUA3);
+$totalRows_rsLSUA3 = mysql_num_rows($rsLSUA3);
+
+$queryString_rsLSUA = "";
+if (!empty($_SERVER['query_string'])) {
+  $params = explode("&", $_SERVER['query_string']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsLSUA") == false && 
+        stristr($param, "totalRows_rsLSUA") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsLSUA = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsLSUA = sprintf("&totalrows_rslsua=%d%s", $totalRows_rsLSUA, $queryString_rsLSUA);
+
+
+$queryString_rsLSUA2 = "";
+if (!empty($_SERVER['query_string'])) {
+  $params = explode("&", $_SERVER['query_string']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsLSUA2") == false && 
+        stristr($param, "totalRows_rsLSUA2") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsLSUA2 = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsLSUA2 = sprintf("&totalrows_rslsua2=%d%s", $totalRows_rsLSUA2, $queryString_rsLSUA2);
+
+
+$queryString_rsLSUA3 = "";
+if (!empty($_SERVER['query_string'])) {
+  $params = explode("&", $_SERVER['query_string']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsLSUA3") == false && 
+        stristr($param, "totalRows_rsLSUA3") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsLSUA3 = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsLSUA3 = sprintf("&totalrows_rslsua3=%d%s", $totalRows_rsLSUA3, $queryString_rsLSUA3);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelsuascore1.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Choose an assessment</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #55799B;
+	background-image: url(/images/skin/LSUAbackground.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 1300px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LSUAheaderWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #7290B0;
+	background-image: url(/images/skin/LSUAmenu.jpg);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #7290B0;
+	background-image: url(/images/skin/LSUAmenu.jpg);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 1246px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 2;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footerWide.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:link {
+	color: #929292;
+}
+.twoColFixRtHdr #container .indent46 a:visited {
+	color: #929292;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:hover {
+	color: #474A47;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="#" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 --><a href="/scoring/chooseassessment.php">choose assessment</a> | <a href="/la_resources/resources_results.php">resources</a> | <a href="/scoring/chooselsua.php">choose lsua</a> | <a href="/scoring/bulkcustomerselect.php">sortable</a><a href="/scoring_lsua/lsua_sortable.php"></a> |&nbsp;<a href="/scoring_lsua/lsua_aspects1.php">aspects</a> | <a href="/scoring_lsua/lsua_generalcomment1.php">general comments</a> | <a href="/scoring_lsua/lsua_selfperspective1.php">self perspective</a> | <a href="/scoring_lsua/lsua_socialperspective1.php">social perspective</a> | <a href="/scoring_lsua/lsua_temporalperspective1.php">temporal perspective</a> | <a href="/scoring_lsua/lsua_selfevaluation1.php">self-evaluation</a> | <a href="/scoring_lsua/lsua_selfgrowth1.php">self growth</a> | <a href="/scoring_lsua/lsua_struggle1.php">implications</a> | <a href="/scoring_lsua/lsua_resources1.php">resources</a> |<br />
+<a href="/scoring_lsua/lsua_truecomment1.php">true comment</a> | <a href="/scoring_lsua/lsua_idealcomment1.php">ideal comment</a> | <a href="/scoring_lsua/lsua_recommendstrength1.php">recommendation strength</a> | <a href="/scoring_lsua/lsua_recommendgrowth1.php"> recommendation growth</a></div>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1>ASSESSMENTS TO SCORE, REPORTS TO VIEW    </h1>
+    <p>&nbsp;Records <?php echo ($startRow_rsLSUA + 1) ?> &nbsp;to <?php echo min($startRow_rsLSUA + $maxRows_rsLSUA, $totalRows_rsLSUA) ?>&nbsp;of <?php echo $totalRows_rsLSUA ?> :
+      <?php //$TFM_navLinks
+if ($pageNum_rsLSUA > 0) {
+  printf('<a href="'."%s?pageNum_rsLSUA=%d%s", $currentPage, 0, $queryString_rsLSUA.'">First</a>');
+}else{
+  echo "First";
+}
+echo " | ";
+if ($pageNum_rsLSUA > 0) {
+  printf('<a href="'."%s?pageNum_rsLSUA=%d%s", $currentPage, max(0, $pageNum_rsLSUA - 1), $queryString_rsLSUA.'">Previous</a>');
+}else{
+  echo "Previous";
+}
+echo " | ";
+if ($pageNum_rsLSUA < $totalPages_rsLSUA) { 
+  printf('<a href="'."%s?pageNum_rsLSUA=%d%s", $currentPage, $pageNum_rsLSUA + 1, $queryString_rsLSUA.'">Next</a>');
+}else{
+  echo "Next";
+}
+echo " | ";
+if ($pageNum_rsLSUA < $totalPages_rsLSUA) { 
+  printf('<a href="'."%s?pageNum_rsLSUA=%d%s", $currentPage, $totalPages_rsLSUA, $queryString_rsLSUA.'">Last</a>');
+}else{
+  echo "Last";
+}
+?>
+    </p>
+    <table width="700">
+      <tr>
+        <td class="tablehead"><div align="center">LSUA key</td>
+        <td class="tablehead">Date</td>
+        <td class="tablehead">First</td>
+        <td class="tablehead">Last</td>
+        <td class="tablehead">Customer</td>
+        <td class="tablehead">Customer ID</td>
+        <td class="tablehead">View</td>
+        <td class="tablehead">Score</td>
+      </tr>
+      <?php do { ?>
+      <tr>
+        <td><div align="center"><?php echo $row_rsLSUA['lsuakey']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLSUA['date']; ?></div></td>
+        <td><?php echo $row_rsLSUA['firstname']; ?>&nbsp;</td>
+        <td><?php echo $row_rsLSUA['lastname']; ?></td>
+        <td><div align="center"><?php echo $row_rsLSUA['username4students']; ?></div></td>
+        <td><?php echo $row_rsLSUA['bulkcustomerkey']; ?></td>
+        <td><div align="center"><a href="../scoring_lsua/lsua_check.php?lsuakey=<?php echo $row_rsLSUA['lsuakey']; ?>">view</a></div></td>
+        <td><div align="center"><a href="../scoring_lsua/lsuascoring.php?lsuakey=<?php echo $row_rsLSUA['lsuakey']; ?>">score</a></div></td>
+      </tr>
+      <?php } while ($row_rsLSUA = mysql_fetch_assoc($rsLSUA)); ?>
+    </table>
+    <p class="copyright">&nbsp;</p>
+    <p>&nbsp;Records <?php echo ($startRow_rsLSUA2 + 1) ?> &nbsp;to <?php echo min($startRow_rsLSUA2 + $maxRows_rsLSUA2, $totalRows_rsLSUA2) ?>&nbsp;of <?php echo $totalRows_rsLSUA2 ?> :
+      <?php //$TFM_navLinks
+if ($pageNum_rsLSUA2 > 0) {
+  printf('<a href="'."%s?pageNum_rsLSUA2=%d%s", $currentPage, 0, $queryString_rsLSUA2.'">First</a>');
+}else{
+  echo "First";
+}
+echo " | ";
+if ($pageNum_rsLSUA2 > 0) {
+  printf('<a href="'."%s?pageNum_rsLSUA2=%d%s", $currentPage, max(0, $pageNum_rsLSUA2 - 1), $queryString_rsLSUA2.'">Previous</a>');
+}else{
+  echo "Previous";
+}
+echo " | ";
+if ($pageNum_rsLSUA2 < $totalPages_rsLSUA2) { 
+  printf('<a href="'."%s?pageNum_rsLSUA2=%d%s", $currentPage, $pageNum_rsLSUA2 + 1, $queryString_rsLSUA2.'">Next</a>');
+}else{
+  echo "Next";
+}
+echo " | ";
+if ($pageNum_rsLSUA2 < $totalPages_rsLSUA2) { 
+  printf('<a href="'."%s?pageNum_rsLSUA2=%d%s", $currentPage, $totalPages_rsLSUA2, $queryString_rsLSUA2.'">Last</a>');
+}else{
+  echo "Last";
+}
+?>
+    </p>
+    <p>Second coder scores assessments with confidence levels below 3.</p>
+    <form action="" method="get" name="tfm_search" id="tfm_search">
+      <table cellspacing="0" cellpadding="0">
+        <tr>
+          <td><input type="text" name="search" style="width:200px" /></td>
+          <td><input type="radio" name="anyallexact" value="all" checked="checked" />
+            all words &nbsp;</td>
+          <td><input type="radio" name="anyallexact" value="any" />
+            any of the words &nbsp;</td>
+          <td><input type="radio" name="anyallexact" value="exact" />
+            exact phrase &nbsp;</td>
+          <td><input type="submit" value="Search" name="submit2" /></td>
+        </tr>
+      </table>
+    </form>
+    <table>
+      <tr>
+        <td class="tablehead">LSUA key</td>
+        <td class="tablehead">Date</td>
+        <td class="tablehead">First</td>
+        <td class="tablehead">Last</td>
+        <td class="tablehead">Score</td>
+        <td class="tablehead">Las 1</td>
+        <td class="tablehead">Conf</td>
+        <td class="tablehead">Las 2</td>
+        <td class="tablehead">Final</td>
+        <td class="tablehead">Coded</td>
+        <td class="tablehead">Code</td>
+        <td class="tablehead">1st scorer</td>
+        <td class="tablehead">Finalize ALL</td>
+        <td class="tablehead">Finalize BC</td>
+        <td class="tablehead">Report</td>
+        <td class="tablehead">2nd scorer</td>
+      </tr>
+      <?php do { ?>
+      <tr>
+        <td><div align="center"><?php echo $row_rsLSUA2['lsuakey']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLSUA2['date']; ?></div></td>
+        <td><div align="left"><?php echo $row_rsLSUA2['firstname']; ?></div></td>
+        <td><?php echo $row_rsLSUA2['lastname']; ?></td>
+        <td><div align="center"><?php echo $row_rsLSUA2['lasname']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLSUA2['lasnumber_1']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLSUA2['confidencekey']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLSUA2['lasnumber_2']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLSUA2['finalized']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLSUA2['coded']; ?></div></td>
+        <td><div align="center"><a href="../scoring_lsua/lsuacoding1.php?lsuakey=<?php echo $row_rsLSUA2['lsuakey']; ?>">code</a></div></td>
+        <td><div align="center"> <a href="../scoring_lsua/lsuascoringupdate.php?lsuakey=<?php echo $row_rsLSUA2['lsuakey']; ?>">edit</a></div></td>
+        <td><div align="center"><a href="../scoring_lsua/lsuascoringfinalize.php?lsuakey=<?php echo $row_rsLSUA2['lsuakey']; ?>&amp;userkey=<?php echo $row_rsLSUA2['userkey']; ?>">finalize all</a></div></td>
+        <td><div align="center"><a href="../scoring_lsua/lsuascoringfinalizereseller.php?ldmakey=<?php echo $row_rsLDMA2['ldmakey']; ?>">finalize bc</a></div></td>
+        <td><div align="center"><a href="../scoring_lsua/lsuareport.php?lsuakey=<?php echo $row_rsLSUA2['lsuakey']; ?>&amp;manlevel=<?php echo $row_rsLSUA2['manlevel']; ?>&amp;lasname=<?php echo $row_rsLSUA2['lasname']; ?>">report</a></div></td>
+        <td><div align="center"><a href="../scoring_lsua/lsuascoring1a.php?lsuakey=<?php echo $row_rsLSUA2['lsuakey']; ?>">score</a></div></td>
+      </tr>
+      <?php } while ($row_rsLSUA2 = mysql_fetch_assoc($rsLSUA2)); ?>
+  </table>
+<p class="copyright">&nbsp;</p>
+<p>&nbsp;Records <?php echo ($startRow_rsLSUA3 + 1) ?> &nbsp;to <?php echo min($startRow_rsLSUA3 + $maxRows_rsLSUA3, $totalRows_rsLSUA3) ?>&nbsp;of <?php echo $totalRows_rsLSUA3 ?> :
+  <?php //$TFM_navLinks
+if ($pageNum_rsLSUA3 > 0) {
+  printf('<a href="'."%s?pageNum_rsLSUA3=%d%s", $currentPage, 0, $queryString_rsLSUA3.'">First</a>');
+}else{
+  echo "First";
+}
+echo " | ";
+if ($pageNum_rsLSUA3 > 0) {
+  printf('<a href="'."%s?pageNum_rsLSUA3=%d%s", $currentPage, max(0, $pageNum_rsLSUA3 - 1), $queryString_rsLSUA3.'">Previous</a>');
+}else{
+  echo "Previous";
+}
+echo " | ";
+if ($pageNum_rsLSUA3 < $totalPages_rsLSUA3) { 
+  printf('<a href="'."%s?pageNum_rsLSUA3=%d%s", $currentPage, $pageNum_rsLSUA3 + 1, $queryString_rsLSUA3.'">Next</a>');
+}else{
+  echo "Next";
+}
+echo " | ";
+if ($pageNum_rsLSUA3 < $totalPages_rsLSUA3) { 
+  printf('<a href="'."%s?pageNum_rsLSUA3=%d%s", $currentPage, $totalPages_rsLSUA3, $queryString_rsLSUA3.'">Last</a>');
+}else{
+  echo "Last";
+}
+?>
+</p>
+<table>
+            <tr>
+              <td class="tablehead">LSUA key</td>
+              <td class="tablehead">Date</td>
+              <td class="tablehead">First</td>
+              <td class="tablehead">Last</td>
+              <td class="tablehead">Customer</td>
+              <td class="tablehead">Customer ID</td>
+              <td class="tablehead">View</td>
+            </tr>
+            <?php do { ?>
+            <tr>
+              <td><div align="center"><?php echo $row_rsLSUA3['lsuakey']; ?></div></td>
+              <td><div align="center"><?php echo $row_rsLSUA3['date']; ?></div></td>
+              <td><?php echo $row_rsLSUA3['firstname']; ?></td>
+              <td><?php echo $row_rsLSUA3['lastname']; ?></td>
+              <td><div align="center"><?php echo $row_rsLSUA3['username4students']; ?></div></td>
+              <td><?php echo $row_rsLSUA3['bulkcustomerkey']; ?></td>
+              <td><div align="center"><a href="../scoring_lsua/lsua_check.php?lsuakey=<?php echo $row_rsLSUA3['lsuakey']; ?>">view</a></div></td>
+            </tr>
+<?php } while ($row_rsLSUA3 = mysql_fetch_assoc($rsLSUA3)); ?>
+  </table>
+          <p>&nbsp;</p>
+    <p>&nbsp;</p>
+    
+    <div align="center"></div>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLSUA);
+
+mysql_free_result($rsLSUA2);
+
+mysql_free_result($rsLSUA3);
+?>

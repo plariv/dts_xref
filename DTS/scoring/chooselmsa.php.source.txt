@@ -1,0 +1,350 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLMSA = "SELECT lmsa.lmsakey, lmsa.coded, lmsa.`date`, lmsa.userkey, lmsa.username4clients, registrants.userkey, registrants.lastname FROM lmsa, registrants WHERE coded = 0 AND registrants.userkey = lmsa.userkey ORDER BY `date` desc";
+$rsLMSA = mysql_query($query_rsLMSA, $Assessment) or die(mysql_error());
+$row_rsLMSA = mysql_fetch_assoc($rsLMSA);
+$totalRows_rsLMSA = mysql_num_rows($rsLMSA);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsManlevel = "SELECT managementlevel.manlevelkey, ldmamil.manlevel FROM managementlevel, ldmamil WHERE ldmamil.manlevel = managementlevel.manlevelkey";
+$rsManlevel = mysql_query($query_rsManlevel, $Assessment) or die(mysql_error());
+$row_rsManlevel = mysql_fetch_assoc($rsManlevel);
+$totalRows_rsManlevel = mysql_num_rows($rsManlevel);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLMSA2 = "SELECT lmsa.lmsakey, lmsa.`date`, lmsa.coded, lmsascores.lasnameself, lmsascores.lasnamerj, lmsascores.lasnameethics, lmsa.manlevel, lmsascores.lmsascoringkey, lmsascores.scored, lmsa.username4clients, registrants.userkey, registrants.lastname, lmsa.userkey, lmsa.finalized FROM lmsa, lmsascores, registrants WHERE lmsa.lmsakey=lmsascores.lmsakey AND lmsascores.scored>0 and registrants.userkey = lmsa.userkey ORDER BY lmsa.`date` desc";
+$rsLMSA2 = mysql_query($query_rsLMSA2, $Assessment) or die(mysql_error());
+$row_rsLMSA2 = mysql_fetch_assoc($rsLMSA2);
+$totalRows_rsLMSA2 = mysql_num_rows($rsLMSA2);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateadmin2.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Choose an assessment</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	background-image: url();
+	background-repeat: repeat;
+	background-color: #EDEEE9;
+}
+#apDiv1 {
+	position:absolute;
+	left:0;
+	top:0px;
+	width:780px;
+	height:110;
+	z-index:15;
+}
+#apDiv2 {
+	position:absolute;
+	left:43px;
+	top:122px;
+	width:780px;
+	height:17px;
+	z-index:4;
+}
+#apDiv3 {
+	position:absolute;
+	left:168px;
+	top:295px;
+	width:539px;
+	height:17px;
+	z-index:8;
+}
+#apDiv4 {
+	position:absolute;
+	left:704px;
+	top:122px;
+	width:42px;
+	height:17px;
+	z-index:3;
+}
+#apDiv5 {
+	position:absolute;
+	left:110px;
+	top:113px;
+	width:782px;
+	z-index:5;
+}
+#apDiv6 {
+	position:absolute;
+	left:260px;
+	top:135px;
+	width:522px;
+	z-index:6;
+}
+#apDiv7 {
+	position:absolute;
+	left:127px;
+	top:941px;
+	width:625px;
+	height:15px;
+	z-index:7;
+}
+#apDiv8 {
+	position:absolute;
+	left:83px;
+	top:257px;
+	width:147px;
+	height:269px;
+	z-index:8;
+}
+#apDiv9 {
+	position:absolute;
+	left:83px;
+	top:586px;
+	width:146px;
+	z-index:9;
+	background-color: #FFFFFF;
+	height: 233px;
+}
+#apDiv10 {
+	position:absolute;
+	left:83px;
+	top:134px;
+	width:146px;
+	height:107px;
+	z-index:10;
+}
+#apDiv11 {
+	position:absolute;
+	left:84px;
+	top:926px;
+	width:145px;
+	height:45px;
+	z-index:11;
+}
+#apDiv12 {
+	position:absolute;
+	left:83px;
+	top:836px;
+	width:146px;
+	height:54px;
+	z-index:12;
+}
+-->
+</style>
+<link href="../css/styles1.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+<!--
+#apDiv13 {
+	position:absolute;
+	left:82px;
+	top:806px;
+	width:147px;
+	height:3px;
+	z-index:13;
+	background-color: #627ECF;
+}
+.style11 {
+	font-size: 10px
+}
+.style4 {	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10px;
+}
+#apDiv16 {	position:absolute;
+	left:4px;
+	top:3px;
+	width:30px;
+	height:28px;
+	z-index:14;
+}
+#apDiv17 {
+	position:absolute;
+	left:120px;
+	top:62px;
+	width:802px;
+	height:21px;
+	z-index:16;
+	padding-top: 4px;
+}
+-->
+</style>
+<script src="../SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+#apDiv14 {
+	position:absolute;
+	left:36px;
+	top:68px;
+	width:266px;
+	height:17px;
+	z-index:17;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="apDiv1"><img src="../images/dtsskinold/DTSheader1.gif" alt="DTS masthead" width="1000" height="66" /></div>
+<div id="apDiv5"><!-- InstanceBeginEditable name="main" -->
+  <td valign="top"><h1><br />
+    <img src="../images/logos/LMSA.gif" alt="ldma" width="72" height="29" align="absmiddle" /></h1>
+    <h1>ASSESSMENTS TO SCORE, REPORTS TO VIEW</h1>
+<p><a href="../scoring_lsua/lsua_aspects1.php">LSUA aspects</a> | <a href="../scoring_lera/lera_essaycom.php">LERA essay comments</a> |<a href="../scoring_lera/lera_generalcom.php">LERAgeneral comment</a> | <a href="../scoring_lera/lera_strengths.php">LERAstrengths</a> | <a href="../scoring_lera/lera_growthareas.php">LERAgrowth areas</a> | <a href="../scoring_lera/lera_resources.php">LERAresources</a> | <a href="../scoring_lera/lera_personalcom.php">LERA personal comments</a> | <a href="../scoring_lrja/lrja-personalcom1.php">LRJApersonal comments</a> | <a href="../scoring/lrja-general.php">LRJAgeneral comments</a> | <a href="../scoring/lrjaevaluate1.php">LRJAevaluate</a> | <a href="../scoring_lrja/lrja-complexity1.php">LRJAcomplexity</a> | <a href="../scoring/lrja-evaluate1.php">LRJAevaluate</a> | <a href="../scoring_lrja/lrja-inquiry1.php">LRJAinquiry</a> | <a href="../scoring_lrja/lrja-relativism1.php">LRJArelativism</a> | <a href="../scoring/lrjatruth1.php">LRJAtruth</a> | <a href="../scoring/lrja-strengths1.php">LRJAstrengths</a> | <a href="../scoring/lrjagrowthareas1.php">LRJAgrowth areas</a> | <a href="../scoring/lrja-resources1.php">LRJAresources</a></p>
+    <p></p>
+<p>&nbsp;</p>
+    <table class="tableindent">
+      <tr class="lmsabackground">
+        <td class="tablehead3">LMSA key</td>
+        <td width="130" class="tablehead3">Date</td>
+        <td width="100" class="tablehead3">Reseller</td>
+        <td width="100" class="tablehead3">Name</td>
+        <td width="100" class="tablehead3">Score</td>
+        <td width="100" class="tablehead3">View</td>
+      </tr>
+      <?php do { ?>
+      <tr>
+        <td><div>
+          <div align="center"><?php echo $row_rsLMSA['lmsakey']; ?></div>
+        </div></td>
+        <td width="130"><div>
+          <div align="center"><?php echo $row_rsLMSA['date']; ?></div>
+        </div></td>
+        <td width="100"><div>
+          <div align="center"><?php echo $row_rsLMSA['username4clients']; ?></div>
+        </div></td>
+        <td width="100"><div align="center"><?php echo $row_rsLMSA['lastname']; ?></div></td>
+        <td width="100"><div>
+          <div align="center"><a href="../codingLMSA/lmsa-lsuascoring.php?lmsakey=<?php echo $row_rsLMSA['lmsakey']; ?>">score</a></div>
+        </div></td>
+        <td width="100"><div align="center"><a href="../codingLMSA/lmsacheck.php?lmsakey=<?php echo $row_rsLMSA['lmsakey']; ?>">view</a></div></td>
+      </tr>
+      <?php } while ($row_rsLMSA = mysql_fetch_assoc($rsLMSA)); ?>
+    </table>
+    <p>&nbsp;</p>
+    <table width="100%" class="tableindent">
+      <tr class="lmsabackground">
+        <td class="tablehead3">&nbsp;</td>
+        <td width="130" class="tablehead3">&nbsp;</td>
+        <td class="tablehead3"><div align="left">Reseller</div></td>
+        <td class="tablehead3"><div align="left">Name</div></td>
+        <td class="tablehead3">Self</td>
+        <td class="tablehead3">Ethics</td>
+        <td class="tablehead3">RJ</td>
+        <td class="tablehead3">Coded</td>
+        <td class="tablehead3">Finalized</td>
+        <td class="tablehead3">Report</td>
+        <td class="tablehead3">Edit</td>
+        <td class="tablehead3">Finalize</td>
+      </tr>
+      <?php do { ?>
+      <tr>
+        <td><div align="center"><?php echo $row_rsLMSA2['lmsakey']; ?></div></td>
+        <td width="130"><div align="center"><?php echo $row_rsLMSA2['date']; ?></div></td>
+        <td><div align="left"><?php echo $row_rsLMSA2['username4clients']; ?></div></td>
+        <td><div align="left"><?php echo $row_rsLMSA2['lastname']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLMSA2['lasnameself']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLMSA2['lasnameethics']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLMSA2['lasnamerj']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLMSA2['coded']; ?></div></td>
+        <td><div align="center"><?php echo $row_rsLMSA2['finalized']; ?></div></td>
+        <td><div align="center"><a href="../scoring_lmsa/lmsareport.php?lmsakey=<?php echo $row_rsLMSA2['lmsakey']; ?>&amp;lmsascoringkey=<?php echo $row_rsLMSA2['lmsascoringkey']; ?>&amp;lasnameself=<?php echo $row_rsLMSA2['lasnameself']; ?>&amp;lasnamerj=<?php echo $row_rsLMSA2['lasnamerj']; ?>&amp;lasnameethics=<?php echo $row_rsLMSA2['lasnameethics']; ?>">select</a></div></td>
+        <td><div align="center"><a href="../codingLMSA/lmsa-lsuascoring.php?lmsascoringkey=<?php echo $row_rsLMSA2['lmsascoringkey']; ?>&amp;lmsakey=<?php echo $row_rsLMSA2['lmsakey']; ?>">edit</a></div></td>
+        <td><div align="center"><a href="../codingLMSA/lmsafinalize.php?lmsascoringkey=<?php echo $row_rsLMSA2['lmsascoringkey']; ?>&amp;lmsakey=<?php echo $row_rsLMSA2['lmsakey']; ?>&amp;userkey=<?php echo $row_rsLMSA2['userkey']; ?>">finalize</a></div></td>
+      </tr>
+      <?php } while ($row_rsLMSA2 = mysql_fetch_assoc($rsLMSA2)); ?>
+    </table>
+    <p></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+    <p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+  <p>&nbsp;</p>
+  <div align="center" class="copyright">
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+  </div>
+</div>
+<div id="apDiv17">
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="../security/logIn.php">log in</a></li>
+    <li><a href="../index.html">home</a></li>
+    <li><a href="../contactus.php">contact</a></li>
+    <li><a href="chooseassessment.php">scoring</a></li>
+    <li><a href="../" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="../training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="../training/tr-choose.php">analysts</a></li>
+      </ul>
+    </li>
+    <li><a href="../analysis/a.php">analysis</a></li>
+    <li><a href="../projects/partnerchoices.php">research</a></li>
+    <li><a href="../assessments/assessmentsOLD/select_assess.php">assess</a></li>
+    <li><a href="../graphics/graphics.php">graphics</a></li>
+    <li><a href="../admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="../admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="../admin/registrations.php">registrants</a></li>
+        <li><a href="../admin/emailtoemaillist.php">MAIL TO EMAIL LIST</a></li>
+        <li><a href="../admin/emailtoregistrants.php">MAIL TO REGISTRANTS</a></li>
+        <li><a href="../admin/emailtoresellers.php">MAIL TO RESELLERS</a></li>
+        <li><a href="../admin/emailrecipientdelete1.php">delete email receipient</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"../SpryAssets/SpryMenuBarDownHover.gif", imgRight:"../SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLMSA2);
+
+mysql_free_result($rsCoders);
+
+mysql_free_result($rsLMSA);
+
+mysql_free_result($rsManlevel);
+?>

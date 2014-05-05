@@ -1,0 +1,367 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as analyst")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$currentPage = $_SERVER["PHP_SELF"];
+
+$maxRows_rsLMBE = 10;
+$pageNum_rsLMBE = 0;
+if (isset($_GET['pageNum_rsLMBE'])) {
+  $pageNum_rsLMBE = $_GET['pageNum_rsLMBE'];
+}
+$startRow_rsLMBE = $pageNum_rsLMBE * $maxRows_rsLMBE;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLMBE = "SELECT lmbekey, `date`, coded FROM LMBE WHERE coded = 0 ORDER BY `date` DESC";
+$query_limit_rsLMBE = sprintf("%s LIMIT %d, %d", $query_rsLMBE, $startRow_rsLMBE, $maxRows_rsLMBE);
+$rsLMBE = mysql_query($query_limit_rsLMBE, $Assessment) or die(mysql_error());
+$row_rsLMBE = mysql_fetch_assoc($rsLMBE);
+
+if (isset($_GET['totalRows_rsLMBE'])) {
+  $totalRows_rsLMBE = $_GET['totalRows_rsLMBE'];
+} else {
+  $all_rsLMBE = mysql_query($query_rsLMBE);
+  $totalRows_rsLMBE = mysql_num_rows($all_rsLMBE);
+}
+$totalPages_rsLMBE = ceil($totalRows_rsLMBE/$maxRows_rsLMBE)-1;
+
+$maxRows_rsLMBE2 = 10;
+$pageNum_rsLMBE2 = 0;
+if (isset($_GET['pageNum_rsLMBE2'])) {
+  $pageNum_rsLMBE2 = $_GET['pageNum_rsLMBE2'];
+}
+$startRow_rsLMBE2 = $pageNum_rsLMBE2 * $maxRows_rsLMBE2;
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLMBE2 = "SELECT LMBE.lmbekey, LMBE.`date`, LMBE.coded, LMBEscores.lasname,  LMBEscores.lmbescoringkey FROM LMBE, LMBEscores WHERE LMBE.lmbekey=LMBEscores.lmbekey AND LMBE.coded>0 ORDER BY LMBE.`date` DESC";
+$query_limit_rsLMBE2 = sprintf("%s LIMIT %d, %d", $query_rsLMBE2, $startRow_rsLMBE2, $maxRows_rsLMBE2);
+$rsLMBE2 = mysql_query($query_limit_rsLMBE2, $Assessment) or die(mysql_error());
+$row_rsLMBE2 = mysql_fetch_assoc($rsLMBE2);
+
+if (isset($_GET['totalRows_rsLMBE2'])) {
+  $totalRows_rsLMBE2 = $_GET['totalRows_rsLMBE2'];
+} else {
+  $all_rsLMBE2 = mysql_query($query_rsLMBE2);
+  $totalRows_rsLMBE2 = mysql_num_rows($all_rsLMBE2);
+}
+$totalPages_rsLMBE2 = ceil($totalRows_rsLMBE2/$maxRows_rsLMBE2)-1;
+
+$queryString_rsLMBE = "";
+if (!empty($_SERVER['QUERY_STRING'])) {
+  $params = explode("&", $_SERVER['QUERY_STRING']);
+  $newParams = array();
+  foreach ($params as $param) {
+    if (stristr($param, "pageNum_rsLMBE") == false && 
+        stristr($param, "totalRows_rsLMBE") == false) {
+      array_push($newParams, $param);
+    }
+  }
+  if (count($newParams) != 0) {
+    $queryString_rsLMBE = "&" . htmlentities(implode("&", $newParams));
+  }
+}
+$queryString_rsLMBE = sprintf("&totalRows_rsLMBE=%d%s", $totalRows_rsLMBE, $queryString_rsLMBE);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateadmin2.dwt" codeOutsideHTMLIsLocked="false" -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: Choose an assessment</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEndEditable -->
+<style type="text/css">
+<!--
+body {
+	background-image: url();
+	background-repeat: repeat;
+	background-color: #EDEEE9;
+}
+#apDiv1 {
+	position:absolute;
+	left:0;
+	top:0px;
+	width:780px;
+	height:110;
+	z-index:15;
+}
+#apDiv2 {
+	position:absolute;
+	left:43px;
+	top:122px;
+	width:780px;
+	height:17px;
+	z-index:4;
+}
+#apDiv3 {
+	position:absolute;
+	left:168px;
+	top:295px;
+	width:539px;
+	height:17px;
+	z-index:8;
+}
+#apDiv4 {
+	position:absolute;
+	left:704px;
+	top:122px;
+	width:42px;
+	height:17px;
+	z-index:3;
+}
+#apDiv5 {
+	position:absolute;
+	left:110px;
+	top:113px;
+	width:782px;
+	z-index:5;
+}
+#apDiv6 {
+	position:absolute;
+	left:260px;
+	top:135px;
+	width:522px;
+	z-index:6;
+}
+#apDiv7 {
+	position:absolute;
+	left:127px;
+	top:941px;
+	width:625px;
+	height:15px;
+	z-index:7;
+}
+#apDiv8 {
+	position:absolute;
+	left:83px;
+	top:257px;
+	width:147px;
+	height:269px;
+	z-index:8;
+}
+#apDiv9 {
+	position:absolute;
+	left:83px;
+	top:586px;
+	width:146px;
+	z-index:9;
+	background-color: #FFFFFF;
+	height: 233px;
+}
+#apDiv10 {
+	position:absolute;
+	left:83px;
+	top:134px;
+	width:146px;
+	height:107px;
+	z-index:10;
+}
+#apDiv11 {
+	position:absolute;
+	left:84px;
+	top:926px;
+	width:145px;
+	height:45px;
+	z-index:11;
+}
+#apDiv12 {
+	position:absolute;
+	left:83px;
+	top:836px;
+	width:146px;
+	height:54px;
+	z-index:12;
+}
+-->
+</style>
+<link href="../css/styles1.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+<!--
+#apDiv13 {
+	position:absolute;
+	left:82px;
+	top:806px;
+	width:147px;
+	height:3px;
+	z-index:13;
+	background-color: #627ECF;
+}
+.style11 {
+	font-size: 10px
+}
+.style4 {	font-family: Arial, Helvetica, sans-serif;
+	font-size: 10px;
+}
+#apDiv16 {	position:absolute;
+	left:4px;
+	top:3px;
+	width:30px;
+	height:28px;
+	z-index:14;
+}
+#apDiv17 {
+	position:absolute;
+	left:120px;
+	top:62px;
+	width:802px;
+	height:21px;
+	z-index:16;
+	padding-top: 4px;
+}
+-->
+</style>
+<script src="../SpryAssets/SpryMenuBar.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+#apDiv14 {
+	position:absolute;
+	left:36px;
+	top:68px;
+	width:266px;
+	height:17px;
+	z-index:17;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="apDiv1"><img src="../images/dtsskinold/DTSheader1.gif" alt="DTS masthead" width="1000" height="66" /></div>
+<div id="apDiv5"><!-- InstanceBeginEditable name="main" -->
+  <td valign="top"><h1><br />
+      <a href="chooselmbe.php"><img src="../images/logos/LMBE.jpg" width="72" height="29" alt="LMBE" /></a> </h1>
+    <h1>ASSESSMENTS TO SCORE, REPORTS TO VIEW</h1>
+<p>&nbsp;</p>
+          <p class="copyright">From&nbsp;<?php echo ($startRow_rsLMBE + 1) ?> to&nbsp;<?php echo min($startRow_rsLMBE + $maxRows_rsLMBE, $totalRows_rsLMBE) ?> of&nbsp;<?php echo $totalRows_rsLMBE ?></p>
+          <p class="copyright">&nbsp;<a href="<?php printf("%s?pageNum_rsLMBE=%d%s", $currentPage, 0, $queryString_rsLMBE); ?>">First</a> |&nbsp;<a href="<?php printf("%s?pageNum_rsLMBE=%d%s", $currentPage, max(0, $pageNum_rsLMBE - 1), $queryString_rsLMBE); ?>">Previous</a> |&nbsp;<a href="<?php printf("%s?pageNum_rsLMBE=%d%s", $currentPage, min($totalPages_rsLMBE, $pageNum_rsLMBE + 1), $queryString_rsLMBE); ?>">Next</a> |&nbsp;<a href="<?php printf("%s?pageNum_rsLMBE=%d%s", $currentPage, $totalPages_rsLMBE, $queryString_rsLMBE); ?>">Last</a></p>
+          <table class="tableindent">
+            <tr>
+              <td width="70" class="tablehead"><div align="center">LMBE key</div></td>
+              <td width="140" class="tablehead"><div align="center">Date</div></td>
+              <td width="100" class="tablehead"><div align="center"><strong>Select assessment</strong></div></td>
+            </tr>
+            <?php do { ?>
+            <tr>
+              <td width="100"><div align="center"><?php echo $row_rsLMBE['lmbekey']; ?></div></td>
+              <td width="150"><div align="center"><?php echo $row_rsLMBE['date']; ?></div></td>
+              <td width="100"><div align="center"><a href="../codingLMBE/lmbescoring.php?lmbekey=<?php echo $row_rsLMBE['lmbekey']; ?>">select</a></div></td>
+            </tr>
+            <?php } while ($row_rsLMBE = mysql_fetch_assoc($rsLMBE)); ?>
+          </table>
+          <p>&nbsp;</p>
+    <p class="copyright">From&nbsp;<?php echo ($startRow_rsLMBE2 + 1) ?> to&nbsp;<?php echo min($startRow_rsLMBE2 + $maxRows_rsLMBE2, $totalRows_rsLMBE2) ?> of&nbsp;<?php echo $totalRows_rsLMBE2 ?></p>
+          <p class="copyright">&nbsp;<a href="<?php printf("%s?pageNum_rsLMBE2=%d%s", $currentPage, 0, $queryString_rsLMBE2); ?>">First</a> |&nbsp;<a href="<?php printf("%s?pageNum_rsLMBE2=%d%s", $currentPage, max(0, $pageNum_rsLMBE2 - 1), $queryString_rsLMBE2); ?>">Previous</a> |&nbsp;<a href="<?php printf("%s?pageNum_rsLMBE2=%d%s", $currentPage, min($totalPages_rsLMBE2, $pageNum_rsLMBE2 + 1), $queryString_rsLMBE2); ?>">Next</a> |&nbsp;<a href="<?php printf("%s?pageNum_rsLMBE2=%d%s", $currentPage, $totalPages_rsLMBE2, $queryString_rsLMBE2); ?>">Last</a>          </p>
+          <table width="100%" class="tableindent">
+            <tr>
+              <td width="70" class="tablehead"><div align="center">Key</div></td>
+              <td width="140" class="tablehead"><div align="center">Date</div></td>
+              <td width="70" class="tablehead"><div align="center"><strong>Level</strong></div></td>
+              <td width="70" class="tablehead"><div align="center"><strong>Report</strong></div></td>
+              <td width="70" class="tablehead"><div align="center">Edit</div></td>
+            </tr>
+            <tr>
+              <?php do { ?>
+                <td width="100"><div align="center"><?php echo $row_rsLMBE2['lmbekey']; ?></div></td>
+                <td width="160"><div align="center"><?php echo $row_rsLMBE2['date']; ?></div></td>
+                <td width="100"><div align="center"><?php echo $row_rsLMBE2['lasname']; ?></div></td>
+                <td width="100"><div align="center"><a href="../codingLMBE/lmbereport.php?lmbekey=<?php echo $row_rsLMBE2['lmbekey']; ?>&amp;lasname=<?php echo $row_rsLMBE2['lasname']; ?>">select</a></div></td>
+                <td width="100"><div align="center"><a href="../codingLMBE/lmbescoring.php?lmbescoringkey=<?php echo $row_rsLMBE2['lmbescoringkey']; ?>&amp;lmbekey=<?php echo $row_rsLMBE2['lmbekey']; ?>">select</a></div></td>
+                <?php } while ($row_rsLMBE2 = mysql_fetch_assoc($rsLMBE2)); ?>
+            </tr>
+          </table>
+    <p>&nbsp;</p>
+<p>&nbsp;</p>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+          <p>&nbsp;</p>
+    <p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+  <p>&nbsp;</p>
+  <div align="center" class="copyright">
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+  </div>
+</div>
+<div id="apDiv17">
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="../security/logIn.php">log in</a></li>
+    <li><a href="../index.html">home</a></li>
+    <li><a href="../contactus.php">contact</a></li>
+    <li><a href="../scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="../" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="../training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="../training/tr-choose.php">analysts</a></li>
+      </ul>
+    </li>
+    <li><a href="../analysis/a.php">analysis</a></li>
+    <li><a href="../projects/partnerchoices.php">research</a></li>
+    <li><a href="../assessments/select_assess.php">assess</a></li>
+    <li><a href="../graphics/graphics.php">graphics</a></li>
+    <li><a href="../admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="../admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="../admin/registrations.php">registrants</a></li>
+        <li><a href="../admin/emailtoemaillist.php">MAIL TO EMAIL LIST</a></li>
+        <li><a href="../admin/emailtoregistrants.php">MAIL TO REGISTRANTS</a></li>
+        <li><a href="../admin/emailtoresellers.php">MAIL TO RESELLERS</a></li>
+        <li><a href="../admin/emailrecipientdelete1.php">delete email receipient</a></li>
+      </ul>
+    </li>
+  </ul>
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"../SpryAssets/SpryMenuBarDownHover.gif", imgRight:"../SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsCoders);
+
+mysql_free_result($rsLMBE);
+
+mysql_free_result($rsLMBE2);
+
+?>

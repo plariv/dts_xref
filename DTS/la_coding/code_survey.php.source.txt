@@ -1,0 +1,528 @@
+<?php 
+include_once ("../includes/dts_functions.php");
+
+if (!WA_Auth_RulePasses("Logged in to registrants")) { WA_Auth_RestrictAccess("../security/logIn.php"); }
+$userkey = $_SESSION['log_userkey'];
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) { WA_Auth_RestrictAccess("../select_instrument.php"); }
+
+// Initializing frequently used variables
+$currentPage = $_SERVER['PHP_SELF'];
+$editFormAction = $currentPage."?".$_SERVER['QUERY_STRING'];
+// $instrument_id should be "LERA" or "LERA_JOURNAL" when reaching the page, then set to "EE_SURVEY"
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_base = str_replace("_JOURNAL", "", $instrument_id);
+$instrument_id_name = str_replace("_", " ", $instrument_id);
+
+$lakey = 0;	// $lakey is structurally optional
+if (isset($_GET['lakey'])) { $lakey = $_GET['lakey']; }
+$part = 1;	// $part = what 'page' of the survey. Default only 1 page.
+if (isset($_GET['part'])) { $part = $_GET['part']; }
+
+// Figure out which coder you are, and which coding table you should be writing to
+$coder = 0;
+if (isset($_GET['coder'])) { $coder = SQLstr($_GET['coder'], "int"); }
+if (isset($_GET['scorer_no'])) { $coder = 1; }
+$table = "la_codes_".$coder;
+$table = str_replace("_1", "", $table);
+
+
+
+// Recordset: la_codes or la_codes_2 depending on who's using the page
+$query_rsData = sprintf("SELECT d.userkey, d.coded_1, d.finalized
+	FROM la_data d WHERE d.lakey = %s", SQLstr($lakey, "int"));
+$rsData = mysql_query($query_rsData) or die("rsData: ".mysql_error());
+$row_rsData = mysql_fetch_assoc($rsData);
+
+// if you (coder) are the person who took this assessment, treat you as a student.
+// Students have a slightly different page:
+// - their codes are saved in a different slot (100 later)
+// - the survey_stems query might filter out certain themes
+$status_student = false;
+$status_teacher = false;
+if ($row_rsData['userkey'] == $userkey) { $status_student = true; }
+if (!WA_Auth_RulePasses("Logged in as coder") AND !$status_student) { $status_teacher = true; }
+
+// The menu name for the survey menus: [instrument][part#]
+$survey_menus = array(
+	'LERA' => array("", "lera_coding_survey1", "CHECKBOXES"),
+	'SMJ' => array("", "reflection_quality")
+);
+
+$filter_category_student = array(
+	'LERA' => " ",
+	'SMJ' => " AND s.category <> 'teachers' "
+);
+
+// if you're student-coding and you've already coded this record, kick you out.
+if ($status_student AND $row_rsData['finalized'] > 0) { 
+	header("Location: ../la_reports/report_individual.php?lakey=".$lakey); exit();
+}
+
+
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+	// topher("Starting update loop."); topher();
+	$codes_to_save = "";
+	if (isset($_POST['codes_to_save'])) { $codes_to_save = " ".$_POST['codes_to_save']; }
+	// track whether the user should be allowed to move on to the next page / finish.
+	$missed_selections = 0;
+	
+	// Prepare to save averages
+	// Averages-arrays are left undeclared if they're irrelevant.
+	if ($instrument_id == "SMJ") { 
+		$avg_low = 	 array(101, 001, 021);
+		$avg_high =  array(120, 020, 040);
+		$avg_slots = array(481, 482, 483);
+	}
+	$avg_scores = array();	// 2D array: [index of average][index of score]
+	
+	// add each potential survey stem codeslot to the queue to save
+	$save_stems = "";
+	for ($i = zeropad(1, 3); $i < 500; $i = zeropad($i+1, 3)) {
+		// if this selection exists, save it
+		if (isset($_POST['code'.$i]) OR strpos($codes_to_save, $i)) {
+			$selection = (isset($_POST['code'.$i]) ? $_POST['code'.$i] : 0);
+			$save_stems .= sprintf(" code{$i} = %s, ", SQLstr($selection, 'int'));
+			// Track how many selections were missing
+			if (isset($_POST['code'.$i]) AND $_POST['code'.$i] == "") { $missed_selections ++; }
+			
+			// Add this code to an average, if any is relevant
+			for ($j = 0; isset($avg_slots[$j]); $j ++) {
+				// If this code slot # is between the low + high slot #s, use it.
+				// (This structure allows for a code to be used in multiple averages.)
+				if ($i >= $avg_low[$j] AND $i <= $avg_high[$j]) { 
+					// look up the value for this menukey
+					$sql_rsValue = sprintf("SELECT item_value 
+						FROM la_menus WHERE menukey = %s ",
+							SQLstr($selection, 'int'));
+					$rsValue = mysql_query($sql_rsValue) or die(mysql_error());
+					$row_rsValue = mysql_fetch_assoc($rsValue);
+					// and add it to the list of values to average together.
+					$avg_scores[$j][] = $row_rsValue['item_value'];
+					// echo $sql_rsValue."<br>";
+					// echo "Code {$i} value = ".$row_rsValue['item_value']."<br>";
+				}
+			} // end FOR: check each average defined, to see if this code should be added
+		} // end IF: if this code was marked, or among the list to save
+	} // end FOR: for each possible code coded
+	// die("Stems: ".$save_stems."<br> missed selections: ".$missed_selections);
+	
+	// Calculate average score for each defined average
+	$save_averages = "";
+	for ($j = 0; isset($avg_slots[$j]); $j ++) { 
+		// ONLY calculate this average if some codes for this average were shown + selected on the page.
+		if (isset($avg_scores[$j])) {
+			$this_avg_score = 0;
+			if (count($avg_scores[$j]) > 0) { 
+				$this_avg_score = (array_sum($avg_scores[$j]) / count($avg_scores[$j]));
+			}
+			$save_averages .= sprintf(" code%s = %s, ", $avg_slots[$j], SQLstr($this_avg_score, 'double'));
+		}
+	}
+	
+	$updateSQL = sprintf("UPDATE {$table} c JOIN la_data d ON c.lakey = d.lakey 
+		SET {$save_stems} {$save_averages} %s codercomment=%s, code_recommend=%s
+		WHERE c.lakey = %s ",
+			// When students code, their records are immediately finalized so they can view the report.
+			(($status_student == true AND $missed_selections == 0) ? 
+				" d.finalized = 1, d.date_released = NOW(), " : ""), 
+			SQLstr($_POST['codercomment'], 'text'),
+			SQLstr($_POST['code_recommend'], 'text'),
+    	SQLstr($lakey, 'int'));
+	// echo $updateSQL; exit();
+  $result = mysql_query($updateSQL) or die("ERROR saving survey codes to {$table}!");
+	
+	// Only go onto the next page if "SAVE AND NEXT" button was clicked, and if no selections missing
+	if (!isset($_POST['save_changes']) AND $missed_selections == 0) {
+		// $numParts tells us whether to go to the "finished" page or to refresh on this page again.
+		$updateGoTo = $currentPage."?part=".($part+1)."&";
+		if ($_POST['numparts'] <= $part) { // leave the coder survey section?
+			if ($instrument_id == "SMJ" AND $status_student) { 
+				$updateGoTo = "../la_reports/report_individual.php?";
+			} else if ($instrument_id == "SMJ") {
+				$updateGoTo = "code_rubrics.php?";
+			} else {
+				$updateGoTo = "coding_confidence.php?";
+			}
+		} 
+		header("Location: ".$updateGoTo.$_SERVER['QUERY_STRING']); exit();
+	}
+}
+
+
+
+//	Recordset: All the essay, dilemma, probe, and menu-choice data.
+$query_rsEssays = sprintf("SELECT r.userkey, r.firstname, r.lastname, 
+	di.dilemmakey, di.dilemma_name, di.dilemma, d.module_number, eng.english_quality, lang.language, 
+	d.probe01, d.probe02, d.probe03, d.probe04, d.probe05, d.probe06, d.probe07, d.test_time, 
+	p1.probe_name AS probe_name01, p2.probe_name AS probe_name02, p3.probe_name AS probe_name03, p4.probe_name AS probe_name04, p5.probe_name AS probe_name05, p6.probe_name AS probe_name06, p7.probe_name AS probe_name07, 
+	m1.menu_item AS menu01, m2.menu_item AS menu02, m3.menu_item AS menu03, m4.menu_item AS menu04, m5.menu_item AS menu05, m6.menu_item AS menu06, m7.menu_item AS menu07,
+	p.show_course_content
+FROM la_data d 
+JOIN registrants r ON d.userkey = r.userkey
+LEFT JOIN la_dilemmas di ON di.dilemmakey = d.dilemmakey
+LEFT JOIN demogs_languages lang ON r.languagekey = lang.languagekey
+LEFT JOIN demogs_english_quality eng ON r.englishqualitykey = eng.englishqualitykey
+LEFT JOIN students_projects sp ON d.userkey = sp.userkey 
+LEFT JOIN projectproject p ON sp.projectkey = p.projectkey
+LEFT JOIN la_probes p1 ON p1.instrument_id = %s AND p1.probe_number = '01' 
+LEFT JOIN la_probes p2 ON p2.instrument_id = %s AND p2.probe_number = '02' 
+LEFT JOIN la_probes p3 ON p3.instrument_id = %s AND p3.probe_number = '03' 
+LEFT JOIN la_probes p4 ON p4.instrument_id = %s AND p4.probe_number = '04' 
+LEFT JOIN la_probes p5 ON p5.instrument_id = %s AND p5.probe_number = '05' 
+LEFT JOIN la_probes p6 ON p6.instrument_id = %s AND p6.probe_number = '06' 
+LEFT JOIN la_probes p7 ON p7.instrument_id = %s AND p7.probe_number = '07' 
+LEFT JOIN la_menus m1 ON d.choicekey01 = m1.menukey 
+LEFT JOIN la_menus m2 ON d.choicekey02 = m2.menukey 
+LEFT JOIN la_menus m3 ON d.choicekey03 = m3.menukey 
+LEFT JOIN la_menus m4 ON d.choicekey04 = m4.menukey 
+LEFT JOIN la_menus m5 ON d.choicekey05 = m5.menukey 
+LEFT JOIN la_menus m6 ON d.choicekey06 = m6.menukey 
+LEFT JOIN la_menus m7 ON d.choicekey07 = m7.menukey 
+WHERE d.lakey = %s", 
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($instrument_id_base, "text"),
+		SQLstr($lakey, "int"));
+$rsEssays = mysql_query($query_rsEssays) or die("rsEssays: ".mysql_error());
+$row_rsEssays = mysql_fetch_assoc($rsEssays);
+$totalRows_rsEssays = mysql_num_rows($rsEssays);
+// topher($query_rsEssays);
+// echo str_replace("\n", "<br>", $query_rsEssays);
+
+// Recordset: la_codes or la_codes_2 depending on who's using the page
+$query_rsLaCodes = sprintf("SELECT c.*, d.coded_1, d.coded_2, d.coded_3, d.coded_4
+	FROM {$table} c JOIN la_data d ON c.lakey = d.lakey
+	WHERE c.lakey = %s", SQLstr($lakey, "int"));
+$rsLaCodes = mysql_query($query_rsLaCodes) or die("rsLaCodes: ".mysql_error());
+$row_rsLaCodes = mysql_fetch_assoc($rsLaCodes);
+
+// fetch survey stems for this part of the survey
+$sql_stems = sprintf("SELECT s.category, s.stem_name, (s.stem_code + %s) AS stem_code, s.stem_description 
+	FROM la_survey_stems s 
+	WHERE s.instrument_id = %s AND s.type = 'coding' AND s.part = %s AND s.stem_code > 0
+		%s 
+	ORDER BY s.category, s.stem_order, s.stem_code",
+		($status_student == true ? 100 : 0),	// student codes are saved 100 slots after teacher codes.
+		SQLstr($instrument_id_base, 'text'),
+		SQLstr($part, 'int'),
+		($status_student == true ? $filter_category_student[$instrument_id] : "")
+		);
+// topher($sql_stems); 
+$rsStems = mysql_query($sql_stems) or die("ERROR fetching rsStems on survey page ".$part);
+
+// count # of parts in this survey
+$sql_parts = sprintf("SELECT s.stemkey
+	FROM la_survey_stems s WHERE s.instrument_id = %s AND s.type = 'coding'
+	GROUP BY s.part", 
+		SQLstr($instrument_id_base, "text"));
+$rsParts = mysql_query($sql_parts);
+$numParts = mysql_num_rows($rsParts);
+
+// fetch standard responses for this survey from la_menus
+// reference the $survey_menus matrix, above.
+$sql_scale = sprintf("SELECT menukey, menu_item_name FROM la_menus 
+	WHERE menu = %s AND active = 1
+	ORDER BY item_order ", 
+		SQLstr($survey_menus[$instrument_id_base][$part], 'text'));
+$rsScale = mysql_query($sql_scale) or die("ERROR fetching rsScale for ".$instrument_id." survey!");
+// dump the menu options into an array; they'll be used over and over.
+$scale = array();	$i = 0;	// $scale[index]['key', 'text']
+while ($row_rsScale = mysql_fetch_assoc($rsScale)) { 
+	$scale[$i]['key'] = $row_rsScale['menukey'];
+	$scale[$i]['text'] = $row_rsScale['menu_item_name'];
+	$i ++;
+}
+
+// any boilerplate (instructions etc.)
+$rsLaBoilerplate = mysql_query("SELECT * FROM la_boilerplate WHERE type = 'coding' ") 
+	or die("rsLaBoilerplate: ".mysql_error());
+$boilerplate = array();
+while ($row_rsLaBoilerplate = mysql_fetch_assoc($rsLaBoilerplate)) {
+	$boilerplate[$row_rsLaBoilerplate['name']] = $row_rsLaBoilerplate['la_boilerplate_text'];
+}
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href='https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic' rel='stylesheet' type='text/css'>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS: Code survey <?php echo $instrument_id_name; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../includes/jquery.js"></script>
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<script src="../SpryAssets/SpryCollapsiblePanel.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryCollapsiblePanel.css" rel="stylesheet" type="text/css" />
+
+
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->
+		<?php include 'code_quickmenu.php'; ?>
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+		<h1><?php 
+			if ($status_student) { echo "STUDENT CODING PAGE"; } 
+			else if ($status_teacher) { 
+				echo "CODING FOR ".strtoupper($row_rsEssays['firstname']." ".$row_rsEssays['lastname']); 
+			}
+			else { ?>CODER SURVEY PAGE <?php echo $part; ?>: #<?php echo $lakey; ?> CODER <?php echo $coder; } ?>
+    </h1>
+    
+    <div id="CollapsiblePanel1" class="CollapsiblePanel">
+      <div class="CollapsiblePanelTab"><?php if ($status_student) { echo "YOUR RESPONSES"; } 
+				else { ?>TEST-TAKER RESPONSES<?php } ?></div>
+      <div class="CollapsiblePanelContent">
+				<?php 
+				$i = 1;
+				while ($row_rsEssays['probe0'.$i] <> "" OR $row_rsEssays['probe_name0'.$i] <> "") { 
+					// If this was a course assignment (like FOLA), display assigned question. Otherwise, probe.
+					if (isset($courseAssnProbe[$i]) AND $courseAssnProbe[$i] <> "") { 
+						?><h4>Question <?php echo $i; ?> </h4><?php 
+						echo "<em>".$courseAssnProbe[$i]."</em>"; 
+					} 
+					else { ?>
+            <p><strong><?php 
+              $row_rsEssays['probe_name0'.$i] = 
+                str_replace("random_lamenus", "", $row_rsEssays['probe_name0'.$i]);
+              echo $row_rsEssays['probe_name0'.$i]; 
+              if ($row_rsEssays['menu0'.$i] <> "") { 
+                if ($row_rsEssays['probe_name0'.$i] <> "") { echo ": "; }
+                echo ucfirst($row_rsEssays['menu0'.$i]); 
+              } ?></strong>
+            </p> <?php 
+					} ?>
+        	<p><?php echo $row_rsEssays['probe0'.$i]; ?></p>
+        	<?php $i ++;
+				} // WHILE loop cycles again for each essay ?>
+        
+      </div>
+    </div>
+    
+    <?php 
+		if ($instrument_id == "SMJ") { 
+			if ($status_student) { echo $boilerplate['coding_smj_survey_intro_student']; }
+			else { echo $boilerplate['coding_smj_survey_intro_teacher']; }
+		} else if ($instrument_id == "LERA") { 
+			echo $boilerplate['code_instructions_lera_survey'];
+		} ?>
+    
+    <?php if (isset($missed_selections) AND $missed_selections > 0) { ?>
+			<p class="red">You did not select an answer for <?php echo $missed_selections; ?> item<?php 
+			echo ($missed_selections > 1 ? "s" : ""); ?> below. 
+      Please select an answer for all items before continuing.</p>
+		<?php } ?>
+    
+    <form action="<?php echo $editFormAction; ?>" id="form1" name="form1" method="POST">
+		<table width="650">
+      
+      <?php 
+			$n = 1; $codes_to_save = ""; $cur_category = "";
+			while ($row_rsStems = mysql_fetch_assoc($rsStems)) { 
+				$code = zeropad($row_rsStems['stem_code'], 3); 
+				$codes_to_save .= " ".$code." "; 
+				
+				if ($row_rsStems['category'] <> $cur_category AND $row_rsStems['category'] <> "") {
+					$cur_category = $row_rsStems['category'];
+					?><tr class="tablehead_knockout">
+          	<td colspan="3">&nbsp;<?php echo ucfirst($cur_category); ?></td>
+          </tr><?php
+				} ?>
+        <tr>
+					<td align="right"><?php echo $n; ?>.</td>
+          <td width="350"><?php echo $row_rsStems['stem_name']; ?></td>
+					<td align="right">
+          	<?php if ($survey_menus[$instrument_id_base][$part] == "CHECKBOXES") { ?>
+            	<input type="checkbox" name="code<?php echo $code; ?>" value="1"
+              	<?php if ($row_rsLaCodes['code'.$code] == 1) { ?>checked="checked"<?php } ?> />
+            <?php } else { ?>
+        			<span id="spryselect<?php echo $code; ?>" <?php 
+							if ($row_rsLaCodes['code'.$code] > 0) { ?>class="selectValidState"<?php } ?>>
+              <select name="code<?php echo $code; ?>" 
+                class="pulldownwidth200">
+                <option value="" <?php if ($row_rsLaCodes['code'.$code] == "") 
+                  { echo "selected='selected'"; } ?>>-select one-</option>
+                <?php 
+                // print out each menu option, stored in $scale[index]['key', 'text']
+                for ($i = 0; isset($scale[$i]); $i ++) {  ?>
+                <option value="<?php echo $scale[$i]['key']; ?>"<?php 
+                  if ($row_rsLaCodes['code'.$code] == $scale[$i]['key']) 
+                  { echo "selected='selected'"; } ?>>
+                  <?php 
+                  echo $scale[$i]['text']; ?>
+                </option>
+                <?php 
+                } ?>
+              </select>
+              <span class="selectRequiredMsg"><br />
+              Please select an option.</span></span>
+            <script type="text/javascript">
+              var spryselect<?php echo $code; ?> = 
+                new Spry.Widget.ValidationSelect("spryselect<?php echo $code; ?>", 
+                {validateOn:["blur", "change"], isRequired:false});
+                // , isRequired:false
+              </script>
+            <?php } ?>
+					</td>
+				</tr><?php 
+				$n ++;
+			} ?>
+      
+      <tr>
+        <td>&nbsp;</td>
+        <td></td>
+      </tr>
+      
+    </table>
+      
+    <table width="650">
+    	<?php // If you're a student coder, hide teacher comments and don't allow editing.
+			if ($status_student) { ?>
+      	<tr><td>
+        	<input type="hidden" name="codercomment" 
+          	value="<?php echo $row_rsLaCodes['codercomment']; ?>" />
+        	<input type="hidden" name="code_recommend" 
+          	value="<?php echo $row_rsLaCodes['code_recommend']; ?>" />
+        </td></tr>
+      <?php } else { // if you are NOT a student ?>
+      <tr>
+        <td><?php 
+					$text = "Coder comments about the performance:";
+					if ($instrument_id_base == "SMJ") { $text = $boilerplate['coding_smj_rubrics_teacher_comments']; }
+					echo $text; ?>
+      	</td>
+        <td width="450"><textarea name="codercomment" class="textarea080_450" 
+          id="codercomment"><?php echo str_replace("<br>", "\n", $row_rsLaCodes['codercomment']); 
+					?></textarea>
+        </td>
+      </tr> 
+      <tr>
+        <td width="200"><?php 
+					$text = "Suggestions for new / changed codes: (Press ENTER to separate different suggestions)";
+					if ($instrument_id_base == "SMJ") { 
+						$text = $boilerplate['coding_smj_rubrics_teacher_suggestions']; 
+					}
+					echo $text; ?></td>
+        <td width="450"><textarea name="code_recommend" class="textarea080_450" 
+          id="code_recommend"><?php echo str_replace("<br>", "\n", $row_rsLaCodes['code_recommend']); 
+					?></textarea></td>
+      </tr>
+    <?php } // ENDIF: only show if you aren't a student ?> 
+      <tr>
+        <td colspan="2">
+          <div id="submitButtons" align="right">
+            <input name="lakey" type="hidden" id="lakey" value="<?php echo $lakey; ?>" />
+            <input name="numparts" type="hidden" id="numparts" value="<?php echo $numParts; ?>" />
+            <input type="hidden" name="codes_to_save" value="<?php echo $codes_to_save; ?>" />
+            <input type="hidden" name="MM_update" value="form1" />
+            <p><span class="fltlft"><?php contactUsForHelp(); ?></span>&nbsp;
+            	<?php if (!$status_student) { ?>
+              	<input type="submit" name="save_changes" id="save_changes" value="SAVE" />&nbsp;
+              <?php } // Hide SAVE button for students ?>
+              <input type="submit" name="button" id="button" value="SUBMIT" />
+            </p>
+            <p>&nbsp;</p>
+          </div>
+        </td>
+      </tr>
+    </table>
+    
+  </form>
+  
+  <script type="text/javascript">
+		var CollapsiblePanel1 = new Spry.Widget.CollapsiblePanel("CollapsiblePanel1");
+  </script>
+  
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+
+
+?>

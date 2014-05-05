@@ -1,0 +1,376 @@
+<?php 
+require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" );
+include_once ("../includes/general_custom_functions.php");
+
+mysql_select_db($database_Assessment, $Assessment);
+
+// restrict access if not logged in as Theo
+if ($_SESSION['log_userkey'] <> 1000000539) {
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+}
+
+$instrument_id = $_SESSION['instrument_id'];
+$instrument_id_name = str_replace("_", " ", $_SESSION['instrument_id']);
+$instrument_id_base = str_replace("_JOURNAL", "", $_SESSION['instrument_id']);
+
+
+
+
+
+
+$editFormAction = $_SERVER['PHP_SELF'];
+if (isset($_SERVER['QUERY_STRING'])) {
+  $editFormAction .= "?" . htmlentities($_SERVER['QUERY_STRING']);
+}
+
+
+
+
+/*  Naming things the way they should be named  */
+
+$table = "";
+$key = "";
+
+$db_table_name = "";
+$col_key = "";
+$col_theme = "";
+$col_strength = "";
+
+if (isset($_POST['table'])) {
+	$table = $_POST['table'];
+}
+
+if (isset($_GET['currentstrengthkey']) OR $table == "current") {
+  $table = "current";
+	$key = $_GET['currentstrengthkey'];
+	$db_table_name = "la_codes_strengths_current";
+	$col_key = "currentstrengthkey";
+	$col_theme = "current_strength_theme";
+	$col_strength = "current_strength";
+} else if (isset($_GET['potentialstrengthkey']) OR $table == "potential") {
+  $table = "potential";
+	$key = $_GET['potentialstrengthkey'];
+	$db_table_name = "la_codes_strengths_potential";
+	$col_key = "potentialstrengthkey";
+	$col_theme = "potential_strength_theme";
+	$col_strength = "potential_strength";
+} else if (isset($_GET['recommendkey']) OR $table == "recommend") {
+  $table = "recommend";
+	$key = $_GET['recommendkey'];
+	$db_table_name = "la_codes_recommendations";
+	$col_key = "recommendkey";
+	$col_theme = "recommend_theme";
+	$col_strength = "recommend";
+}
+
+$mode = "edit";
+if ($key == 0) {
+	$mode = "new";
+}
+
+
+
+
+
+if ((isset($_POST["MM_update"])) && ($_POST["MM_update"] == "form1")) {
+	
+	if ($mode == "new") {
+		
+		$insertSQL = sprintf("INSERT INTO ".$db_table_name." (instrument_id, las_number_low, las_number_high, {$col_theme}, {$col_strength}, position1phrasing, position2phrasing".($table == "current" ? ", position3phrasing" : "")." ) VALUES (%s, %s, %s, %s, %s, %s, %s",
+					 SQLstr($_POST['instrument_id'], "text"),
+					 SQLstr($_POST['las_number_low'], "double"),
+					 SQLstr($_POST['las_number_high'], "double"),
+					 SQLstr($_POST[$col_theme], "text"),
+					 SQLstr($_POST[$col_strength], "text"),
+					 SQLstr($_POST['position1phrasing'], "text"),
+					 SQLstr($_POST['position2phrasing'], "text"));
+		if ($table == "current") {
+			$insertSQL .= ", ".SQLstr($_POST['position3phrasing']).")";
+		} else $insertSQL .= ")";
+		
+		mysql_select_db($database_Assessment, $Assessment);
+		$Result1 = mysql_query($insertSQL, $Assessment) or die(mysql_error());
+		
+	} else {
+	
+		$updateSQL = sprintf("UPDATE ".$db_table_name." SET instrument_id=%s, las_number_low=%s, las_number_high=%s, ".$col_theme."=%s, ".$col_strength."=%s, position1phrasing=%s, position2phrasing=%s".($table == "current" ? ", position3phrasing=".SQLstr($_POST['position3phrasing'], "text") : "")." WHERE ".$col_key."=%s",
+					 SQLstr($_POST['instrument_id'], "text"),
+					 SQLstr($_POST['las_number_low'], "double"),
+					 SQLstr($_POST['las_number_high'], "double"),
+					 SQLstr($_POST[$col_theme], "text"),
+					 SQLstr($_POST[$col_strength], "text"),
+					 SQLstr($_POST['position1phrasing'], "text"),
+					 SQLstr($_POST['position2phrasing'], "text"),
+					 SQLstr($_POST['key'], "int"));
+
+		mysql_select_db($database_Assessment, $Assessment);
+		$Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+		
+	}
+
+
+  $updateGoTo = "code_strengths_view.php";
+  if (isset($_SERVER['QUERY_STRING'])) {
+    $updateGoTo .= (strpos($updateGoTo, '?')) ? "&" : "?";
+    $updateGoTo .= $_SERVER['QUERY_STRING'];
+  }
+  header(sprintf("Location: %s", $updateGoTo));
+	
+}
+
+
+
+
+
+if ($key == 0) {
+	$row_rsStrength = array(
+		$col_key = "",
+		'instrument_id' => "",
+		'las_number_low' => "",
+		'las_number_high' => "",
+		$col_theme => "",
+		$col_strength => "",
+		'position1phrasing' => "",
+		'position2phrasing' => "",
+		'position3phrasing' => ""
+	);
+} else {
+	
+	
+	
+	// the generic strength / potential / recommendation query
+	
+	mysql_select_db($database_Assessment, $Assessment);
+	$query_rsStrength = "SELECT * FROM {$db_table_name} WHERE {$col_key} = $key";
+	$rsStrength = mysql_query($query_rsStrength, $Assessment) or die(mysql_error());
+	$row_rsStrength = mysql_fetch_assoc($rsStrength);
+	$totalRows_rsStrength = mysql_num_rows($rsStrength);
+	
+	mysql_select_db($database_Assessment, $Assessment);
+	$query_rsStrengthThemes = "SELECT * FROM la_codes_strengths_themes";
+	$rsStrengthThemes = mysql_query($query_rsStrengthThemes, $Assessment) or die(mysql_error());
+	$row_rsStrengthThemes = mysql_fetch_assoc($rsStrengthThemes);
+	$totalRows_rsStrengthThemes = mysql_num_rows($rsStrengthThemes);
+	
+	mysql_select_db($database_Assessment, $Assessment);
+	$query_rsLaInstruments = "SELECT instrument_id FROM la_instruments";
+	$rsLaInstruments = mysql_query($query_rsLaInstruments, $Assessment) or die(mysql_error());
+	$row_rsLaInstruments = mysql_fetch_assoc($rsLaInstruments);
+	$totalRows_rsLaInstruments = mysql_num_rows($rsLaInstruments);
+
+}
+
+
+
+
+
+
+?>
+<div style="display:none"><%@LANGUAGE="JAVASCRIPT" CODEPAGE="65001"%></div>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="//fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>DTS:
+<?php if ($mode == "new") { echo "Add new "; } else { echo "Edit "; } echo $col_strength." - ".$_SESSION['instrument_id']; ?>
+</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<script src="../SpryAssets/SpryValidationSelect.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+<link href="../SpryAssets/SpryValidationSelect.css" rel="stylesheet" type="text/css" />
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->EditableMenuRegion<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    <h1><?php if ($mode == "new") { echo "ADD NEW "; } else { ?>EDIT <?php } echo $col_strength." "; if ($mode == "edit") { echo $key; } ?></h1>
+    
+    <p></p>
+    <form action="<?php echo $editFormAction; ?>" method="post" name="form1" id="form1">
+      <table align="center">
+        <tr valign="baseline">
+          <td nowrap="nowrap" align="right"><?php echo $col_key; ?>:</td>
+          <td><?php echo $row_rsStrength[$col_key]; ?></td>
+        </tr>
+        <tr valign="baseline">
+          <td nowrap="nowrap" align="right">Instrument_id:</td>
+          <td><span id="spryselect2">
+          <select name="instrument_id" id="instrument_id">
+            <option value="" <?php if (!(strcmp("", $_SESSION['instrument_id']))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+            <?php
+do {  
+?>
+            <option value="<?php echo $row_rsLaInstruments['instrument_id']?>"<?php if (!(strcmp($row_rsLaInstruments['instrument_id'], $_SESSION['instrument_id']))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsLaInstruments['instrument_id']?></option>
+            <?php
+} while ($row_rsLaInstruments = mysql_fetch_assoc($rsLaInstruments));
+  $rows = mysql_num_rows($rsLaInstruments);
+  if($rows > 0) {
+      mysql_data_seek($rsLaInstruments, 0);
+	  $row_rsLaInstruments = mysql_fetch_assoc($rsLaInstruments);
+  }
+?>
+          </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr valign="baseline">
+          <td nowrap="nowrap" align="right">LAS range:</td>
+          <td><span id="sprytextfield2">
+            <input type="text" name="las_number_low" value="<?php echo htmlentities($row_rsStrength['las_number_low'], ENT_COMPAT, 'UTF-8'); ?>" size="12" />
+          <span class="textfieldRequiredMsg">A value is required.</span></span> to 
+          <span id="sprytextfield1">
+          <input type="text" name="las_number_high" value="<?php echo htmlentities($row_rsStrength['las_number_high'], ENT_COMPAT, 'UTF-8'); ?>" size="12" />
+          <span class="textfieldRequiredMsg">A value is required.</span></span>
+          </td>
+        </tr>
+        <tr valign="baseline">
+          <td nowrap="nowrap" align="right"><?php echo $col_strength; ?> theme:</td>
+          <td><!--<input type="text" name="<?php echo $col_theme; ?>" value="<?php echo htmlentities($row_rsStrength[$col_theme], ENT_COMPAT, 'UTF-8'); ?>" size="32" />-->
+            <span id="spryselect1">
+            <label for="strength_theme"></label>
+            <select name="<?php echo $col_theme; ?>" id="<?php echo $col_theme; ?>">
+              <option value="" <?php if (!(strcmp("", $row_rsStrength[$col_theme]))) {echo "selected=\"selected\"";} ?>>- select one -</option>
+              <?php
+do {  
+?>
+              <option value="<?php echo $row_rsStrengthThemes['theme']?>"<?php if (!(strcmp($row_rsStrengthThemes['theme'], $row_rsStrength[$col_theme]))) {echo "selected=\"selected\"";} ?>><?php echo $row_rsStrengthThemes['theme']?></option>
+              <?php
+} while ($row_rsStrengthThemes = mysql_fetch_assoc($rsStrengthThemes));
+  $rows = mysql_num_rows($rsStrengthThemes);
+  if($rows > 0) {
+      mysql_data_seek($rsStrengthThemes, 0);
+	  $row_rsStrengthThemes = mysql_fetch_assoc($rsStrengthThemes);
+  }
+?>
+            </select>
+          <span class="selectRequiredMsg">Please select an item.</span></span></td>
+        </tr>
+        <tr valign="baseline">
+          <td nowrap="nowrap" align="right"><?php echo $col_strength; ?> <br />
+          code name:</td>
+          <td><input type="text" name="<?php echo $col_strength; ?>" value="<?php echo htmlentities($row_rsStrength[$col_strength], ENT_COMPAT, 'UTF-8'); ?>" size="60" /></td>
+        </tr>
+        <tr valign="baseline">
+          <td nowrap="nowrap" align="right">Position 1 phrasing:</td>
+          <td><textarea name="position1phrasing" id="position1phrasing"><?php echo $row_rsStrength['position1phrasing']; ?></textarea></td>
+        </tr>
+        <tr valign="baseline">
+          <td nowrap="nowrap" align="right">Position 2 phrasing:</td>
+          <td><textarea name="position2phrasing" id="position2phrasing"><?php echo htmlentities($row_rsStrength['position2phrasing'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr>
+        <?php if ($table == "current") { ?>
+				<tr valign="baseline">
+          <td nowrap="nowrap" align="right">Position 3 phrasing:</td>
+          <td><textarea name="position3phrasing" id="position3phrasing"><?php echo htmlentities($row_rsStrength['position3phrasing'], ENT_COMPAT, 'UTF-8'); ?></textarea></td>
+        </tr><?php } ?>
+        <tr valign="baseline">
+          <td nowrap="nowrap" align="right">&nbsp;</td>
+          <td><input type="submit" name="submit" value="Update record" /></td>
+        </tr>
+      </table>
+      <input type="hidden" name="MM_update" value="form1" />
+      <input type="hidden" name="key" value="<?php echo $row_rsStrength[$col_key]; ?>" />
+      <input type="hidden" name="table" value="<?php echo $table; ?>" />
+    </form>
+    <p>&nbsp;</p>
+<p>&nbsp;</p>
+    <p>&nbsp;</p>
+    <script type="text/javascript">
+var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "none", {validateOn:["blur", "change"]});
+var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {validateOn:["blur", "change"]});
+var spryselect1 = new Spry.Widget.ValidationSelect("spryselect1", {validateOn:["blur", "change"]});
+var spryselect2 = new Spry.Widget.ValidationSelect("spryselect2", {validateOn:["blur", "change"]});
+    </script>
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsStrength);
+
+mysql_free_result($rsStrengthThemes);
+
+mysql_free_result($rsLaInstruments);
+?>
+
+<?php
+echo "<mm:dwdrfml documentRoot=" . __FILE__ .">";$included_files = get_included_files();foreach ($included_files as $filename) { echo "<mm:IncludeFile path=" . $filename . " />"; } echo "</mm:dwdrfml>";
+?>

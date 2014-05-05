@@ -1,0 +1,303 @@
+<? require_once('../includes/dts_functions.php'); 
+
+if (!WA_Auth_RulePasses("Logged in to registrants")){ WA_Auth_RestrictAccess("../security/logIn.php"); }
+
+$userkey = $_SESSION['log_userkey'];
+$comments = ""; if (isset($_GET['comments'])) { $comments = $_GET['comments']; }
+$invoiceno = ""; if (isset($_GET['invoiceno'])) { $invoiceno = $_GET['invoiceno']; }
+$amount = ""; if (isset($_GET['amount'])) { $amount = $_GET['amount']; }
+
+$for_course = false; 
+if (isset($_GET['for_course'])) { $for_course = $_GET['for_course']; }
+if (isset($_POST['for_course'])) { $for_course = $_POST['for_course']; }
+
+// registrant info
+$sql = sprintf("SELECT userkey, firstname, lastname, company FROM registrants 
+  WHERE userkey = %s", 
+    SQLstr($userkey, "int"));
+$rsRegistrant = mysql_query($sql) or die("ERROR fetching customer information.");
+$registrant = mysql_fetch_assoc($rsRegistrant);
+
+$can_edit = false; if (WA_Auth_RulePasses("Logged in as admin")) { $can_edit = true; }
+
+
+
+// Listener: submit payment
+if (isset($_POST["submit"])) {
+
+  // check that amount is valid & non-zero
+  $amount = $_POST['amount'];
+  if ($amount == 0 OR round(doubleval($amount), 2) <> $amount) {
+    die("ERROR: The amount specified '{$amount}' isn't valid."); }
+
+  // Look up invoice, if present
+  $invoiceno = $_POST['invoiceno'];
+  $for_project = null;
+  if ($invoiceno == "none") { $invoiceno = null; }
+  else {
+    $sql = sprintf("SELECT * FROM bulkcustpay WHERE invoicenumber = %s",
+      SQLstr($invoiceno, 'text'));
+    $rsInvoice = mysql_query($sql) or die("ERROR looking up this invoice.");
+    if (mysql_num_rows($rsInvoice) <> 1) { die("ERROR: Can't find that invoice number. Please press BACK to re-enter it, or <a href='../contactus.php'>contact us</a> for help."); }
+    $invoice = mysql_fetch_assoc($rsInvoice);
+    $for_project = $invoice['projectkey'];
+  }
+
+  // ensure for_course is null if empty
+  if (!$for_course) { $for_course = null; }
+
+  $assessment = $_POST['assessment'];
+  if ($assessment == "none") { $assessment = null; }
+
+  $sql = sprintf("INSERT INTO payments 
+      (firstname, lastname, company, userkey, assessment, invoiceno, for_course, for_project, comments, amount) 
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+      SQLstr($registrant['firstname'], 'text'),
+      SQLstr($registrant['lastname'], 'text'),
+      SQLstr($registrant['company'], 'text'),
+      SQLstr($registrant['userkey'], 'int'),
+      SQLstr($assessment, 'text'),
+      SQLstr($invoiceno, 'text'),
+      SQLstr($for_course, 'int'),
+      SQLstr($for_project, 'int'),
+      SQLstr($_POST['comments'], 'text'),
+      SQLstr($amount, 'double'));
+  $result = mysql_query($sql) or die("ERROR preparing your payment.".mysql_error());
+  $paymentkey = mysql_insert_id();
+
+  $url = "paymentform.php?paymentkey={$paymentkey}";
+  header("Location: {$url}"); exit();
+}
+
+
+
+// Instruments list
+$sql = "SELECT * FROM la_instruments ORDER BY instrument_id ASC";
+$rsInstruments = mysql_query($sql) or die("ERROR fetching list of instruments.");
+
+// Course, if one was specified
+if ($for_course > 0) {
+  $rsCourse = query(prepsql("SELECT * FROM courses c WHERE c.key = ?", $for_course));
+  $course = $rsCourse->fetch_assoc();
+}
+
+
+
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Lectica: Make a payment</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+
+<script src="../SpryAssets/SpryValidationTextField.js" type="text/javascript"></script>
+<link href="../SpryAssets/SpryValidationTextField.css" rel="stylesheet" type="text/css" />
+
+
+<style>
+  
+  .twoColFixRtHdr #container #mainContent p {
+  	font-size: 110%;
+  	font-weight: 400;
+  }
+  .twoColFixRtHdr #container #mainContent td {
+  	font-size: 110%;
+  	font-weight: 400;
+  }
+  .twoColFixRtHdr #container #mainContent table {
+  	width: 100%;
+  	max-width: 650px;
+  	min-width: 200px;	
+  }
+
+  /* --------- For the CKeditor --------------- */
+  .green { color: green; }
+  .orange { color: orange; }
+
+  <? if ($can_edit) { ?>
+    #ckeditor_intro { border: 1px solid #aaa; }
+  <? } ?>
+
+</style>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" -->	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+    
+    <h1>PAY WITH PAYPAL</h1>
+    
+    <p>Use this form to send a payment via PayPal or credit card. All payments must be made in US funds. If you wish to pay by check, <a href="../contactus.php">contact us</a> for instructions. Please <a href='../contactus.php'>contact us</a> if the following personal information isn't correct.</p>
+
+    <table>
+    <form action="" name="form1" method="POST" id="form1">
+      <tr>
+        <td align='right'>First name</td>
+        <td><? echo $registrant['firstname']; ?></td>
+      </tr>
+      <tr>
+        <td align='right'>Last name</td>
+        <td><? echo $registrant['lastname']; ?></td>
+      </tr>
+      <tr>
+        <td align='right'>Organization</td>
+        <td><? echo $registrant['company']; ?></td>
+      </tr>
+      <tr>
+        <? if (!$for_course) { ?>
+          <td align='right'>Invoice number</td>
+          <td>
+            <span id="sprytextfield2">
+              <input type="text" name="invoiceno" id="invoiceno" value="<?php echo $invoiceno; ?>" /><br />
+              <span class="textfieldRequiredMsg">A value is required.</span>
+            </span>
+          </td>
+        <? } else { ?>
+          <td></td>
+          <td>
+            <input type='hidden' name='invoiceno' value='none' />
+          </td>
+        <? } ?>
+      </tr>
+      <tr>
+        <td align='right'>Amount of payment</td>
+        <td>
+        	<? if ($for_course AND $course['is_lectures_only'] == 0) { ?>
+        		You must pay a deposit of at least $100 in order to secure your place in the course.<br />
+        	<? } ?>
+          <span id="sprytextfield1">
+        	 $<input type="text" name="amount" id="amount" value="<?php echo $amount; ?>" size="5" /><br />
+           <span class="textfieldRequiredMsg">A value is required.</span>
+          </span>
+       	</td>
+      </tr>
+      <tr>
+        <? if (!$for_course) { ?>
+          <td align='right'>For assessment (if applicable)</td>
+          <td>
+            <select name="assessment" id="assessment">
+              <option value="">- select one -</option>
+              <? while ($row = mysql_fetch_assoc($rsInstruments)) { ?>
+                <option value="<?php echo $row['instrument_id']?>">
+                  <?php echo $row['instrument_id']?>
+                </option>
+              <? } ?>
+            </select>
+          </td>
+        <? } else { ?>
+          <td></td>
+          <td>
+            <input type='hidden' name='assessment' value='none' />
+          </td>
+        <? } ?>
+      </tr>
+      <tr>
+        <td align='right'>Comments</td>
+        <td><textarea name="comments" id="comments"><?php echo $comments; ?></textarea></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>
+          <input type='hidden' name='for_course' value='<? echo $for_course; ?>' />
+          <input type="submit" name="submit" id="submit" value="CHECK OUT" />
+        </td>
+      </tr>
+    </form>
+    </table>
+
+    <p>&nbsp;</p>
+  	<p>&nbsp;</p>
+
+    <script type="text/javascript">
+
+      var sprytextfield1 = new Spry.Widget.ValidationTextField("sprytextfield1", "none", {validateOn:["blur", "change"]});
+      
+      // Invoice is required if you aren't paying for a course
+      <? if (!$for_course) { ?>
+        var sprytextfield2 = new Spry.Widget.ValidationTextField("sprytextfield2", "none", {validateOn:["blur", "change"]});
+      <? } ?>
+
+    </script>
+
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

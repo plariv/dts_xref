@@ -1,0 +1,575 @@
+<?php 
+require_once('../includes/dts_functions.php');
+$boilerplate = prepBoilerplate('admin');
+
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	$userkey = 0;
+} else {
+  $userkey = $_SESSION['log_userkey'];
+}
+
+$can_edit = false; if (WA_Auth_RulePasses("Logged in as admin")) { $can_edit = true; }
+
+$_SESSION['instrument_id'] = "FOLA";
+
+if (!isset($_GET['coursekey'])) { header("Location: ../landing.php"); exit(); }
+$coursekey = $_GET['coursekey'];
+
+
+
+// recordsets used in the submission code
+
+// the registrant
+$sql = prepsql("SELECT * FROM registrants WHERE userkey = ? ", $userkey);
+$rsRegistrant = query($sql, 'rsRegistrant');
+$registrant = $rsRegistrant->fetch_assoc();
+
+// the course
+$sql = prepsql("SELECT c.*, IF(cr.key > 0, 1, 0) AS am_i_registered,
+    CONCAT(i1.firstname, ' ', i1.lastname) AS instructor1_name,
+    CONCAT(i2.firstname, ' ', i2.lastname) AS instructor2_name,
+    CONCAT(i3.firstname, ' ', i3.lastname) AS instructor3_name
+  FROM courses c 
+    LEFT JOIN registrants i1 ON c.instructor1_userkey = i1.userkey
+    LEFT JOIN registrants i2 ON c.instructor2_userkey = i2.userkey
+    LEFT JOIN registrants i3 ON c.instructor3_userkey = i3.userkey
+    LEFT JOIN course_registrations cr ON c.key = cr.coursekey AND cr.userkey = ?
+  WHERE c.key = ?",
+    $userkey,
+    $coursekey);
+$rsCourse = query($sql, 'rsCourse');
+$course = $rsCourse->fetch_assoc();
+$is_lectures_only = false; 
+if ($course['is_lectures_only'] == 1) { $is_lectures_only = true; }
+
+// Array of days of week. Indexed 0-6 same as date() does it.
+$days = array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday');
+
+
+
+// Listener: Update intro boilerplate
+if (isset($_GET['update_intro'])) {
+  if (!$can_edit) { die("<span class='red'>ERROR - can't edit! Try refreshing the page.</span>"); }
+
+  $sql = prepsql("UPDATE courses c SET text_register = ? WHERE c.key = ?", $_POST['text'], $coursekey);
+  query($sql, 'update_intro');
+  die("<span class='green'>saved</span>");
+}
+
+
+
+// Registration submission listener
+if (isset($_POST['submit'])) { 
+
+  $level = intval($_POST['will_take_course_level']);
+  if ($is_lectures_only) { $level = 1; }
+
+  // update registrant info
+  $sql = prepsql("UPDATE registrants 
+    SET work_phone = ?, address1 = ?, city = ?, state = ?, province = ?, zip = ?, country = ?
+    WHERE userkey = ?",
+      $_POST['work_phone'],
+      $_POST['address1'],
+      $_POST['city'],
+      $_POST['state'],
+      $_POST['province'],
+      $_POST['zip'],
+      $_POST['country'],
+      $userkey);
+  query($sql, 'submit -> update registrants');
+
+  // look up info on the selected section. Is it full?
+  if (!$is_lectures_only) { 
+    $sql = prepsql("SELECT s.*, IF(COUNT(r.key) >= s.max_num_students, 1, 0) AS is_full
+      FROM course_class_sections s
+        LEFT JOIN course_registrations r ON s.key = r.sectionkey
+      WHERE s.key = ?",
+        $_POST['sectionkey']);
+    $rsSelectedSection = query($sql, 'submit -> rsSelectedSection');
+    $section = $rsSelectedSection->fetch_assoc();
+    if ($section['is_full']) { header("Location: register.php?coursekey={$coursekey}"); exit(); }
+  }
+
+  // look up fee for this level
+  $fee = $course['price_level'.$level];
+  if ($fee == 0) { die("ERROR preparing the course fee. Please contact us for help."); }
+  $is_student = 0;
+  if (isset($_POST['registered_as_student'])) { $is_student = 1; }
+
+  // insert course registration
+  $sql = prepsql("INSERT INTO course_registrations 
+    (coursekey, sectionkey, userkey, name, about_me, registered_as_student, will_take_course_level, wont_share_videos, amount_charged, amount_paid, date_registered)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NOW() )",
+      $coursekey,
+      (isset($_POST['sectionkey']) ? $_POST['sectionkey'] : ''),
+      $userkey,
+      $_POST['name'],
+      $_POST['about_me'],
+      $is_student,
+      $level,
+      (isset($_POST['wont_share_videos']) ? '1' : '0'),
+      $fee);
+  query($sql, 'submit -> insert into course_registrations');
+
+  $title_friendly = "";
+
+  // **** modify for lectures package
+
+  // send the student a confirmation email
+  $to = $registrant['email'];
+  $from = array('outreach@lectica.org' => 'Jennifer Worden');
+  $cc = '';
+  $subject = "You've registered for the Lectica course: ".strip_tags($course['title']);
+  $body = $boilerplate['course_register_confirmation_email'];
+  $body = str_replace('[COURSE_NAME]', strip_tags($course['title']), $body); 
+  $body = str_replace('[DATE_START]', date('F jS, Y', strtotime($course['date_start'])), $body); 
+  $body = str_replace("[COURSEKEY]", $course['key'], $body);
+  $body = str_replace("[DAY_OF_WEEK]", $days[$section['day_of_week']], $body);
+  $body = str_replace("[TIME_OF_DAY]", date('g:i A', strtotime($section['time_of_day'])), $body);
+  $student_message = "";
+  if ($is_student) { $student_message = "\rWe will contact you shortly about student rates.\r"; }
+  $body = str_replace("[STUDENT_COMMENT]", $student_message, $body);
+  $result = sendEmail($to, $from, $cc, $subject, $body);
+
+  // send us an alert email
+  $to = array('outreach@lectica.org' => 'Jennifer Worden');
+  $from = array('outreach@lectica.org' => 'Jennifer Worden');
+  $cc = 'amy@lectica.org';
+  $subject = sprintf("Courses: %s registered for %s", 
+    $_POST['name'], 
+    strip_tags($course['title']));
+  $body = sprintf("Name: %s \rEmail: %s \rCourse: %s \r(starts %s) \rTaking at level: %s\rComments: %s",
+    $_POST['name'],
+    $registrant['email'],
+    strip_tags($course['title']), 
+    $course['date_start'],
+    $level,
+    $_POST['about_me']);
+  if ($is_student) { 
+    $subject .= " and requests student discount"; 
+    $body .= "\r** Please contact me about student rates. **";
+  }
+  $result = sendEmail($to, $from, $cc, $subject, $body);
+  
+  // redirect to payment page
+  if ($is_student) { $fee = ''; }
+  header("Location: ../checkout/payment.php?for_course={$coursekey}&amount={$fee}"); 
+  exit();
+}
+
+
+
+// Recordsets just for the page
+
+// course sections
+$sql = prepsql("SELECT s.*, IF(COUNT(r.key) >= s.max_num_students, 1, 0) AS is_full
+  FROM course_class_sections s
+    LEFT JOIN course_registrations r ON s.key = r.sectionkey
+  WHERE s.coursekey = ? 
+  GROUP BY s.key
+  ORDER BY s.day_of_week ",
+    $coursekey);
+$rsSections = query($sql, 'rsSections');
+
+// Demographics lists
+$rsStates =query("SELECT * FROM demogs_states ORDER BY state", 'rsStates');
+$rsCountries = query("SELECT `name` AS country FROM demogs_countries ORDER BY name", 'rsCountries');
+
+
+
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/assess3.dwt.php" codeOutsideHTMLIsLocked="false" -->
+
+<head>
+
+<link href="https://fonts.googleapis.com/css?family=Lato:200italic,600italic,400italic,200,600,400&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Register for course: <? echo $course['title']; ?></title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+
+<script src="../includes/jquery.js" type="text/javascript"></script>
+<script src="../includes/ckeditor/ckeditor.js"></script>
+
+<script>
+$(function(){
+  
+  $('.toggle_next').click(function(){
+    $(this).parent().find('.toggle_receiver').toggle();
+  });
+
+  $('#form1').submit(function(){
+    $('.missing').removeClass('missing');
+
+    $('.required').each(function(){
+      if ($(this).val() == '') {
+        $(this).addClass('missing');
+      }
+    });
+    if ($('.missing').length > 0) {
+      $('.missing').focus();
+      alert('Please make a selection for all fields.');
+      return false;
+    }
+    if ($('#wont_share_videos:checked').length == 0) {
+      $('#wont_share_videos').parent().addClass('missing');
+      alert('Please agree to not share our recordings with others.');
+      return false;
+    }
+  });
+
+  // CKEDITOR for intro
+  <? if ($can_edit) { ?>
+
+    // CKeditor: show "editing" status
+    $('#ckeditor_intro').click(function(){
+      $('#ckeditor_status').html("<span class='orange'>editing</span>");
+    });
+
+    CKEDITOR.disableAutoInline = true;
+
+    // Set up the inline editor for the appeal
+    CKEDITOR.inline('ckeditor_intro', {
+      on: { 
+        blur: function(event) {
+          $('#ckeditor_status').html("<span class='orange'>saving...</span>")
+            .load('?coursekey=<? echo $coursekey; ?>&update_intro=yes', { text: event.editor.getData() });
+        }
+      }
+    });
+
+  <? } ?>
+
+
+});
+</script>
+
+<style>
+
+  .missing { 
+    border: 1px solid red; 
+    padding: 6px;
+  }
+
+  .twoColFixRtHdr #container #mainContent p {
+  	font-size: 110%;
+  }
+  .twoColFixRtHdr #container #mainContent {
+  	max-width: 800px;
+  }
+  .twoColFixRtHdr #container #mainContent #form1 table {
+  	width: 100%;
+  	max-width: 650px;
+  	min-width: 200px;	
+  }
+
+  /* --------- For the CKeditor --------------- */
+  .green { color: green; }
+  .orange { color: orange; }
+
+  <? if ($can_edit) { ?>
+    #ckeditor_intro { border: 1px solid #aaa; }
+  <? } ?>
+
+</style>
+
+<!-- InstanceEndEditable -->
+
+<?php
+$img_header = "DTSheader880.jpg";
+if (isset($_SESSION['instrument_id'])) { $img_header = $_SESSION['instrument_id']."header880.jpg"; }
+?>
+
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #333333;
+	background-color: #FFF;
+}
+.twoColFixRtHdr #header {
+	background-image: url(/_images/skin/backgrounds/<?php echo $_SESSION['instrument_id']; ?>_background.png);
+	background-repeat: repeat;
+	background-color: #93CCCB;
+	height: 74px;
+} 
+--> 
+--> 
+</style>
+<!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+
+<link href="/_css/template.css" rel="stylesheet" type="text/css" />
+<link href="/_css/template_assess3.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="header">
+	<?php if (isset($_SESSION['instrument_id'])) { ?>
+    <div id="header_logo">
+      <p class="uppercase"><?php echo str_replace("_", " ", $_SESSION['instrument_id']); ?></p>
+    </div>
+	<?php } else { ?>
+  	<div class="header1_column1"></div>
+  <?php } ?>
+</div>
+
+<div id="menu1">
+  <h3>
+				<?php include("../_includes/navigation/header_1a.html"); ?>
+				<!-- InstanceBeginEditable name="ExtraMenuItem1" -->&nbsp;<!-- InstanceEndEditable -->&nbsp;
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;
+					<?php if (isset($_SESSION['log_firstname'])) {  ?>
+  					You are logged in as <?php echo $_SESSION['log_firstname']." ".$_SESSION['log_lastname'];  } ?></h3>
+</div>
+	
+<div id="container">
+<p><!-- InstanceBeginEditable name="menu3" --> 
+	
+	<!-- InstanceEndEditable --></p>
+<div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  
+  <? if ($course['text_register'] == '') { ?>
+    <h1>REGISTER FOR COURSE: <? echo $course['title']; ?></h1>
+  <? } ?>
+
+  <? if ($can_edit) { ?><span id='ckeditor_status'></span><? } ?>
+  <div id='ckeditor_intro' <? if ($can_edit) { ?>contenteditable='true'<? } ?>
+    ><? echo $course['text_register']; ?></div>
+
+  <h2>About the course</h2>
+  <p><a href='syllabus.php?coursekey=<? echo $coursekey; ?>'>view syllabus</a></p>
+  
+  <? echo $course['description_short']; ?>
+  <br class='clearfloat' />
+  
+  <? if (!$is_lectures_only) { ?>
+    <table style='width:100%; margin-top:0px;'>
+      <tr>
+        <td style='width:20%; max-width:200px;'><div align="right">Dates</div></td>
+        <td><? echo ($course['date_start'] <> '' ? date('F jS', strtotime($course['date_start'])): '?'); ?> 
+          to <? echo ($course['date_end'] <> '' ? date('F jS', strtotime($course['date_end'])): '?'); ?></td>
+      </tr>
+      <tr>
+        <td><div align="right">Register by</div></td>
+        <td><? echo ($course['register_by_date'] <> '' ? date('F jS', strtotime($course['register_by_date'])): '?'); ?></td>
+      </tr>
+      <tr>
+        <td><div align="right">Instructors</div></td>
+        <td><? echo $course['instructor1_name']; ?>
+          <? if ($course['instructor2_name'] <> '') { 
+          echo '<br />'.$course['instructor2_name']; } ?>
+          <? if ($course['instructor3_name'] <> '') { 
+          echo '<br />'.$course['instructor3_name']; } ?>, visiting lecturer
+        </td>
+      </tr>
+      <tr>
+        <td><div align="right">Sections</div></td>
+        <td>
+          <? $is_first_row = true;
+          while ($row = $rsSections->fetch_assoc()) { ?>
+
+            <? echo $days[$row['day_of_week']]; ?>s, 
+            <? echo date('g:i', strtotime($row['time_of_day'])); ?> to 
+            <? echo date('g:i A', 
+              strtotime("+{$row['duration_mins']} minutes", 
+                strtotime($row['time_of_day']))); ?> 
+            EST  
+            <? if ($is_first_row) { $is_first_row = false; echo " or "; } ?>
+            <br />
+          <? } ?>
+        </td>
+      </tr>
+      <tr>
+        <td><div align="right"><strong>Fees</strong></div></td>
+      </tr>
+      <tr>
+        <td><div align="right">General Education Level</div></td>
+        <td>$<? echo $course['price_level1']; ?></td>
+      </tr>
+      <tr>
+        <td><div align="right">Certificate Level</div></td>
+        <td>$<? echo $course['price_level2']; ?></td>
+      </tr>
+      <tr>
+        <td><div align="right">Minimum deposit</div></td>
+        <td>$<? echo $course['deposit_amount']; ?></td>
+      </tr>
+    </table>
+  <? } // ENDIF: only show dates & prices for full course; hide for lectures-only package ?>
+
+
+
+	<? if (!$is_lectures_only AND date('Y-m-d') > $course['register_by_date']) { ?>
+    <div class="box">
+      <p>Registration for this course is now closed. Please <a href='../contactus.php'>contact us</a> with any questions.</p>
+    </div>
+  <? } else if ($course['am_i_registered']) { ?>
+    <div class='box'>
+      <p>We have already received your registration for this course. <br />
+      <a href='registration_status.php?coursekey=<? echo $coursekey; ?>'>view my registration and payment status</a></p>
+    </div>
+  <? } else if ($userkey == 0) { ?>
+    <h3 class='red'>You need to be logged into our website in order to register for our courses.</h3>
+    <p><a href='../security/logIn.php?accesscheck=%2Fcourses%2Fregister.php%3Fcoursekey%3D<? echo $coursekey; ?>'>
+        log in</a> or 
+      <a href='../security/registration.php?coursekey=<? echo $coursekey; ?>'>
+        create an account</a>
+    </p>
+  <? } else { ?>
+    
+    <form id='form1' method="POST" action="" style='margin-top:0px;'>
+    
+      <h3 style='margin-top:0px;'>Basic information</h3>
+    
+      <table width='100%'>
+        <tr>
+          <td style='width:20%; max-width:200px;'><div align="right">Phone number</div></td>
+          <td><input class='required' type='text' name='work_phone' value='<? echo $registrant['work_phone']; ?>' /></td>
+        </tr>
+        <tr>
+          <td><div align="right">Address</div></td>
+          <td><input class='required width-250' type='text' name='address1' value='<? echo $registrant['address1']; ?>' /></td>
+        </tr>
+        <tr>
+          <td><div align="right">City</div></td>
+          <td><input class='required' type='text' name='city' value='<? echo $registrant['city']; ?>' /></td>
+        </tr>
+        <tr>
+          <td><div align="right">State</div></td>
+          <td>
+            <select class='required width-200' name='state'>
+              <option value=''>- select one -</option>
+              <option value='n/a'>n/a</option>
+              <? while ($row = $rsStates->fetch_assoc()) { ?>
+                <option value='<? echo $row['state']; ?>' <? if ($row['state'] == $registrant['state']) { echo "selected='selected'"; } ?>><? echo $row['state']; ?></option>
+              <? } ?>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td><div align="right">Province</div></td>
+          <td><input type='text' name='province' value='<? echo $registrant['province']; ?>' /></td>
+        </tr>
+        <tr>
+          <td><div align="right">Zip code</div></td>
+          <td><input type='text' name='zip' value='<? echo $registrant['zip']; ?>' /></td>
+        </tr>
+        <tr>
+          <td><div align="right">Country</div></td>
+          <td>
+            <select class='required width-200' name='country'>
+              <option value=''>- select one -</option>
+              <option value='United States'>United States</option>
+              <? while ($row = $rsCountries->fetch_assoc()) { ?>
+                <option value='<? echo $row['country']; ?>' <? if ($row['country'] == $registrant['country']) { echo "selected='selected'"; } ?>><? echo $row['country']; ?></option>
+              <? } ?>
+            </select>
+          </td>
+        </tr>
+      </table>
+
+      <? if (!$is_lectures_only) { ?>
+        <h3>About you</h3>
+        <p>
+          Tell us about yourself, your background, and why you decided to take this course.<br />
+          <textarea class='required' name="about_me"></textarea>
+        </p>
+      <? } else { ?>
+        <input type='hidden' name='about_me' value='' />
+      <? } ?>
+
+      <? if ($is_lectures_only) { ?>
+        <input type='hidden' name='will_take_course_level' value='1' />
+      <? } else { ?>
+
+        <h3>Course level</h3>
+        <p>
+          Which level of this course will you be taking?<br />
+          <select class='required' name='will_take_course_level'>
+            <option value=''>- select one -</option>
+            <option value='1'>General Education Level
+              (fee: $<? echo $course['price_level1']; ?>)</option>
+            <option value='2'>Certificate Level
+              (fee: $<? echo $course['price_level2']; ?>)</option>
+          </select>
+          <br />
+          <input type='checkbox' class='toggle_next' name='registered_as_student' value='1' />
+          I'm registering as a student<br />
+          <span class='toggle_receiver' style='display: none'>
+            <span class='red'>Please don't register as a student until you've spoken with us about the student discount.</span>
+            Please <a href='../contactus.php'>contact us</a> first.
+          </span>
+        </p>
+
+        <h3>Course section</h3>
+        <p>Select the class meeting time that best fits your schedule.<br />
+          <select class='required' name='sectionkey'>
+            <option value=''>- select one -</option>
+            <? $rsSections->data_seek(0); 
+            while ($row = $rsSections->fetch_assoc()) { 
+              if (!$row['is_full']) { ?>
+                <option value='<? echo $row['key']; ?>'>
+                  <? echo $days[$row['day_of_week']]; ?> at 
+                  <? echo date('g:i A', strtotime($row['time_of_day'])); ?> EST
+                </option>
+              <? } ?>
+            <? } ?>
+          </select>
+        </p>
+
+      <? } // END else: only show course level and section selections for full course registration, not for lectures-only package. ?>
+
+      <table><tr>
+        <td><input type='checkbox' id='wont_share_videos' name='wont_share_videos' value='1' /></td>
+        <td>
+          I understand that the course lecture and discussion recordings are the property of Lectica, Inc. and will not share them with other individuals or groups. If you are interested in group licensing, please <a href='/contactus.php?type=fola'>contact us</a>.
+        </td>
+      </tr></table>
+
+      <h3 class='red'>Payment information</h3>
+      <ul style="font-size:110%;">
+        <? if (!$is_lectures_only) { ?>
+          <li>A nonrefundable deposit of $<? echo $course['deposit_amount']; ?> is required to secure your place in the course. You are not officially registered until we receive your deposit.</li>
+          <li>Full payment is due by <? echo date('F jS', strtotime($course['register_by_date'])); ?>.</li>
+        <? } else { ?>
+          <li>The cost of the course is $<? echo $course['price_level1']; ?>. You will have access to the complete syllabus and all lectures once you pay this amount.</li>
+        <? } ?>
+        <li>You will be redirected to our PayPal payment page when you submit this form. All payments must be made in US funds.</li>
+      </ul>
+      <input type='hidden' name='name' value='<? echo $registrant['firstname'].' '.$registrant['lastname']; ?>' />
+      <input name="submit" type="submit" style='margin-top:25px; font-size:120%;' value="SUBMIT AND CHECKOUT" />
+      
+    </form>
+    
+    <?php } // END ELSE: only show the main page content if registration is live. ?>
+
+    <p>&nbsp;</p>
+    <p>&nbsp;</p>
+    
+  <!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+  <!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <!-- end #container -->
+</div>
+</body>
+<!-- InstanceEnd --></html>

@@ -1,0 +1,415 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+
+// Start trigger
+$formValidation = new tNG_FormValidation();
+$formValidation->addField("ldmakey", true, "numeric", "", "", "", "");
+$formValidation->addField("perspectives1", true, "text", "", "500", "5000", "Please explain your answer more thoroughly.");
+$formValidation->addField("perspectives2", true, "text", "", "500", "5000", "Please explain your answer more thoroughly.");
+$formValidation->addField("response1", true, "text", "", "500", "5000", "Please explain your answer more thoroughly.");
+$formValidation->addField("response2", true, "text", "", "500", "5000", "Please explain your answer more thoroughly.");
+$formValidation->addField("process", true, "text", "", "500", "5000", "Please explain your answer more thoroughly.");
+$tNGs->prepareValidation($formValidation);
+// End trigger
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsRegistrants = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsRegistrants = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsRegistrants = sprintf("SELECT userkey, firstname, lastname FROM Registrants WHERE userkey = %s", GetSQLValueString($colname_rsRegistrants, "int"));
+$rsRegistrants = mysql_query($query_rsRegistrants, $Assessment) or die(mysql_error());
+$row_rsRegistrants = mysql_fetch_assoc($rsRegistrants);
+$totalRows_rsRegistrants = mysql_num_rows($rsRegistrants);
+
+// Make an update transaction instance
+$upd_LDMAmil1 = new tNG_update($conn_Assessment);
+$tNGs->addTransaction($upd_LDMAmil1);
+// Register triggers
+$upd_LDMAmil1->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Update1");
+$upd_LDMAmil1->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$upd_LDMAmil1->registerTrigger("END", "Trigger_Default_Redirect", 99, "finished.html");
+// Add columns
+$upd_LDMAmil1->setTable("LDMAmil");
+$upd_LDMAmil1->addColumn("perspectives1", "STRING_TYPE", "POST", "perspectives1");
+$upd_LDMAmil1->addColumn("perspectives2", "STRING_TYPE", "POST", "perspectives2");
+$upd_LDMAmil1->addColumn("response1", "STRING_TYPE", "POST", "response1");
+$upd_LDMAmil1->addColumn("response2", "STRING_TYPE", "POST", "response2");
+$upd_LDMAmil1->addColumn("process", "STRING_TYPE", "POST", "process");
+$upd_LDMAmil1->setPrimaryKey("ldmakey", "NUMERIC_TYPE", "GET", "ldmakey");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsLDMAmil = $tNGs->getRecordset("LDMAmil");
+$row_rsLDMAmil = mysql_fetch_assoc($rsLDMAmil);
+$totalRows_rsLDMAmil = mysql_num_rows($rsLDMAmil);
+?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templateldma2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: LDMA essays</title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<style type="text/css">
+<!--
+.style11 {
+	color: #990000
+}
+-->
+</style>
+<?php echo $tNGs->displayValidationRules();?>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #7E7E7E;
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #767A76;
+	background-color: #FFF9F3;
+	background-image: url(/images/skin/LDMAcontainer2.jpg);
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LDMAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-image: url(/images/skin/menu.png);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 3;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 0px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+	background-image: url(/images/skin/LDMAmenu4.jpg);
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/LDMAfooter2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container #sidebar1 p a {
+	color: #C8C8C8;
+}
+.twoColFixRtHdr #container #sidebar1 p a:hover {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:active {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #sidebar1 p a:visited {
+	color: #E2E2E2;
+}
+.twoColFixRtHdr #container #menu1 div {
+	color: #FFE1D0;
+}
+.twoColFixRtHdr #container #menu1 #MenuBar2 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a:hover {
+	color: #FFF;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+.twoColFixRtHdr #container #menu2 div #MenuBar1 li a {
+	color: #FFEDE2;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+    <div align="right">
+      <!-- end #menu1 -->
+You are logged in as <?php echo $_SESSION['log_firstname']; ?> <?php echo $_SESSION['log_lastname']; ?></div>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <!-- InstanceBeginEditable name="menu3" --><!-- InstanceEndEditable --></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+        <td valign="top"><h1>  MILITARY VERSION (LDMAmil01)</h1>
+          <h2><strong>Important information about the essay section of the LDMA</strong></h2>
+          <p>The essay section of this assessment is designed to help us understand how you think about common leadership problems. You will be asked to show us how you evaluate information and make decisions.</p>
+          <p><span class="emphasis"><strong>Please answer the questions as completely as possible, thoroughly EXPLAINING all of your answers.</strong></span> Your explanations provide us with the information we need to determine the developmental level of your response. If you do not do a good job showing us how you think, we may not have enough information to provide an accurate score. In fact, if you do not carefully explain your answers, it is likely that your score will be lower than your true level of skill.</p>
+          <p>You don't need to worry  about writing too much, but if you write too little for us to score your performance properly, you will receive a prompt to provide more explanation.</p>
+          <h3>Cutting and pasting</h3>
+          <p><span class="emphasis"><strong>You must complete this assessment in a single sitting, without leaving your computer idle for more than ten minutes at a time.</strong></span> If you must leave your computer, save this page to your desktop or cut and paste the essays into a word processor. If you know in advance that you will not be able to complete the assessment in a single sitting,  copy this page for reference and write your answers in a word processing application (Word, Open Office, Notepad, Pages, etc.).  When you are finished, you can log in again, restart the assessment, fill in your personal information,  then paste your essays into the fields below. Before cutting and pasting, please save your word processor file in <span class="redbold">.txt </span> format, close it, then reopen it. Otherwise, what we see on our end may be very difficult to read.</p>
+          <h3>The next 5 questions involve the following dilemma.</h3>
+          <p>You have just had a one-on-one with the technical superstar of your squadron to go over his performance review. As usual, feedback relating to his accomplishments is in the stratosphere, reflecting his hard charging, take-no-prisoners approach to work. His high energy and intelligence have helped the squadron to become one of the most productive in the Wing. You were totally taken by surprise when he asked you to consider him for an upcoming leadership position, so you told him you’d think about it and get back to him. You are concerned about his interpersonal skills; he has never been a particularly good team player, because he prefers to be out in front of the pack. Also, the other members of the squadron are a little intimidated by him, because he is so confident and capable and, you admit to yourself, on occasion a little arrogant and impatient. You are feeling overwhelmed by all the factors to consider in this decision: the obvious sincerity of this individual in wanting a new challenge, his track record of bringing in numerous home runs for the squadron, the potential downside of some of his personality traits, your hunch that maybe he could become a superstar leader if he put his mind to it, etc.</p>
+          <p>&nbsp;
+            <?php
+	echo $tNGs->getErrorMsg();
+?>
+
+          <form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+            <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+              <tr>
+                <td class="KT_th"><label for="perspectives1">What are the important 
+                  things to consider in 
+                  this situation? In one or 
+                  two paragraphs, explain 
+                  what they are and <strong>why</strong> they are important.</label>
+(In your response, feel free to include considerations that go beyond the immediate situation.)</td>
+                <td><textarea name="perspectives1" cols="70" rows="12" id="perspectives1"><?php echo KT_escapeAttribute($row_rsLDMAmil01['perspectives1']); ?></textarea>
+                <?php echo $tNGs->displayFieldHint("perspectives1");?> <?php echo $tNGs->displayFieldError("LDMA", "perspectives1"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th">Are some of  the 
+considerations you 
+discussed in your 
+response to question 
+1 more important than 
+others? If so, what are 
+they and <strong>why</strong> are they 
+more important?</td>
+                <td><textarea name="perspectives2" cols="70" rows="12" id="perspectives2"><?php echo KT_escapeAttribute($row_rsLDMAmil01['perspectives2']); ?></textarea>
+                <?php echo $tNGs->displayFieldHint("perspectives2");?> <?php echo $tNGs->displayFieldError("LDMA", "perspectives2"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th">What do you think is 
+                an appropriate response 
+                to this kind of situation? 
+                Please explain <strong>why</strong> this 
+                response is appropriate.</td>
+                <td><textarea name="response1" cols="70" rows="12" id="response1"><?php echo KT_escapeAttribute($row_rsLDMAmil01['response1']); ?></textarea>
+                <?php echo $tNGs->displayFieldHint("response1");?> <?php echo $tNGs->displayFieldError("LDMA", "response1"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th"><label for="response2">Describe another 
+reasonable response to  
+this kind of situation.  
+Compare the potential  
+risks and benefits of this 
+response with those of your  
+original response.</label></td>
+                <td><textarea name="response2" cols="70" rows="12" id="response2"><?php echo KT_escapeAttribute($row_rsLDMAmil01['response2']); ?></textarea>
+                <?php echo $tNGs->displayFieldHint("response2");?> <?php echo $tNGs->displayFieldError("LDMA", "response2"); ?> </td>
+              </tr>
+              <tr>
+                <td class="KT_th">What process would you 
+                recommend for deciding 
+                how to respond to 
+                situations of this kind? 
+                Please describe this 
+                decision-making process 
+                in general terms—<span class="red">in a 
+                way that would allow 
+                another person to use the 
+                process in a similar 
+                workplace situation</span>—and explain <strong>why</strong> you would recommend each step in this process.</td>
+                <td><textarea name="process" cols="70" rows="12" id="process"><?php echo KT_escapeAttribute($row_rsLDMAmil01['process']); ?></textarea>
+                <?php echo $tNGs->displayFieldHint("process");?> <?php echo $tNGs->displayFieldError("LDMA", "process"); ?> </td>
+              </tr>
+              <tr class="KT_buttons">
+                <td colspan="2"><input type="submit" name="KT_Update1" id="KT_Update1" value="Submit" />
+                </td>
+              </tr>
+            </table>
+            <input type="hidden" name="ldmakey" id="ldmakey" value="<?php echo KT_escapeAttribute($row_rsLDMAmil01['ldmakey']); ?>" />
+            </p>
+          </form>
+          </td>
+  <h3><span class="energy">If you see this message after clicking the submit button, your answers have not been submitted. Please check for error messages, make any necessary changes, and resubmit.</span></h3>
+<!-- InstanceEndEditable -->
+  <!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsRegistrants);
+?>

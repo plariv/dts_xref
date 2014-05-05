@@ -1,0 +1,80 @@
+<?php
+ob_start();
+?>
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as bulk customer")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+$colname_rsLIMAscores = "-1";
+if (isset($_SESSION['log_userkey'])) {
+  $colname_rsLIMAscores = $_SESSION['log_userkey'];
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLIMAscores = sprintf("SELECT LIMA.limakey, LIMA.userkey, LIMA.projectkey, LIMA.`date`, LIMAscores.limascoringkey, LIMAscores.limakey, LIMA.finalized, LIMAscores.lasname, Registrants.userkey, Registrants.firstname, Registrants.lastname, LIMA.testtime, BulkCustomerInfo.bulkcustomerkey, BulkCustomerInfo.projectkey, LIMAscores.itmeaning, LIMAscores.itapplication, LIMAscores.considerations, LIMAscores.quadrants, LIMAscores.levelslines, LIMAscores.bestresponse, LIMAscores.lasname FROM LIMA, LIMAscores, Registrants, BulkCustomerInfo WHERE BulkCustomerInfo.bulkcustomerkey = %s AND LIMAscores.limakey = LIMA.limakey AND Registrants.userkey = LIMA.userkey AND  LIMA.finalized = 1 AND BulkCustomerInfo.projectkey = LIMA.projectkey ORDER BY LIMA.limakey DESC", GetSQLValueString($colname_rsLIMAscores, "int"));
+$rsLIMAscores = mysql_query($query_rsLIMAscores, $Assessment) or die(mysql_error());
+$row_rsLIMAscores = mysql_fetch_assoc($rsLIMAscores);
+$totalRows_rsLIMAscores = mysql_num_rows($rsLIMAscores);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>DTS: LIMA summary download</title>
+</head>
+
+<body>
+  <?php 
+ob_end_clean();
+header("Content-Type: application/unknown\r\n"); 
+header("Content-Disposition: filename=limasummary.csv\r\n"); 
+header("Content-Transfer-Encoding: binary\r\n"); 
+?>
+  limakey, firstname, lastname, testtime, date, itmeaning, itapplication, considerations, quadrants, levelslines, bestresponse, score,
+<?php do { ?>
+<?php echo $row_rsLIMAscores['limakey']; ?>,<?php echo $row_rsLIMAscores['firstname']; ?>,<?php echo $row_rsLIMAscores['lastname']; ?>,<?php echo $row_rsLIMAscores['testtime']; ?>,<?php echo $row_rsLIMAscores['date']; ?>,<?php echo $row_rsLIMAscores['itmeaning']; ?>,<?php echo $row_rsLIMAscores['itapplication']; ?>,<?php echo $row_rsLIMAscores['considerations']; ?>,<?php echo $row_rsLIMAscores['quadrants']; ?>,<?php echo $row_rsLIMAscores['levelslines']; ?>,<?php echo $row_rsLIMAscores['bestresponse']; ?>,<?php echo $row_rsLIMAscores['lasname']; ?>,
+<?php } while ($row_rsLIMAscores = mysql_fetch_assoc($rsLIMAscores)); ?>
+<br />
+  <?
+exit();
+?>
+</p>
+</body>
+</html>
+<?php
+mysql_free_result($rsLIMAscores);
+?>

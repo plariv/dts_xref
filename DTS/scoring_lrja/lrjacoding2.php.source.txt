@@ -1,0 +1,1829 @@
+<?php require_once('../Connections/Assessment.php'); ?>
+<?php
+// Load the common classes
+require_once('../includes/common/KT_common.php');
+
+// Load the tNG classes
+require_once('../includes/tng/tNG.inc.php');
+
+// Load the KT_back class
+require_once('../includes/nxt/KT_back.php');
+
+// Make a transaction dispatcher instance
+$tNGs = new tNG_dispatcher("../");
+
+// Make unified connection variable
+$conn_Assessment = new KT_connection($Assessment, $database_Assessment);
+?><?php require_once( "../WA_SecurityAssist/Helper_PHP.php" ); ?>
+<?php
+if (!WA_Auth_RulePasses("Logged in as researcher")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+
+
+// Start trigger
+$formValidation = new tNG_FormValidation();
+$formValidation->addField("lrjakey", true, "numeric", "", "", "", "");
+$tNGs->prepareValidation($formValidation);
+// End trigger
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJAscoringratings = "SELECT ratingskey, ratingname FROM lrjascoringratings";
+$rsLRJAscoringratings = mysql_query($query_rsLRJAscoringratings, $Assessment) or die(mysql_error());
+$row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+$totalRows_rsLRJAscoringratings = mysql_num_rows($rsLRJAscoringratings);
+
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsGroupingLabels = "SELECT groupinglabelno, groupinglabelname FROM lrjascoringratings";
+$rsGroupingLabels = mysql_query($query_rsGroupingLabels, $Assessment) or die(mysql_error());
+$row_rsGroupingLabels = mysql_fetch_assoc($rsGroupingLabels);
+$totalRows_rsGroupingLabels = mysql_num_rows($rsGroupingLabels);
+
+$colname_rsLRJA = "-1";
+if (isset($_GET['lrjakey'])) {
+  $colname_rsLRJA = (get_magic_quotes_gpc()) ? $_GET['lrjakey'] : addslashes($_GET['lrjakey']);
+}
+mysql_select_db($database_Assessment, $Assessment);
+$query_rsLRJA = sprintf("SELECT lrja.lrjakey, lrja.thinkof, lrja.differentconclusions, lrja.idealprocess, lrja.certainty, lrja.truth, lrja.identifytruth, lrja.absolutetruth, lrja.generalcomment, lrjascores.lrjakey, lrjascores.essay1las, lrjascores.essay2las, lrjascores.essay3las, lrjascores.essay4las, lrjascores.essay5las, lrjascores.essay6las, lrjascores.essay7las, lrjascores.lasname FROM lrja, lrjascores WHERE lrja.lrjakey = %s AND lrjascores.lrjakey = lrja.lrjakey", GetSQLValueString($colname_rsLRJA, "int"));
+$rsLRJA = mysql_query($query_rsLRJA, $Assessment) or die(mysql_error());
+$row_rsLRJA = mysql_fetch_assoc($rsLRJA);
+$totalRows_rsLRJA = mysql_num_rows($rsLRJA);
+
+// Make an insert transaction instance
+$ins_LRJAscores = new tNG_multipleInsert($conn_Assessment);
+$tNGs->addTransaction($ins_LRJAscores);
+// Register triggers
+$ins_LRJAscores->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Insert1");
+$ins_LRJAscores->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$ins_LRJAscores->registerTrigger("END", "Trigger_Default_Redirect", 99, "lrjacontentcoded.php?lrjakey={GET.lrjakey}");
+// Add columns
+$ins_LRJAscores->setTable("LRJAscores");
+$ins_LRJAscores->addColumn("lrjakey", "NUMERIC_TYPE", "POST", "lrjakey", "{GET.lrjakey}");
+$ins_LRJAscores->addColumn("effectsofperspective", "NUMERIC_TYPE", "POST", "effectsofperspective");
+$ins_LRJAscores->addColumn("effectsbias", "NUMERIC_TYPE", "POST", "effectsbias");
+$ins_LRJAscores->addColumn("effectselfinterest", "NUMERIC_TYPE", "POST", "effectselfinterest");
+$ins_LRJAscores->addColumn("effectsattitude", "NUMERIC_TYPE", "POST", "effectsattitude");
+$ins_LRJAscores->addColumn("effectsbiasconstraints", "NUMERIC_TYPE", "POST", "effectsbiasconstraints");
+$ins_LRJAscores->addColumn("effectsopinions", "NUMERIC_TYPE", "POST", "effectsopinions");
+$ins_LRJAscores->addColumn("effectsperspectives", "NUMERIC_TYPE", "POST", "effectsperspectives");
+$ins_LRJAscores->addColumn("effectsworldview", "NUMERIC_TYPE", "POST", "effectsworldview");
+$ins_LRJAscores->addColumn("effectsupbringing", "NUMERIC_TYPE", "POST", "effectsupbringing");
+$ins_LRJAscores->addColumn("effectsculture", "NUMERIC_TYPE", "POST", "effectsculture");
+$ins_LRJAscores->addColumn("effectseducation", "NUMERIC_TYPE", "POST", "effectseducation");
+$ins_LRJAscores->addColumn("effectsemotion", "NUMERIC_TYPE", "POST", "effectsemotion");
+$ins_LRJAscores->addColumn("effectseconomics", "NUMERIC_TYPE", "POST", "effectseconomics");
+$ins_LRJAscores->addColumn("thinkingaboutthinking", "NUMERIC_TYPE", "POST", "thinkingaboutthinking");
+$ins_LRJAscores->addColumn("effectspolitics", "NUMERIC_TYPE", "POST", "effectspolitics");
+$ins_LRJAscores->addColumn("gatherinformation", "NUMERIC_TYPE", "POST", "gatherinformation");
+$ins_LRJAscores->addColumn("evaluateinformation", "NUMERIC_TYPE", "POST", "evaluateinformation");
+$ins_LRJAscores->addColumn("informationsource", "NUMERIC_TYPE", "POST", "informationsource");
+$ins_LRJAscores->addColumn("criticalthinking", "NUMERIC_TYPE", "POST", "criticalthinking");
+$ins_LRJAscores->addColumn("commonsense", "NUMERIC_TYPE", "POST", "commonsense");
+$ins_LRJAscores->addColumn("logic", "NUMERIC_TYPE", "POST", "logic");
+$ins_LRJAscores->addColumn("facts", "NUMERIC_TYPE", "POST", "facts");
+$ins_LRJAscores->addColumn("proof", "NUMERIC_TYPE", "POST", "proof");
+$ins_LRJAscores->addColumn("comparingcontrasting", "NUMERIC_TYPE", "POST", "comparingcontrasting");
+$ins_LRJAscores->addColumn("debate", "NUMERIC_TYPE", "POST", "debate");
+$ins_LRJAscores->addColumn("intuition", "NUMERIC_TYPE", "POST", "intuition");
+$ins_LRJAscores->addColumn("weighingproscons", "NUMERIC_TYPE", "POST", "weighingproscons");
+$ins_LRJAscores->addColumn("multiplesources", "NUMERIC_TYPE", "POST", "multiplesources");
+$ins_LRJAscores->addColumn("broadinquiry", "NUMERIC_TYPE", "POST", "broadinquiry");
+$ins_LRJAscores->addColumn("domains", "NUMERIC_TYPE", "POST", "domains");
+$ins_LRJAscores->addColumn("socialphysical", "NUMERIC_TYPE", "POST", "socialphysical");
+$ins_LRJAscores->addColumn("science", "NUMERIC_TYPE", "POST", "science");
+$ins_LRJAscores->addColumn("religion", "NUMERIC_TYPE", "POST", "religion");
+$ins_LRJAscores->addColumn("philosophy", "NUMERIC_TYPE", "POST", "philosophy");
+$ins_LRJAscores->addColumn("morality", "NUMERIC_TYPE", "POST", "morality");
+$ins_LRJAscores->addColumn("mathematics", "NUMERIC_TYPE", "POST", "mathematics");
+$ins_LRJAscores->addColumn("history", "NUMERIC_TYPE", "POST", "history");
+$ins_LRJAscores->addColumn("perspectivesontruth", "NUMERIC_TYPE", "POST", "perspectivesontruth");
+$ins_LRJAscores->addColumn("politics", "NUMERIC_TYPE", "POST", "politics");
+$ins_LRJAscores->addColumn("truthoutthere", "NUMERIC_TYPE", "POST", "truthoutthere");
+$ins_LRJAscores->addColumn("itworksitstrue", "NUMERIC_TYPE", "POST", "itworksitstrue");
+$ins_LRJAscores->addColumn("revealedtruth", "NUMERIC_TYPE", "POST", "revealedtruth");
+$ins_LRJAscores->addColumn("probability", "NUMERIC_TYPE", "POST", "probability");
+$ins_LRJAscores->addColumn("approximation", "NUMERIC_TYPE", "POST", "approximation");
+$ins_LRJAscores->addColumn("truthiswhatyoumakeit", "NUMERIC_TYPE", "POST", "truthiswhatyoumakeit");
+$ins_LRJAscores->addColumn("basisforcertainty", "NUMERIC_TYPE", "POST", "basisforcertainty");
+$ins_LRJAscores->addColumn("intuitivetruths", "NUMERIC_TYPE", "POST", "intuitivetruths");
+$ins_LRJAscores->addColumn("sensecertainty", "NUMERIC_TYPE", "POST", "sensecertainty");
+$ins_LRJAscores->addColumn("personalexperience", "NUMERIC_TYPE", "POST", "personalexperience");
+$ins_LRJAscores->addColumn("weightofevidence", "NUMERIC_TYPE", "POST", "weightofevidence");
+$ins_LRJAscores->addColumn("majoritybelief", "NUMERIC_TYPE", "POST", "majoritybelief");
+$ins_LRJAscores->addColumn("methods", "NUMERIC_TYPE", "POST", "methods");
+$ins_LRJAscores->addColumn("humanfallability", "NUMERIC_TYPE", "POST", "humanfallability");
+$ins_LRJAscores->addColumn("uncertaintycertain", "NUMERIC_TYPE", "POST", "uncertaintycertain");
+$ins_LRJAscores->addColumn("informationsources", "NUMERIC_TYPE", "POST", "informationsources");
+$ins_LRJAscores->addColumn("consensus", "NUMERIC_TYPE", "POST", "consensus");
+$ins_LRJAscores->addColumn("internet", "NUMERIC_TYPE", "POST", "internet");
+$ins_LRJAscores->addColumn("experts", "NUMERIC_TYPE", "POST", "experts");
+$ins_LRJAscores->addColumn("friendsfamily", "NUMERIC_TYPE", "POST", "friendsfamily");
+$ins_LRJAscores->addColumn("school", "NUMERIC_TYPE", "POST", "school");
+$ins_LRJAscores->addColumn("media", "NUMERIC_TYPE", "POST", "media");
+$ins_LRJAscores->addColumn("objective", "NUMERIC_TYPE", "POST", "objective");
+$ins_LRJAscores->addColumn("unbiased", "NUMERIC_TYPE", "POST", "unbiased");
+$ins_LRJAscores->addColumn("reliable", "NUMERIC_TYPE", "POST", "reliable");
+$ins_LRJAscores->addColumn("personalopinion", "NUMERIC_TYPE", "POST", "personalopinion");
+$ins_LRJAscores->addColumn("ideasforcodes", "STRING_TYPE", "POST", "ideasforcodes");
+$ins_LRJAscores->setPrimaryKey("lrjascoringkey", "NUMERIC_TYPE");
+
+// Make an update transaction instance
+$upd_LRJAscores = new tNG_multipleUpdate($conn_Assessment);
+$tNGs->addTransaction($upd_LRJAscores);
+// Register triggers
+$upd_LRJAscores->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Update1");
+$upd_LRJAscores->registerTrigger("BEFORE", "Trigger_Default_FormValidation", 10, $formValidation);
+$upd_LRJAscores->registerTrigger("END", "Trigger_Default_Redirect", 99, "lrjacontentcoded.php?lrjakey={GET.lrjakey}");
+// Add columns
+$upd_LRJAscores->setTable("LRJAscores");
+$upd_LRJAscores->addColumn("lrjakey", "NUMERIC_TYPE", "POST", "lrjakey");
+$upd_LRJAscores->addColumn("effectsofperspective", "NUMERIC_TYPE", "POST", "effectsofperspective");
+$upd_LRJAscores->addColumn("effectsbias", "NUMERIC_TYPE", "POST", "effectsbias");
+$upd_LRJAscores->addColumn("effectselfinterest", "NUMERIC_TYPE", "POST", "effectselfinterest");
+$upd_LRJAscores->addColumn("effectsattitude", "NUMERIC_TYPE", "POST", "effectsattitude");
+$upd_LRJAscores->addColumn("effectsbiasconstraints", "NUMERIC_TYPE", "POST", "effectsbiasconstraints");
+$upd_LRJAscores->addColumn("effectsopinions", "NUMERIC_TYPE", "POST", "effectsopinions");
+$upd_LRJAscores->addColumn("effectsperspectives", "NUMERIC_TYPE", "POST", "effectsperspectives");
+$upd_LRJAscores->addColumn("effectsworldview", "NUMERIC_TYPE", "POST", "effectsworldview");
+$upd_LRJAscores->addColumn("effectsupbringing", "NUMERIC_TYPE", "POST", "effectsupbringing");
+$upd_LRJAscores->addColumn("effectsculture", "NUMERIC_TYPE", "POST", "effectsculture");
+$upd_LRJAscores->addColumn("effectseducation", "NUMERIC_TYPE", "POST", "effectseducation");
+$upd_LRJAscores->addColumn("effectsemotion", "NUMERIC_TYPE", "POST", "effectsemotion");
+$upd_LRJAscores->addColumn("effectseconomics", "NUMERIC_TYPE", "POST", "effectseconomics");
+$upd_LRJAscores->addColumn("thinkingaboutthinking", "NUMERIC_TYPE", "POST", "thinkingaboutthinking");
+$upd_LRJAscores->addColumn("effectspolitics", "NUMERIC_TYPE", "POST", "effectspolitics");
+$upd_LRJAscores->addColumn("gatherinformation", "NUMERIC_TYPE", "POST", "gatherinformation");
+$upd_LRJAscores->addColumn("evaluateinformation", "NUMERIC_TYPE", "POST", "evaluateinformation");
+$upd_LRJAscores->addColumn("informationsource", "NUMERIC_TYPE", "POST", "informationsource");
+$upd_LRJAscores->addColumn("criticalthinking", "NUMERIC_TYPE", "POST", "criticalthinking");
+$upd_LRJAscores->addColumn("commonsense", "NUMERIC_TYPE", "POST", "commonsense");
+$upd_LRJAscores->addColumn("logic", "NUMERIC_TYPE", "POST", "logic");
+$upd_LRJAscores->addColumn("facts", "NUMERIC_TYPE", "POST", "facts");
+$upd_LRJAscores->addColumn("proof", "NUMERIC_TYPE", "POST", "proof");
+$upd_LRJAscores->addColumn("comparingcontrasting", "NUMERIC_TYPE", "POST", "comparingcontrasting");
+$upd_LRJAscores->addColumn("debate", "NUMERIC_TYPE", "POST", "debate");
+$upd_LRJAscores->addColumn("intuition", "NUMERIC_TYPE", "POST", "intuition");
+$upd_LRJAscores->addColumn("weighingproscons", "NUMERIC_TYPE", "POST", "weighingproscons");
+$upd_LRJAscores->addColumn("multiplesources", "NUMERIC_TYPE", "POST", "multiplesources");
+$upd_LRJAscores->addColumn("broadinquiry", "NUMERIC_TYPE", "POST", "broadinquiry");
+$upd_LRJAscores->addColumn("domains", "NUMERIC_TYPE", "POST", "domains");
+$upd_LRJAscores->addColumn("socialphysical", "NUMERIC_TYPE", "POST", "socialphysical");
+$upd_LRJAscores->addColumn("science", "NUMERIC_TYPE", "POST", "science");
+$upd_LRJAscores->addColumn("religion", "NUMERIC_TYPE", "POST", "religion");
+$upd_LRJAscores->addColumn("philosophy", "NUMERIC_TYPE", "POST", "philosophy");
+$upd_LRJAscores->addColumn("morality", "NUMERIC_TYPE", "POST", "morality");
+$upd_LRJAscores->addColumn("mathematics", "NUMERIC_TYPE", "POST", "mathematics");
+$upd_LRJAscores->addColumn("history", "NUMERIC_TYPE", "POST", "history");
+$upd_LRJAscores->addColumn("perspectivesontruth", "NUMERIC_TYPE", "POST", "perspectivesontruth");
+$upd_LRJAscores->addColumn("politics", "NUMERIC_TYPE", "POST", "politics");
+$upd_LRJAscores->addColumn("truthoutthere", "NUMERIC_TYPE", "POST", "truthoutthere");
+$upd_LRJAscores->addColumn("itworksitstrue", "NUMERIC_TYPE", "POST", "itworksitstrue");
+$upd_LRJAscores->addColumn("revealedtruth", "NUMERIC_TYPE", "POST", "revealedtruth");
+$upd_LRJAscores->addColumn("probability", "NUMERIC_TYPE", "POST", "probability");
+$upd_LRJAscores->addColumn("approximation", "NUMERIC_TYPE", "POST", "approximation");
+$upd_LRJAscores->addColumn("truthiswhatyoumakeit", "NUMERIC_TYPE", "POST", "truthiswhatyoumakeit");
+$upd_LRJAscores->addColumn("basisforcertainty", "NUMERIC_TYPE", "POST", "basisforcertainty");
+$upd_LRJAscores->addColumn("intuitivetruths", "NUMERIC_TYPE", "POST", "intuitivetruths");
+$upd_LRJAscores->addColumn("sensecertainty", "NUMERIC_TYPE", "POST", "sensecertainty");
+$upd_LRJAscores->addColumn("personalexperience", "NUMERIC_TYPE", "POST", "personalexperience");
+$upd_LRJAscores->addColumn("weightofevidence", "NUMERIC_TYPE", "POST", "weightofevidence");
+$upd_LRJAscores->addColumn("majoritybelief", "NUMERIC_TYPE", "POST", "majoritybelief");
+$upd_LRJAscores->addColumn("methods", "NUMERIC_TYPE", "POST", "methods");
+$upd_LRJAscores->addColumn("humanfallability", "NUMERIC_TYPE", "POST", "humanfallability");
+$upd_LRJAscores->addColumn("uncertaintycertain", "NUMERIC_TYPE", "POST", "uncertaintycertain");
+$upd_LRJAscores->addColumn("informationsources", "NUMERIC_TYPE", "POST", "informationsources");
+$upd_LRJAscores->addColumn("consensus", "NUMERIC_TYPE", "POST", "consensus");
+$upd_LRJAscores->addColumn("internet", "NUMERIC_TYPE", "POST", "internet");
+$upd_LRJAscores->addColumn("experts", "NUMERIC_TYPE", "POST", "experts");
+$upd_LRJAscores->addColumn("friendsfamily", "NUMERIC_TYPE", "POST", "friendsfamily");
+$upd_LRJAscores->addColumn("school", "NUMERIC_TYPE", "POST", "school");
+$upd_LRJAscores->addColumn("media", "NUMERIC_TYPE", "POST", "media");
+$upd_LRJAscores->addColumn("objective", "NUMERIC_TYPE", "POST", "objective");
+$upd_LRJAscores->addColumn("unbiased", "NUMERIC_TYPE", "POST", "unbiased");
+$upd_LRJAscores->addColumn("reliable", "NUMERIC_TYPE", "POST", "reliable");
+$upd_LRJAscores->addColumn("ideasforcodes", "STRING_TYPE", "POST", "ideasforcodes");
+$upd_LRJAscores->addColumn("personalopinion", "NUMERIC_TYPE", "POST", "personalopinion");
+$upd_LRJAscores->setPrimaryKey("lrjakey", "NUMERIC_TYPE", "GET", "lrjakey");
+
+// Make an instance of the transaction object
+$del_LRJAscores = new tNG_multipleDelete($conn_Assessment);
+$tNGs->addTransaction($del_LRJAscores);
+// Register triggers
+$del_LRJAscores->registerTrigger("STARTER", "Trigger_Default_Starter", 1, "POST", "KT_Delete1");
+$del_LRJAscores->registerTrigger("END", "Trigger_Default_Redirect", 99, "../includes/nxt/back.php");
+// Add columns
+$del_LRJAscores->setTable("LRJAscores");
+$del_LRJAscores->setPrimaryKey("lrjascoringkey", "NUMERIC_TYPE", "GET", "lrjascoringkey");
+
+// Execute all the registered transactions
+$tNGs->executeTransactions();
+
+// Get the transaction recordset
+$rsLRJAscores = $tNGs->getRecordset("LRJAscores");
+$row_rsLRJAscores = mysql_fetch_assoc($rsLRJAscores);
+$totalRows_rsLRJAscores = mysql_num_rows($rsLRJAscores);
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><!-- InstanceBegin template="/Templates/templatelrjascore2.dwt.php" codeOutsideHTMLIsLocked="false" -->
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<!-- InstanceBeginEditable name="doctitle" -->
+<title>Developmental Testing Service: </title>
+<!-- InstanceEndEditable -->
+<!-- InstanceBeginEditable name="head" -->
+<!-- InstanceEditableHeadTag -->
+<link href="../includes/skins/mxkollection3.css" rel="stylesheet" type="text/css" media="all" />
+<script src="../includes/common/js/base.js" type="text/javascript"></script>
+<script src="../includes/common/js/utility.js" type="text/javascript"></script>
+<script src="../includes/skins/style.js" type="text/javascript"></script>
+<!-- InstanceEndEditable -->
+<style type="text/css"> 
+<!-- 
+body  {
+	margin: 0; /* it's good practice to zero the margin and padding of the body element to account for differing browser defaults */
+	padding: 0; /* this centers the container in IE 5* browsers. The text is then set to the left aligned default in the #container selector */
+	color: #474A47;
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	background-color: #A9BBA0;
+	background-image: url(/images/skin/LRJAbackground.jpg);
+}
+.twoColFixRtHdr #container {
+	width: 780px;
+	margin: 0 auto;
+	text-align: left;
+	border: 1px solid #52561F;
+	background-color: #F4F6F2;
+} 
+.twoColFixRtHdr #header {
+	background-image: url(/images/skin/LRJAheader2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 0px;
+} 
+.twoColFixRtHdr #menu1 {
+	height: 20px;
+	padding-top: 0px;
+	padding-right: 27px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #809874;
+	background-image: url(/images/skin/LRJAmenu.jpg);
+} 
+.twoColFixRtHdr #menu2 {
+	height: 20px;
+	padding-top: 0;
+	padding-right: 0px;
+	padding-bottom: 0;
+	padding-left: 17px;
+	background-repeat: repeat;
+	background-color: #809874;
+	background-image: url(/images/skin/LRJAmenu.jpg);
+} 
+.twoColFixRtHdr #menu3 {
+	width: 753px;
+	padding-top: 0px;
+	padding-right: 0px;
+	padding-bottom: 1;
+	padding-left: 27px;
+	background-repeat: repeat;
+	float: left;
+	line-height: 18px;
+	color: #6E6E6E;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: #FFF;
+	background-color: #DFDFDF;
+} 
+.twoColFixRtHdr #container #menu3 a {
+	color: #8A8A8A;
+	text-decoration: none;
+}
+.twoColFixRtHdr #container #menu3 a:hover {
+	color: #3B3B3B;
+}
+.twoColFixRtHdr #spacer1 {
+	background-color: #E2E2E2;
+	height: 0px;
+} 
+.twoColFixRtHdr #header h1 {
+	margin: 0; /* zeroing the margin of the last element in the #header div will avoid margin collapse - an unexplainable space between divs. If the div has a border around it, this is not necessary as that also avoids the margin collapse */
+	padding: 10px 0; /* using padding instead of margin will allow you to keep the element away from the edges of the div */
+}
+.twoColFixRtHdr #mainContent {
+	margin-top: 0;
+	margin-right: 0px;
+	margin-bottom: 0;
+	margin-left: 0;
+	padding-top: 50px;
+	padding-right: 46px;
+	padding-bottom: 0;
+	padding-left: 46px;
+} 
+.twoColFixRtHdr #footer {
+	background-image: url(/images/skin/footer2.jpg);
+	height: 70px;
+	padding-top: 0;
+	padding-right: 10px;
+	padding-bottom: 0;
+	padding-left: 20px;
+} 
+.twoColFixRtHdr #footer p {
+	margin: 0; /* zeroing the margins of the first element in the footer will avoid the possibility of margin collapse - a space between divs */
+	padding: 10px 0; /* padding on this element will create space, just as the the margin would have, without the margin collapse issue */
+}
+.fltrt { /* this class can be used to float an element right in your page. The floated element must precede the element it should be next to on the page. */
+	float: right;
+	margin-left: 8px;
+}
+.fltlft { /* this class can be used to float an element left in your page */
+	float: left;
+	margin-right: 8px;
+}
+.clearfloat { /* this class should be placed on a div or break element and should be the final element before the close of a container that should fully contain a float */
+	clear:both;
+    height:0;
+    font-size: 1px;
+    line-height: 0px;
+}
+.twoColFixRtHdr #container #sidebar1 p {
+	color: #C8C8C8;
+	line-height: 18px;
+	padding-right: 10px;
+	padding-left: 10px;
+	font-size: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 h3 {
+	color: #1D201D;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.twoColFixRtHdr #container #sidebar1 td {
+	background-color: #EFEFEF;
+	color: #1D201D;
+	padding-left: 2px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+.twoColFixRtHdr #container .indent46 a:link {
+	color: #929292;
+}
+.twoColFixRtHdr #container .indent46 a:visited {
+	color: #929292;
+}
+.logintext {
+	line-height: 20px;
+}
+.twoColFixRtHdr #container .indent46 a:hover {
+	color: #474A47;
+}
+--> 
+</style><!--[if IE 5]>
+<style type="text/css"> 
+/* place css box model fixes for IE 5* in this conditional comment */
+.twoColFixRtHdr #sidebar1 { width: 220px; }
+</style>
+<![endif]--><!--[if IE]>
+<style type="text/css"> 
+/* place css fixes for all versions of IE in this conditional comment */
+.twoColFixRtHdr #sidebar1 { padding-top: 30px; }
+.twoColFixRtHdr #mainContent { zoom: 1; }
+/* the above proprietary zoom property gives IE the hasLayout it needs to avoid several bugs */
+</style>
+<![endif]-->
+<link href="/css/styleassessments.css" rel="stylesheet" type="text/css" />
+<script src="/SpryAssetsTemplates1/SpryMenuBar.js" type="text/javascript"></script>
+<link href="/SpryAssetsTemplates1/SpryMenuBarHorizontal.css" rel="stylesheet" type="text/css" />
+<link href="/SpryAssets/SpryMenuBarVertical.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.navigation {}
+-->
+</style>
+</head>
+
+<body class="twoColFixRtHdr">
+
+<div id="container">
+  <div id="spacer1">
+  <!-- end #spacer1 --></div>
+  <div id="header">
+  <!-- end #header --></div>
+  <div class="logintext" id="menu1">
+  <!-- end #menu1 -->
+  <ul id="MenuBar2" class="MenuBarHorizontal">
+    <li><a href="/security/logIn.php">log in</a></li>
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/contactus.php">contact</a></li>
+    <li><a href="/scoring/chooseassessment.php">scoring</a></li>
+    <li><a href="#" class="MenuBarItemSubmenu">training</a>
+      <ul>
+        <li><a href="/training/t-choosetoscore.php">trainees</a></li>
+        <li><a href="/training/tr-choose.php">analysts</a></li>
+        <li><a href="/interviewing/interviewing_dts.php">interviewing</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">downloads</a>
+      <ul>
+        <li><a href="/admin/lsua_download_1.php">LSUA</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="MenuBarItemSubmenu">employees</a>
+      <ul>
+        <li><a href="/employees/intern_landing_page.php">intern area</a></li>
+        <li><a href="/employees/employee_landing_page.php">employee area</a></li>
+      </ul>
+    </li>
+<!--    <li><a href="/assessments/assessmentsOLD/select_assess.php">assess</a></li>
+-->    <li><a href="#" class="MenuBarItemSubmenu">resources</a>
+      <ul>
+        <li><a href="/graphics/graphics.php">graphics</a></li>
+        <li><a href="/la_resources/resources_insert.php">add a resource</a></li>
+        <li><a href="/la_resources/resources_results_resellers.php">view resources</a></li>
+      </ul>
+    </li>
+    <li><a href="/admin/bulkbalanceselect.php" class="MenuBarItemSubmenu">admin</a>
+      <ul>
+        <li><a href="/employees/employee_timesheet_Results_admin.php">intern time sheets</a></li>
+        <li><a href="/admin/bulkbalanceselect.php">accounts</a></li>
+        <li><a href="/admin/registrations.php">registrants</a></li>
+        <li><a href="/admin/emailtoemaillist.php">mail to email list</a></li>
+        <li><a href="/admin/emailtoregistrants.php">mail to registrants</a></li>
+        <li><a href="/admin/emailtoresellers.php">mail to resellers</a></li>
+        <li><a href="/admin/emailrecipientdelete1.php">delete email recipient</a></li>
+      </ul>
+    </li>
+</ul>
+  </div>
+  <div id="menu3">
+  <!-- end #menu1 -->
+  <a href="/scoring/chooseassessment.php">choose assessment</a> | <a href="/scoring/chooselrja.php">choose lrja</a> | <a href="/scoring/bulkcustomerselect.php">sortable</a> | <a href="/scoring_lrja/lrjascoring_update_1.php">rescore contested</a> | <a href="/scoring_lrja/lrjascoring2nd_a.php">second score</a> | <a href="/scoring_lrja/lrja-complexity1.php">complexity</a> | <a href="/scoring_lrja/lrja-evaluation1.php">evaluate</a> | <a href="/scoring_lrja/lrja-certainty1.php">certainty</a> | <a href="/scoring_lrja/lrja-inquiry1.php">inquiry</a> | <a href="/scoring_lrja/lrja-relativism1.php">absolute truth</a> | <a href="/scoring_lrja/lrjatruth1.php">truth</a> | <a href="/scoring_lrja/lrja-growth.php">growth comments</a> |  <a href="/scoring_lrja/lrja-strengthcom.php">present strengths</a> | <a href="/scoring_lrja/lrja-growthcom.php">potential strengths</a> | <a href="/scoring_lrja/lrja-recommendcom.php">recommendations</a></div>
+  <div id="mainContent"> <!-- InstanceBeginEditable name="main" -->
+  <h1><?php echo $tNGs->displayValidationRules();?>
+    
+    <script src="../includes/nxt/scripts/form.js" type="text/javascript"></script>
+    <script src="../includes/nxt/scripts/form.js.php" type="text/javascript"></script>
+    <script type="text/javascript">
+$NXT_FORM_SETTINGS = {
+  duplicate_buttons: false,
+  show_as_grid: true,
+  merge_down_value: true
+}
+    </script>
+    CODE NUMBER <?php echo $row_rsLRJA['lrjakey']; ?>, PHASE <?php echo $row_rsLRJA['lasname']; ?></h1>
+  <p><a href="../scoring/chooseassessment.php">choose assessment</a> | <a href="lrja-personalcom1.php">personal comments</a> | <a href="../codingLRJA/lrja-general.php">general comments</a> | <a href="lrja-complexity1.php">complexity</a> | <a href="lrja-evaluation1.php">evaluate</a> | <a href="lrja-inquiry1.php">inquiry</a> | <a href="lrja-relativism1.php">relativism</a> | <a href="lrja-growth.php">growth</a> | <a href="../codingLRJA/lrjatruth1.php">truth</a> | <a href="../codingLRJA/lrja-strengths1.php">strengths</a> | <a href="lrja-caveats1.php">weaknesses</a> | <a href="../codingLRJA/lrja-recommend1.php">resources</a> | <a href="../codingLRJA/chooselrja.php">choose lrja</a></p>
+  <p><span class="emphasis">NOTE:</span> At least one item in each category that is present in the performance should be coded as &quot;emphasized&quot; <br />
+  </p>
+  <p></p>
+  <div class="KT_tng">
+    <p>
+      <?php
+	echo $tNGs->getErrorMsg();
+?>
+      </p>
+    <div class="KT_tngform">
+      <form method="post" id="form1" action="<?php echo KT_escapeAttribute(KT_getFullUri()); ?>">
+        <?php $cnt1 = 0; ?>
+        <?php do { ?>
+          <?php $cnt1++; ?>
+          <?php 
+// Show IF Conditional region1 
+if (@$totalRows_rsLRJAscores > 1) {
+?>
+            <h3><?php echo NXT_getResource("Record_FH"); ?> <?php echo $cnt1; ?></h3>
+            <?php } 
+// endif Conditional region1
+?>
+          <table cellpadding="2" cellspacing="0" class="KT_tngtable">
+            <tr>
+              <td colspan="2" class="KT_th"><div align="center">BIAS/PERSPECTIVE</div></td>
+              <td colspan="2" class="KT_th"><div align="center">ASPECTS OF THINKING</div></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectsofperspective_<?php echo $cnt1; ?>">Argues that conclusions are affected by any of the following:</label></td>
+              <td width="130"><select name="effectsofperspective_<?php echo $cnt1; ?>" id="effectsofperspective_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsGroupingLabels['groupinglabelno']?>"<?php if (!(strcmp($row_rsGroupingLabels['groupinglabelno'], $row_rsLRJAscores['effectsofperspective']))) {echo "SELECTED";} ?>><?php echo $row_rsGroupingLabels['groupinglabelname']?></option>
+                <?php
+} while ($row_rsGroupingLabels = mysql_fetch_assoc($rsGroupingLabels));
+  $rows = mysql_num_rows($rsGroupingLabels);
+  if($rows > 0) {
+      mysql_data_seek($rsGroupingLabels, 0);
+	  $row_rsGroupingLabels = mysql_fetch_assoc($rsGroupingLabels);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectsofperspective", $cnt1); ?></td>
+              <td class="KT_th"><label for="thinkingaboutthinking_<?php echo $cnt1; ?>">Refers to any of the following aspects of thinking:</label></td>
+              <td width="130"><select name="thinkingaboutthinking_<?php echo $cnt1; ?>" id="thinkingaboutthinking_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsGroupingLabels['groupinglabelno']?>"<?php if (!(strcmp($row_rsGroupingLabels['groupinglabelno'], $row_rsLRJAscores['thinkingaboutthinking']))) {echo "SELECTED";} ?>><?php echo $row_rsGroupingLabels['groupinglabelname']?></option>
+                <?php
+} while ($row_rsGroupingLabels = mysql_fetch_assoc($rsGroupingLabels));
+  $rows = mysql_num_rows($rsGroupingLabels);
+  if($rows > 0) {
+      mysql_data_seek($rsGroupingLabels, 0);
+	  $row_rsGroupingLabels = mysql_fetch_assoc($rsGroupingLabels);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "thinkingaboutthinking", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectsbias_<?php echo $cnt1; ?>">Bias</label></td>
+              <td width="130"><select name="effectsbias_<?php echo $cnt1; ?>" id="effectsbias_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['effectsbias']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectsbias", $cnt1); ?></td>
+              <td class="KT_th"><label for="gatherinformation_<?php echo $cnt1; ?>">Gather information</label></td>
+              <td width="130"><select name="gatherinformation_<?php echo $cnt1; ?>" id="gatherinformation_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['gatherinformation']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "gatherinformation", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectselfinterest_<?php echo $cnt1; ?>">Self-interest</label></td>
+              <td width="130"><select name="effectselfinterest_<?php echo $cnt1; ?>" id="effectselfinterest_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['effectselfinterest']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectselfinterest", $cnt1); ?></td>
+              <td class="KT_th"><label for="evaluateinformation_<?php echo $cnt1; ?>">Evaluate information quality</label></td>
+              <td width="130"><select name="evaluateinformation_<?php echo $cnt1; ?>" id="evaluateinformation_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['evaluateinformation']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "evaluateinformation", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectsattitude_<?php echo $cnt1; ?>">People's attitudes</label></td>
+              <td width="130"><select name="effectsattitude_<?php echo $cnt1; ?>" id="effectsattitude_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['effectsattitude']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectsattitude", $cnt1); ?></td>
+              <td class="KT_th"><label for="informationsource_<?php echo $cnt1; ?>">Consider the source of information</label></td>
+              <td width="130"><select name="informationsource_<?php echo $cnt1; ?>" id="informationsource_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['informationsource']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "informationsource", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectsbiasconstraints_<?php echo $cnt1; ?>">Constraints on human reason</label></td>
+              <td width="130"><select name="effectsbiasconstraints_<?php echo $cnt1; ?>" id="effectsbiasconstraints_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['effectsbiasconstraints']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectsbiasconstraints", $cnt1); ?></td>
+              <td class="KT_th"><label for="criticalthinking_<?php echo $cnt1; ?>">Employ critical thinking</label></td>
+              <td width="130"><select name="criticalthinking_<?php echo $cnt1; ?>" id="criticalthinking_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['criticalthinking']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "criticalthinking", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectsperspectives_<?php echo $cnt1; ?>">Differing perspectives</label></td>
+              <td width="130"><select name="effectsperspectives_<?php echo $cnt1; ?>" id="effectsperspectives_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['effectsperspectives']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectsperspectives", $cnt1); ?></td>
+              <td class="KT_th"><label for="logic_<?php echo $cnt1; ?>">Employ logic</label></td>
+              <td width="130"><select name="logic_<?php echo $cnt1; ?>" id="logic_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['logic']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "logic", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectsopinions_<?php echo $cnt1; ?>">Opinions</label></td>
+              <td width="130"><select name="effectsopinions_<?php echo $cnt1; ?>" id="effectsopinions_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['effectsopinions']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectsopinions", $cnt1); ?></td>
+              <td class="KT_th"><label for="commonsense_<?php echo $cnt1; ?>"> Common sense</label></td>
+              <td width="130"><select name="commonsense_<?php echo $cnt1; ?>" id="commonsense_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['commonsense']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "commonsense", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectsworldview_<?php echo $cnt1; ?>">Differing worldviews</label></td>
+              <td width="130"><select name="effectsworldview_<?php echo $cnt1; ?>" id="effectsworldview_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['effectsworldview']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectsworldview", $cnt1); ?></td>
+              <td class="KT_th"><label for="facts_<?php echo $cnt1; ?>">Consider facts</label></td>
+              <td width="130"><select name="facts_<?php echo $cnt1; ?>" id="facts_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['facts']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "facts", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectsupbringing_<?php echo $cnt1; ?>">Upbringing</label></td>
+              <td width="130"><select name="effectsupbringing_<?php echo $cnt1; ?>" id="effectsupbringing_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['effectsupbringing']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectsupbringing", $cnt1); ?></td>
+              <td class="KT_th"><label for="proof_<?php echo $cnt1; ?>">Look for proof</label></td>
+              <td width="130"><select name="proof_<?php echo $cnt1; ?>" id="proof_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['proof']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "proof", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectsculture_<?php echo $cnt1; ?>">Culture</label></td>
+              <td width="130"><select name="effectsculture_<?php echo $cnt1; ?>" id="effectsculture_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['effectsculture']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectsculture", $cnt1); ?></td>
+              <td class="KT_th"><label for="intuition_<?php echo $cnt1; ?>">Use intuition</label></td>
+              <td width="130"><select name="intuition_<?php echo $cnt1; ?>" id="intuition_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['intuition']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "intuition", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectseducation_<?php echo $cnt1; ?>">Education</label></td>
+              <td width="130"><select name="effectseducation_<?php echo $cnt1; ?>" id="effectseducation_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['effectseducation']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectseducation", $cnt1); ?></td>
+              <td class="KT_th"><label for="comparingcontrasting_<?php echo $cnt1; ?>">Comparing and contrasting</label></td>
+              <td width="130"><select name="comparingcontrasting_<?php echo $cnt1; ?>" id="comparingcontrasting_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['comparingcontrasting']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "comparingcontrasting", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectsemotion_<?php echo $cnt1; ?>">Emotion</label></td>
+              <td width="130"><select name="effectsemotion_<?php echo $cnt1; ?>" id="effectsemotion_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['effectsemotion']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectsemotion", $cnt1); ?></td>
+              <td class="KT_th"><label for="debate_<?php echo $cnt1; ?>">Debate</label></td>
+              <td width="130"><select name="debate_<?php echo $cnt1; ?>" id="debate_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['debate']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "debate", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectseconomics_<?php echo $cnt1; ?>">Economics</label></td>
+              <td width="130"><select name="effectseconomics_<?php echo $cnt1; ?>" id="effectseconomics_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['effectseconomics']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectseconomics", $cnt1); ?></td>
+              <td class="KT_th"><label for="multiplesources_<?php echo $cnt1; ?>">Consult multiple types of sources</label></td>
+              <td width="130"><select name="multiplesources_<?php echo $cnt1; ?>" id="multiplesources_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['multiplesources']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "multiplesources", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="effectspolitics_<?php echo $cnt1; ?>">Politics</label></td>
+              <td width="130"><select name="effectspolitics_<?php echo $cnt1; ?>" id="effectspolitics_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['effectspolitics']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "effectspolitics", $cnt1); ?></td>
+              <td class="KT_th"><label for="weighingproscons_<?php echo $cnt1; ?>">Weigh pros and cons</label></td>
+              <td width="130"><select name="weighingproscons_<?php echo $cnt1; ?>" id="weighingproscons_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['weighingproscons']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "weighingproscons", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th">&nbsp;</td>
+              <td width="130">&nbsp;</td>
+              <td class="KT_th"><label for="broadinquiry_<?php echo $cnt1; ?>">Distinguish between broad forms of inquiry</label></td>
+              <td width="130"><select name="broadinquiry_<?php echo $cnt1; ?>" id="broadinquiry_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['broadinquiry']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "broadinquiry", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th">&nbsp;</td>
+              <td width="130">&nbsp;</td>
+              <td class="KT_th"><label for="socialphysical_<?php echo $cnt1; ?>">Distinguish between social and physical sciences</label></td>
+              <td width="130"><select name="socialphysical_<?php echo $cnt1; ?>" id="socialphysical_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['socialphysical']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "socialphysical", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td colspan="2" class="KT_th"><div align="center">DOMAINS/DISCIPLINES</div></td>
+              <td colspan="2" class="KT_th"><div align="center">PERSPECTIVES ON TRUTH</div></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="domains_<?php echo $cnt1; ?>">Mentions any of the following disciplines:</label></td>
+              <td width="130"><select name="domains_<?php echo $cnt1; ?>" id="domains_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsGroupingLabels['groupinglabelno']?>"<?php if (!(strcmp($row_rsGroupingLabels['groupinglabelno'], $row_rsLRJAscores['domains']))) {echo "SELECTED";} ?>><?php echo $row_rsGroupingLabels['groupinglabelname']?></option>
+                <?php
+} while ($row_rsGroupingLabels = mysql_fetch_assoc($rsGroupingLabels));
+  $rows = mysql_num_rows($rsGroupingLabels);
+  if($rows > 0) {
+      mysql_data_seek($rsGroupingLabels, 0);
+	  $row_rsGroupingLabels = mysql_fetch_assoc($rsGroupingLabels);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "domains", $cnt1); ?></td>
+              <td class="KT_th"><label for="perspectivesontruth_<?php echo $cnt1; ?>">Considers any of the following perspectives on truth:</label></td>
+              <td width="130"><select name="perspectivesontruth_<?php echo $cnt1; ?>" id="perspectivesontruth_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsGroupingLabels['groupinglabelno']?>"<?php if (!(strcmp($row_rsGroupingLabels['groupinglabelno'], $row_rsLRJAscores['perspectivesontruth']))) {echo "SELECTED";} ?>><?php echo $row_rsGroupingLabels['groupinglabelname']?></option>
+                <?php
+} while ($row_rsGroupingLabels = mysql_fetch_assoc($rsGroupingLabels));
+  $rows = mysql_num_rows($rsGroupingLabels);
+  if($rows > 0) {
+      mysql_data_seek($rsGroupingLabels, 0);
+	  $row_rsGroupingLabels = mysql_fetch_assoc($rsGroupingLabels);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "perspectivesontruth", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="science_<?php echo $cnt1; ?>">Science</label></td>
+              <td width="130"><select name="science_<?php echo $cnt1; ?>" id="science_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['science']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "science", $cnt1); ?></td>
+              <td class="KT_th"><label for="truthoutthere_<?php echo $cnt1; ?>">The truth is <em>out there</em></label></td>
+              <td width="130"><select name="truthoutthere_<?php echo $cnt1; ?>" id="truthoutthere_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['truthoutthere']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "truthoutthere", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="religion_<?php echo $cnt1; ?>">Religion</label></td>
+              <td width="130"><select name="religion_<?php echo $cnt1; ?>" id="religion_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['religion']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "religion", $cnt1); ?></td>
+              <td class="KT_th"><label for="itworksitstrue_<?php echo $cnt1; ?>">If it works it is true</label></td>
+              <td width="130"><select name="itworksitstrue_<?php echo $cnt1; ?>" id="itworksitstrue_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['itworksitstrue']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "itworksitstrue", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="philosophy_<?php echo $cnt1; ?>">Philosophy</label></td>
+              <td width="130"><select name="philosophy_<?php echo $cnt1; ?>" id="philosophy_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['philosophy']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "philosophy", $cnt1); ?></td>
+              <td class="KT_th"><label for="revealedtruth_<?php echo $cnt1; ?>">Revealed truth (faith)</label></td>
+              <td width="130"><select name="revealedtruth_<?php echo $cnt1; ?>" id="revealedtruth_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['revealedtruth']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "revealedtruth", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th">Ethics</td>
+              <td width="130"><select name="morality_<?php echo $cnt1; ?>" id="morality_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['morality']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "morality", $cnt1); ?></td>
+              <td class="KT_th"><label for="probability_<?php echo $cnt1; ?>">Truth as probability</label></td>
+              <td width="130"><select name="probability_<?php echo $cnt1; ?>" id="probability_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['probability']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "probability", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="mathematics_<?php echo $cnt1; ?>">Mathematics</label></td>
+              <td width="130"><select name="mathematics_<?php echo $cnt1; ?>" id="mathematics_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['mathematics']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "mathematics", $cnt1); ?></td>
+              <td class="KT_th"><label for="approximation_<?php echo $cnt1; ?>">Truth is approximated (iteratively)</label></td>
+              <td width="130"><select name="approximation_<?php echo $cnt1; ?>" id="approximation_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['approximation']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "approximation", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="history_<?php echo $cnt1; ?>">History</label></td>
+              <td width="130"><select name="history_<?php echo $cnt1; ?>" id="history_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['history']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "history", $cnt1); ?></td>
+              <td class="KT_th"><label for="truthiswhatyoumakeit_<?php echo $cnt1; ?>">Truth is what you make it</label></td>
+              <td width="130"><select name="truthiswhatyoumakeit_<?php echo $cnt1; ?>" id="truthiswhatyoumakeit_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['truthiswhatyoumakeit']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "truthiswhatyoumakeit", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="politics_<?php echo $cnt1; ?>">Politics</label></td>
+              <td width="130"><select name="politics_<?php echo $cnt1; ?>" id="politics_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['politics']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "politics", $cnt1); ?></td>
+              <td class="KT_th"><label for="intuitivetruths_<?php echo $cnt1; ?>">Intuitive truths</label></td>
+              <td width="130"><select name="intuitivetruths_<?php echo $cnt1; ?>" id="intuitivetruths_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['intuitivetruths']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "intuitivetruths", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td colspan="2" class="KT_th"><div align="center">CERTAINTY</div></td>
+              <td colspan="2" class="KT_th"><div align="center">INFORMATION SOURCES</div></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="basisforcertainty_<?php echo $cnt1; ?>">Considers any of the following when writing about certainty:</label></td>
+              <td width="130"><select name="basisforcertainty_<?php echo $cnt1; ?>" id="basisforcertainty_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsGroupingLabels['groupinglabelno']?>"<?php if (!(strcmp($row_rsGroupingLabels['groupinglabelno'], $row_rsLRJAscores['basisforcertainty']))) {echo "SELECTED";} ?>><?php echo $row_rsGroupingLabels['groupinglabelname']?></option>
+                <?php
+} while ($row_rsGroupingLabels = mysql_fetch_assoc($rsGroupingLabels));
+  $rows = mysql_num_rows($rsGroupingLabels);
+  if($rows > 0) {
+      mysql_data_seek($rsGroupingLabels, 0);
+	  $row_rsGroupingLabels = mysql_fetch_assoc($rsGroupingLabels);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "basisforcertainty", $cnt1); ?></td>
+              <td class="KT_th"><label for="informationsources_<?php echo $cnt1; ?>">Mentions any of the following information sources:</label></td>
+              <td width="130"><select name="informationsources_<?php echo $cnt1; ?>" id="informationsources_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsGroupingLabels['groupinglabelno']?>"<?php if (!(strcmp($row_rsGroupingLabels['groupinglabelno'], $row_rsLRJAscores['informationsources']))) {echo "SELECTED";} ?>><?php echo $row_rsGroupingLabels['groupinglabelname']?></option>
+                <?php
+} while ($row_rsGroupingLabels = mysql_fetch_assoc($rsGroupingLabels));
+  $rows = mysql_num_rows($rsGroupingLabels);
+  if($rows > 0) {
+      mysql_data_seek($rsGroupingLabels, 0);
+	  $row_rsGroupingLabels = mysql_fetch_assoc($rsGroupingLabels);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "informationsources", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="sensecertainty_<?php echo $cnt1; ?>">Dependent upon seeing, hearing, touching, etc.</label></td>
+              <td width="130"><select name="sensecertainty_<?php echo $cnt1; ?>" id="sensecertainty_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['sensecertainty']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "sensecertainty", $cnt1); ?></td>
+              <td class="KT_th"><label for="internet_<?php echo $cnt1; ?>">The internet</label></td>
+              <td width="130"><select name="internet_<?php echo $cnt1; ?>" id="internet_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['internet']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "internet", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="personalexperience_<?php echo $cnt1; ?>">Dependent upon personal experience (subjective)</label></td>
+              <td width="130"><select name="personalexperience_<?php echo $cnt1; ?>" id="personalexperience_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['personalexperience']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "personalexperience", $cnt1); ?></td>
+              <td class="KT_th"><label for="experts_<?php echo $cnt1; ?>">Experts</label></td>
+              <td width="130"><select name="experts_<?php echo $cnt1; ?>" id="experts_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['experts']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "experts", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="weightofevidence_<?php echo $cnt1; ?>">Dependent upon the weight of evidence</label></td>
+              <td width="130"><select name="weightofevidence_<?php echo $cnt1; ?>" id="weightofevidence_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['weightofevidence']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "weightofevidence", $cnt1); ?></td>
+              <td class="KT_th"><label for="friendsfamily_<?php echo $cnt1; ?>">Friends/family</label></td>
+              <td width="130"><select name="friendsfamily_<?php echo $cnt1; ?>" id="friendsfamily_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['friendsfamily']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "friendsfamily", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="majoritybelief_<?php echo $cnt1; ?>">Dependent upon the beliefs of the majority</label></td>
+              <td width="130"><select name="majoritybelief_<?php echo $cnt1; ?>" id="majoritybelief_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['majoritybelief']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "majoritybelief", $cnt1); ?></td>
+              <td class="KT_th"><label for="school_<?php echo $cnt1; ?>">School/college</label></td>
+              <td width="130"><select name="school_<?php echo $cnt1; ?>" id="school_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['school']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "school", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="methods_<?php echo $cnt1; ?>">Dependent upon the quality/appropriateness of methods</label></td>
+              <td width="130"><select name="methods_<?php echo $cnt1; ?>" id="methods_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['methods']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "methods", $cnt1); ?></td>
+              <td class="KT_th"><label for="media_<?php echo $cnt1; ?>">Media</label></td>
+              <td width="130"><select name="media_<?php echo $cnt1; ?>" id="media_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['media']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "media", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="uncertaintycertain_<?php echo $cnt1; ?>">Limited by the ubiquity of uncertainty</label></td>
+              <td width="130"><select name="uncertaintycertain_<?php echo $cnt1; ?>" id="uncertaintycertain_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['uncertaintycertain']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "uncertaintycertain", $cnt1); ?></td>
+              <td class="KT_th"><label for="personalopinion_<?php echo $cnt1; ?>">Self</label></td>
+              <td width="130"><select name="personalopinion_<?php echo $cnt1; ?>" id="personalopinion_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['personalopinion']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "personalopinion", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="humanfallability_<?php echo $cnt1; ?>">Limited by human fallability</label></td>
+              <td width="130"><select name="humanfallability_<?php echo $cnt1; ?>" id="humanfallability_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['humanfallability']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "humanfallability", $cnt1); ?></td>
+              <td class="KT_th"><label for="objective_<?php echo $cnt1; ?>">Objective</label></td>
+              <td width="130"><select name="objective_<?php echo $cnt1; ?>" id="objective_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['objective']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "objective", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="consensus_<?php echo $cnt1; ?>">Dependent upon ability to achieve consensus</label></td>
+              <td width="130"><select name="consensus_<?php echo $cnt1; ?>" id="consensus_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['consensus']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "consensus", $cnt1); ?></td>
+              <td class="KT_th"><label for="unbiased_<?php echo $cnt1; ?>">Unbiased</label></td>
+              <td width="130"><select name="unbiased_<?php echo $cnt1; ?>" id="unbiased_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['unbiased']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "unbiased", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th">&nbsp;</td>
+              <td width="130">&nbsp;</td>
+              <td class="KT_th"><label for="reliable_<?php echo $cnt1; ?>">Reliable</label></td>
+              <td width="130"><select name="reliable_<?php echo $cnt1; ?>" id="reliable_<?php echo $cnt1; ?>">
+                <option value=""><?php echo NXT_getResource("Select one..."); ?></option>
+                <?php 
+do {  
+?>
+                <option value="<?php echo $row_rsLRJAscoringratings['ratingskey']?>"<?php if (!(strcmp($row_rsLRJAscoringratings['ratingskey'], $row_rsLRJAscores['reliable']))) {echo "SELECTED";} ?>><?php echo $row_rsLRJAscoringratings['ratingname']?></option>
+                <?php
+} while ($row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings));
+  $rows = mysql_num_rows($rsLRJAscoringratings);
+  if($rows > 0) {
+      mysql_data_seek($rsLRJAscoringratings, 0);
+	  $row_rsLRJAscoringratings = mysql_fetch_assoc($rsLRJAscoringratings);
+  }
+?>
+                </select>
+                <?php echo $tNGs->displayFieldError("LRJAscores", "reliable", $cnt1); ?></td>
+              </tr>
+            <tr>
+              <td class="KT_th"><label for="ideasforcodes_<?php echo $cnt1; ?>">Coder comments and ideas for codes</label></td>
+              <td colspan="3" class="KT_th"><textarea name="ideasforcodes_<?php echo $cnt1; ?>" cols="70" rows="5" id="ideasforcodes_<?php echo $cnt1; ?>"><?php echo KT_escapeAttribute($row_rsLRJAscores['ideasforcodes']); ?></textarea>
+                <?php echo $tNGs->displayFieldHint("ideasforcodes");?> <?php echo $tNGs->displayFieldError("LRJAscores", "ideasforcodes", $cnt1); ?></td>
+              </tr>
+            </table>
+          <input type="hidden" name="kt_pk_LRJAscores_<?php echo $cnt1; ?>" class="id_field" value="<?php echo KT_escapeAttribute($row_rsLRJAscores['kt_pk_lrjascores']); ?>" />
+          <input type="hidden" name="lrjakey_<?php echo $cnt1; ?>" id="lrjakey_<?php echo $cnt1; ?>" value="<?php echo $_GET['lrjakey']; ?>" />
+          
+          <?php } while ($row_rsLRJAscores = mysql_fetch_assoc($rsLRJAscores)); ?>
+        <div class="KT_bottombuttons">
+          <div>
+            <?php 
+      // Show IF Conditional region1
+      if (@$_GET['lrjascoringkey'] == "") {
+      ?>
+              <input type="submit" name="KT_Insert1" id="KT_Insert1" value="<?php echo NXT_getResource("Insert_FB"); ?>" />
+              <?php 
+      // else Conditional region1
+      } else { ?>
+              <input type="submit" name="KT_Update1" value="<?php echo NXT_getResource("Update_FB"); ?>" />
+              <input type="submit" name="KT_Delete1" value="<?php echo NXT_getResource("Delete_FB"); ?>" onclick="return confirm('<?php echo NXT_getResource("Are you sure?"); ?>');" />
+              <?php }
+      // endif Conditional region1
+      ?>
+            <input type="button" name="KT_Cancel1" value="<?php echo NXT_getResource("Cancel_FB"); ?>" onclick="return UNI_navigateCancel(event, '../includes/nxt/back.php')" />
+            </div>
+          </div>
+        </form>
+      </div>
+    <br class="clearfixplain" />
+  </div>
+  <h2>Essays</h2>
+  <table>
+    <tr>
+      <td class="pspaced"><label for="essay1las_<?php echo $cnt1; ?>">What do you think?</label></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['essay1las']; ?></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['thinkof']; ?></td>
+    </tr>
+    <tr>
+      <td class="pspaced"><label for="essay2las_<?php echo $cnt1; ?>">Why different conclusions?</label></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['essay2las']; ?></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['differentconclusions']; ?></td>
+    </tr>
+    <tr>
+      <td class="pspaced"><label for="essay3las_<?php echo $cnt1; ?>">Ideal process</label></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['essay3las']; ?></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['idealprocess']; ?></td>
+    </tr>
+    <tr>
+      <td class="pspaced"><label for="essay4las_<?php echo $cnt1; ?>">Certainty</label></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['essay4las']; ?></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['certainty']; ?></td>
+    </tr>
+    <tr>
+      <td class="pspaced"><label for="essay5las_<?php echo $cnt1; ?>">Truth</label></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['essay5las']; ?></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['truth']; ?></td>
+    </tr>
+    <tr>
+      <td class="pspaced"><label for="essay6las_<?php echo $cnt1; ?>">Identify truth</label></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['essay6las']; ?></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['identifytruth']; ?></td>
+    </tr>
+    <tr>
+      <td class="pspaced"><label for="essay7las_<?php echo $cnt1; ?>">Absolute truth</label></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['essay7las']; ?></td>
+      <td class="pspaced"><?php echo $row_rsLRJA['absolutetruth']; ?></td>
+    </tr>
+  </table>
+  <p>&nbsp;</p>
+  </p>
+<p>&nbsp;</p>
+<!-- InstanceEndEditable -->
+<!-- end #mainContent --></div>
+	<!-- This clearing element should immediately follow the #mainContent div in order to force the #container div to contain all child floats --><br class="clearfloat" />
+  <div id="menu2">
+<div>
+  <ul id="MenuBar1" class="MenuBarHorizontal">
+    <li><a href="/landing.php">home</a></li>
+    <li><a href="/security/logout.php">log out</a></li>
+    <li><a href="/contactus.php">contact us</a></li>
+  </ul>
+</div>
+<!-- end #menu2 --></div>
+  <div id="footer">
+    <p>&nbsp;</p>
+  <!-- end #footer --></div>
+  <!-- end #container -->
+</div>
+<script type="text/javascript">
+<!--
+var MenuBar1 = new Spry.Widget.MenuBar("MenuBar1", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+var MenuBar2 = new Spry.Widget.MenuBar("MenuBar2", {imgDown:"/SpryAssets/SpryMenuBarDownHover.gif", imgRight:"/SpryAssets/SpryMenuBarRightHover.gif"});
+//-->
+</script>
+</body>
+<!-- InstanceEnd --></html>
+<?php
+mysql_free_result($rsLRJAscoringratings);
+
+mysql_free_result($rsGroupingLabels);
+
+mysql_free_result($rsLRJA);
+?>

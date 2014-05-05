@@ -1,0 +1,86 @@
+<?php 
+require_once('../Connections/Assessment.php'); 
+require_once( "../WA_SecurityAssist/Helper_PHP.php" ); 
+
+if (!WA_Auth_RulePasses("Logged in to registrants")){
+	WA_Auth_RestrictAccess("../security/logIn.php");
+}
+// if user hasn't chosen an instrument_id, force them to do so
+if (!isset($_SESSION['instrument_id'])) {
+	WA_Auth_RestrictAccess("../select_instrument.php");
+} 
+
+
+
+
+if (!function_exists("GetSQLValueString")) {
+function GetSQLValueString($theValue, $theType, $theDefinedValue = "", $theNotDefinedValue = "") 
+{
+  if (PHP_VERSION < 6) {
+    $theValue = get_magic_quotes_gpc() ? stripslashes($theValue) : $theValue;
+  }
+
+  $theValue = function_exists("mysql_real_escape_string") ? mysql_real_escape_string($theValue) : mysql_escape_string($theValue);
+
+  switch ($theType) {
+    case "text":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;    
+    case "long":
+    case "int":
+      $theValue = ($theValue != "") ? intval($theValue) : "NULL";
+      break;
+    case "double":
+      $theValue = ($theValue != "") ? doubleval($theValue) : "NULL";
+      break;
+    case "date":
+      $theValue = ($theValue != "") ? "'" . $theValue . "'" : "NULL";
+      break;
+    case "defined":
+      $theValue = ($theValue != "") ? $theDefinedValue : $theNotDefinedValue;
+      break;
+  }
+  return $theValue;
+}
+}
+
+
+
+
+/* This script is called by assess_essay pages to regularly save user input. 
+	To my mind, AJAX RAISES SOME NOVEL SECURITY QUESTIONS which I will note here.
+	Primarily, data interaction with the server is no longer simply a matter of clicking a button and closing a form. Any code which serves the same 'express-door' function as this autosave.php should be treated as a place of particular security concern, because I sense that it will be easier for the programmer to forget just how much sensitive data is being transmitted through these pages and how often it happens. 
+	DO NOT FORGET THAT JAVASCRIPT CODE IS READABLE. Therefore it should not be treated in the same way that PHP code is treated: the vast majority of PHP code never reaches the end browser, whereas all JavaScript code is visible.
+	
+	My security plan, for now, is to:
+	 - NOT streamline the code to the extent of receiving text for the column names from the Javascript code. Only certain column names will be accepted here. 
+	 - Add a structurally-redundant requirement to the query that refuses to update data unless that la_data row belongs to the logged-in user.
+
+*/
+
+$entryColumnName = "NULL";
+$acceptableNames = array("probe01", "probe02", "probe03", "probe04", "probe05", "probe06", "probe07", "probe08", "probe09", "probe10"); // don't think the later ones will ever be used...
+
+do {
+	if ( isset( $_POST[current($acceptableNames)] ) ) {
+		$entryColumnName = current($acceptableNames);
+	}
+	
+} while (next($acceptableNames));
+
+
+if (isset($_POST[$entryColumnName])) {
+	
+	$updateSQL = sprintf("UPDATE la_data SET {$entryColumnName}=%s WHERE lakey=%s AND userkey=%s",
+       GetSQLValueString($_POST[$entryColumnName], "text"),
+			 GetSQLValueString($_POST['lakey'], "int"),
+			 GetSQLValueString($_SESSION['log_userkey'], "int"));
+
+  mysql_select_db($database_Assessment, $Assessment);
+  $Result1 = mysql_query($updateSQL, $Assessment) or die(mysql_error());
+	
+}
+
+
+
+?>
